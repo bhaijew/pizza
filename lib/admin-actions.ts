@@ -18,6 +18,7 @@ import {
   generateSessionToken,
   verifySessionToken,
 } from "@/lib/admin-auth";
+import { sendWhatsAppRiderAlert, sendWhatsAppCustomerDispatchedAlert } from "@/lib/whatsapp";
 
 // ─── Auth helper ─────────────────────────────────────────────────
 async function requireAdmin() {
@@ -494,6 +495,8 @@ export async function updateSettings(
   const meta_title = (formData.get("meta_title") as string)?.trim();
   const meta_description = (formData.get("meta_description") as string)?.trim();
   const currency_symbol = (formData.get("currency_symbol") as string)?.trim() || "$";
+  const whatsapp_session_id = (formData.get("whatsapp_session_id") as string)?.trim() || null;
+  const whatsapp_api_key = (formData.get("whatsapp_api_key") as string)?.trim() || null;
 
   if (!shop_name || !menu_title || !meta_title) {
     return { error: "Shop name, menu title, and meta title are required.", success: false };
@@ -501,13 +504,26 @@ export async function updateSettings(
 
   if (activeShop.shopId) {
     // Update branch in public.shops table
-    const { error: shopError } = await db
+    const updatePayload: Record<string, any> = {
+      name: shop_name,
+      currency_symbol: currency_symbol,
+      whatsapp_session_id,
+      whatsapp_api_key,
+    };
+
+    let { error: shopError } = await db
       .from("shops")
-      .update({
-        name: shop_name,
-        currency_symbol: currency_symbol,
-      })
+      .update(updatePayload)
       .eq("id", activeShop.shopId);
+
+    // Fallback if columns pending migration
+    if (shopError && (shopError.message.includes("whatsapp_session_id") || shopError.message.includes("whatsapp_api_key"))) {
+      const retry = await db
+        .from("shops")
+        .update({ name: shop_name, currency_symbol })
+        .eq("id", activeShop.shopId);
+      shopError = retry.error;
+    }
 
     if (shopError) return { error: shopError.message, success: false };
 
@@ -522,9 +538,28 @@ export async function updateSettings(
     });
   } else {
     // Update master shop settings
-    const { error } = await db
+    const upsertPayload: Record<string, any> = {
+      id: "main",
+      shop_name,
+      menu_title,
+      meta_title,
+      meta_description,
+      currency_symbol,
+      whatsapp_session_id,
+      whatsapp_api_key,
+    };
+
+    let { error } = await db
       .from("shop_settings")
-      .upsert({ id: "main", shop_name, menu_title, meta_title, meta_description, currency_symbol });
+      .upsert(upsertPayload);
+
+    // Fallback if columns pending migration
+    if (error && (error.message.includes("whatsapp_session_id") || error.message.includes("whatsapp_api_key"))) {
+      const retry = await db
+        .from("shop_settings")
+        .upsert({ id: "main", shop_name, menu_title, meta_title, meta_description, currency_symbol });
+      error = retry.error;
+    }
 
     if (error) return { error: error.message, success: false };
   }
@@ -609,9 +644,103 @@ export async function assignOrderRider(
 
   if (error) return { error: error.message };
 
+  // Trigger automated WhatsApp alerts to Rider and Customer
+  try {
+    const { data: updatedOrd } = await db
+      .from("orders")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (updatedOrd) {
+      const deliveryAddress =
+        updatedOrd.delivery_address ||
+        updatedOrd.notes?.match(/\[DELIVERY:\s*Address:\s*([^|]+)/i)?.[1]?.trim() ||
+        "Delivery address provided on order ticket";
+
+      // 1. Send WhatsApp to Rider with delivery address, customer name/phone, total cash
+      if (riderPhone?.trim()) {
+        sendWhatsAppRiderAlert({
+          riderPhone: riderPhone.trim(),
+          riderName: riderName.trim(),
+          orderNumber: updatedOrd.order_number,
+          deliveryAddress,
+          customerName: updatedOrd.customer_name,
+          customerPhone: updatedOrd.customer_phone,
+          total: updatedOrd.total,
+          shopId: activeShop.shopId,
+        }).catch((err) => console.error("[Rider WhatsApp alert background error]", err));
+      }
+
+      // 2. Send WhatsApp to Customer notifying that order is out for delivery with rider details
+      if (updatedOrd.customer_phone?.trim()) {
+        sendWhatsAppCustomerDispatchedAlert({
+          customerPhone: updatedOrd.customer_phone.trim(),
+          customerName: updatedOrd.customer_name,
+          orderNumber: updatedOrd.order_number,
+          riderName: riderName.trim(),
+          riderPhone: riderPhone?.trim() || null,
+          shopId: activeShop.shopId,
+        }).catch((err) => console.error("[Customer Dispatched WhatsApp alert background error]", err));
+      }
+    }
+  } catch (waErr) {
+    console.warn("[assignOrderRider WhatsApp non-blocking error]", waErr);
+  }
+
   revalidatePath("/admin/orders");
   revalidatePath("/admin");
   return { error: null };
+}
+
+export async function triggerRiderWhatsAppAlert(orderId: number): Promise<{
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  const { data: order, error } = await db
+    .from("orders")
+    .select("*")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (error || !order) {
+    return { success: false, error: "Order not found." };
+  }
+
+  let riderPhone = order.delivery_rider_phone;
+  let riderName = order.delivery_rider_name || "Rider";
+
+  if (!riderPhone && order.notes?.includes("[RIDER:")) {
+    const pMatch = order.notes.match(/Phone:\s*([^\]]+)/i);
+    if (pMatch) riderPhone = pMatch[1].trim();
+    const rMatch = order.notes.match(/\[RIDER:\s*([^|]+)/i);
+    if (rMatch) riderName = rMatch[1].trim();
+  }
+
+  if (!riderPhone?.trim()) {
+    return { success: false, error: "No rider phone number found for this order. Please assign rider with phone." };
+  }
+
+  const deliveryAddress =
+    order.delivery_address ||
+    order.notes?.match(/\[DELIVERY:\s*Address:\s*([^|]+)/i)?.[1]?.trim() ||
+    "Delivery address provided on order ticket";
+
+  return sendWhatsAppRiderAlert({
+    riderPhone: riderPhone.trim(),
+    riderName: riderName.trim(),
+    orderNumber: order.order_number,
+    deliveryAddress,
+    customerName: order.customer_name,
+    customerPhone: order.customer_phone,
+    total: order.total,
+    shopId: activeShop.shopId,
+  });
 }
 
 // ─── INVENTORY ACTIONS (FEATURE 7) ────────────────────────────────

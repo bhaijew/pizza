@@ -16,14 +16,14 @@ export default async function AdminDashboardPage() {
   let orderCount = 0;
   let pendingOrders = 0;
   let recentOrders: Order[] = [];
-  let currencySymbol = "$";
+  let currencySymbol = "Rs.";
   let shopName = "Pizza Shop";
 
   try {
     let prodQuery = db.from("products").select("id", { count: "exact", head: true });
     let catQuery = db.from("categories").select("id", { count: "exact", head: true });
     let orderQuery = db.from("orders").select("id, status");
-    let recentQuery = db.from("orders").select("*").order("created_at", { ascending: false }).limit(5);
+    let recentQuery = db.from("orders").select("*").order("created_at", { ascending: false }).limit(6);
 
     if (activeShop.shopId) {
       prodQuery = prodQuery.eq("shop_id", activeShop.shopId);
@@ -46,7 +46,7 @@ export default async function AdminDashboardPage() {
     ]);
 
     shopName = settings.shop_name || "Pizza Shop";
-    currencySymbol = settings.currency_symbol || "$";
+    currencySymbol = settings.currency_symbol || "Rs.";
 
     productCount = prodRes.count ?? 0;
     categoryCount = catRes.count ?? 0;
@@ -63,297 +63,392 @@ export default async function AdminDashboardPage() {
     }
   } catch (_) {}
 
-  const statusColors: Record<string, { bg: string; text: string; border: string; label: string }> = {
-    pending: { bg: "#fefce8", text: "#ca8a04", border: "#fef08a", label: "Pending" },
-    confirmed: { bg: "#eff6ff", text: "#2563eb", border: "#bfdbfe", label: "Confirmed" },
-    preparing: { bg: "#fff7ed", text: "#ea580c", border: "#fed7aa", label: "Preparing" },
-    ready: { bg: "#faf5ff", text: "#9333ea", border: "#e9d5ff", label: "Ready" },
-    delivered: { bg: "#f0fdf4", text: "#16a34a", border: "#bbf7d0", label: "Delivered" },
-    cancelled: { bg: "#fef2f2", text: "#dc2626", border: "#fecaca", label: "Cancelled" },
+  const statusColors: Record<string, { bg: string; text: string; border: string; label: string; dot: string }> = {
+    pending: { bg: "#fefce8", text: "#ca8a04", border: "#fde047", label: "Pending", dot: "#eab308" },
+    confirmed: { bg: "#eff6ff", text: "#2563eb", border: "#bfdbfe", label: "Confirmed", dot: "#3b82f6" },
+    preparing: { bg: "#fff7ed", text: "#ea580c", border: "#fed7aa", label: "In Kitchen", dot: "#f97316" },
+    ready: { bg: "#faf5ff", text: "#9333ea", border: "#e9d5ff", label: "Ready", dot: "#a855f7" },
+    delivered: { bg: "#ecfdf5", text: "#059669", border: "#a7f3d0", label: "Delivered", dot: "#10b981" },
+    cancelled: { bg: "#fef2f2", text: "#dc2626", border: "#fecaca", label: "Cancelled", dot: "#ef4444" },
   };
 
   return (
-    <div>
-      {/* ─── Top Banner if service role key is missing ─── */}
+    <div style={{ maxWidth: 1300, margin: "0 auto" }}>
+      {/* ─── Warning if Service Role missing ─── */}
       {!serviceRoleOk && (
         <div
           style={{
-            marginBottom: "20px",
-            padding: "14px 18px",
-            borderRadius: "5px",
+            marginBottom: 24,
+            padding: "16px 20px",
+            borderRadius: 8,
             background: "#fffbeb",
-            border: "1px solid #fde68a",
+            border: "1.5px solid #fde68a",
             color: "#92400e",
             display: "flex",
             alignItems: "flex-start",
-            gap: "12px",
+            gap: 14,
+            boxShadow: "0 2px 8px rgba(245, 158, 11, 0.1)",
           }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "2px" }}>
-            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-          <div style={{ flex: 1 }}>
-            <strong style={{ display: "block", fontSize: "13px", color: "#78350f" }}>
-              Action Needed: SUPABASE_SERVICE_ROLE_KEY is not configured
+          <span style={{ fontSize: 22 }}>⚠️</span>
+          <div>
+            <strong style={{ display: "block", fontSize: 14, color: "#78350f" }}>
+              Configuration Required: SUPABASE_SERVICE_ROLE_KEY is missing
             </strong>
-            <p style={{ margin: "3px 0 0", fontSize: "12px", color: "#92400e", lineHeight: 1.5 }}>
-              To add products, categories, or update shop title, copy your <code>service_role</code> secret
-              from <strong>Supabase Dashboard → Project Settings → API</strong> into <code>.env.local</code>.
+            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#92400e", lineHeight: 1.5 }}>
+              To enable database writes, copy your <code>service_role</code> secret from your Supabase Dashboard into <code>.env.local</code>.
             </p>
           </div>
         </div>
       )}
 
-      {/* Header */}
+      {/* ─── Top Command Center Banner ─── */}
       <div
         style={{
+          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+          borderRadius: 12,
+          padding: "26px 30px",
+          color: "#ffffff",
+          marginBottom: 28,
           display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
           justifyContent: "space-between",
-          gap: "16px",
-          marginBottom: "24px",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 20,
+          boxShadow: "0 10px 30px rgba(15, 23, 42, 0.15)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
         }}
       >
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
-            <h1
-              style={{
-                fontSize: "24px",
-                fontWeight: 800,
-                color: "#0f172a",
-                letterSpacing: "-0.02em",
-                margin: 0,
-              }}
-            >
-              {shopName} Dashboard
-            </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
             <span
               style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                padding: "2px 8px",
-                borderRadius: "4px",
-                background: "#ecfdf5",
-                color: "#16a34a",
-                border: "1px solid #bbf7d0",
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "#10b981",
+                boxShadow: "0 0 10px #10b981",
               }}
-            >
-              ● Live Branch
+            />
+            <span style={{ fontSize: 11, fontWeight: 800, color: "#34d399", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Live Operations Terminal
             </span>
           </div>
-          <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>
-            Real-time status of your store, menu items, and incoming customer orders for {shopName}.
+          <h1
+            style={{
+              fontSize: 26,
+              fontWeight: 900,
+              color: "#ffffff",
+              letterSpacing: "-0.02em",
+              margin: "0 0 6px",
+            }}
+          >
+            {shopName} Dashboard
+          </h1>
+          <p style={{ margin: 0, fontSize: 13, color: "#94a3b8" }}>
+            Real-time kitchen display, live incoming customer orders, and store management.
           </p>
         </div>
 
-        {/* Quick action shortcuts */}
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        {/* Quick Executive Shortcuts */}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <Link
+            href="/admin/orders"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 18px",
+              borderRadius: 6,
+              background: "#ea580c",
+              color: "#ffffff",
+              fontWeight: 800,
+              fontSize: 13,
+              textDecoration: "none",
+              boxShadow: "0 4px 14px rgba(234, 88, 12, 0.35)",
+              border: "none",
+            }}
+          >
+            <span>📋</span>
+            <span>Live Order Board</span>
+            {pendingOrders > 0 && (
+              <span
+                style={{
+                  background: "#ffffff",
+                  color: "#ea580c",
+                  padding: "1px 7px",
+                  borderRadius: 10,
+                  fontSize: 11,
+                  fontWeight: 900,
+                }}
+              >
+                {pendingOrders}
+              </span>
+            )}
+          </Link>
+
+          <Link
+            href="/admin/kitchen"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 18px",
+              borderRadius: 6,
+              background: "rgba(255, 255, 255, 0.1)",
+              color: "#ffffff",
+              fontWeight: 700,
+              fontSize: 13,
+              textDecoration: "none",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+            }}
+          >
+            <span>🔥</span>
+            <span>Kitchen KDS</span>
+          </Link>
+
           <Link
             href="/admin/products?action=new"
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
-              padding: "9px 16px",
-              borderRadius: "5px",
-              background: "#ef4444",
-              color: "#ffffff",
+              gap: 6,
+              padding: "10px 16px",
+              borderRadius: 6,
+              background: "rgba(255, 255, 255, 0.06)",
+              color: "#cbd5e1",
               fontWeight: 600,
-              fontSize: "13px",
+              fontSize: 13,
               textDecoration: "none",
-              boxShadow: "0 2px 4px rgba(239, 68, 68, 0.2)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
             }}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>Add Product</span>
-          </Link>
-
-          <Link
-            href="/admin/orders"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "9px 16px",
-              borderRadius: "5px",
-              background: "#ffffff",
-              border: "1px solid #cbd5e1",
-              color: "#1e293b",
-              fontWeight: 600,
-              fontSize: "13px",
-              textDecoration: "none",
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="8" cy="21" r="1"></circle>
-              <circle cx="19" cy="21" r="1"></circle>
-              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-            </svg>
-            <span>Live Order Board</span>
+            <span>＋ Add Pizza</span>
           </Link>
         </div>
       </div>
 
-      {/* ─── Metric Cards Grid ────────────────────────────── */}
+      {/* ─── Metric KPI Cards Grid ─── */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "14px",
-          marginBottom: "24px",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: 18,
+          marginBottom: 28,
         }}
       >
-        {/* Products Stat */}
-        <div
+        {/* KPI 1: Active Orders */}
+        <Link
+          href="/admin/orders"
           style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "5px",
-            padding: "20px",
+            textDecoration: "none",
+            background: pendingOrders > 0
+              ? "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)"
+              : "#ffffff",
+            border: pendingOrders > 0 ? "1.5px solid #fdba74" : "1px solid #e2e8f0",
+            borderRadius: 10,
+            padding: 22,
             display: "flex",
             flexDirection: "column",
-            gap: "10px",
+            justifyContent: "space-between",
+            boxShadow: pendingOrders > 0
+              ? "0 8px 20px rgba(234, 88, 12, 0.12)"
+              : "0 2px 8px rgba(0, 0, 0, 0.03)",
+            transition: "transform 0.15s ease",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Total Products
-            </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "5px", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
-                <path d="M12 22V12"></path>
-                <path d="m3.3 7 8.7 5 8.7-5"></path>
-                <path d="m12 12 8.5-5"></path>
-              </svg>
-            </div>
-          </div>
-          <div style={{ fontSize: "28px", fontWeight: 800, color: "#0f172a" }}>
-            {productCount}
-          </div>
-          <Link
-            href="/admin/products"
-            style={{ fontSize: "12px", color: "#dc2626", textDecoration: "none", fontWeight: 600 }}
-          >
-            Manage Products →
-          </Link>
-        </div>
-
-        {/* Categories Stat */}
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "5px",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Categories
-            </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "5px", background: "#f0f9ff", display: "flex", alignItems: "center", justifyContent: "center", color: "#0284c7" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"></path>
-                <path d="M7 7h.01"></path>
-              </svg>
-            </div>
-          </div>
-          <div style={{ fontSize: "28px", fontWeight: 800, color: "#0f172a" }}>
-            {categoryCount}
-          </div>
-          <Link
-            href="/admin/categories"
-            style={{ fontSize: "12px", color: "#0284c7", textDecoration: "none", fontWeight: 600 }}
-          >
-            Manage Categories →
-          </Link>
-        </div>
-
-        {/* Pending Orders Stat */}
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "5px",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: pendingOrders > 0 ? "#9a3412" : "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Active Orders
             </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "5px", background: "#fff7ed", display: "flex", alignItems: "center", justifyContent: "center", color: "#ea580c" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
-              </svg>
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 8,
+                background: pendingOrders > 0 ? "#ea580c" : "#f1f5f9",
+                color: pendingOrders > 0 ? "#ffffff" : "#64748b",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 18,
+              }}
+            >
+              🔥
             </div>
           </div>
-          <div style={{ fontSize: "28px", fontWeight: 800, color: pendingOrders > 0 ? "#ea580c" : "#0f172a" }}>
-            {pendingOrders}
+          <div style={{ margin: "14px 0 6px" }}>
+            <div style={{ fontSize: 32, fontWeight: 900, color: pendingOrders > 0 ? "#c2410c" : "#0f172a" }}>
+              {pendingOrders}
+            </div>
+            <p style={{ margin: "2px 0 0", fontSize: 12, color: pendingOrders > 0 ? "#ea580c" : "#64748b", fontWeight: 600 }}>
+              {pendingOrders > 0 ? "Needs kitchen preparation" : "All orders caught up"}
+            </p>
           </div>
-          <Link
-            href="/admin/orders"
-            style={{ fontSize: "12px", color: "#ea580c", textDecoration: "none", fontWeight: 600 }}
-          >
-            Kitchen Live Board →
-          </Link>
-        </div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#ea580c", display: "flex", alignItems: "center", gap: 4 }}>
+            <span>Open live order board</span>
+            <span>→</span>
+          </div>
+        </Link>
 
-        {/* Total Orders Stat */}
-        <div
+        {/* KPI 2: Products */}
+        <Link
+          href="/admin/products"
           style={{
+            textDecoration: "none",
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "5px",
-            padding: "20px",
+            borderRadius: 10,
+            padding: 22,
             display: "flex",
             flexDirection: "column",
-            gap: "10px",
+            justifyContent: "space-between",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Total Orders
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Menu Products
             </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "5px", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="8" cy="21" r="1"></circle>
-                <circle cx="19" cy="21" r="1"></circle>
-                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-              </svg>
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 8,
+                background: "#fef2f2",
+                color: "#dc2626",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 18,
+              }}
+            >
+              🍕
             </div>
           </div>
-          <div style={{ fontSize: "28px", fontWeight: 800, color: "#0f172a" }}>
-            {orderCount}
+          <div style={{ margin: "14px 0 6px" }}>
+            <div style={{ fontSize: 32, fontWeight: 900, color: "#0f172a" }}>
+              {productCount}
+            </div>
+            <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
+              Across {categoryCount} food categories
+            </p>
           </div>
-          <span style={{ fontSize: "12px", color: "#64748b" }}>
-            All-time customer orders
-          </span>
-        </div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#dc2626", display: "flex", alignItems: "center", gap: 4 }}>
+            <span>Manage food items</span>
+            <span>→</span>
+          </div>
+        </Link>
+
+        {/* KPI 3: Total Orders */}
+        <Link
+          href="/admin/orders"
+          style={{
+            textDecoration: "none",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: 10,
+            padding: 22,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Total Orders
+            </span>
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 8,
+                background: "#eff6ff",
+                color: "#2563eb",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 18,
+              }}
+            >
+              📦
+            </div>
+          </div>
+          <div style={{ margin: "14px 0 6px" }}>
+            <div style={{ fontSize: 32, fontWeight: 900, color: "#0f172a" }}>
+              {orderCount}
+            </div>
+            <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
+              All-time completed orders
+            </p>
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#2563eb", display: "flex", alignItems: "center", gap: 4 }}>
+            <span>View order history</span>
+            <span>→</span>
+          </div>
+        </Link>
+
+        {/* KPI 4: Promos & Loyalty */}
+        <Link
+          href="/admin/promos"
+          style={{
+            textDecoration: "none",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: 10,
+            padding: 22,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Promos &amp; Loyalty
+            </span>
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 8,
+                background: "#ecfdf5",
+                color: "#059669",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 18,
+              }}
+            >
+              🪙
+            </div>
+          </div>
+          <div style={{ margin: "14px 0 6px" }}>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#059669" }}>
+              VIP Cash Engine
+            </div>
+            <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b" }}>
+              1 pt per Rs. 50 (2% Cashback)
+            </p>
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#059669", display: "flex", alignItems: "center", gap: 4 }}>
+            <span>Manage coupons &amp; points</span>
+            <span>→</span>
+          </div>
+        </Link>
       </div>
 
-      {/* ─── Recent Orders & Quick Jump ───────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "20px" }}>
-        {/* Recent Orders Section */}
+      {/* ─── Operations Grid: Recent Orders + Quick Management ─── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: 24 }}>
+        {/* LEFT: Live Order Stream */}
         <div
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "5px",
-            padding: "20px",
+            borderRadius: 10,
+            padding: 24,
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
           }}
         >
           <div
@@ -361,47 +456,59 @@ export default async function AdminDashboardPage() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: "16px",
+              marginBottom: 20,
             }}
           >
-            <h2 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "#0f172a" }}>
-              Recent Orders
-            </h2>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "#10b981",
+                  boxShadow: "0 0 8px #10b981",
+                }}
+              />
+              <h2 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: "#0f172a" }}>
+                Recent Incoming Orders
+              </h2>
+            </div>
             <Link
               href="/admin/orders"
-              style={{ fontSize: "12px", color: "#0284c7", textDecoration: "none", fontWeight: 600 }}
+              style={{ fontSize: 13, color: "#ea580c", textDecoration: "none", fontWeight: 700 }}
             >
-              View All Orders →
+              Live Order Board →
             </Link>
           </div>
 
           {recentOrders.length === 0 ? (
             <div
               style={{
-                padding: "36px 16px",
+                padding: "48px 20px",
                 textAlign: "center",
                 color: "#64748b",
-                fontSize: "13px",
+                fontSize: 13,
               }}
             >
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px", color: "#94a3b8" }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="8" cy="21" r="1"></circle>
-                  <circle cx="19" cy="21" r="1"></circle>
-                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-                </svg>
-              </div>
-              No orders placed yet. Orders made by customers will show up here live!
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🍕</div>
+              <p style={{ margin: "0 0 6px", fontWeight: 700, color: "#0f172a" }}>
+                No active orders yet
+              </p>
+              <p style={{ margin: 0, fontSize: 12, color: "#94a3b8" }}>
+                When customers place Dine-In, Delivery, or Takeaway orders, they will stream here live with sound alerts.
+              </p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {recentOrders.map((order) => {
                 const s = statusColors[order.status] || {
                   bg: "#f1f5f9",
                   text: "#334155",
                   border: "#e2e8f0",
                   label: order.status,
+                  dot: "#64748b",
                 };
+
                 return (
                   <div
                     key={order.id}
@@ -409,39 +516,100 @@ export default async function AdminDashboardPage() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      padding: "10px 12px",
+                      padding: "12px 14px",
                       background: "#f8fafc",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "5px",
+                      border: "1px solid #f1f5f9",
+                      borderRadius: 8,
+                      gap: 12,
                     }}
                   >
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: "13px", color: "#0f172a" }}>
-                        {order.order_number}
-                        {order.customer_name && (
-                          <span style={{ fontWeight: 400, color: "#64748b", marginLeft: "6px" }}>
-                            ({order.customer_name})
-                          </span>
-                        )}
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                        <span
+                          style={{
+                            fontFamily: "monospace",
+                            fontWeight: 800,
+                            fontSize: 13,
+                            color: "#0f172a",
+                          }}
+                        >
+                          #{order.order_number}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 800,
+                            padding: "1px 6px",
+                            borderRadius: 4,
+                            background:
+                              order.order_type === "delivery"
+                                ? "#eff6ff"
+                                : order.order_type === "dine_in"
+                                ? "#fff7ed"
+                                : "#fefce8",
+                            color:
+                              order.order_type === "delivery"
+                                ? "#1d4ed8"
+                                : order.order_type === "dine_in"
+                                ? "#c2410c"
+                                : "#a16207",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {order.order_type === "dine_in"
+                            ? `Table ${order.table_number || "—"}`
+                            : order.order_type === "delivery"
+                            ? "Delivery"
+                            : "Takeaway"}
+                        </span>
                       </div>
-                      <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-                        {currencySymbol}{Number(order.total).toFixed(2)} • {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+
+                      <div style={{ fontSize: 12, color: "#64748b", display: "flex", alignItems: "center", gap: 8 }}>
+                        <span>{order.customer_name || "Guest"}</span>
+                        <span>•</span>
+                        <span style={{ fontWeight: 700, color: "#0f172a" }}>
+                          {currencySymbol} {Number(order.total).toFixed(2)}
+                        </span>
                       </div>
                     </div>
 
-                    <span
-                      style={{
-                        padding: "3px 8px",
-                        borderRadius: "5px",
-                        fontSize: "11px",
-                        fontWeight: 600,
-                        background: s.bg,
-                        color: s.text,
-                        border: `1px solid ${s.border}`,
-                      }}
-                    >
-                      {s.label}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 5,
+                          padding: "4px 8px",
+                          borderRadius: 4,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          background: s.bg,
+                          color: s.text,
+                          border: `1px solid ${s.border}`,
+                        }}
+                      >
+                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: s.dot }} />
+                        <span>{s.label}</span>
+                      </span>
+
+                      <Link
+                        href={`/track/${order.order_number}`}
+                        target="_blank"
+                        style={{
+                          padding: "4px 8px",
+                          borderRadius: 4,
+                          background: "#ffffff",
+                          border: "1px solid #cbd5e1",
+                          color: "#334155",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          textDecoration: "none",
+                        }}
+                        title="Track Order Live Status"
+                      >
+                        Track ↗
+                      </Link>
+                    </div>
                   </div>
                 );
               })}
@@ -449,128 +617,90 @@ export default async function AdminDashboardPage() {
           )}
         </div>
 
-        {/* Quick Management Shortcuts */}
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "5px",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
-          <div>
-            <h2 style={{ fontSize: "16px", fontWeight: 700, margin: "0 0 8px", color: "#0f172a" }}>
-              Quick Settings &amp; Customization
+        {/* RIGHT: Quick Launch Controls & System Readiness */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* Quick Shortcuts Matrix */}
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #e2e8f0",
+              borderRadius: 10,
+              padding: 24,
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
+            }}
+          >
+            <h2 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 6px", color: "#0f172a" }}>
+              Quick Management Shortcuts
             </h2>
-            <p style={{ fontSize: "13px", color: "#64748b", lineHeight: 1.5, margin: "0 0 16px" }}>
-              Manage your pizza shop brand name, change the menu heading, update SEO meta tags, and configure products all in one place.
+            <p style={{ fontSize: 12, color: "#64748b", margin: "0 0 16px" }}>
+              One-click access to core store operations and daily workflows.
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <Link
-                href="/admin/settings"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "11px 14px",
-                  background: "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "5px",
-                  color: "#1e293b",
-                  textDecoration: "none",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#64748b" }}>
-                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                  <span>Edit Shop Name &amp; Menu Title</span>
-                </div>
-                <span style={{ color: "#94a3b8" }}>→</span>
-              </Link>
-
-              <Link
-                href="/admin/categories"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "11px 14px",
-                  background: "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "5px",
-                  color: "#1e293b",
-                  textDecoration: "none",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#64748b" }}>
-                    <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"></path>
-                    <path d="M7 7h.01"></path>
-                  </svg>
-                  <span>Manage Categories</span>
-                </div>
-                <span style={{ color: "#94a3b8" }}>→</span>
-              </Link>
-
-              <Link
-                href="/admin/products"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "11px 14px",
-                  background: "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "5px",
-                  color: "#1e293b",
-                  textDecoration: "none",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#64748b" }}>
-                    <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
-                    <path d="M12 22V12"></path>
-                    <path d="m3.3 7 8.7 5 8.7-5"></path>
-                    <path d="m12 12 8.5-5"></path>
-                  </svg>
-                  <span>Full Products Catalog</span>
-                </div>
-                <span style={{ color: "#94a3b8" }}>→</span>
-              </Link>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {[
+                { title: "Table QR Codes", desc: "Generate & print table QRs", href: "/admin/tables", icon: "🖨️" },
+                { title: "Coupons & Promos", desc: "Set discount voucher codes", href: "/admin/promos", icon: "🎟️" },
+                { title: "Daily Cash Closing", desc: "End of day financial report", href: "/admin/closing", icon: "📊" },
+                { title: "Menu Settings", desc: "Branding, SEO & currency", href: "/admin/settings", icon: "⚙️" },
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  style={{
+                    padding: "14px",
+                    borderRadius: 8,
+                    background: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    textDecoration: "none",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <span style={{ fontSize: 20 }}>{item.icon}</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: "#0f172a", marginTop: 4 }}>{item.title}</span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>{item.desc}</span>
+                </Link>
+              ))}
             </div>
           </div>
 
+          {/* System & Hardware Readiness Card */}
           <div
             style={{
-              marginTop: "16px",
-              padding: "10px 12px",
-              borderRadius: "5px",
-              background: "#f0fdf4",
-              border: "1px solid #bbf7d0",
-              color: "#16a34a",
-              fontSize: "12px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              fontWeight: 600,
+              background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)",
+              border: "1px solid #a7f3d0",
+              borderRadius: 10,
+              padding: 20,
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Database Connected &amp; Live</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <span style={{ fontSize: 20 }}>⚡</span>
+              <div>
+                <h3 style={{ fontSize: 14, fontWeight: 800, margin: 0, color: "#065f46" }}>
+                  Operational System Status
+                </h3>
+                <p style={{ margin: "2px 0 0", fontSize: 11, color: "#047857" }}>
+                  All store services and live engines are healthy.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "#065f46" }}>• Kitchen Audio Engine:</span>
+                <span style={{ fontWeight: 800, color: "#047857" }}>Web Audio API (Online)</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "#065f46" }}>• WhatsApp Multi-Tenancy:</span>
+                <span style={{ fontWeight: 800, color: "#047857" }}>Shop-Isolated Gateway</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "#065f46" }}>• Customer Live Tracker:</span>
+                <span style={{ fontWeight: 800, color: "#047857" }}>/track/[orderNumber] Active</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

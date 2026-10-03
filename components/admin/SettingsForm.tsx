@@ -30,6 +30,8 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [metaTitle, setMetaTitle] = useState(initialSettings.meta_title);
   const [metaDescription, setMetaDescription] = useState(initialSettings.meta_description);
   const [currencySymbol, setCurrencySymbol] = useState(initialSettings.currency_symbol || "$");
+  const [whatsappSessionId, setWhatsappSessionId] = useState(initialSettings.whatsapp_session_id || "");
+  const [whatsappApiKey, setWhatsappApiKey] = useState(initialSettings.whatsapp_api_key || "");
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "24px" }}>
@@ -282,6 +284,87 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
                 resize: "vertical",
               }}
             />
+          </div>
+
+          {/* WhatsApp Order Alerts */}
+          <div style={{ marginTop: "6px", padding: "16px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <span style={{ fontSize: "16px" }}>📱</span>
+              <div>
+                <h3 style={{ fontSize: "13px", fontWeight: 700, margin: 0, color: "#0f172a" }}>
+                  WhatsApp Order Alerts (Railway Gateway)
+                </h3>
+                <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#64748b" }}>
+                  Sends instant WhatsApp order confirmations to customers.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "12px" }}>
+              <div>
+                <label
+                  htmlFor="whatsapp_session_id"
+                  style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", marginBottom: "4px" }}
+                >
+                  WhatsApp Session ID
+                </label>
+                <input
+                  id="whatsapp_session_id"
+                  name="whatsapp_session_id"
+                  type="text"
+                  value={whatsappSessionId}
+                  onChange={(e) => setWhatsappSessionId(e.target.value)}
+                  placeholder="e.g. rhs5o"
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "5px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "13px",
+                    fontFamily: "monospace",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
+                  Your Railway device session ID. Endpoint: <code>/api/messages/{whatsappSessionId || "{sessionId}"}/send</code>
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="whatsapp_api_key"
+                  style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", marginBottom: "4px" }}
+                >
+                  WhatsApp Gateway API Key (Optional)
+                </label>
+                <input
+                  id="whatsapp_api_key"
+                  name="whatsapp_api_key"
+                  type="password"
+                  value={whatsappApiKey}
+                  onChange={(e) => setWhatsappApiKey(e.target.value)}
+                  placeholder="Leave empty to use system default key"
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "5px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "13px",
+                    fontFamily: "monospace",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
+                  Optional custom x-api-key for this branch shop.
+                </p>
+              </div>
+            </div>
           </div>
 
           <button

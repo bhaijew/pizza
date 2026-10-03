@@ -9,6 +9,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useCart } from "./CartContext";
 import { placeCustomerOrder } from "@/lib/order-actions";
+import {
+  validatePromoCode,
+  lookupCustomerLoyalty,
+  type PromoValidationResult,
+  type CustomerLoyaltyInfo,
+} from "@/lib/promo-actions";
 
 interface CartSheetProps {
   open: boolean;
@@ -48,6 +54,16 @@ export default function CartSheet({
   const [orderNotes, setOrderNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Feature 3: Promo Coupon Codes
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoMsg, setPromoMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Feature 5: Customer Loyalty Points
+  const [loyaltyInfo, setLoyaltyInfo] = useState<CustomerLoyaltyInfo | null>(null);
+  const [redeemLoyalty, setRedeemLoyalty] = useState(false);
 
   // Confirmed order state
   const [placedOrderNumber, setPlacedOrderNumber] = useState<string | null>(null);
@@ -93,12 +109,65 @@ export default function CartSheet({
     if (propSetTableNumber) propSetTableNumber(val);
   };
 
+  // Lookup loyalty points when phone number has 10+ digits
+  useEffect(() => {
+    const digits = customerPhone.replace(/\D/g, "");
+    if (digits.length >= 10) {
+      lookupCustomerLoyalty(customerPhone, shopId)
+        .then((info) => {
+          setLoyaltyInfo(info);
+          if (!info || info.pointsBalance <= 0) setRedeemLoyalty(false);
+        })
+        .catch(() => {});
+    } else {
+      setLoyaltyInfo(null);
+      setRedeemLoyalty(false);
+    }
+  }, [customerPhone, shopId]);
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setPromoLoading(true);
+    setPromoMsg(null);
+    try {
+      const res = await validatePromoCode(promoInput, totalPrice, shopId);
+      if (res.valid) {
+        setAppliedPromo(res);
+        setPromoMsg({ type: "success", text: res.message });
+      } else {
+        setPromoMsg({ type: "error", text: res.message });
+      }
+    } catch {
+      setPromoMsg({ type: "error", text: "Failed to validate promo code." });
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoInput("");
+    setPromoMsg(null);
+  };
+
+  const promoDiscount = appliedPromo?.discountAmount || 0;
+  const maxLoyaltyAllowed = Math.max(0, totalPrice - promoDiscount);
+  const loyaltyDiscount = redeemLoyalty && loyaltyInfo ? Math.min(maxLoyaltyAllowed, loyaltyInfo.pointsBalance) : 0;
+  const totalDiscount = promoDiscount + loyaltyDiscount;
+  const finalPayable = Math.max(0, totalPrice - totalDiscount) + (selectedOrderType === "delivery" ? deliveryFee : 0);
+  const pointsToEarn = Math.max(0, Math.floor(finalPayable / 50));
+
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
     if (!customerName.trim()) {
       setErrorMessage("Please enter your name.");
+      return;
+    }
+
+    if (!customerPhone.trim()) {
+      setErrorMessage("Please enter your WhatsApp / phone number for order updates.");
       return;
     }
 
@@ -110,10 +179,6 @@ export default function CartSheet({
     if (selectedOrderType === "delivery") {
       if (!deliveryAddress.trim()) {
         setErrorMessage("Please enter your complete delivery address.");
-        return;
-      }
-      if (!customerPhone.trim()) {
-        setErrorMessage("Please enter your phone number for rider delivery.");
         return;
       }
     }
@@ -134,8 +199,6 @@ export default function CartSheet({
       selected_toppings: i.selectedToppings || [],
     }));
 
-    const finalPayable = totalPrice + (selectedOrderType === "delivery" ? deliveryFee : 0);
-
     const result = await placeCustomerOrder({
       order_type: selectedOrderType,
       table_number: selectedOrderType === "dine_in" ? currentTable.trim() : undefined,
@@ -143,6 +206,9 @@ export default function CartSheet({
       customer_phone: customerPhone,
       delivery_address: selectedOrderType === "delivery" ? deliveryAddress.trim() : undefined,
       delivery_fee: selectedOrderType === "delivery" ? deliveryFee : 0,
+      discount_amount: totalDiscount,
+      promo_code: appliedPromo?.code || null,
+      points_redeemed: loyaltyDiscount,
       notes: orderNotes,
       items: orderItems,
       total: finalPayable,
@@ -983,10 +1049,11 @@ export default function CartSheet({
                     letterSpacing: "0.03em",
                   }}
                 >
-                  Phone Number (Optional)
+                  Mobile / WhatsApp Number <span style={{ color: "#dc2626" }}>*</span>
                 </label>
                 <input
                   type="tel"
+                  required
                   placeholder="e.g. 0300 1234567"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
@@ -1004,6 +1071,9 @@ export default function CartSheet({
                   onFocus={(e) => (e.currentTarget.style.borderColor = "#ea580c")}
                   onBlur={(e) => (e.currentTarget.style.borderColor = "#fed7aa")}
                 />
+                <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#9a3412", fontWeight: 600 }}>
+                  💬 We will send your instant order confirmation to this WhatsApp number.
+                </p>
               </div>
 
               {/* Order Notes */}
@@ -1040,6 +1110,221 @@ export default function CartSheet({
                   onFocus={(e) => (e.currentTarget.style.borderColor = "#ea580c")}
                   onBlur={(e) => (e.currentTarget.style.borderColor = "#fed7aa")}
                 />
+              </div>
+
+              {/* Feature 3: Promo Coupon Codes */}
+              <div
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 6,
+                  background: "#fffbeb",
+                  border: "1.5px dashed #f59e0b",
+                  marginBottom: 14,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 16 }}>🎟️</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "#92400e", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                      Promo / Coupon Code
+                    </span>
+                  </div>
+                  {appliedPromo && (
+                    <span style={{ fontSize: 10, fontWeight: 800, background: "#16a34a", color: "#ffffff", padding: "2px 7px", borderRadius: 3 }}>
+                      APPLIED: -{formatPrice(appliedPromo.discountAmount)}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                  <input
+                    type="text"
+                    placeholder="Enter promo code (e.g. WELCOME20)"
+                    value={promoInput}
+                    disabled={appliedPromo !== null || promoLoading}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (!appliedPromo) handleApplyPromo();
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      height: 36,
+                      padding: "0 10px",
+                      borderRadius: 4,
+                      border: "1px solid #fde68a",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "#0f172a",
+                      background: appliedPromo ? "#f1f5f9" : "#ffffff",
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      outline: "none",
+                    }}
+                  />
+                  {appliedPromo ? (
+                    <button
+                      type="button"
+                      onClick={handleRemovePromo}
+                      style={{
+                        padding: "0 12px",
+                        height: 36,
+                        borderRadius: 4,
+                        border: "1px solid #dc2626",
+                        background: "#fef2f2",
+                        color: "#dc2626",
+                        fontSize: 11,
+                        fontWeight: 800,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleApplyPromo}
+                      disabled={promoLoading || !promoInput.trim()}
+                      style={{
+                        padding: "0 14px",
+                        height: 36,
+                        borderRadius: 4,
+                        border: "none",
+                        background: "#d97706",
+                        color: "#ffffff",
+                        fontSize: 11,
+                        fontWeight: 800,
+                        cursor: promoLoading || !promoInput.trim() ? "not-allowed" : "pointer",
+                        opacity: promoLoading || !promoInput.trim() ? 0.6 : 1,
+                      }}
+                    >
+                      {promoLoading ? "Checking..." : "Apply"}
+                    </button>
+                  )}
+                </div>
+
+                {/* Validation Message */}
+                {promoMsg && (
+                  <p
+                    style={{
+                      margin: "0 0 8px",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: promoMsg.type === "success" ? "#15803d" : "#b91c1c",
+                    }}
+                  >
+                    {promoMsg.type === "success" ? "✓ " : "✕ "}
+                    {promoMsg.text}
+                  </p>
+                )}
+
+                {/* Quick suggestions pills */}
+                {!appliedPromo && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#b45309" }}>Quick:</span>
+                    {[
+                      { code: "WELCOME20", label: "WELCOME20 (20% OFF)" },
+                      { code: "FLAT100", label: "FLAT100 (Rs. 100 OFF)" },
+                      { code: "PIZZA500", label: "PIZZA500 (Rs. 500 OFF)" },
+                    ].map((promo) => (
+                      <button
+                        key={promo.code}
+                        type="button"
+                        onClick={async () => {
+                          setPromoInput(promo.code);
+                          setPromoLoading(true);
+                          setPromoMsg(null);
+                          const res = await validatePromoCode(promo.code, totalPrice, shopId);
+                          setPromoLoading(false);
+                          if (res.valid) {
+                            setAppliedPromo(res);
+                            setPromoMsg({ type: "success", text: res.message });
+                          } else {
+                            setPromoMsg({ type: "error", text: res.message });
+                          }
+                        }}
+                        style={{
+                          padding: "3px 8px",
+                          borderRadius: 3,
+                          border: "1px solid #fde68a",
+                          background: "#ffffff",
+                          color: "#92400e",
+                          fontSize: 10,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {promo.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Feature 5: Customer Loyalty Points Banner */}
+              <div
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 6,
+                  background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+                  border: "1px solid #fcd34d",
+                  marginBottom: 16,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 16 }}>🪙</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "#78350f", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                      Customer Loyalty Rewards
+                    </span>
+                  </div>
+                  {loyaltyInfo && (
+                    <span style={{ fontSize: 11, fontWeight: 900, color: "#b45309" }}>
+                      {loyaltyInfo.pointsBalance} pts (Rs. {loyaltyInfo.pointsBalance})
+                    </span>
+                  )}
+                </div>
+
+                {loyaltyInfo && loyaltyInfo.pointsBalance > 0 ? (
+                  <div>
+                    <p style={{ margin: "2px 0 8px", fontSize: 11, color: "#92400e" }}>
+                      You have <strong>{loyaltyInfo.pointsBalance} points</strong> ready to use. 1 point = Rs. 1 cash discount!
+                    </p>
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "#78350f",
+                        cursor: "pointer",
+                        background: "#ffffff",
+                        padding: "8px 10px",
+                        borderRadius: 4,
+                        border: "1px solid #fde68a",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={redeemLoyalty}
+                        onChange={(e) => setRedeemLoyalty(e.target.checked)}
+                        style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#d97706" }}
+                      />
+                      <span>
+                        Redeem {loyaltyDiscount} points on this order{" "}
+                        <strong style={{ color: "#16a34a" }}>(-{formatPrice(loyaltyDiscount)})</strong>
+                      </span>
+                    </label>
+                  </div>
+                ) : (
+                  <p style={{ margin: 0, fontSize: 11, color: "#92400e" }}>
+                    🎁 <strong>VIP Member:</strong> You will earn{" "}
+                    <strong style={{ color: "#d97706" }}>+{pointsToEarn} loyalty points</strong> (1 pt per Rs. 50 spent) on this order!
+                  </p>
+                )}
               </div>
 
               {/* Mini Order Summary */}
@@ -1088,22 +1373,89 @@ export default function CartSheet({
                   );
                 })}
 
+                {/* Subtotal */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 12,
+                    color: "#64748b",
+                    marginTop: 6,
+                    paddingTop: 6,
+                    borderTop: "1px dashed #fed7aa",
+                  }}
+                >
+                  <span>Subtotal</span>
+                  <span style={{ fontWeight: 700 }}>{formatPrice(totalPrice)}</span>
+                </div>
+
+                {/* Delivery Fee */}
                 {selectedOrderType === "delivery" && (
                   <div
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
-                      fontSize: 13,
+                      fontSize: 12,
                       color: "#059669",
-                      marginTop: 6,
-                      paddingTop: 6,
-                      borderTop: "1px dashed #fed7aa",
+                      marginTop: 4,
                     }}
                   >
                     <span>🛵 Delivery Fee</span>
-                    <span style={{ fontWeight: 700 }}>{formatPrice(deliveryFee)}</span>
+                    <span style={{ fontWeight: 700 }}>+{formatPrice(deliveryFee)}</span>
                   </div>
                 )}
+
+                {/* Promo Code Discount */}
+                {promoDiscount > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: 12,
+                      color: "#16a34a",
+                      marginTop: 4,
+                      fontWeight: 700,
+                    }}
+                  >
+                    <span>🏷️ Promo Discount ({appliedPromo?.code})</span>
+                    <span>-{formatPrice(promoDiscount)}</span>
+                  </div>
+                )}
+
+                {/* Loyalty Points Discount */}
+                {loyaltyDiscount > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: 12,
+                      color: "#16a34a",
+                      marginTop: 4,
+                      fontWeight: 700,
+                    }}
+                  >
+                    <span>🪙 Loyalty Points Redeemed</span>
+                    <span>-{formatPrice(loyaltyDiscount)}</span>
+                  </div>
+                )}
+
+                {/* Points Earning Line */}
+                <div
+                  style={{
+                    marginTop: 8,
+                    paddingTop: 6,
+                    borderTop: "1px dashed #fed7aa",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "#b45309",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span>🎁 Points Earning on this order:</span>
+                  <span>+{pointsToEarn} pts</span>
+                </div>
               </div>
             </div>
 
@@ -1115,8 +1467,15 @@ export default function CartSheet({
                 background: "#fff7ed",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#7c2d12" }}>Total Payable</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 14 }}>
+                <div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#7c2d12", display: "block" }}>Total Payable</span>
+                  {totalDiscount > 0 && (
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "#16a34a" }}>
+                      🎉 Saved {formatPrice(totalDiscount)}
+                    </span>
+                  )}
+                </div>
                 <span
                   style={{
                     fontFamily: "var(--font-display)",
@@ -1125,7 +1484,7 @@ export default function CartSheet({
                     color: "#dc2626",
                   }}
                 >
-                  {formatPrice(totalPrice + (selectedOrderType === "delivery" ? deliveryFee : 0))}
+                  {formatPrice(finalPayable)}
                 </span>
               </div>
 

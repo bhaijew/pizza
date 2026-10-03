@@ -105,6 +105,8 @@ export interface ShopSettings {
   meta_description: string;
   currency_symbol: string;
   shop_id?: number | null;
+  whatsapp_session_id?: string | null;
+  whatsapp_api_key?: string | null;
 }
 
 const DEFAULT_SETTINGS: ShopSettings = {
@@ -114,6 +116,8 @@ const DEFAULT_SETTINGS: ShopSettings = {
   meta_description: "Fresh, made-to-order pizzas.",
   currency_symbol: "$",
   shop_id: null,
+  whatsapp_session_id: null,
+  whatsapp_api_key: null,
 };
 
 export async function fetchShopBySlugOrId(identifier: string | number): Promise<any | null> {
@@ -149,7 +153,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
     try {
       const { data: branchData } = await supabase
         .from("shops")
-        .select("id, name, currency_symbol, status")
+        .select("id, name, currency_symbol, status, whatsapp_session_id, whatsapp_api_key")
         .eq("id", targetShopId)
         .maybeSingle();
 
@@ -161,6 +165,8 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
           meta_description: `Order fresh from ${branchData.name}.`,
           currency_symbol: branchData.currency_symbol || "Rs.",
           shop_id: branchData.id,
+          whatsapp_session_id: (branchData as any).whatsapp_session_id || null,
+          whatsapp_api_key: (branchData as any).whatsapp_api_key || null,
         };
       }
     } catch {
@@ -168,34 +174,41 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
     }
   }
 
-  const { data, error } = await supabase
+  try {
+    const { data, error } = await supabase
+      .from("shop_settings")
+      .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key")
+      .eq("id", "main")
+      .single();
+
+    if (!error && data) {
+      return {
+        ...data,
+        currency_symbol: data.currency_symbol || "$",
+        shop_id: null,
+      } as ShopSettings;
+    }
+  } catch {
+    // Fallback if columns not migrated yet
+  }
+
+  const { data: fallbackData } = await supabase
     .from("shop_settings")
     .select("shop_name, menu_title, meta_title, meta_description, currency_symbol")
     .eq("id", "main")
     .single();
 
-  if (error || !data) {
-    const fallbackRes = await supabase
-      .from("shop_settings")
-      .select("shop_name, menu_title, meta_title, meta_description")
-      .eq("id", "main")
-      .single();
-
-    if (fallbackRes.data) {
-      return {
-        ...(fallbackRes.data as any),
-        currency_symbol: "$",
-        shop_id: null,
-      };
-    }
-    return DEFAULT_SETTINGS;
+  if (fallbackData) {
+    return {
+      ...fallbackData,
+      currency_symbol: fallbackData.currency_symbol || "$",
+      shop_id: null,
+      whatsapp_session_id: null,
+      whatsapp_api_key: null,
+    } as ShopSettings;
   }
 
-  return {
-    ...data,
-    currency_symbol: data.currency_symbol || "$",
-    shop_id: null,
-  } as ShopSettings;
+  return DEFAULT_SETTINGS;
 }
 
 // ─── Restaurant Tables ────────────────────────────────────────────

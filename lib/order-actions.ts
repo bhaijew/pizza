@@ -10,6 +10,8 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { getTableScanSession } from "@/lib/table-session";
 import { ProductVariation, ExtraTopping } from "@/types/menu";
+import { sendWhatsAppOrderAlert } from "@/lib/whatsapp";
+import { processLoyaltyPoints } from "@/lib/promo-actions";
 
 export interface CreateOrderItem {
   id: string | number;
@@ -28,6 +30,9 @@ export interface CreateOrderInput {
   customer_phone?: string;
   delivery_address?: string;
   delivery_fee?: number;
+  discount_amount?: number;
+  promo_code?: string | null;
+  points_redeemed?: number;
   notes?: string;
   items: CreateOrderItem[];
   total: number;
@@ -48,14 +53,14 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
     if (!input.customer_name?.trim()) {
       return { success: false, error: "Please enter your name." };
     }
+    if (!input.customer_phone?.trim()) {
+      return { success: false, error: "Please enter your mobile/WhatsApp number for order updates." };
+    }
     if (input.order_type === "dine_in" && !input.table_number?.trim()) {
       return { success: false, error: "Please specify your Table Number." };
     }
     if (input.order_type === "delivery" && !input.delivery_address?.trim()) {
       return { success: false, error: "Please enter your complete delivery address." };
-    }
-    if (input.order_type === "delivery" && !input.customer_phone?.trim()) {
-      return { success: false, error: "Please provide a contact phone number for rider delivery." };
     }
     if (!input.items || input.items.length === 0) {
       return { success: false, error: "Your cart is empty." };
@@ -140,13 +145,16 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       shop_id: targetShopId || null,
       delivery_address: input.delivery_address?.trim() || null,
       delivery_fee: input.delivery_fee || 0,
+      discount_amount: input.discount_amount || 0,
+      promo_code: input.promo_code || null,
+      points_redeemed: input.points_redeemed || 0,
     };
 
     // Attempt insert with new columns
     let { error } = await supabase.from("orders").insert(orderPayload);
 
     // If new columns don't exist yet in Supabase (migration pending), fallback to basic payload
-    if (error && (error.message.includes("delivery_address") || error.message.includes("delivery_fee") || error.message.includes("order_type") || error.message.includes("table_number") || error.message.includes("token_number") || error.message.includes("shop_id"))) {
+    if (error && (error.message.includes("delivery_address") || error.message.includes("delivery_fee") || error.message.includes("order_type") || error.message.includes("table_number") || error.message.includes("token_number") || error.message.includes("shop_id") || error.message.includes("discount_amount") || error.message.includes("promo_code"))) {
       const fallbackPayload: Record<string, any> = {
         order_number: orderNumber,
         status: "pending",
@@ -214,6 +222,32 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       } catch {
         // Non-blocking
       }
+    }
+
+    // Process Customer Loyalty Points (Feature 5: 1 point per Rs. 50 spent)
+    if (input.customer_phone?.trim()) {
+      processLoyaltyPoints(
+        input.customer_phone.trim(),
+        input.customer_name?.trim() || "Customer",
+        input.total,
+        input.points_redeemed || 0,
+        targetShopId
+      ).catch((loyaltyErr) => {
+        console.warn("[Customer Loyalty non-blocking error]", loyaltyErr);
+      });
+    }
+
+    // Trigger WhatsApp notification alert (multi-tenant session ID support)
+    if (input.customer_phone?.trim()) {
+      sendWhatsAppOrderAlert({
+        phone: input.customer_phone.trim(),
+        customerName: input.customer_name?.trim() || "Customer",
+        orderId: orderNumber,
+        total: `${input.total.toFixed(2)}`,
+        shopId: targetShopId,
+      }).catch((waErr) => {
+        console.error("[WhatsApp order alert non-blocking error]", waErr);
+      });
     }
 
     return {

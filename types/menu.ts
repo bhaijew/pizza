@@ -162,6 +162,8 @@ export interface Shop {
   total_orders_count?: number;
   total_revenue?: number;
   notes?: string | null;
+  whatsapp_session_id?: string | null;
+  whatsapp_api_key?: string | null;
   created_at?: string;
   updated_at?: string;
 }

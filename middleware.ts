@@ -1,9 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/middleware";
 import { ADMIN_COOKIE, verifySessionToken } from "@/lib/admin-auth";
 import { SUPER_ADMIN_COOKIE, verifySuperAdminSessionToken } from "@/lib/super-admin-auth";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Refresh Supabase session cookies
+  const supabaseResponse = createClient(request);
 
   // 1. Guard Super Admin routes (not login)
   if (pathname.startsWith("/super-admin") && !pathname.startsWith("/super-admin/login")) {
@@ -29,7 +33,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
 export const config = {

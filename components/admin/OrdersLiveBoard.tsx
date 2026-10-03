@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useTransition } from "react";
 import type { Order } from "@/types/menu";
-import { updateOrderStatus, assignOrderRider } from "@/lib/admin-actions";
+import { updateOrderStatus, assignOrderRider, triggerRiderWhatsAppAlert } from "@/lib/admin-actions";
 import { createClient } from "@/utils/supabase/client";
 
 interface OrdersLiveBoardProps {
@@ -116,6 +116,8 @@ export default function OrdersLiveBoard({
   const [assigningRiderOrderId, setAssigningRiderOrderId] = useState<number | null>(null);
   const [riderNameInput, setRiderNameInput] = useState("");
   const [riderPhoneInput, setRiderPhoneInput] = useState("");
+  const [sendingRiderWaId, setSendingRiderWaId] = useState<number | null>(null);
+  const [riderWaSentId, setRiderWaSentId] = useState<number | null>(null);
 
   const handleAssignRiderSubmit = (orderId: number) => {
     if (!riderNameInput.trim()) return;
@@ -135,6 +137,23 @@ export default function OrdersLiveBoard({
       );
       setAssigningRiderOrderId(null);
     });
+  };
+
+  const handleSendRiderWhatsApp = async (orderId: number) => {
+    setSendingRiderWaId(orderId);
+    try {
+      const res = await triggerRiderWhatsAppAlert(orderId);
+      if (res.success) {
+        setRiderWaSentId(orderId);
+        setTimeout(() => setRiderWaSentId(null), 4000);
+      } else {
+        alert(res.error || "Failed to dispatch WhatsApp alert to rider.");
+      }
+    } catch (err: any) {
+      alert(err?.message || "WhatsApp dispatch error.");
+    } finally {
+      setSendingRiderWaId(null);
+    }
   };
 
   // Subscribe to real-time order updates via Supabase Realtime
@@ -700,31 +719,64 @@ export default function OrdersLiveBoard({
                             </button>
 
                             {info.riderPhone && (
-                              <a
-                                href={`https://wa.me/${info.riderPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                                  `Salam ${info.riderName || "Rider"}, New Delivery Order [${order.order_number}]!\n` +
-                                  `Destination: ${info.deliveryAddress || "Address provided"}\n` +
-                                  `Customer: ${order.customer_name} (${order.customer_phone || "N/A"})\n` +
-                                  `Total to Collect: ${currencySymbol}${Number(order.total).toFixed(2)}\n` +
-                                  `Please pick up from restaurant now.`
-                                )}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 4,
-                                  padding: "4px 8px",
-                                  borderRadius: "4px",
-                                  background: "#25d366",
-                                  color: "#ffffff",
-                                  fontSize: "11px",
-                                  fontWeight: 800,
-                                  textDecoration: "none",
-                                }}
-                              >
-                                <span>WhatsApp</span>
-                              </a>
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={sendingRiderWaId === order.id}
+                                  onClick={() => handleSendRiderWhatsApp(order.id)}
+                                  title="Send instant automated WhatsApp alert to Rider via Railway Gateway"
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 4,
+                                    padding: "4px 8px",
+                                    borderRadius: "4px",
+                                    background: riderWaSentId === order.id ? "#15803d" : "#25d366",
+                                    color: "#ffffff",
+                                    fontSize: "11px",
+                                    fontWeight: 800,
+                                    border: "none",
+                                    cursor: sendingRiderWaId === order.id ? "not-allowed" : "pointer",
+                                    boxShadow: "0 1px 3px rgba(37, 211, 102, 0.3)",
+                                  }}
+                                >
+                                  <span>
+                                    {sendingRiderWaId === order.id
+                                      ? "Sending..."
+                                      : riderWaSentId === order.id
+                                      ? "Sent ✓"
+                                      : "💬 Auto WhatsApp"}
+                                  </span>
+                                </button>
+
+                                <a
+                                  href={`https://wa.me/${info.riderPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                                    `Salam ${info.riderName || "Rider"}, New Delivery Order [${order.order_number}]!\n` +
+                                    `Destination: ${info.deliveryAddress || "Address provided"}\n` +
+                                    `Customer: ${order.customer_name} (${order.customer_phone || "N/A"})\n` +
+                                    `Total to Collect: ${currencySymbol}${Number(order.total).toFixed(2)}\n` +
+                                    `Please pick up from restaurant now.`
+                                  )}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Open WhatsApp Web chat directly"
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 4,
+                                    padding: "4px 8px",
+                                    borderRadius: "4px",
+                                    background: "#f0fdf4",
+                                    border: "1px solid #bbf7d0",
+                                    color: "#166534",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                    textDecoration: "none",
+                                  }}
+                                >
+                                  <span>Web ↗</span>
+                                </a>
+                              </>
                             )}
                           </div>
                         </div>

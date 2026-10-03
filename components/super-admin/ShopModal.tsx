@@ -28,6 +28,8 @@ export default function ShopModal({
   const [plan, setPlan] = useState<"starter" | "pro" | "enterprise">(editingShop?.plan || "pro");
   const [status, setStatus] = useState<"active" | "suspended" | "pending">(editingShop?.status || "active");
   const [notes, setNotes] = useState(editingShop?.notes || "");
+  const [whatsappSessionId, setWhatsappSessionId] = useState(editingShop?.whatsapp_session_id || "");
+  const [whatsappApiKey, setWhatsappApiKey] = useState(editingShop?.whatsapp_api_key || "");
 
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +65,8 @@ export default function ShopModal({
     formData.append("plan", plan);
     formData.append("status", status);
     formData.append("notes", notes.trim());
+    formData.append("whatsapp_session_id", whatsappSessionId.trim());
+    formData.append("whatsapp_api_key", whatsappApiKey.trim());
 
     setIsSubmitting(true);
     try {
@@ -436,6 +440,70 @@ export default function ShopModal({
                 <option value="suspended">Suspended (Blocked)</option>
                 <option value="pending">Pending Approval</option>
               </select>
+            </div>
+          </div>
+
+          {/* WhatsApp Gateway Settings */}
+          <div style={{ marginBottom: "18px", padding: "14px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+              <span style={{ fontSize: "14px" }}>📱</span>
+              <span style={{ fontSize: "11px", fontWeight: 700, color: "#1e293b", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                WhatsApp Order Alerts (Railway Gateway)
+              </span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Session ID (e.g. rhs5o)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. rhs5o"
+                  value={whatsappSessionId}
+                  onChange={(e) => setWhatsappSessionId(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 10px",
+                    borderRadius: "5px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "13px",
+                    fontFamily: "monospace",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <p style={{ margin: "3px 0 0", fontSize: "10px", color: "#64748b" }}>
+                  Unique session code for this shop&apos;s WhatsApp
+                </p>
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Custom API Key (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Leave blank to use default"
+                  value={whatsappApiKey}
+                  onChange={(e) => setWhatsappApiKey(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 10px",
+                    borderRadius: "5px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "13px",
+                    fontFamily: "monospace",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <p style={{ margin: "3px 0 0", fontSize: "10px", color: "#64748b" }}>
+                  Overrides x-api-key if shop has own account
+                </p>
+              </div>
             </div>
           </div>
 

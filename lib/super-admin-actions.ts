@@ -94,6 +94,8 @@ export async function createShop(
   const plan = (formData.get("plan") as "starter" | "pro" | "enterprise") || "pro";
   const status = (formData.get("status") as "active" | "suspended" | "pending") || "active";
   const notes = (formData.get("notes") as string)?.trim() || null;
+  const whatsapp_session_id = (formData.get("whatsapp_session_id") as string)?.trim() || null;
+  const whatsapp_api_key = (formData.get("whatsapp_api_key") as string)?.trim() || null;
 
   if (!name || !owner_name) {
     return { error: "Shop Name and Owner Name are required.", success: false };
@@ -103,23 +105,35 @@ export async function createShop(
   const randomSuffix = Math.floor(100 + Math.random() * 900);
   const slug = `${baseSlug}-${randomSuffix}`;
 
-  const { data, error } = await db
+  const insertPayload: Record<string, any> = {
+    name,
+    slug,
+    owner_name,
+    owner_email,
+    owner_phone,
+    branch_address,
+    password,
+    currency_symbol,
+    plan,
+    status,
+    notes,
+    whatsapp_session_id,
+    whatsapp_api_key,
+  };
+
+  let { data, error } = await db
     .from("shops")
-    .insert({
-      name,
-      slug,
-      owner_name,
-      owner_email,
-      owner_phone,
-      branch_address,
-      password,
-      currency_symbol,
-      plan,
-      status,
-      notes,
-    })
+    .insert(insertPayload)
     .select()
     .single();
+
+  if (error && (error.message.includes("whatsapp_session_id") || error.message.includes("whatsapp_api_key"))) {
+    delete insertPayload.whatsapp_session_id;
+    delete insertPayload.whatsapp_api_key;
+    const retry = await db.from("shops").insert(insertPayload).select().single();
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) {
     if (error.code === "PGRST205") {
@@ -157,6 +171,8 @@ export async function updateShop(
   const plan = (formData.get("plan") as "starter" | "pro" | "enterprise") || "pro";
   const status = (formData.get("status") as "active" | "suspended" | "pending") || "active";
   const notes = (formData.get("notes") as string)?.trim() || null;
+  const whatsapp_session_id = (formData.get("whatsapp_session_id") as string)?.trim() || null;
+  const whatsapp_api_key = (formData.get("whatsapp_api_key") as string)?.trim() || null;
 
   if (!name || !owner_name) {
     return { error: "Shop Name and Owner Name are required.", success: false };
@@ -172,6 +188,8 @@ export async function updateShop(
     plan,
     status,
     notes,
+    whatsapp_session_id,
+    whatsapp_api_key,
     updated_at: new Date().toISOString(),
   };
 
@@ -179,7 +197,14 @@ export async function updateShop(
     updatePayload.password = password;
   }
 
-  const { error } = await db.from("shops").update(updatePayload).eq("id", id);
+  let { error } = await db.from("shops").update(updatePayload).eq("id", id);
+
+  if (error && (error.message.includes("whatsapp_session_id") || error.message.includes("whatsapp_api_key"))) {
+    delete updatePayload.whatsapp_session_id;
+    delete updatePayload.whatsapp_api_key;
+    const retry = await db.from("shops").update(updatePayload).eq("id", id);
+    error = retry.error;
+  }
 
   if (error) return { error: error.message, success: false };
 
