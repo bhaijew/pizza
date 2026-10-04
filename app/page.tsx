@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "Enterprise-grade restaurant & pizza POS system with automated WhatsApp notifications, live customer tracking, chef kitchen display (KDS), loyalty cash rewards, and multi-branch management. Built by Syed Zeeshan Haider.",
 };
 
-export default function SquareUIProfessionalPage() {
+export default function MobileResponsivePizzaLanding() {
   const phoneNumber = "03334867615";
   const internationalPhone = "+92 333 4867615";
   const formattedPhone = "0333-4867615";
@@ -106,47 +106,41 @@ export default function SquareUIProfessionalPage() {
         color: "#ffffff",
         fontFamily: "var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif)",
         lineHeight: 1.5,
+        overflowX: "hidden",
+        width: "100%",
+        maxWidth: "100%",
       }}
+      className="pb-20 md:pb-0"
     >
-      {/* ─── TOP NOTICE BANNER ────────────────────────────────────── */}
+      {/* ─── TOP NOTICE BANNER (RESPONSIVE) ───────────────────────── */}
       <div
         style={{
           background: "#ea580c",
           color: "#ffffff",
-          padding: "8px 16px",
-          textAlign: "center",
-          fontSize: 12,
-          fontWeight: 800,
-          letterSpacing: "0.04em",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          flexWrap: "wrap",
+          borderBottom: "1px solid #c2410c",
         }}
+        className="px-3 py-2 text-center text-xs font-extrabold flex items-center justify-center gap-2 flex-wrap"
       >
-        <span>⚡ INTERACTIVE SANDBOX DEMO LIVE:</span>
-        <span style={{ textDecoration: "underline" }}>
-          Test Customer Storefront, Branch POS, Kitchen KDS, and Live Tracker instantly without login!
+        <span className="flex items-center gap-1.5">
+          <span>⚡</span>
+          <span>LIVE SANDBOX: Test Storefront, POS, KDS &amp; Tracker without login!</span>
         </span>
         <Link
           href="#sandbox-modules"
           style={{
             background: "#09090b",
             color: "#ffffff",
-            padding: "2px 8px",
             borderRadius: 3,
-            fontSize: 11,
             textDecoration: "none",
-            fontWeight: 900,
-            textTransform: "uppercase",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
           }}
+          className="px-2 py-0.5 text-[11px] font-black uppercase inline-block whitespace-nowrap"
         >
-          Explore Sandbox ↓
+          Explore Demos ↓
         </Link>
       </div>
 
-      {/* ─── ORANGE / WHITE / BLACK NAVBAR ────────────────────────── */}
+      {/* ─── ORANGE / WHITE / BLACK NAVBAR (RESPONSIVE) ───────────── */}
       <header
         style={{
           borderBottom: "2px solid #ea580c",
@@ -157,79 +151,37 @@ export default function SquareUIProfessionalPage() {
           boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
         }}
       >
-        <div
-          style={{
-            maxWidth: 1240,
-            margin: "0 auto",
-            padding: "14px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 12,
-          }}
-        >
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           {/* Logo & Identity */}
-          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 12 }}>
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 text-decoration-none">
             <div
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 6,
                 background: "#ea580c",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#ffffff",
-                fontSize: 22,
                 boxShadow: "0 2px 10px rgba(234, 88, 12, 0.5)",
               }}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-md flex items-center justify-center text-xl sm:text-2xl text-white flex-shrink-0"
             >
               🍕
             </div>
             <div>
-              <span
-                style={{
-                  fontSize: 17,
-                  fontWeight: 900,
-                  color: "#ffffff",
-                  letterSpacing: "-0.02em",
-                  display: "block",
-                }}
-              >
+              <span className="text-sm sm:text-base md:text-lg font-black text-white tracking-tight block leading-tight">
                 PIZZA POS &amp; CLOUD SUITE
               </span>
-              <span
-                style={{
-                  fontSize: 11,
-                  color: "#ea580c",
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
+              <span className="text-[10px] sm:text-xs text-orange-500 font-extrabold uppercase tracking-wider block">
                 By Syed Zeeshan Haider
               </span>
             </div>
           </Link>
 
-          {/* Quick Header Navigation Links & Actions */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex items-center gap-2.5 flex-wrap">
             <Link
               href="#sandbox-modules"
               style={{
-                fontSize: 12,
-                fontWeight: 800,
-                color: "#ffedd5",
-                textDecoration: "none",
-                padding: "8px 12px",
-                borderRadius: 4,
                 background: "rgba(234, 88, 12, 0.15)",
                 border: "1px solid #ea580c",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 5,
               }}
+              className="text-xs font-bold text-orange-200 px-3 py-2 rounded no-underline inline-flex items-center gap-1.5 hover:bg-orange-600/30 transition-colors"
             >
               <span>🎮</span>
               <span>Live Demos</span>
@@ -238,19 +190,9 @@ export default function SquareUIProfessionalPage() {
             <a
               href={phoneCallUrl}
               style={{
-                fontSize: 12,
-                fontWeight: 800,
-                color: "#000000",
-                textDecoration: "none",
-                padding: "8px 12px",
-                borderRadius: 4,
-                background: "#ffffff",
-                border: "1.5px solid #ffffff",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
                 boxShadow: "0 2px 0 #cbd5e1",
               }}
+              className="text-xs font-extrabold text-black bg-white px-3 py-2 rounded no-underline inline-flex items-center gap-1.5"
             >
               <span>📞</span>
               <span>{formattedPhone}</span>
@@ -259,20 +201,12 @@ export default function SquareUIProfessionalPage() {
             <Link
               href="/demo/pos"
               style={{
-                fontSize: 12,
-                fontWeight: 900,
-                color: "#ffffff",
-                textDecoration: "none",
-                padding: "8px 14px",
-                borderRadius: 4,
                 background: "#ea580c",
-                border: "1.5px solid #ea580c",
-                textTransform: "uppercase",
-                letterSpacing: "0.03em",
                 boxShadow: "0 2px 0 #9a3412",
               }}
+              className="text-xs font-black text-white px-3.5 py-2 rounded no-underline uppercase tracking-wide inline-flex items-center gap-1"
             >
-              Interactive POS Demo ➔
+              <span>POS Demo ➔</span>
             </Link>
 
             <a
@@ -280,72 +214,68 @@ export default function SquareUIProfessionalPage() {
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "8px 16px",
-                borderRadius: 4,
                 background: "#15803d",
-                color: "#ffffff",
-                fontSize: 12,
-                fontWeight: 800,
-                textDecoration: "none",
-                border: "1.5px solid #166534",
-                textTransform: "uppercase",
-                letterSpacing: "0.03em",
                 boxShadow: "0 2px 0 #14532d",
               }}
+              className="text-xs font-extrabold text-white px-3.5 py-2 rounded no-underline uppercase tracking-wide inline-flex items-center gap-1.5"
             >
               <span>💬</span>
               <span>WhatsApp: {formattedPhone}</span>
             </a>
           </div>
+
+          {/* Mobile Fast Action Buttons (Header) */}
+          <div className="flex md:hidden items-center gap-2">
+            <a
+              href={phoneCallUrl}
+              className="bg-white text-black px-2.5 py-1.5 rounded text-xs font-black no-underline inline-flex items-center gap-1"
+            >
+              <span>📞</span>
+              <span>Call</span>
+            </a>
+
+            <a
+              href={whatsappInquiryUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-emerald-600 text-white px-2.5 py-1.5 rounded text-xs font-black no-underline inline-flex items-center gap-1"
+            >
+              <span>💬</span>
+              <span>Chat</span>
+            </a>
+
+            <Link
+              href="#sandbox-modules"
+              className="bg-orange-600 text-white px-2.5 py-1.5 rounded text-xs font-black no-underline inline-flex items-center"
+            >
+              <span>Demo</span>
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* ─── HERO SECTION (HIGH IMPACT ORANGE / WHITE / BLACK) ────── */}
+      {/* ─── HERO SECTION (RESPONSIVE) ────────────────────────────── */}
       <section
         style={{
           background: "radial-gradient(ellipse at top, rgba(234, 88, 12, 0.22) 0%, rgba(9, 9, 11, 1) 68%)",
           borderBottom: "2px solid #27272a",
-          padding: "70px 20px 60px",
-          position: "relative",
-          overflow: "hidden",
         }}
+        className="px-4 py-10 sm:px-6 sm:py-16 md:py-20 text-center relative overflow-hidden"
       >
-        <div style={{ maxWidth: 1040, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 2 }}>
-          {/* Badge */}
+        <div className="max-w-4xl mx-auto relative z-10">
+          {/* Square Badge */}
           <div
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "6px 14px",
-              borderRadius: 99,
               background: "rgba(234, 88, 12, 0.15)",
               border: "1.5px solid #ea580c",
-              color: "#fb923c",
-              fontSize: 11,
-              fontWeight: 900,
-              marginBottom: 24,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
             }}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-orange-400 text-[11px] sm:text-xs font-black uppercase tracking-wider mb-5"
           >
             <span>■</span>
             <span>ENTERPRISE RESTAURANT &amp; PIZZA SOFTWARE SUITE</span>
           </div>
 
-          <h1
-            style={{
-              fontSize: "clamp(32px, 5.8vw, 56px)",
-              fontWeight: 900,
-              color: "#ffffff",
-              letterSpacing: "-0.03em",
-              lineHeight: 1.15,
-              margin: "0 auto 20px",
-            }}
-          >
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.15] mb-4 sm:mb-5">
             Complete Pizza POS,{" "}
             <span style={{ color: "#ea580c", textDecoration: "underline", textDecorationColor: "rgba(234,88,12,0.4)" }}>
               Online Ordering
@@ -353,47 +283,21 @@ export default function SquareUIProfessionalPage() {
             &amp; WhatsApp Automation System
           </h1>
 
-          <p
-            style={{
-              fontSize: "clamp(15px, 2.2vw, 18px)",
-              color: "#d4d4d8",
-              maxWidth: 780,
-              margin: "0 auto 36px",
-              lineHeight: 1.6,
-            }}
-          >
+          <p className="text-xs sm:text-sm md:text-base lg:text-lg text-zinc-300 max-w-2xl mx-auto mb-7 sm:mb-9 leading-relaxed">
             A high-performance digital ordering and POS platform built for pizza outlets, burger joints, and cloud kitchens.
             Equipped with automated WhatsApp receipts, rider dispatch alerts, real-time live order tracking, chef kitchen display (KDS), table QR codes, and loyalty cash rewards.
           </p>
 
-          {/* Primary Action Buttons */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: 14,
-              flexWrap: "wrap",
-              marginBottom: 44,
-            }}
-          >
+          {/* Primary Action Buttons (Responsive Grid/Flex) */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-8 sm:mb-12 w-full">
             <Link
               href="#sandbox-modules"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "15px 28px",
-                borderRadius: 6,
                 background: "#ea580c",
-                color: "#ffffff",
-                fontSize: 14,
-                fontWeight: 900,
-                textDecoration: "none",
                 border: "2px solid #ffffff",
                 boxShadow: "4px 4px 0 #000000",
-                textTransform: "uppercase",
-                letterSpacing: "0.03em",
               }}
+              className="w-full sm:w-auto px-6 py-3.5 rounded-md text-white text-xs sm:text-sm font-black no-underline uppercase tracking-wide inline-flex items-center justify-center gap-2"
             >
               <span>🍕</span>
               <span>Launch Live Demo Sandbox ➔</span>
@@ -404,60 +308,32 @@ export default function SquareUIProfessionalPage() {
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "15px 26px",
-                borderRadius: 6,
                 background: "#ffffff",
-                color: "#000000",
-                fontSize: 14,
-                fontWeight: 900,
-                textDecoration: "none",
                 border: "2px solid #000000",
                 boxShadow: "4px 4px 0 #ea580c",
-                textTransform: "uppercase",
-                letterSpacing: "0.03em",
               }}
+              className="w-full sm:w-auto px-6 py-3.5 rounded-md text-black text-xs sm:text-sm font-black no-underline uppercase tracking-wide inline-flex items-center justify-center gap-2"
             >
               <span>💬</span>
-              <span>WhatsApp Syed Zeeshan ({formattedPhone})</span>
+              <span>WhatsApp: {formattedPhone}</span>
             </a>
 
             <a
               href={phoneCallUrl}
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "15px 24px",
-                borderRadius: 6,
                 background: "#18181b",
-                color: "#ffffff",
-                fontSize: 14,
-                fontWeight: 800,
-                textDecoration: "none",
                 border: "2px solid #3f3f46",
                 boxShadow: "4px 4px 0 #000000",
-                textTransform: "uppercase",
-                letterSpacing: "0.03em",
               }}
+              className="w-full sm:w-auto px-6 py-3.5 rounded-md text-white text-xs sm:text-sm font-extrabold no-underline uppercase tracking-wide inline-flex items-center justify-center gap-2"
             >
               <span>📞</span>
               <span>Direct Call: {formattedPhone}</span>
             </a>
           </div>
 
-          {/* Architectural Metrics Bar (Orange & Black High Contrast) */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: 12,
-              maxWidth: 920,
-              margin: "0 auto",
-            }}
-          >
+          {/* Architectural Metrics Bar (Responsive 2x2 grid on mobile) */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 max-w-3xl mx-auto">
             {[
               { label: "Turnkey Codebase", value: "Ready to Deploy", color: "#fb923c" },
               { label: "Architecture", value: "Multi-Tenant Cloud", color: "#ffffff" },
@@ -469,32 +345,15 @@ export default function SquareUIProfessionalPage() {
                 style={{
                   background: "#18181b",
                   border: "1.5px solid #27272a",
-                  borderRadius: 6,
-                  padding: "12px 14px",
-                  textAlign: "center",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
                 }}
+                className="rounded-md p-3 sm:p-3.5 text-center"
               >
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 800,
-                    color: "#a1a1aa",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    display: "block",
-                  }}
-                >
+                <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider block">
                   {m.label}
                 </span>
                 <span
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 900,
-                    color: m.color,
-                    marginTop: 3,
-                    display: "block",
-                  }}
+                  style={{ color: m.color }}
+                  className="text-xs sm:text-sm font-black mt-1 block leading-tight"
                 >
                   {m.value}
                 </span>
@@ -511,112 +370,66 @@ export default function SquareUIProfessionalPage() {
           background: "#ffffff",
           color: "#09090b",
           borderBottom: "3px solid #ea580c",
-          padding: "54px 20px 60px",
         }}
+        className="px-4 py-10 sm:px-6 sm:py-14 md:py-16"
       >
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-end",
-              marginBottom: 26,
-              flexWrap: "wrap",
-              gap: 14,
-              borderBottom: "2px solid #09090b",
-              paddingBottom: 16,
-            }}
-          >
+        <div className="max-w-7xl mx-auto">
+          {/* Header Row */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6 sm:mb-8 border-b-2 border-zinc-900 pb-4">
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 12, fontWeight: 900, color: "#ea580c", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-black text-orange-600 uppercase tracking-wider">
                   ■ LIVE FUNCTIONAL MODULES
                 </span>
-                <span
-                  style={{
-                    background: "#ea580c",
-                    color: "#ffffff",
-                    fontSize: 10,
-                    fontWeight: 900,
-                    padding: "2px 6px",
-                    borderRadius: 3,
-                  }}
-                >
+                <span className="bg-orange-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded">
                   NO LOGIN NEEDED
                 </span>
               </div>
-              <h2 style={{ fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 900, color: "#09090b", margin: "4px 0 0" }}>
+              <h2 className="text-2xl sm:text-3xl font-black text-zinc-950 m-0">
                 Interactive Live System Sandbox
               </h2>
             </div>
-            <span style={{ fontSize: 13, color: "#ea580c", fontWeight: 800 }}>
-              ⚡ Click any tile below to launch live simulated demo:
+            <span className="text-xs sm:text-sm text-orange-600 font-extrabold">
+              ⚡ Click any tile to test live simulated system:
             </span>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-              gap: 20,
-            }}
-          >
+          {/* Cards Grid: 1 col on mobile, 2 cols on tablet, 4 cols on desktop */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {/* Tile 1: Customer Online Menu -> /demo/menu */}
             <Link
               href="/demo/menu"
               style={{
                 background: "#ffffff",
                 border: "2.5px solid #09090b",
-                borderRadius: 6,
-                padding: "22px 20px",
-                textDecoration: "none",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                boxShadow: "5px 5px 0 #ea580c",
-                minHeight: 180,
-                transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                boxShadow: "4px 4px 0 #ea580c",
               }}
+              className="rounded-lg p-5 sm:p-6 no-underline flex flex-col justify-between min-h-[190px] transition-transform active:scale-[0.98]"
             >
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <span style={{ fontSize: 30 }}>🍕</span>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-3xl">🍕</span>
                   <span
                     style={{
-                      fontSize: 10,
-                      fontWeight: 900,
                       background: "#fff7ed",
                       color: "#c2410c",
                       border: "1.5px solid #fed7aa",
-                      padding: "3px 8px",
-                      borderRadius: 3,
-                      letterSpacing: "0.04em",
                     }}
+                    className="text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
                   >
                     STOREFRONT DEMO
                   </span>
                 </div>
-                <h3 style={{ fontSize: 18, fontWeight: 900, color: "#09090b", margin: "0 0 8px" }}>
+                <h3 className="text-base sm:text-lg font-black text-zinc-950 mb-1.5">
                   Customer Online Menu
                 </h3>
-                <p style={{ fontSize: 13, color: "#475569", margin: 0, lineHeight: 1.5 }}>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed m-0">
                   Interactive menu with pizza toppings, cart drawer, promo code input, and loyalty cash points.
                 </p>
               </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 900,
-                  color: "#ea580c",
-                  marginTop: 18,
-                  textTransform: "uppercase",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
+              <div className="text-xs sm:text-sm font-black text-orange-600 uppercase mt-4 flex items-center justify-between">
                 <span>OPEN CUSTOMER MENU</span>
-                <span style={{ fontSize: 16 }}>➔</span>
+                <span className="text-base">➔</span>
               </div>
             </Link>
 
@@ -626,56 +439,34 @@ export default function SquareUIProfessionalPage() {
               style={{
                 background: "#ffffff",
                 border: "2.5px solid #09090b",
-                borderRadius: 6,
-                padding: "22px 20px",
-                textDecoration: "none",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                boxShadow: "5px 5px 0 #09090b",
-                minHeight: 180,
-                transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                boxShadow: "4px 4px 0 #09090b",
               }}
+              className="rounded-lg p-5 sm:p-6 no-underline flex flex-col justify-between min-h-[190px] transition-transform active:scale-[0.98]"
             >
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <span style={{ fontSize: 30 }}>🖥️</span>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-3xl">🖥️</span>
                   <span
                     style={{
-                      fontSize: 10,
-                      fontWeight: 900,
                       background: "#f1f5f9",
                       color: "#0f172a",
                       border: "1.5px solid #cbd5e1",
-                      padding: "3px 8px",
-                      borderRadius: 3,
-                      letterSpacing: "0.04em",
                     }}
+                    className="text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
                   >
                     ADMIN POS DEMO
                   </span>
                 </div>
-                <h3 style={{ fontSize: 18, fontWeight: 900, color: "#09090b", margin: "0 0 8px" }}>
+                <h3 className="text-base sm:text-lg font-black text-zinc-950 mb-1.5">
                   Branch Admin POS
                 </h3>
-                <p style={{ fontSize: 13, color: "#475569", margin: 0, lineHeight: 1.5 }}>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed m-0">
                   Full live order board, audio synthesizer chime alerts, menu pricing manager, and daily cash closing.
                 </p>
               </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 900,
-                  color: "#09090b",
-                  marginTop: 18,
-                  textTransform: "uppercase",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
+              <div className="text-xs sm:text-sm font-black text-zinc-950 uppercase mt-4 flex items-center justify-between">
                 <span>OPEN ADMIN POS</span>
-                <span style={{ fontSize: 16 }}>➔</span>
+                <span className="text-base">➔</span>
               </div>
             </Link>
 
@@ -685,56 +476,34 @@ export default function SquareUIProfessionalPage() {
               style={{
                 background: "#ffffff",
                 border: "2.5px solid #09090b",
-                borderRadius: 6,
-                padding: "22px 20px",
-                textDecoration: "none",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                boxShadow: "5px 5px 0 #ea580c",
-                minHeight: 180,
-                transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                boxShadow: "4px 4px 0 #ea580c",
               }}
+              className="rounded-lg p-5 sm:p-6 no-underline flex flex-col justify-between min-h-[190px] transition-transform active:scale-[0.98]"
             >
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <span style={{ fontSize: 30 }}>🔥</span>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-3xl">🔥</span>
                   <span
                     style={{
-                      fontSize: 10,
-                      fontWeight: 900,
                       background: "#fff7ed",
                       color: "#ea580c",
                       border: "1.5px solid #fed7aa",
-                      padding: "3px 8px",
-                      borderRadius: 3,
-                      letterSpacing: "0.04em",
                     }}
+                    className="text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
                   >
                     KITCHEN KDS DEMO
                   </span>
                 </div>
-                <h3 style={{ fontSize: 18, fontWeight: 900, color: "#09090b", margin: "0 0 8px" }}>
+                <h3 className="text-base sm:text-lg font-black text-zinc-950 mb-1.5">
                   Kitchen Display (KDS)
                 </h3>
-                <p style={{ fontSize: 13, color: "#475569", margin: 0, lineHeight: 1.5 }}>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed m-0">
                   Real-time kitchen display for chefs with stage transitions, live cooking timers, and audio notifications.
                 </p>
               </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 900,
-                  color: "#ea580c",
-                  marginTop: 18,
-                  textTransform: "uppercase",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
+              <div className="text-xs sm:text-sm font-black text-orange-600 uppercase mt-4 flex items-center justify-between">
                 <span>OPEN KITCHEN KDS</span>
-                <span style={{ fontSize: 16 }}>➔</span>
+                <span className="text-base">➔</span>
               </div>
             </Link>
 
@@ -744,150 +513,96 @@ export default function SquareUIProfessionalPage() {
               style={{
                 background: "#ffffff",
                 border: "2.5px solid #09090b",
-                borderRadius: 6,
-                padding: "22px 20px",
-                textDecoration: "none",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                boxShadow: "5px 5px 0 #09090b",
-                minHeight: 180,
-                transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                boxShadow: "4px 4px 0 #09090b",
               }}
+              className="rounded-lg p-5 sm:p-6 no-underline flex flex-col justify-between min-h-[190px] transition-transform active:scale-[0.98]"
             >
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <span style={{ fontSize: 30 }}>📍</span>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-3xl">📍</span>
                   <span
                     style={{
-                      fontSize: 10,
-                      fontWeight: 900,
                       background: "#f0fdf4",
                       color: "#166534",
                       border: "1.5px solid #bbf7d0",
-                      padding: "3px 8px",
-                      borderRadius: 3,
-                      letterSpacing: "0.04em",
                     }}
+                    className="text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
                   >
                     TRACKER DEMO
                   </span>
                 </div>
-                <h3 style={{ fontSize: 18, fontWeight: 900, color: "#09090b", margin: "0 0 8px" }}>
+                <h3 className="text-base sm:text-lg font-black text-zinc-950 mb-1.5">
                   Live Order Tracker
                 </h3>
-                <p style={{ fontSize: 13, color: "#475569", margin: 0, lineHeight: 1.5 }}>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed m-0">
                   Live customer tracking screen showing preparation timeline, rider details, and real-time audio chimes.
                 </p>
               </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 900,
-                  color: "#166534",
-                  marginTop: 18,
-                  textTransform: "uppercase",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
+              <div className="text-xs sm:text-sm font-black text-emerald-700 uppercase mt-4 flex items-center justify-between">
                 <span>OPEN ORDER TRACKER</span>
-                <span style={{ fontSize: 16 }}>➔</span>
+                <span className="text-base">➔</span>
               </div>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ─── FULL FEATURE MODULES (ORANGE / BLACK / WHITE) ───────── */}
-      <section
-        style={{
-          background: "#09090b",
-          color: "#ffffff",
-          maxWidth: 1240,
-          margin: "0 auto",
-          padding: "60px 20px 70px",
-        }}
-      >
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <span style={{ fontSize: 11, fontWeight: 900, color: "#ea580c", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+      {/* ─── FULL FEATURE MODULES (RESPONSIVE) ───────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 py-12 sm:px-6 sm:py-16 md:py-20">
+        <div className="text-center mb-8 sm:mb-12">
+          <span className="text-xs font-black text-orange-500 uppercase tracking-widest block mb-2">
             ■ COMPLETE ARCHITECTURE BREAKDOWN
           </span>
-          <h2 style={{ fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 900, color: "#ffffff", margin: "6px 0 10px" }}>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 sm:mb-3">
             Enterprise Modules Included in System
           </h2>
-          <p style={{ fontSize: 15, color: "#a1a1aa", maxWidth: 680, margin: "0 auto" }}>
+          <p className="text-xs sm:text-sm md:text-base text-zinc-400 max-w-2xl mx-auto">
             Replaces expensive aggregator commissions with direct online ordering, automated WhatsApp dispatching, and full POS control.
           </p>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: 18,
-          }}
-        >
+        {/* 1 col on mobile, 2 cols on tablet, 3 cols on desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {coreFeatures.map((f) => (
             <div
               key={f.title}
               style={{
                 background: "#18181b",
                 border: "1.5px solid #27272a",
-                borderRadius: 6,
-                padding: "24px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                gap: 14,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
               }}
+              className="rounded-lg p-5 sm:p-6 flex flex-col justify-between gap-3 sm:gap-4 shadow-lg"
             >
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <span style={{ fontSize: 28 }}>{f.icon}</span>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <span style={{ fontSize: 10, fontFamily: "monospace", color: "#a1a1aa", fontWeight: 700 }}>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-2xl sm:text-3xl">{f.icon}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono text-zinc-400 font-bold">
                       {f.code}
                     </span>
                     <span
                       style={{
-                        fontSize: 9,
-                        fontWeight: 900,
-                        padding: "3px 8px",
-                        borderRadius: 3,
                         background: "rgba(234, 88, 12, 0.15)",
-                        color: "#fb923c",
                         border: "1px solid #ea580c",
-                        letterSpacing: "0.04em",
                       }}
+                      className="text-[9px] font-black px-2 py-0.5 rounded text-orange-400 uppercase tracking-wider"
                     >
                       {f.badge}
                     </span>
                   </div>
                 </div>
 
-                <h3 style={{ fontSize: 16, fontWeight: 900, color: "#ffffff", margin: "0 0 8px" }}>
+                <h3 className="text-base sm:text-lg font-black text-white mb-2">
                   {f.title}
                 </h3>
-                <p style={{ fontSize: 13, color: "#a1a1aa", lineHeight: 1.6, margin: 0 }}>
+                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed m-0">
                   {f.desc}
                 </p>
               </div>
 
-              <div style={{ borderTop: "1px solid #27272a", paddingTop: 12 }}>
+              <div className="border-t border-zinc-800 pt-3">
                 <Link
                   href={f.demoHref}
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 800,
-                    color: "#ea580c",
-                    textDecoration: "none",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                  }}
+                  className="text-xs font-extrabold text-orange-500 no-underline inline-flex items-center gap-1 hover:text-orange-400"
                 >
                   <span>Test in Sandbox</span>
                   <span>➔</span>
@@ -898,175 +613,151 @@ export default function SquareUIProfessionalPage() {
         </div>
       </section>
 
-      {/* ─── DEVELOPER CREDENTIALS & SALES CARD ─────────────────── */}
-      <section
-        style={{
-          background: "#09090b",
-          maxWidth: 1000,
-          margin: "0 auto 80px",
-          padding: "0 20px",
-        }}
-      >
+      {/* ─── DEVELOPER CREDENTIALS & SALES CARD (RESPONSIVE) ──────── */}
+      <section className="max-w-4xl mx-auto px-4 pb-16 sm:pb-20">
         <div
           style={{
             background: "#18181b",
             border: "2.5px solid #ea580c",
-            borderRadius: 8,
-            padding: "48px 30px",
-            textAlign: "center",
             boxShadow: "0 10px 30px rgba(234, 88, 12, 0.2)",
           }}
+          className="rounded-xl p-6 sm:p-10 md:p-12 text-center"
         >
           {/* Monogram Badge */}
           <div
             style={{
-              width: 64,
-              height: 64,
-              borderRadius: 8,
               background: "#ea580c",
-              color: "#ffffff",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 24,
-              fontWeight: 900,
-              marginBottom: 18,
               boxShadow: "0 4px 14px rgba(234, 88, 12, 0.4)",
             }}
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl text-white inline-flex items-center justify-center text-xl sm:text-2xl font-black mb-4"
           >
             ZH
           </div>
 
-          <h3 style={{ fontSize: "clamp(22px, 3.5vw, 30px)", fontWeight: 900, color: "#ffffff", margin: "0 0 8px", letterSpacing: "-0.02em" }}>
+          <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-white mb-2 tracking-tight">
             Want This Full POS &amp; Online Ordering System Setup for Your Brand?
           </h3>
-          <p style={{ fontSize: 16, fontWeight: 900, color: "#ea580c", margin: "0 0 18px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <p className="text-sm sm:text-base font-black text-orange-500 uppercase tracking-wider mb-4 sm:mb-5">
             Engineered &amp; Sold by: Syed Zeeshan Haider
           </p>
 
-          <p
-            style={{
-              fontSize: 14,
-              color: "#d4d4d8",
-              maxWidth: 680,
-              margin: "0 auto 28px",
-              lineHeight: 1.6,
-            }}
-          >
+          <p className="text-xs sm:text-sm text-zinc-300 max-w-xl mx-auto mb-6 sm:mb-8 leading-relaxed">
             Complete commercial software handover is available. Includes custom pizza shop branding, custom domain connection, automated WhatsApp API gateway setup, menu configuration, and technical training.
           </p>
 
           {/* Phone Highlight Box */}
           <div
             style={{
-              display: "inline-flex",
-              flexDirection: "column",
-              gap: 4,
               background: "#09090b",
               border: "1.5px solid #3f3f46",
-              borderRadius: 6,
-              padding: "14px 28px",
-              marginBottom: 32,
             }}
+            className="inline-flex flex-col gap-1 px-5 py-3 sm:px-7 sm:py-3.5 rounded-lg mb-6 sm:mb-8 max-w-full"
           >
-            <span style={{ fontSize: 11, fontWeight: 800, color: "#ea580c", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            <span className="text-[10px] sm:text-xs font-extrabold text-orange-500 uppercase tracking-wider">
               Direct Phone / WhatsApp Contact
             </span>
-            <span style={{ fontSize: 22, fontWeight: 900, color: "#ffffff", letterSpacing: "0.02em" }}>
+            <span className="text-base sm:text-xl font-black text-white tracking-wide break-words">
               {formattedPhone} &nbsp;•&nbsp; {internationalPhone}
             </span>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: 14,
-              flexWrap: "wrap",
-            }}
-          >
+          {/* Action CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full">
             <a
               href={whatsappInquiryUrl}
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "14px 32px",
-                borderRadius: 6,
                 background: "#ea580c",
-                color: "#ffffff",
-                fontSize: 14,
-                fontWeight: 900,
-                textDecoration: "none",
                 border: "2px solid #ffffff",
                 boxShadow: "4px 4px 0 #000000",
-                textTransform: "uppercase",
-                letterSpacing: "0.03em",
               }}
+              className="w-full sm:w-auto px-7 py-3.5 rounded-md text-white text-xs sm:text-sm font-black no-underline uppercase tracking-wide inline-flex items-center justify-center gap-2"
             >
-              <span style={{ fontSize: 20 }}>💬</span>
+              <span className="text-lg">💬</span>
               <span>WhatsApp: {formattedPhone}</span>
             </a>
 
             <a
               href={phoneCallUrl}
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "14px 30px",
-                borderRadius: 6,
                 background: "#ffffff",
-                color: "#000000",
-                fontSize: 14,
-                fontWeight: 900,
-                textDecoration: "none",
                 border: "2px solid #000000",
                 boxShadow: "4px 4px 0 #ea580c",
-                textTransform: "uppercase",
-                letterSpacing: "0.03em",
               }}
+              className="w-full sm:w-auto px-7 py-3.5 rounded-md text-black text-xs sm:text-sm font-black no-underline uppercase tracking-wide inline-flex items-center justify-center gap-2"
             >
-              <span style={{ fontSize: 20 }}>📞</span>
+              <span className="text-lg">📞</span>
               <span>Direct Call: {formattedPhone}</span>
             </a>
           </div>
         </div>
       </section>
 
-      {/* ─── FOOTER (ORANGE / BLACK / WHITE) ────────────────────── */}
+      {/* ─── FOOTER (RESPONSIVE) ─────────────────────────────────── */}
       <footer
         style={{
           borderTop: "2px solid #ea580c",
           background: "#000000",
-          padding: "36px 20px",
-          textAlign: "center",
-          fontSize: 12,
-          color: "#a1a1aa",
         }}
+        className="px-4 py-8 text-center text-xs sm:text-sm text-zinc-400"
       >
-        <p style={{ margin: "0 0 8px", fontWeight: 800, color: "#ffffff", fontSize: 14 }}>
+        <p className="font-extrabold text-white text-xs sm:text-sm mb-2">
           © {new Date().getFullYear()} Pizza POS &amp; Cloud Kitchen System. Developed &amp; Sold by{" "}
-          <strong style={{ color: "#ea580c" }}>Syed Zeeshan Haider</strong>.
+          <strong className="text-orange-500">Syed Zeeshan Haider</strong>.
         </p>
-        <p style={{ margin: "0 0 12px", fontWeight: 700, color: "#fb923c" }}>
+        <p className="font-bold text-orange-400 mb-3">
           Direct Contact / WhatsApp:{" "}
           <a
             href={whatsappInquiryUrl}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: "#ffffff", textDecoration: "underline" }}
+            className="text-white underline"
           >
             {formattedPhone}
           </a>{" "}
           ({internationalPhone})
         </p>
-        <p style={{ margin: 0, color: "#71717a", fontSize: 11 }}>
+        <p className="text-[11px] text-zinc-500 m-0">
           Next.js • Supabase Postgres • Railway WhatsApp Gateway • Realtime KDS • Web Audio Synthesizer
         </p>
       </footer>
+
+      {/* ─── MOBILE STICKY FLOATING QUICK ACTION BAR (SMARTPHONE ONLY) ─── */}
+      <div
+        style={{
+          background: "#09090b",
+          borderTop: "2.5px solid #ea580c",
+          boxShadow: "0 -4px 15px rgba(0,0,0,0.5)",
+        }}
+        className="fixed bottom-0 inset-x-0 z-50 md:hidden px-3 py-2 flex items-center justify-around gap-2"
+      >
+        <Link
+          href="#sandbox-modules"
+          className="flex-1 bg-zinc-800 text-white border border-zinc-700 py-2 rounded text-xs font-black text-center no-underline inline-flex items-center justify-center gap-1"
+        >
+          <span>🍕</span>
+          <span>Demos</span>
+        </Link>
+
+        <a
+          href={whatsappInquiryUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 bg-emerald-600 text-white py-2 rounded text-xs font-black text-center no-underline inline-flex items-center justify-center gap-1"
+        >
+          <span>💬</span>
+          <span>WhatsApp</span>
+        </a>
+
+        <a
+          href={phoneCallUrl}
+          className="flex-1 bg-orange-600 text-white py-2 rounded text-xs font-black text-center no-underline inline-flex items-center justify-center gap-1"
+        >
+          <span>📞</span>
+          <span>Call Now</span>
+        </a>
+      </div>
     </div>
   );
 }

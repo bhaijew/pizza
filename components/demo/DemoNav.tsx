@@ -11,10 +11,10 @@ export default function DemoNav({ currentModule }: DemoNavProps) {
   const pathname = usePathname();
 
   const modules = [
-    { id: "menu", label: "🍕 Customer Menu", href: "/demo/menu", desc: "Storefront & Cart" },
-    { id: "pos", label: "🖥️ Admin POS", href: "/demo/pos", desc: "Order Management" },
-    { id: "kitchen", label: "🔥 Kitchen KDS", href: "/demo/kitchen", desc: "Chef Display Screen" },
-    { id: "track", label: "📍 Live Tracker", href: "/demo/track", desc: "Customer Tracking" },
+    { id: "menu", label: "🍕 Menu", fullLabel: "🍕 Customer Menu", href: "/demo/menu" },
+    { id: "pos", label: "🖥️ POS", fullLabel: "🖥️ Admin POS", href: "/demo/pos" },
+    { id: "kitchen", label: "🔥 KDS", fullLabel: "🔥 Kitchen KDS", href: "/demo/kitchen" },
+    { id: "track", label: "📍 Tracker", fullLabel: "📍 Live Tracker", href: "/demo/track" },
   ];
 
   return (
@@ -22,11 +22,11 @@ export default function DemoNav({ currentModule }: DemoNavProps) {
       style={{
         background: "#09090b",
         borderBottom: "2px solid #ea580c",
-        padding: "10px 16px",
+        padding: "8px 12px",
         position: "sticky",
         top: 0,
         zIndex: 100,
-        boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+        boxShadow: "0 4px 14px rgba(0,0,0,0.4)",
       }}
     >
       <div
@@ -36,78 +36,72 @@ export default function DemoNav({ currentModule }: DemoNavProps) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          gap: 8,
           flexWrap: "wrap",
-          gap: 10,
         }}
       >
-        {/* Left: Badge & Title */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {/* Left: Home Button & Sandbox Indicator */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Link
             href="/"
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 6,
-              fontSize: 12,
-              fontWeight: 800,
+              gap: 4,
+              fontSize: 11,
+              fontWeight: 900,
               color: "#ffffff",
               background: "#ea580c",
-              padding: "6px 12px",
+              padding: "5px 10px",
               borderRadius: 4,
               textDecoration: "none",
               textTransform: "uppercase",
-              letterSpacing: "0.03em",
               boxShadow: "0 2px 0 #9a3412",
+              whiteSpace: "nowrap",
             }}
           >
             <span>←</span>
-            <span>Back to Home</span>
+            <span>Home</span>
           </Link>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
             <span
               style={{
                 display: "inline-block",
-                width: 8,
-                height: 8,
+                width: 7,
+                height: 7,
                 borderRadius: "50%",
                 background: "#22c55e",
-                boxShadow: "0 0 8px #22c55e",
-                animation: "pulse 2s infinite",
+                boxShadow: "0 0 6px #22c55e",
               }}
             />
             <span
               style={{
                 color: "#ffedd5",
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: 900,
                 textTransform: "uppercase",
-                letterSpacing: "0.05em",
+                letterSpacing: "0.04em",
+                whiteSpace: "nowrap",
               }}
             >
-              Interactive Demo Sandbox
-            </span>
-            <span
-              style={{
-                background: "rgba(234, 88, 12, 0.2)",
-                color: "#fb923c",
-                border: "1px solid #ea580c",
-                fontSize: 10,
-                fontWeight: 800,
-                padding: "2px 6px",
-                borderRadius: 3,
-              }}
-            >
-              Zero Login Required
+              Demo Sandbox
             </span>
           </div>
         </div>
 
-        {/* Right: Quick Module Switcher */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 11, color: "#a1a1aa", fontWeight: 700, marginRight: 4 }}>
-            Switch Module:
-          </span>
+        {/* Right: Quick Module Switcher (Horizontal scroll on mobile) */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+            paddingBottom: 2,
+            maxWidth: "100%",
+          }}
+        >
           {modules.map((m) => {
             const isActive = currentModule === m.id || pathname === m.href;
             return (
@@ -118,8 +112,9 @@ export default function DemoNav({ currentModule }: DemoNavProps) {
                   fontSize: 11,
                   fontWeight: 800,
                   textDecoration: "none",
-                  padding: "6px 10px",
+                  padding: "5px 9px",
                   borderRadius: 4,
+                  whiteSpace: "nowrap",
                   transition: "all 0.15s ease",
                   background: isActive ? "#ffffff" : "#18181b",
                   color: isActive ? "#09090b" : "#e4e4e7",
@@ -127,10 +122,10 @@ export default function DemoNav({ currentModule }: DemoNavProps) {
                   boxShadow: isActive ? "0 2px 0 #ea580c" : "none",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 5,
+                  gap: 4,
                 }}
               >
-                <span>{m.label}</span>
+                <span>{m.fullLabel}</span>
               </Link>
             );
           })}
