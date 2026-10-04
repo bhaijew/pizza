@@ -1,12 +1,10 @@
 "use client";
 
 import { useActionState, useState, useEffect } from "react";
-import { adminLogin, getPublicShopsForLogin } from "@/lib/admin-actions";
+import { adminLogin } from "@/lib/admin-actions";
 
 export default function AdminLoginPage() {
   const [mounted, setMounted] = useState(false);
-  const [shops, setShops] = useState<{ id: number; name: string; slug: string }[]>([]);
-  const [selectedShopId, setSelectedShopId] = useState<string>("");
   const [state, formAction, isPending] = useActionState(adminLogin, {
     error: null,
   });
@@ -14,9 +12,6 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     setMounted(true);
-    getPublicShopsForLogin().then((data) => {
-      setShops(data);
-    });
   }, []);
 
   if (!mounted) {
@@ -123,50 +118,6 @@ export default function AdminLoginPage() {
 
         {/* Form */}
         <form action={formAction}>
-          {shops.length > 0 && (
-            <div style={{ marginBottom: "18px" }}>
-              <label
-                htmlFor="shop_id"
-                style={{
-                  display: "block",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: "#334155",
-                  marginBottom: "6px",
-                }}
-              >
-                Select Store Branch
-              </label>
-              <select
-                id="shop_id"
-                name="shop_id"
-                value={selectedShopId}
-                onChange={(e) => setSelectedShopId(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "11px 14px",
-                  borderRadius: "5px",
-                  border: "1px solid #cbd5e1",
-                  background: "#ffffff",
-                  color: "#0f172a",
-                  fontSize: "14px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                  cursor: "pointer",
-                }}
-              >
-                <option value="">🌐 Auto-Detect / Master Platform Admin</option>
-                {shops.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    🏪 {s.name}
-                  </option>
-                ))}
-              </select>
-              <p style={{ margin: "5px 0 0", fontSize: "11px", color: "#64748b" }}>
-                Select your branch to sign in directly to its isolated terminal.
-              </p>
-            </div>
-          )}
 
           <div style={{ marginBottom: "20px" }}>
             <label
