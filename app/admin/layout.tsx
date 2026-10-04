@@ -142,6 +142,21 @@ export default async function AdminLayout({
     }
   }
 
+  let availableShops: { id: number; name: string; slug: string }[] = [];
+  if (isServiceRoleConfigured()) {
+    try {
+      const db = createAdminClient();
+      const { data: shopsData } = await db
+        .from("shops")
+        .select("id, name, slug")
+        .eq("status", "active")
+        .order("name", { ascending: true });
+      if (shopsData) {
+        availableShops = shopsData as { id: number; name: string; slug: string }[];
+      }
+    } catch {}
+  }
+
   return (
     <AdminShell
       shopName={shopName}
@@ -149,6 +164,7 @@ export default async function AdminLayout({
       ownerName={ownerName}
       shopSlug={shopSlug}
       shopId={shopIdNum}
+      availableShops={availableShops}
     >
       {children}
     </AdminShell>

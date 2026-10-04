@@ -40,6 +40,8 @@ export async function fetchCategories(shopId?: number | null): Promise<{
     const branchShopId = cookieStore.get("pizza_admin_shop_id")?.value;
     if (branchShopId) {
       query = query.eq("shop_id", parseInt(branchShopId, 10));
+    } else {
+      query = query.is("shop_id", null);
     }
   }
 

@@ -62,32 +62,75 @@ function slugify(text: string): string {
 
 // ─── AUTH ACTIONS ─────────────────────────────────────────────────
 
+export async function getPublicShopsForLogin(): Promise<{ id: number; name: string; slug: string }[]> {
+  try {
+    const db = createAdminClient();
+    const { data } = await db
+      .from("shops")
+      .select("id, name, slug")
+      .eq("status", "active")
+      .order("name", { ascending: true });
+    return (data as { id: number; name: string; slug: string }[]) || [];
+  } catch {
+    return [];
+  }
+}
+
 export async function adminLogin(
   _prev: { error: string | null },
   formData: FormData
 ): Promise<{ error: string | null }> {
   const password = (formData.get("password") as string)?.trim();
+  const shopIdRaw = (formData.get("shop_id") as string)?.trim();
   const adminPassword = process.env.ADMIN_PASSWORD ?? "changeme";
 
   if (!password) {
     return { error: "Please enter your password." };
   }
 
-  // 1. Check if it matches Master Store Password
-  let isAuthorized = password === adminPassword;
+  const db = isServiceRoleConfigured() ? createAdminClient() : null;
+  let isAuthorized = false;
   let matchedShopData: { id: number; name: string; slug: string } | null = null;
 
-  // 2. If not master password, check against registered shops in Supabase
-  if (!isAuthorized && isServiceRoleConfigured()) {
-    try {
-      const db = createAdminClient();
-      const { data: matchedShop } = await db
+  // Case 1: Specific shop branch was selected on login screen
+  if (shopIdRaw && shopIdRaw !== "master" && db) {
+    const shopIdNum = parseInt(shopIdRaw, 10);
+    const { data: matchedShop } = await db
+      .from("shops")
+      .select("id, name, slug, status, password")
+      .eq("id", shopIdNum)
+      .maybeSingle();
+
+    if (matchedShop) {
+      if (matchedShop.status === "suspended") {
+        return {
+          error: `Access Suspended: Shop "${matchedShop.name}" has been suspended by the Super Admin. Please contact platform support.`,
+        };
+      }
+      // Authorized if password matches this shop's password OR platform master password
+      if (matchedShop.password === password || password === adminPassword) {
+        isAuthorized = true;
+        matchedShopData = { id: matchedShop.id, name: matchedShop.name, slug: matchedShop.slug };
+      } else {
+        return { error: `Incorrect password for "${matchedShop.name}".` };
+      }
+    } else {
+      return { error: "Selected branch was not found." };
+    }
+  } else {
+    // Case 2: No specific shop selected or "master" chosen
+    if (password === adminPassword) {
+      isAuthorized = true;
+      matchedShopData = null; // Master store
+    } else if (db) {
+      // Check if password matches a registered shop
+      const { data: matchedShops } = await db
         .from("shops")
         .select("id, name, slug, status, password")
-        .eq("password", password)
-        .maybeSingle();
+        .eq("password", password);
 
-      if (matchedShop) {
+      if (matchedShops && matchedShops.length === 1) {
+        const matchedShop = matchedShops[0];
         if (matchedShop.status === "suspended") {
           return {
             error: `Access Suspended: Shop "${matchedShop.name}" has been suspended by the Super Admin. Please contact platform support.`,
@@ -95,9 +138,11 @@ export async function adminLogin(
         }
         isAuthorized = true;
         matchedShopData = { id: matchedShop.id, name: matchedShop.name, slug: matchedShop.slug };
+      } else if (matchedShops && matchedShops.length > 1) {
+        return {
+          error: "Multiple branches share this password. Please select your specific branch from the dropdown above.",
+        };
       }
-    } catch {
-      // Ignore if shops table not yet created
     }
   }
 
@@ -148,6 +193,55 @@ export async function adminLogin(
   redirect("/admin");
 }
 
+export async function switchAdminBranch(targetShopId: number | null) {
+  await requireAdmin();
+  const cookieStore = await cookies();
+
+  if (targetShopId !== null) {
+    const db = createAdminClient();
+    const { data: shop } = await db
+      .from("shops")
+      .select("id, name, slug")
+      .eq("id", targetShopId)
+      .maybeSingle();
+
+    if (shop) {
+      cookieStore.set(ADMIN_SHOP_COOKIE, String(shop.id), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: COOKIE_MAX_AGE,
+        path: "/",
+      });
+      cookieStore.set(ADMIN_SHOP_NAME_COOKIE, shop.name, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: COOKIE_MAX_AGE,
+        path: "/",
+      });
+      if (shop.slug) {
+        cookieStore.set(ADMIN_SHOP_SLUG_COOKIE, shop.slug, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: COOKIE_MAX_AGE,
+          path: "/",
+        });
+      }
+    }
+  } else {
+    // Switch to Master Store (All / Unassigned)
+    cookieStore.delete(ADMIN_SHOP_COOKIE);
+    cookieStore.delete(ADMIN_SHOP_NAME_COOKIE);
+    cookieStore.delete(ADMIN_SHOP_SLUG_COOKIE);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/categories");
+  revalidatePath("/admin/products");
+}
+
 export async function adminLogout() {
   const cookieStore = await cookies();
   cookieStore.delete(ADMIN_COOKIE);
@@ -179,11 +273,21 @@ export async function createCategory(
   const sort_order = parseInt(formData.get("sort_order") as string) || 0;
   const is_active = formData.get("is_active") === "true";
 
+  // Check explicit shop_id from form or fallback to activeShop.shopId
+  const rawShopId = formData.get("shop_id");
+  let targetShopId: number | null = activeShop.shopId;
+  if (rawShopId !== null && rawShopId !== undefined && rawShopId !== "") {
+    const parsed = parseInt(rawShopId as string, 10);
+    if (!isNaN(parsed)) {
+      targetShopId = parsed;
+    }
+  }
+
   if (!name || !slug) return { error: "Name and slug are required.", success: false };
 
   // Scope slug to branch to prevent cross-tenant unique collisions
-  if (activeShop.shopId && !slug.endsWith(`-${activeShop.shopId}`)) {
-    slug = `${slug}-${activeShop.shopId}`;
+  if (targetShopId && !slug.endsWith(`-${targetShopId}`)) {
+    slug = `${slug}-${targetShopId}`;
   }
 
   const { error } = await db
@@ -195,13 +299,18 @@ export async function createCategory(
       image_url,
       sort_order,
       is_active,
-      shop_id: activeShop.shopId || null,
+      shop_id: targetShopId,
     });
 
   if (error) return { error: error.message, success: false };
 
   revalidatePath("/admin/categories");
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/products/new");
   revalidatePath("/");
+  if (activeShop.shopSlug) {
+    revalidatePath(`/${activeShop.shopSlug}`);
+  }
   return { error: null, success: true };
 }
 
@@ -225,15 +334,38 @@ export async function updateCategory(
   const sort_order = parseInt(formData.get("sort_order") as string) || 0;
   const is_active = formData.get("is_active") === "true";
 
+  const rawShopId = formData.get("shop_id");
+  let targetShopId: number | null = activeShop.shopId;
+  if (rawShopId !== null && rawShopId !== undefined && rawShopId !== "") {
+    const parsed = parseInt(rawShopId as string, 10);
+    if (!isNaN(parsed)) {
+      targetShopId = parsed;
+    }
+  }
+
   if (!name || !slug) return { error: "Name and slug are required.", success: false };
 
-  if (activeShop.shopId && !slug.endsWith(`-${activeShop.shopId}`)) {
-    slug = `${slug}-${activeShop.shopId}`;
+  if (targetShopId && !slug.endsWith(`-${targetShopId}`)) {
+    slug = `${slug}-${targetShopId}`;
+  }
+
+  const updateData: Record<string, unknown> = {
+    name,
+    slug,
+    description,
+    image_url,
+    sort_order,
+    is_active,
+  };
+
+  // If shop_id was explicitly provided, allow updating branch assignment
+  if (rawShopId !== null && rawShopId !== undefined) {
+    updateData.shop_id = targetShopId;
   }
 
   let query = db
     .from("categories")
-    .update({ name, slug, description, image_url, sort_order, is_active })
+    .update(updateData)
     .eq("id", id);
 
   if (activeShop.shopId) {
@@ -245,7 +377,12 @@ export async function updateCategory(
   if (error) return { error: error.message, success: false };
 
   revalidatePath("/admin/categories");
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/products/new");
   revalidatePath("/");
+  if (activeShop.shopSlug) {
+    revalidatePath(`/${activeShop.shopSlug}`);
+  }
   return { error: null, success: true };
 }
 
@@ -267,7 +404,11 @@ export async function deleteCategory(id: number): Promise<{ error: string | null
   if (error) return { error: error.message };
 
   revalidatePath("/admin/categories");
+  revalidatePath("/admin/products");
   revalidatePath("/");
+  if (activeShop.shopSlug) {
+    revalidatePath(`/${activeShop.shopSlug}`);
+  }
   return { error: null };
 }
 

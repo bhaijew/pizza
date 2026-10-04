@@ -2,8 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { adminLogout } from "@/lib/admin-actions";
+import { useState, useEffect, useTransition } from "react";
+import { adminLogout, switchAdminBranch } from "@/lib/admin-actions";
 import LiveOrderNotifier from "@/components/admin/LiveOrderNotifier";
 
 interface AdminShellProps {
@@ -13,6 +13,7 @@ interface AdminShellProps {
   ownerName?: string;
   shopSlug?: string;
   shopId?: number | null;
+  availableShops?: { id: number; name: string; slug: string }[];
 }
 
 interface NavItem {
@@ -199,11 +200,20 @@ export default function AdminShell({
   ownerName,
   shopSlug,
   shopId,
+  availableShops = [],
 }: AdminShellProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeBranch, setActiveBranch] = useState<string>(shopName || "Pizza Admin");
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isSwitchingBranch, startBranchTransition] = useTransition();
+
+  const handleSelectBranch = (targetShopId: number | null) => {
+    startBranchTransition(async () => {
+      await switchAdminBranch(targetShopId);
+      window.location.reload();
+    });
+  };
 
   // Sidebar theme state: "dark" (Obsidian) vs "light" (White)
   const [sidebarTheme, setSidebarTheme] = useState<"dark" | "light">("dark");
@@ -383,6 +393,39 @@ export default function AdminShell({
               />
               <span>Live Terminal</span>
             </div>
+
+            {availableShops.length > 0 && (
+              <div style={{ marginTop: "8px" }}>
+                <select
+                  value={shopId ? String(shopId) : ""}
+                  disabled={isSwitchingBranch}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    handleSelectBranch(val ? parseInt(val, 10) : null);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                    background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.08)",
+                    color: isLight ? "#0f172a" : "#f8fafc",
+                    border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.15)",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    outline: "none",
+                    cursor: "pointer",
+                  }}
+                  title="Switch Active Store Branch"
+                >
+                  <option value="" style={{ color: "#0f172a", background: "#fff" }}>🌐 Master Store (All / Global)</option>
+                  {availableShops.map((s) => (
+                    <option key={s.id} value={s.id} style={{ color: "#0f172a", background: "#fff" }}>
+                      🏪 {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
 
@@ -658,12 +701,51 @@ export default function AdminShell({
           className="md:flex"
         >
           {/* Breadcrumb & Section Name */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
             <span style={{ fontSize: "13px", color: "#64748b", fontWeight: 500 }}>Admin Portal</span>
             <span style={{ color: "#cbd5e1", fontSize: "14px" }}>/</span>
             <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>
               {currentPageTitle}
             </span>
+
+            {/* Quick Branch Switcher in Top Bar */}
+            {availableShops.length > 0 && (
+              <div style={{ position: "relative", marginLeft: "10px" }}>
+                <select
+                  value={shopId ? String(shopId) : ""}
+                  disabled={isSwitchingBranch}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    handleSelectBranch(val ? parseInt(val, 10) : null);
+                  }}
+                  style={{
+                    padding: "4px 26px 4px 10px",
+                    borderRadius: "16px",
+                    background: shopId ? "#eff6ff" : "#f1f5f9",
+                    color: shopId ? "#1d4ed8" : "#334155",
+                    border: shopId ? "1.5px solid #bfdbfe" : "1.5px solid #cbd5e1",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    outline: "none",
+                    cursor: "pointer",
+                    appearance: "none",
+                  }}
+                  title="Switch Active Store Branch"
+                >
+                  <option value="">🌐 Master Store (All Branches)</option>
+                  {availableShops.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      🏪 {s.name} (#{s.id})
+                    </option>
+                  ))}
+                </select>
+                <div style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: shopId ? "#3b82f6" : "#64748b" }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Quick Actions & Status Tools */}

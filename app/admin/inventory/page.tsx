@@ -16,7 +16,7 @@ export default async function AdminInventoryPage() {
   const activeShop = await getActiveShopContext();
 
   let prodQuery = db.from("products").select("*").order("name", { ascending: true });
-  let catQuery = db.from("categories").select("*").order("display_order", { ascending: true });
+  let catQuery = db.from("categories").select("*").order("sort_order", { ascending: true });
 
   if (activeShop.shopId) {
     prodQuery = prodQuery.eq("shop_id", activeShop.shopId);
@@ -29,7 +29,7 @@ export default async function AdminInventoryPage() {
   const [{ data: products }, { data: categories }, settings] = await Promise.all([
     prodQuery,
     catQuery,
-    fetchSettings(),
+    fetchSettings(activeShop.shopId),
   ]);
 
   return (

@@ -7,11 +7,19 @@ import { createCategory, updateCategory, deleteCategory } from "@/lib/admin-acti
 interface CategoryManagerProps {
   initialCategories: Category[];
   productCounts: Record<string | number, number>;
+  currentShopId?: number | null;
+  currentShopName?: string;
+  isMasterAdmin?: boolean;
+  availableShops?: { id: number; name: string; slug: string }[];
 }
 
 export default function CategoryManager({
   initialCategories,
   productCounts,
+  currentShopId,
+  currentShopName = "Pizza Admin",
+  isMasterAdmin = false,
+  availableShops = [],
 }: CategoryManagerProps) {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -26,6 +34,7 @@ export default function CategoryManager({
   const [formImageUrl, setFormImageUrl] = useState("");
   const [formSortOrder, setFormSortOrder] = useState(0);
   const [formIsActive, setFormIsActive] = useState(true);
+  const [formShopId, setFormShopId] = useState<string>(currentShopId ? String(currentShopId) : "");
 
   const openAddModal = () => {
     setEditingCategory(null);
@@ -35,6 +44,7 @@ export default function CategoryManager({
     setFormImageUrl("");
     setFormSortOrder(categories.length);
     setFormIsActive(true);
+    setFormShopId(currentShopId ? String(currentShopId) : "");
     setErrorMessage(null);
     setIsModalOpen(true);
   };
@@ -47,6 +57,7 @@ export default function CategoryManager({
     setFormImageUrl(cat.image_url || "");
     setFormSortOrder(cat.sort_order || 0);
     setFormIsActive(cat.is_active ?? true);
+    setFormShopId(cat.shop_id != null ? String(cat.shop_id) : (currentShopId ? String(currentShopId) : ""));
     setErrorMessage(null);
     setIsModalOpen(true);
   };
@@ -75,6 +86,7 @@ export default function CategoryManager({
     formData.set("image_url", formImageUrl);
     formData.set("sort_order", formSortOrder.toString());
     formData.set("is_active", formIsActive ? "true" : "false");
+    formData.set("shop_id", formShopId);
 
     startTransition(async () => {
       let res;
@@ -125,8 +137,21 @@ export default function CategoryManager({
           marginBottom: "20px",
         }}
       >
-        <div style={{ color: "#64748b", fontSize: "13px" }}>
-          Organize your pizzas, drinks, sides, and desserts into menu categories.
+        <div style={{ color: "#64748b", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <span>Organize your pizzas, drinks, sides, and desserts into menu categories.</span>
+          <span
+            style={{
+              padding: "2px 8px",
+              borderRadius: "4px",
+              background: currentShopId ? "#eff6ff" : "#f1f5f9",
+              color: currentShopId ? "#1d4ed8" : "#475569",
+              border: currentShopId ? "1px solid #bfdbfe" : "1px solid #cbd5e1",
+              fontSize: "11px",
+              fontWeight: 700,
+            }}
+          >
+            Branch: {currentShopName} {currentShopId ? `(#${currentShopId})` : "(All/Global)"}
+          </span>
         </div>
 
         <button
@@ -477,6 +502,60 @@ export default function CategoryManager({
                   </label>
                 </div>
               </div>
+
+              {/* Branch Assignment Selector */}
+              {availableShops && availableShops.length > 0 ? (
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "5px" }}>
+                    Assigned Branch / Store
+                  </label>
+                  <select
+                    value={formShopId}
+                    onChange={(e) => setFormShopId(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "9px 12px",
+                      borderRadius: "5px",
+                      border: "1px solid #cbd5e1",
+                      background: "#ffffff",
+                      color: "#0f172a",
+                      fontSize: "13px",
+                      outline: "none",
+                      boxSizing: "border-box",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <option value="">🌐 Master Store (Global / Unassigned)</option>
+                    {availableShops.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        🏪 {s.name} (#{s.id})
+                      </option>
+                    ))}
+                  </select>
+                  <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
+                    This category will only appear on this branch&apos;s menu and its admin management.
+                  </p>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "5px",
+                    background: currentShopId ? "#eff6ff" : "#f8fafc",
+                    border: currentShopId ? "1px solid #bfdbfe" : "1px solid #e2e8f0",
+                    fontSize: "12px",
+                    color: currentShopId ? "#1e40af" : "#475569",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <span>🏪</span>
+                  <span>
+                    Saving to branch: <strong>{currentShopName}</strong> {currentShopId ? `(#${currentShopId})` : ""}
+                  </span>
+                </div>
+              )}
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "10px" }}>
                 <button
