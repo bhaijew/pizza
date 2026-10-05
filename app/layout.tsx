@@ -44,7 +44,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${outfit.variable} ${geistMono.variable}`}
     >
-      <body style={{ minHeight: "100vh" }} suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

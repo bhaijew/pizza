@@ -251,8 +251,7 @@ export default function AdminShell({
     <div
       style={{
         display: "flex",
-        minHeight: "125vh",
-        zoom: 0.8,
+        minHeight: "100vh",
         background: isLight ? "#f8fafc" : "#0a0f1d",
         color: isLight ? "#0f172a" : "#f8fafc",
         fontFamily: "var(--font-sans, system-ui, -apple-system, sans-serif)",
@@ -426,7 +425,8 @@ export default function AdminShell({
         <nav
           style={{
             padding: "16px 12px",
-            flex: 1,
+            flex: "1 1 auto",
+            minHeight: 0,
             overflowY: "auto",
             display: "flex",
             flexDirection: "column",
@@ -525,7 +525,8 @@ export default function AdminShell({
         {/* Bottom Actions Widget */}
         <div
           style={{
-            padding: "14px 14px",
+            marginTop: "auto",
+            padding: "14px 14px 18px",
             borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
             display: "flex",
             flexDirection: "column",
@@ -1157,8 +1158,7 @@ export default function AdminShell({
         <main
           style={{
             flex: 1,
-            overflowY: "auto",
-            padding: "28px 32px",
+            padding: "24px 28px 48px",
             maxWidth: "1440px",
             width: "100%",
             margin: "0 auto",
