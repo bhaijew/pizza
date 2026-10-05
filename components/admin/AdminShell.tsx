@@ -251,7 +251,8 @@ export default function AdminShell({
     <div
       style={{
         display: "flex",
-        minHeight: "100vh",
+        minHeight: "125vh",
+        zoom: 0.8,
         background: isLight ? "#f8fafc" : "#0a0f1d",
         color: isLight ? "#0f172a" : "#f8fafc",
         fontFamily: "var(--font-sans, system-ui, -apple-system, sans-serif)",

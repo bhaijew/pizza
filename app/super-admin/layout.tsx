@@ -13,7 +13,8 @@ export default function SuperAdminLayout({
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "125vh",
+        zoom: 0.8,
         background: "#f8fafc",
         color: "#0f172a",
         fontFamily: "var(--font-sans, system-ui, sans-serif)",
