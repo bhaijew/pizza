@@ -218,7 +218,7 @@ export default function DemoKitchenPage() {
   });
 
   return (
-    <div style={{ minHeight: "100vh", background: "#09090b", color: "#ffffff" }}>
+    <div style={{ minHeight: "125vh", background: "#09090b", color: "#ffffff" }}>
       {/* Universal Top Demo Bar */}
       <DemoNav currentModule="kitchen" />
 

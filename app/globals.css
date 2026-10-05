@@ -67,7 +67,16 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  min-height: 100vh;
+  min-height: 125vh;
+}
+
+/* 80% zoom viewport height synchronization (100% / 0.8 = 125vh) */
+.min-h-screen {
+  min-height: 125vh !important;
+}
+
+.h-screen {
+  height: 125vh !important;
 }
 
 /* Respect prefers-reduced-motion */

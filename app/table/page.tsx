@@ -12,7 +12,7 @@ export default async function TableIndexPage() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "125vh",
         background: "linear-gradient(180deg, #fffdfa 0%, #fff7ed 100%)",
         display: "flex",
         flexDirection: "column",

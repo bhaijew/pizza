@@ -251,7 +251,7 @@ export default function AdminShell({
     <div
       style={{
         display: "flex",
-        minHeight: "100vh",
+        minHeight: "125vh",
         background: isLight ? "#f8fafc" : "#0a0f1d",
         color: isLight ? "#0f172a" : "#f8fafc",
         fontFamily: "var(--font-sans, system-ui, -apple-system, sans-serif)",
@@ -347,7 +347,8 @@ export default function AdminShell({
           flexShrink: 0,
           position: "sticky",
           top: 0,
-          height: "100vh",
+          height: "125vh",
+          maxHeight: "125vh",
           zIndex: 40,
           boxShadow: isLight ? "2px 0 16px rgba(0, 0, 0, 0.03)" : "4px 0 28px rgba(0, 0, 0, 0.45)",
           transition: "background 0.25s ease, border-color 0.25s ease",
@@ -690,7 +691,7 @@ export default function AdminShell({
       </aside>
 
       {/* ─── MAIN CONTENT AREA ────────────────────────────── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: "100vh" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: "125vh" }}>
         {/* Desktop Top Header Bar */}
         <header
           style={{

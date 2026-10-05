@@ -49,7 +49,7 @@ export default async function AdminLayout({
           return (
             <div
               style={{
-                minHeight: "100vh",
+                minHeight: "125vh",
                 background: "#090d16",
                 display: "flex",
                 alignItems: "center",

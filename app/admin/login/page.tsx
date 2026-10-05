@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
       <div
         suppressHydrationWarning
         style={{
-          minHeight: "100vh",
+          minHeight: "125vh",
           background: "#f1f5f9",
         }}
       />
@@ -30,7 +30,6 @@ export default function AdminLoginPage() {
     <div
       suppressHydrationWarning
       style={{
-        zoom: 0.8,
         minHeight: "125vh",
         display: "flex",
         alignItems: "center",

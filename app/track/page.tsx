@@ -44,7 +44,7 @@ export default function TrackSearchPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", padding: "40px 16px" }}>
+    <div style={{ minHeight: "125vh", background: "#f8fafc", padding: "40px 16px" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         {/* Back Link */}
         <Link

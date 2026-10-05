@@ -72,7 +72,7 @@ export default function DemoTrackerPage() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", color: "#0f172a" }}>
+    <div style={{ minHeight: "125vh", background: "#f8fafc", color: "#0f172a" }}>
       {/* Universal Top Demo Bar */}
       <DemoNav currentModule="track" />
 
