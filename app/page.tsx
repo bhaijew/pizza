@@ -15,14 +15,22 @@ export default function HomePage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    // Strictly disable window scrolling on main page
+    // Strictly disable window scrolling on main page and set dark seamless background
     const origHtml = document.documentElement.style.overflow;
     const origBody = document.body.style.overflow;
+    const origBodyBg = document.body.style.backgroundColor;
+    const origHtmlBg = document.documentElement.style.backgroundColor;
+
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+    document.documentElement.style.backgroundColor = "#080706";
+    document.body.style.backgroundColor = "#080706";
+
     return () => {
       document.documentElement.style.overflow = origHtml;
       document.body.style.overflow = origBody;
+      document.documentElement.style.backgroundColor = origHtmlBg;
+      document.body.style.backgroundColor = origBodyBg;
     };
   }, []);
 
@@ -50,11 +58,15 @@ export default function HomePage() {
 
   return (
     <main
-      className="relative w-screen h-[100dvh] max-h-[100dvh] overflow-hidden select-none flex flex-col justify-center items-center"
+      className="relative w-full min-w-full min-h-[125vh] h-[125vh] overflow-hidden select-none flex flex-col justify-center items-center"
       style={{
         background: "#080706",
         color: "#ffffff",
         fontFamily: "var(--font-outfit, var(--font-inter, system-ui, sans-serif))",
+        width: "100%",
+        minWidth: "100%",
+        minHeight: "125vh",
+        height: "125vh",
       }}
     >
       {/* ─── Ambient Glow Lights ─── */}
@@ -412,7 +424,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════
           MOBILE VIEW (md:hidden) — Square 5px UI, 100dvh Zero-Scroll
           ══════════════════════════════════════════════════════════════════ */}
-      <div className="flex md:hidden w-full h-[100dvh] max-h-[100dvh] overflow-hidden flex-col justify-between p-4 relative z-10">
+      <div className="flex md:hidden w-full min-h-[125vh] h-[125vh] overflow-hidden flex-col justify-between p-4 relative z-10">
         
         {/* Mobile Header Bar (Square 5px) */}
         <div
