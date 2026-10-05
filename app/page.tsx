@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function HomePage() {
-  const phoneNumber = "0333-4867615";
-  const intlPhone = "+92 333 4867615";
-  const rawPhone = "03334867615";
-  const whatsappUrl = `https://wa.me/923334867615?text=${encodeURIComponent(
+  const phoneNumber = "0302-5260958";
+  const intlPhone = "+92 302 5260958";
+  const rawPhone = "03025260958";
+  const whatsappUrl = `https://wa.me/923025260958?text=${encodeURIComponent(
     "Salam Syed Zeeshan Haider, I am interested in purchasing the Pizza POS & Online Ordering System."
   )}`;
-  const callUrl = `tel:+923334867615`;
+  const callUrl = `tel:+923025260958`;
 
   const [copied, setCopied] = useState(false);
 
