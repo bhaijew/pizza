@@ -4,6 +4,22 @@ import { useState, useEffect, useMemo, useTransition } from "react";
 import type { Order } from "@/types/menu";
 import { updateOrderStatus, assignOrderRider, triggerRiderWhatsAppAlert } from "@/lib/admin-actions";
 import { createClient } from "@/utils/supabase/client";
+import {
+  Search,
+  Bike,
+  UtensilsCrossed,
+  ShoppingBag,
+  Clock,
+  ArrowRight,
+  ExternalLink,
+  Flame,
+  CheckCircle2,
+  XCircle,
+  Key,
+  MapPin,
+  Phone,
+  User,
+} from "lucide-react";
 
 interface OrdersLiveBoardProps {
   initialOrders: Order[];
@@ -48,7 +64,7 @@ function getOrderServiceInfo(order: Order) {
     deliveryAddress,
     riderName,
     riderPhone,
-    label: isDelivery ? "🛵 Delivery" : isDineIn ? (tableNumber ? `Table #${tableNumber}` : "Dine-In") : (tokenNumber ? `Token ${tokenNumber}` : "Takeaway"),
+    label: isDelivery ? "Delivery" : isDineIn ? (tableNumber ? `Table #${tableNumber}` : "Dine-In") : (tokenNumber ? `Token ${tokenNumber}` : "Takeaway"),
   };
 }
 
@@ -306,8 +322,8 @@ export default function OrdersLiveBoard({
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               width: "100%",
-              padding: "9px 12px 9px 32px",
-              borderRadius: "5px",
+              padding: "9px 12px 9px 34px",
+              borderRadius: "6px",
               border: "1px solid #cbd5e1",
               background: "#ffffff",
               color: "#0f172a",
@@ -316,20 +332,10 @@ export default function OrdersLiveBoard({
               boxSizing: "border-box",
             }}
           />
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <Search
+            size={15}
             style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }}
-          >
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
+          />
         </div>
       </div>
 
@@ -337,7 +343,7 @@ export default function OrdersLiveBoard({
       <div
         style={{
           display: "flex",
-          gap: "6px",
+          gap: "8px",
           flexWrap: "wrap",
           marginBottom: "20px",
           borderBottom: "1px solid #e2e8f0",
@@ -348,144 +354,189 @@ export default function OrdersLiveBoard({
           onClick={() => setActiveTab("active")}
           style={{
             padding: "7px 14px",
-            borderRadius: "5px",
+            borderRadius: "6px",
             fontSize: "13px",
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: "pointer",
             border: activeTab === "active" ? "1px solid #fed7aa" : "1px solid #e2e8f0",
             background: activeTab === "active" ? "#fff7ed" : "#ffffff",
             color: activeTab === "active" ? "#ea580c" : "#64748b",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.15s ease",
           }}
         >
-          Active ({activeCount})
+          <Flame size={14} className={activeTab === "active" ? "text-orange-500" : ""} />
+          <span>Active ({activeCount})</span>
         </button>
 
         <button
           onClick={() => setActiveTab("delivery")}
           style={{
             padding: "7px 14px",
-            borderRadius: "5px",
+            borderRadius: "6px",
             fontSize: "13px",
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: "pointer",
             border: activeTab === "delivery" ? "1px solid #a7f3d0" : "1px solid #e2e8f0",
             background: activeTab === "delivery" ? "#ecfdf5" : "#ffffff",
             color: activeTab === "delivery" ? "#065f46" : "#64748b",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.15s ease",
           }}
         >
-          🛵 Delivery ({orders.filter((o) => getOrderServiceInfo(o).type === "delivery").length})
+          <Bike size={14} />
+          <span>Delivery ({orders.filter((o) => getOrderServiceInfo(o).type === "delivery").length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab("all")}
           style={{
             padding: "7px 14px",
-            borderRadius: "5px",
+            borderRadius: "6px",
             fontSize: "13px",
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: "pointer",
             border: activeTab === "all" ? "1px solid #cbd5e1" : "1px solid #e2e8f0",
             background: activeTab === "all" ? "#f1f5f9" : "#ffffff",
             color: activeTab === "all" ? "#0f172a" : "#64748b",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.15s ease",
           }}
         >
-          All Orders ({orders.length})
+          <ShoppingBag size={14} />
+          <span>All Orders ({orders.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab("tables")}
           style={{
             padding: "7px 14px",
-            borderRadius: "5px",
+            borderRadius: "6px",
             fontSize: "13px",
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: "pointer",
             border: activeTab === "tables" ? "1px solid #fde68a" : "1px solid #e2e8f0",
             background: activeTab === "tables" ? "#fef3c7" : "#ffffff",
             color: activeTab === "tables" ? "#92400e" : "#64748b",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.15s ease",
           }}
         >
-          🍽️ Tables ({orders.filter(o => getOrderServiceInfo(o).type === "dine_in").length})
+          <UtensilsCrossed size={14} />
+          <span>Tables ({orders.filter(o => getOrderServiceInfo(o).type === "dine_in").length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab("tokens")}
           style={{
             padding: "7px 14px",
-            borderRadius: "5px",
+            borderRadius: "6px",
             fontSize: "13px",
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: "pointer",
             border: activeTab === "tokens" ? "1px solid #fed7aa" : "1px solid #e2e8f0",
             background: activeTab === "tokens" ? "#fff7ed" : "#ffffff",
             color: activeTab === "tokens" ? "#c2410c" : "#64748b",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.15s ease",
           }}
         >
-          🛍️ Tokens ({orders.filter(o => getOrderServiceInfo(o).type === "takeaway").length})
+          <Key size={14} />
+          <span>Tokens ({orders.filter(o => getOrderServiceInfo(o).type === "takeaway").length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab("pending")}
           style={{
             padding: "7px 14px",
-            borderRadius: "5px",
+            borderRadius: "6px",
             fontSize: "13px",
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: "pointer",
             border: activeTab === "pending" ? "1px solid #fef08a" : "1px solid #e2e8f0",
             background: activeTab === "pending" ? "#fefce8" : "#ffffff",
             color: activeTab === "pending" ? "#ca8a04" : "#64748b",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.15s ease",
           }}
         >
-          Pending
+          <Clock size={13} />
+          <span>Pending</span>
         </button>
 
         <button
           onClick={() => setActiveTab("preparing")}
           style={{
             padding: "7px 14px",
-            borderRadius: "5px",
+            borderRadius: "6px",
             fontSize: "13px",
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: "pointer",
             border: activeTab === "preparing" ? "1px solid #fed7aa" : "1px solid #e2e8f0",
             background: activeTab === "preparing" ? "#fff7ed" : "#ffffff",
             color: activeTab === "preparing" ? "#ea580c" : "#64748b",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.15s ease",
           }}
         >
-          In Kitchen
+          <Flame size={13} />
+          <span>In Kitchen</span>
         </button>
 
         <button
           onClick={() => setActiveTab("ready")}
           style={{
             padding: "7px 14px",
-            borderRadius: "5px",
+            borderRadius: "6px",
             fontSize: "13px",
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: "pointer",
             border: activeTab === "ready" ? "1px solid #e9d5ff" : "1px solid #e2e8f0",
             background: activeTab === "ready" ? "#faf5ff" : "#ffffff",
             color: activeTab === "ready" ? "#9333ea" : "#64748b",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.15s ease",
           }}
         >
-          Ready
+          <CheckCircle2 size={13} />
+          <span>Ready</span>
         </button>
 
         <button
           onClick={() => setActiveTab("delivered")}
           style={{
             padding: "7px 14px",
-            borderRadius: "5px",
+            borderRadius: "6px",
             fontSize: "13px",
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: "pointer",
             border: activeTab === "delivered" ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
             background: activeTab === "delivered" ? "#f0fdf4" : "#ffffff",
             color: activeTab === "delivered" ? "#16a34a" : "#64748b",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.15s ease",
           }}
         >
-          Delivered
+          <CheckCircle2 size={13} />
+          <span>Delivered</span>
         </button>
       </div>
 
@@ -534,13 +585,14 @@ export default function OrdersLiveBoard({
                 style={{
                   background: "#ffffff",
                   border: `1px solid ${cfg.border}`,
-                  borderRadius: "5px",
+                  borderRadius: "10px",
                   padding: "18px",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
                 }}
+                className="admin-card-hover"
               >
                 <div>
                   {/* Top Bar: Service Mode Badge (Table # / Token #) & Status Badge */}
@@ -564,7 +616,7 @@ export default function OrdersLiveBoard({
                               alignItems: "center",
                               gap: "6px",
                               padding: "4px 9px",
-                              borderRadius: "4px",
+                              borderRadius: "6px",
                               fontSize: "12px",
                               fontWeight: 800,
                               background: info.type === "delivery" ? "#ecfdf5" : info.type === "dine_in" ? "#fef3c7" : "#fff7ed",
@@ -572,7 +624,13 @@ export default function OrdersLiveBoard({
                               border: info.type === "delivery" ? "1px solid #a7f3d0" : info.type === "dine_in" ? "1px solid #fde68a" : "1px solid #fed7aa",
                             }}
                           >
-                            <span>{info.type === "delivery" ? "🛵" : info.type === "dine_in" ? "🍽️" : "🛍️"}</span>
+                            {info.type === "delivery" ? (
+                              <Bike size={13} />
+                            ) : info.type === "dine_in" ? (
+                              <UtensilsCrossed size={13} />
+                            ) : (
+                              <ShoppingBag size={13} />
+                            )}
                             <span>{info.label}</span>
                           </span>
 

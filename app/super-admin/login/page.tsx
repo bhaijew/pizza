@@ -1,7 +1,21 @@
 "use client";
 
 import { useActionState, useState, useEffect } from "react";
+import Link from "next/link";
 import { superAdminLogin } from "@/lib/super-admin-actions";
+import {
+  Crown,
+  KeyRound,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  AlertTriangle,
+  ArrowRight,
+  Store,
+  Clock,
+  Sparkles,
+  Lock,
+} from "lucide-react";
 
 export default function SuperAdminLoginPage() {
   const [mounted, setMounted] = useState(false);
@@ -9,9 +23,24 @@ export default function SuperAdminLoginPage() {
     error: null,
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [pakistanTime, setPakistanTime] = useState("");
 
   useEffect(() => {
     setMounted(true);
+    const updateTime = () => {
+      const now = new Date();
+      setPakistanTime(
+        now.toLocaleTimeString("en-US", {
+          timeZone: "Asia/Karachi",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })
+      );
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   if (!mounted) {
@@ -20,7 +49,7 @@ export default function SuperAdminLoginPage() {
         suppressHydrationWarning
         style={{
           minHeight: "100vh",
-          background: "#f8fafc",
+          background: "#090d16",
         }}
       />
     );
@@ -32,60 +61,172 @@ export default function SuperAdminLoginPage() {
       style={{
         minHeight: "100vh",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "24px",
-        background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-        color: "#0f172a",
+        padding: "24px 16px",
+        background: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(220, 38, 38, 0.18), transparent 70%), #0a0f1d",
+        color: "#f8fafc",
         fontFamily: "var(--font-sans, system-ui, sans-serif)",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      {/* Background ambient decorative grid */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: "linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+          maskImage: "radial-gradient(ellipse 60% 50% at 50% 50%, #000 60%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 60% 50% at 50% 50%, #000 60%, transparent 100%)",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Top Bar with Pakistan Time & Network Status */}
+      <div
+        style={{
+          position: "absolute",
+          top: "20px",
+          left: "24px",
+          right: "24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          zIndex: 10,
+        }}
+      >
+        <Link
+          href="/"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            textDecoration: "none",
+            color: "#94a3b8",
+            fontSize: "13px",
+            fontWeight: 700,
+            transition: "color 0.15s ease",
+          }}
+          className="hover:text-white"
+        >
+          <div
+            style={{
+              width: "28px",
+              height: "28px",
+              borderRadius: "6px",
+              background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#ffffff",
+              boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
+            }}
+          >
+            <Crown size={15} />
+          </div>
+          <span>Pizza Multi-Tenant Network</span>
+        </Link>
+
+        {pakistanTime && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "4px 10px",
+              borderRadius: "16px",
+              background: "rgba(255, 255, 255, 0.06)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "#e2e8f0",
+            }}
+          >
+            <div
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#10b981",
+                boxShadow: "0 0 6px #10b981",
+              }}
+            />
+            <Clock size={12} className="text-emerald-400" />
+            <span style={{ fontFamily: "monospace" }}>{pakistanTime} PKT</span>
+          </div>
+        )}
+      </div>
+
+      {/* Main Glassmorphic Security Box */}
       <div
         style={{
           width: "100%",
-          maxWidth: "420px",
-          background: "#ffffff",
-          border: "1px solid #e2e8f0",
-          borderRadius: "8px",
-          padding: "36px 32px",
-          boxShadow: "0 10px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04)",
+          maxWidth: "440px",
+          background: "rgba(15, 23, 42, 0.75)",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
+          borderRadius: "16px",
+          padding: "40px 32px",
+          boxShadow: "0 20px 50px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          position: "relative",
+          zIndex: 10,
         }}
       >
-        {/* Crown / Master Key SVG Emblem */}
-        <div style={{ textAlign: "center", marginBottom: "26px" }}>
+        {/* Crown Emblem */}
+        <div style={{ textAlign: "center", marginBottom: "28px" }}>
           <div
             style={{
-              width: "56px",
-              height: "56px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #dc2626 0%, #ea580c 100%)",
+              width: "64px",
+              height: "64px",
+              borderRadius: "16px",
+              background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
               color: "#ffffff",
-              boxShadow: "0 4px 14px rgba(220, 38, 38, 0.28)",
+              boxShadow: "0 8px 24px rgba(239, 68, 68, 0.35)",
               marginBottom: "16px",
+              border: "1px solid rgba(255, 255, 255, 0.25)",
             }}
           >
-            {/* Real SVG Crown / Master Shield Icon */}
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
-              <path d="M4 20h16" />
-            </svg>
+            <Crown size={32} />
           </div>
+
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "#f87171",
+                background: "rgba(239, 68, 68, 0.15)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                padding: "2px 8px",
+                borderRadius: "20px",
+              }}
+            >
+              Master Access
+            </span>
+          </div>
+
           <h1
             style={{
-              fontSize: "22px",
-              fontWeight: 800,
+              fontSize: "24px",
+              fontWeight: 900,
               letterSpacing: "-0.02em",
               margin: "0 0 6px",
-              color: "#0f172a",
+              color: "#ffffff",
             }}
           >
-            Super Admin Portal
+            Super Admin Controller
           </h1>
-          <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>
-            Multi-Shop &amp; Branch Network Controller
+          <p style={{ margin: 0, fontSize: "13px", color: "#94a3b8" }}>
+            Multi-Shop Branches &amp; Global Fleet Manager
           </p>
         </div>
 
@@ -94,62 +235,69 @@ export default function SuperAdminLoginPage() {
           <div
             style={{
               marginBottom: "20px",
-              padding: "10px 14px",
-              borderRadius: "6px",
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
-              color: "#b91c1c",
+              padding: "12px 14px",
+              borderRadius: "8px",
+              background: "rgba(239, 68, 68, 0.15)",
+              border: "1px solid rgba(239, 68, 68, 0.35)",
+              color: "#fca5a5",
               fontSize: "13px",
+              fontWeight: 600,
               display: "flex",
               alignItems: "center",
               gap: "10px",
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
+            <AlertTriangle size={18} className="text-red-400 shrink-0" />
             <span>{state.error}</span>
           </div>
         )}
 
         {/* Form */}
         <form action={formAction}>
-          <div style={{ marginBottom: "22px" }}>
+          <div style={{ marginBottom: "24px" }}>
             <label
               htmlFor="password"
               style={{
-                display: "block",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
                 fontSize: "12px",
                 fontWeight: 700,
-                color: "#334155",
+                color: "#cbd5e1",
                 textTransform: "uppercase",
                 letterSpacing: "0.04em",
                 marginBottom: "8px",
               }}
             >
-              Master Super Admin Password
+              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <KeyRound size={13} className="text-red-400" />
+                Master Access Key
+              </span>
+              <span style={{ fontSize: "10px", color: "#64748b", textTransform: "none", fontWeight: 600 }}>
+                HMAC SHA-256 Protected
+              </span>
             </label>
+
             <div style={{ position: "relative" }}>
               <input
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter master key..."
+                placeholder="Enter master super admin key..."
                 required
                 autoFocus
                 style={{
                   width: "100%",
-                  padding: "11px 42px 11px 14px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  background: "#ffffff",
-                  color: "#0f172a",
+                  padding: "12px 42px 12px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  background: "rgba(10, 15, 29, 0.8)",
+                  color: "#ffffff",
                   fontSize: "14px",
                   outline: "none",
                   boxSizing: "border-box",
                   fontFamily: showPassword ? "inherit" : "monospace",
+                  transition: "border-color 0.15s ease, box-shadow 0.15s ease",
                 }}
               />
               <button
@@ -162,7 +310,7 @@ export default function SuperAdminLoginPage() {
                   transform: "translateY(-50%)",
                   background: "none",
                   border: "none",
-                  color: "#64748b",
+                  color: "#94a3b8",
                   cursor: "pointer",
                   padding: "4px",
                   display: "flex",
@@ -170,17 +318,7 @@ export default function SuperAdminLoginPage() {
                 }}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                    <line x1="1" y1="1" x2="23" y2="23" />
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                )}
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
@@ -190,54 +328,95 @@ export default function SuperAdminLoginPage() {
             disabled={isPending}
             style={{
               width: "100%",
-              padding: "12px",
-              borderRadius: "6px",
-              background: "linear-gradient(135deg, #dc2626 0%, #ea580c 100%)",
+              padding: "13px",
+              borderRadius: "8px",
+              background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
               color: "#ffffff",
               fontSize: "14px",
               fontWeight: 800,
               border: "none",
               cursor: isPending ? "not-allowed" : "pointer",
-              opacity: isPending ? 0.7 : 1,
-              boxShadow: "0 2px 8px rgba(220, 38, 38, 0.25)",
+              opacity: isPending ? 0.75 : 1,
+              boxShadow: "0 4px 16px rgba(239, 68, 68, 0.35)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: "8px",
+              transition: "transform 0.15s ease, box-shadow 0.15s ease",
             }}
+            className="hover:opacity-95"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            <span>{isPending ? "Authorizing..." : "Enter Super Admin Portal"}</span>
+            <Lock size={15} />
+            <span>{isPending ? "Authenticating Session..." : "Authorize & Enter Console"}</span>
+            <ArrowRight size={15} />
           </button>
         </form>
 
-        <div style={{ marginTop: "24px", textAlign: "center", display: "flex", justifyContent: "center", gap: 16 }}>
-          <a
+        {/* Security Notice */}
+        <div
+          style={{
+            marginTop: "20px",
+            padding: "10px 12px",
+            borderRadius: "6px",
+            background: "rgba(255, 255, 255, 0.03)",
+            border: "1px solid rgba(255, 255, 255, 0.06)",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "11px",
+            color: "#64748b",
+          }}
+        >
+          <ShieldCheck size={14} className="text-emerald-400 shrink-0" />
+          <span>Multi-tenant isolation &amp; branch data partitioning active.</span>
+        </div>
+
+        {/* External Nav Links */}
+        <div
+          style={{
+            marginTop: "24px",
+            paddingTop: "20px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Link
             href="/admin/login"
             style={{
               fontSize: "12px",
-              color: "#475569",
+              color: "#94a3b8",
               textDecoration: "none",
               fontWeight: 600,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              transition: "color 0.15s ease",
             }}
+            className="hover:text-white"
           >
-            Store Manager Login →
-          </a>
-          <span style={{ color: "#cbd5e1" }}>&bull;</span>
-          <a
+            <Store size={13} />
+            <span>Branch Manager</span>
+          </Link>
+
+          <Link
             href="/"
             style={{
               fontSize: "12px",
-              color: "#475569",
+              color: "#94a3b8",
               textDecoration: "none",
               fontWeight: 600,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              transition: "color 0.15s ease",
             }}
+            className="hover:text-white"
           >
-            Customer Menu →
-          </a>
+            <span>Customer Menu</span>
+            <ArrowRight size={12} />
+          </Link>
         </div>
       </div>
     </div>

@@ -2,6 +2,25 @@
 
 import { useState } from "react";
 import type { Shop } from "@/types/menu";
+import {
+  Building2,
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  KeyRound,
+  Coins,
+  Layers,
+  Activity,
+  MessageSquare,
+  FileText,
+  X,
+  Check,
+  Sparkles,
+  RefreshCw,
+  Store,
+  AlertTriangle,
+} from "lucide-react";
 
 interface ShopModalProps {
   isOpen: boolean;
@@ -87,8 +106,9 @@ export default function ShopModal({
         position: "fixed",
         inset: 0,
         zIndex: 9999,
-        background: "rgba(15, 23, 42, 0.55)",
-        backdropFilter: "blur(4px)",
+        background: "rgba(10, 15, 29, 0.72)",
+        backdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(6px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -98,43 +118,50 @@ export default function ShopModal({
       <div
         style={{
           width: "100%",
-          maxWidth: "560px",
-          maxHeight: "90vh",
+          maxWidth: "620px",
+          maxHeight: "92vh",
           overflowY: "auto",
           background: "#ffffff",
           border: "1px solid #e2e8f0",
-          borderRadius: "8px",
-          padding: "28px",
-          boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.18)",
+          borderRadius: "14px",
+          padding: "28px 24px",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           color: "#0f172a",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", borderBottom: "1px solid #f1f5f9", paddingBottom: "14px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: "20px",
+            borderBottom: "1px solid #f1f5f9",
+            paddingBottom: "16px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div
               style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "6px",
-                background: "#fef2f2",
-                color: "#dc2626",
+                width: "42px",
+                height: "42px",
+                borderRadius: "10px",
+                background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
+                color: "#ffffff",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                border: "1px solid #fecaca",
+                boxShadow: "0 4px 12px rgba(239, 68, 68, 0.25)",
               }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
+              <Store size={22} />
             </div>
             <div>
-              <h2 style={{ fontSize: "18px", fontWeight: 800, margin: "0 0 2px", color: "#0f172a" }}>
-                {isEditing ? `Edit Shop: ${editingShop.name}` : "Register New Shop Branch"}
+              <h2 style={{ fontSize: "19px", fontWeight: 800, margin: "0 0 2px", color: "#0f172a" }}>
+                {isEditing ? `Edit Branch: ${editingShop.name}` : "Register New Shop Branch"}
               </h2>
               <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                Define branch info and generate owner login password.
+                Configure multi-tenant branch parameters and terminal access credentials.
               </p>
             </div>
           </div>
@@ -145,312 +172,349 @@ export default function ShopModal({
             style={{
               background: "#f1f5f9",
               border: "1px solid #cbd5e1",
-              borderRadius: "4px",
+              borderRadius: "8px",
               color: "#64748b",
-              width: "28px",
-              height: "28px",
+              width: "32px",
+              height: "32px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
+              transition: "all 0.15s ease",
             }}
+            className="hover:bg-slate-200"
             aria-label="Close dialog"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <X size={16} />
           </button>
         </div>
 
         {error && (
           <div
             style={{
-              padding: "10px 14px",
-              borderRadius: "6px",
+              padding: "12px 14px",
+              borderRadius: "8px",
               background: "#fef2f2",
               border: "1px solid #fecaca",
               color: "#b91c1c",
-              fontSize: "12px",
+              fontSize: "13px",
+              fontWeight: 600,
               marginBottom: "18px",
               display: "flex",
               alignItems: "center",
-              gap: "8px",
+              gap: "10px",
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
+            <AlertTriangle size={18} className="text-red-500 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Shop Name & Owner Name */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", textTransform: "uppercase", marginBottom: "5px" }}>
-                Shop / Branch Name <span style={{ color: "#ef4444" }}>*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Pizza Crust - Gulberg"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "5px",
-                  border: "1px solid #cbd5e1",
-                  background: "#ffffff",
-                  color: "#0f172a",
-                  fontSize: "13px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", textTransform: "uppercase", marginBottom: "5px" }}>
-                Owner Full Name <span style={{ color: "#ef4444" }}>*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Tariq Mehmood"
-                value={ownerName}
-                onChange={(e) => setOwnerName(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "5px",
-                  border: "1px solid #cbd5e1",
-                  background: "#ffffff",
-                  color: "#0f172a",
-                  fontSize: "13px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Owner Phone & Email */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", textTransform: "uppercase", marginBottom: "5px" }}>
-                Owner Phone / WhatsApp
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. 0300-1234567"
-                value={ownerPhone}
-                onChange={(e) => setOwnerPhone(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "5px",
-                  border: "1px solid #cbd5e1",
-                  background: "#ffffff",
-                  color: "#0f172a",
-                  fontSize: "13px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", textTransform: "uppercase", marginBottom: "5px" }}>
-                Owner Email
-              </label>
-              <input
-                type="email"
-                placeholder="e.g. owner@pizzashop.com"
-                value={ownerEmail}
-                onChange={(e) => setOwnerEmail(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "5px",
-                  border: "1px solid #cbd5e1",
-                  background: "#ffffff",
-                  color: "#0f172a",
-                  fontSize: "13px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Shop Admin Login Password */}
-          <div style={{ marginBottom: "14px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
-              <label style={{ fontSize: "11px", fontWeight: 700, color: "#334155", textTransform: "uppercase" }}>
-                Shop Owner Login Password <span style={{ color: "#ef4444" }}>*</span>
-              </label>
-              <button
-                type="button"
-                onClick={handleGeneratePassword}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#ea580c",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
-                </svg>
-                <span>Generate Random PIN</span>
-              </button>
-            </div>
-            <input
-              type="text"
-              required
-              placeholder="Password for /admin/login"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "9px 12px",
-                borderRadius: "5px",
-                border: "1px solid #cbd5e1",
-                background: "#f8fafc",
-                color: "#c2410c",
-                fontSize: "14px",
-                fontFamily: "monospace",
-                fontWeight: 800,
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-            />
-            <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", display: "block" }}>
-              Shop owner will enter this password at <code>/admin/login</code> to access their store manager.
-            </span>
-          </div>
-
-          {/* Branch Address */}
-          <div style={{ marginBottom: "14px" }}>
-            <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", textTransform: "uppercase", marginBottom: "5px" }}>
-              Branch Location / Address
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Shop #12, Commercial Market, Gulberg III, Lahore"
-              value={branchAddress}
-              onChange={(e) => setBranchAddress(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "9px 12px",
-                borderRadius: "5px",
-                border: "1px solid #cbd5e1",
-                background: "#ffffff",
-                color: "#0f172a",
-                fontSize: "13px",
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-
-          {/* Plan, Currency & Status */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "16px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", textTransform: "uppercase", marginBottom: "5px" }}>
-                Currency Symbol
-              </label>
-              <select
-                value={currencySymbol}
-                onChange={(e) => setCurrencySymbol(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "9px 10px",
-                  borderRadius: "5px",
-                  border: "1px solid #cbd5e1",
-                  background: "#ffffff",
-                  color: "#0f172a",
-                  fontSize: "13px",
-                  outline: "none",
-                }}
-              >
-                <option value="Rs.">Rs. (PKR)</option>
-                <option value="$">$ (USD)</option>
-                <option value="AED">AED</option>
-                <option value="SAR">SAR</option>
-                <option value="£">£ (GBP)</option>
-                <option value="€">€ (EUR)</option>
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", textTransform: "uppercase", marginBottom: "5px" }}>
-                Subscription Plan
-              </label>
-              <select
-                value={plan}
-                onChange={(e) => setPlan(e.target.value as "starter" | "pro" | "enterprise")}
-                style={{
-                  width: "100%",
-                  padding: "9px 10px",
-                  borderRadius: "5px",
-                  border: "1px solid #cbd5e1",
-                  background: "#ffffff",
-                  color: "#0f172a",
-                  fontSize: "13px",
-                  outline: "none",
-                }}
-              >
-                <option value="starter">Starter (Basic)</option>
-                <option value="pro">Pro (Recommended)</option>
-                <option value="enterprise">Enterprise (Unlimited)</option>
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", textTransform: "uppercase", marginBottom: "5px" }}>
-                Access Status
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as "active" | "suspended" | "pending")}
-                style={{
-                  width: "100%",
-                  padding: "9px 10px",
-                  borderRadius: "5px",
-                  border: "1px solid #cbd5e1",
-                  background: status === "active" ? "#f0fdf4" : "#fef2f2",
-                  color: status === "active" ? "#16a34a" : "#dc2626",
-                  fontWeight: 800,
-                  fontSize: "13px",
-                  outline: "none",
-                }}
-              >
-                <option value="active">Active (Online)</option>
-                <option value="suspended">Suspended (Blocked)</option>
-                <option value="pending">Pending Approval</option>
-              </select>
-            </div>
-          </div>
-
-          {/* WhatsApp Gateway Settings */}
-          <div style={{ marginBottom: "18px", padding: "14px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-              <span style={{ fontSize: "14px" }}>📱</span>
-              <span style={{ fontSize: "11px", fontWeight: 700, color: "#1e293b", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                WhatsApp Order Alerts (Railway Gateway)
+          {/* Section 1: Branch Details */}
+          <div
+            style={{
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: "10px",
+              padding: "16px",
+              marginBottom: "16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
+              <Building2 size={15} className="text-red-500" />
+              <span style={{ fontSize: "12px", fontWeight: 800, color: "#1e293b", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                Branch Information
               </span>
             </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Shop / Branch Name <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Pizza Crust - Gulberg"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "13px",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Owner Full Name <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Tariq Mehmood"
+                  value={ownerName}
+                  onChange={(e) => setOwnerName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "13px",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Owner Phone / WhatsApp
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 0300-1234567"
+                  value={ownerPhone}
+                  onChange={(e) => setOwnerPhone(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "13px",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Owner Email
+                </label>
+                <input
+                  type="email"
+                  placeholder="e.g. owner@pizzashop.com"
+                  value={ownerEmail}
+                  onChange={(e) => setOwnerEmail(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "13px",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                Physical Branch Location / Address
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Shop #12, Commercial Market, Gulberg III, Lahore"
+                value={branchAddress}
+                onChange={(e) => setBranchAddress(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: "6px",
+                  border: "1px solid #cbd5e1",
+                  background: "#ffffff",
+                  color: "#0f172a",
+                  fontSize: "13px",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Section 2: Terminal Access & Plan */}
+          <div
+            style={{
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: "10px",
+              padding: "16px",
+              marginBottom: "16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
+              <KeyRound size={15} className="text-amber-500" />
+              <span style={{ fontSize: "12px", fontWeight: 800, color: "#1e293b", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                Manager Credentials &amp; Plan
+              </span>
+            </div>
+
+            <div style={{ marginBottom: "12px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569" }}>
+                  Store Manager Password (/admin/login) <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGeneratePassword}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#ea580c",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <RefreshCw size={11} />
+                  <span>Generate New PIN</span>
+                </button>
+              </div>
+
+              <input
+                type="text"
+                required
+                placeholder="Password for /admin/login"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: "6px",
+                  border: "1px solid #cbd5e1",
+                  background: "#ffffff",
+                  color: "#ea580c",
+                  fontSize: "14px",
+                  fontFamily: "monospace",
+                  fontWeight: 800,
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+              <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", display: "block" }}>
+                Branch manager logs into <code>/admin/login</code> with this access PIN.
+              </span>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Currency
+                </label>
+                <select
+                  value={currencySymbol}
+                  onChange={(e) => setCurrencySymbol(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    outline: "none",
+                  }}
+                >
+                  <option value="Rs.">Rs. (PKR)</option>
+                  <option value="$">$ (USD)</option>
+                  <option value="AED">AED</option>
+                  <option value="SAR">SAR</option>
+                  <option value="£">£ (GBP)</option>
+                  <option value="€">€ (EUR)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Plan
+                </label>
+                <select
+                  value={plan}
+                  onChange={(e) => setPlan(e.target.value as "starter" | "pro" | "enterprise")}
+                  style={{
+                    width: "100%",
+                    padding: "9px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    outline: "none",
+                  }}
+                >
+                  <option value="starter">Starter</option>
+                  <option value="pro">Pro (Standard)</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Status
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as "active" | "suspended" | "pending")}
+                  style={{
+                    width: "100%",
+                    padding: "9px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: status === "active" ? "#f0fdf4" : "#fef2f2",
+                    color: status === "active" ? "#16a34a" : "#dc2626",
+                    fontWeight: 800,
+                    fontSize: "13px",
+                    outline: "none",
+                  }}
+                >
+                  <option value="active">Active (Online)</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="pending">Pending</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: WhatsApp Gateway */}
+          <div
+            style={{
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: "10px",
+              padding: "16px",
+              marginBottom: "16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
+              <MessageSquare size={15} className="text-emerald-500" />
+              <span style={{ fontSize: "12px", fontWeight: 800, color: "#1e293b", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                WhatsApp Gateway &amp; Alerts
+              </span>
+            </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
@@ -463,8 +527,8 @@ export default function ShopModal({
                   onChange={(e) => setWhatsappSessionId(e.target.value)}
                   style={{
                     width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "5px",
+                    padding: "9px 10px",
+                    borderRadius: "6px",
                     border: "1px solid #cbd5e1",
                     background: "#ffffff",
                     color: "#0f172a",
@@ -474,23 +538,21 @@ export default function ShopModal({
                     boxSizing: "border-box",
                   }}
                 />
-                <p style={{ margin: "3px 0 0", fontSize: "10px", color: "#64748b" }}>
-                  Unique session code for this shop&apos;s WhatsApp
-                </p>
               </div>
+
               <div>
                 <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
                   Custom API Key (Optional)
                 </label>
                 <input
                   type="text"
-                  placeholder="Leave blank to use default"
+                  placeholder="Leave blank for platform default"
                   value={whatsappApiKey}
                   onChange={(e) => setWhatsappApiKey(e.target.value)}
                   style={{
                     width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "5px",
+                    padding: "9px 10px",
+                    borderRadius: "6px",
                     border: "1px solid #cbd5e1",
                     background: "#ffffff",
                     color: "#0f172a",
@@ -500,27 +562,24 @@ export default function ShopModal({
                     boxSizing: "border-box",
                   }}
                 />
-                <p style={{ margin: "3px 0 0", fontSize: "10px", color: "#64748b" }}>
-                  Overrides x-api-key if shop has own account
-                </p>
               </div>
             </div>
           </div>
 
-          {/* Notes */}
+          {/* Section 4: Notes */}
           <div style={{ marginBottom: "22px" }}>
-            <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", textTransform: "uppercase", marginBottom: "5px" }}>
-              Super Admin Internal Notes
+            <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+              Internal Super Admin Remarks
             </label>
             <input
               type="text"
-              placeholder="e.g. Paid monthly advance, renews on 1st of each month"
+              placeholder="e.g. Monthly subscription paid via Bank Transfer, renewal 1st"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               style={{
                 width: "100%",
                 padding: "9px 12px",
-                borderRadius: "5px",
+                borderRadius: "6px",
                 border: "1px solid #cbd5e1",
                 background: "#ffffff",
                 color: "#0f172a",
@@ -531,19 +590,19 @@ export default function ShopModal({
             />
           </div>
 
-          {/* Action buttons */}
+          {/* Actions */}
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: "1px solid #f1f5f9", paddingTop: "16px" }}>
             <button
               type="button"
               onClick={onClose}
               style={{
-                padding: "9px 16px",
-                borderRadius: "5px",
+                padding: "9px 18px",
+                borderRadius: "8px",
                 background: "#f1f5f9",
                 border: "1px solid #cbd5e1",
                 color: "#475569",
                 fontSize: "13px",
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: "pointer",
               }}
             >
@@ -553,18 +612,22 @@ export default function ShopModal({
               type="submit"
               disabled={isSubmitting}
               style={{
-                padding: "9px 20px",
-                borderRadius: "5px",
-                background: "linear-gradient(135deg, #dc2626 0%, #ea580c 100%)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "7px",
+                padding: "9px 22px",
+                borderRadius: "8px",
+                background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
                 border: "none",
                 color: "#ffffff",
                 fontSize: "13px",
-                fontWeight: 700,
+                fontWeight: 800,
                 cursor: isSubmitting ? "not-allowed" : "pointer",
-                boxShadow: "0 2px 8px rgba(220, 38, 38, 0.25)",
+                boxShadow: "0 4px 14px rgba(239, 68, 68, 0.3)",
               }}
             >
-              {isSubmitting ? "Saving..." : isEditing ? "Save Changes" : "Create & Activate Shop"}
+              <Check size={16} />
+              <span>{isSubmitting ? "Saving..." : isEditing ? "Save Branch Changes" : "Create & Activate Branch"}</span>
             </button>
           </div>
         </form>

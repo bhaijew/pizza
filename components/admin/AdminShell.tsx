@@ -5,6 +5,35 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { adminLogout } from "@/lib/admin-actions";
 import LiveOrderNotifier from "@/components/admin/LiveOrderNotifier";
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  ChefHat,
+  Pizza,
+  Tags,
+  QrCode,
+  TicketPercent,
+  FileText,
+  Coins,
+  BarChart3,
+  Boxes,
+  Settings,
+  Sun,
+  Moon,
+  LogOut,
+  ExternalLink,
+  Copy,
+  Check,
+  Volume2,
+  ShieldCheck,
+  Store,
+  Flame,
+  Menu,
+  X,
+  ChevronRight,
+  Sparkles,
+  Clock,
+} from "lucide-react";
 
 interface AdminShellProps {
   children: React.ReactNode;
@@ -21,7 +50,7 @@ interface NavItem {
   href: string;
   badge?: string;
   badgeColor?: string;
-  icon: React.ReactNode;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
 }
 
 interface NavGroup {
@@ -36,39 +65,21 @@ const NAV_GROUPS: NavGroup[] = [
       {
         label: "Dashboard",
         href: "/admin",
-        icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="7" height="9" x="3" y="3" rx="1" />
-            <rect width="7" height="5" x="14" y="3" rx="1" />
-            <rect width="7" height="9" x="14" y="12" rx="1" />
-            <rect width="7" height="5" x="3" y="16" rx="1" />
-          </svg>
-        ),
+        icon: LayoutDashboard,
       },
       {
         label: "Live Orders",
         href: "/admin/orders",
         badge: "LIVE",
         badgeColor: "#ef4444",
-        icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="8" cy="21" r="1" />
-            <circle cx="19" cy="21" r="1" />
-            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-          </svg>
-        ),
+        icon: ShoppingBag,
       },
       {
         label: "Kitchen Display (KDS)",
         href: "/admin/kitchen",
         badge: "KDS",
         badgeColor: "#f97316",
-        icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
-            <line x1="6" y1="17" x2="18" y2="17" />
-          </svg>
-        ),
+        icon: ChefHat,
       },
     ],
   },
@@ -78,58 +89,24 @@ const NAV_GROUPS: NavGroup[] = [
       {
         label: "Products",
         href: "/admin/products",
-        icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" />
-            <path d="M12 22V12" />
-            <path d="m3.3 7 8.7 5 8.7-5" />
-            <path d="m12 12 8.5-5" />
-          </svg>
-        ),
+        icon: Pizza,
       },
       {
         label: "Categories",
         href: "/admin/categories",
-        icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
-            <path d="M7 7h.01" />
-          </svg>
-        ),
+        icon: Tags,
       },
       {
         label: "Table QR Codes",
         href: "/admin/tables",
-        icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="5" height="5" x="3" y="3" rx="1" />
-            <rect width="5" height="5" x="16" y="3" rx="1" />
-            <rect width="5" height="5" x="3" y="16" rx="1" />
-            <path d="M21 16h-3a2 2 0 0 0-2 2v3" />
-            <path d="M21 21v.01" />
-            <path d="M12 7v3a2 2 0 0 1-2 2H7" />
-            <path d="M3 12h.01" />
-            <path d="M12 3h.01" />
-            <path d="M12 16v.01" />
-            <path d="M16 12h1" />
-            <path d="M21 12v.01" />
-            <path d="M12 21v-1" />
-          </svg>
-        ),
+        icon: QrCode,
       },
       {
         label: "Coupons & Loyalty",
         href: "/admin/promos",
         badge: "PROMOS",
         badgeColor: "#10b981",
-        icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
-            <path d="M13 5v2" />
-            <path d="M13 17v2" />
-            <path d="M13 11v2" />
-          </svg>
-        ),
+        icon: TicketPercent,
       },
     ],
   },
@@ -139,55 +116,27 @@ const NAV_GROUPS: NavGroup[] = [
       {
         label: "Daily Closing",
         href: "/admin/closing",
-        icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="18" height="18" x="3" y="3" rx="2" />
-            <path d="m9 12 2 2 4-4" />
-            <path d="M3 7h18" />
-          </svg>
-        ),
+        icon: FileText,
       },
       {
         label: "Expenses",
         href: "/admin/expenses",
-        icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="1" x2="12" y2="23" />
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-          </svg>
-        ),
+        icon: Coins,
       },
       {
         label: "Sales Analytics",
         href: "/admin/analytics",
-        icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10" />
-            <line x1="12" y1="20" x2="12" y2="4" />
-            <line x1="6" y1="20" x2="6" y2="14" />
-          </svg>
-        ),
+        icon: BarChart3,
       },
       {
         label: "Inventory & Stock",
         href: "/admin/inventory",
-        icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-            <path d="m3.3 7 8.7 5 8.7-5" />
-            <path d="M12 12v10" />
-          </svg>
-        ),
+        icon: Boxes,
       },
       {
         label: "Shop & Settings",
         href: "/admin/settings",
-        icon: (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
-        ),
+        icon: Settings,
       },
     ],
   },
@@ -206,11 +155,39 @@ export default function AdminShell({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeBranch, setActiveBranch] = useState<string>(shopName || "Pizza Admin");
   const [copiedLink, setCopiedLink] = useState(false);
-
-  // Sidebar theme state: "dark" (Obsidian) vs "light" (White)
   const [sidebarTheme, setSidebarTheme] = useState<"dark" | "light">("dark");
 
   const customerMenuUrl = shopSlug ? `/${shopSlug}` : "/";
+
+  const [pakistanTime, setPakistanTime] = useState<string>("");
+  const [pakistanDate, setPakistanDate] = useState<string>("");
+
+  useEffect(() => {
+    const updatePKTime = () => {
+      const now = new Date();
+      setPakistanTime(
+        now.toLocaleTimeString("en-US", {
+          timeZone: "Asia/Karachi",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        })
+      );
+      setPakistanDate(
+        now.toLocaleDateString("en-US", {
+          timeZone: "Asia/Karachi",
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        })
+      );
+    };
+
+    updatePKTime();
+    const interval = setInterval(updatePKTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCopyMenu = () => {
     const fullUrl = `${window.location.origin}${customerMenuUrl}`;
@@ -219,7 +196,6 @@ export default function AdminShell({
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  // Load saved sidebar theme from localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem("pizza_admin_sidebar_theme");
@@ -274,53 +250,106 @@ export default function AdminShell({
   return (
     <div
       style={{
-        zoom: 0.8,
         display: "flex",
-        minHeight: "125vh",
-        background: "#f1f5f9",
-        color: "#0f172a",
-        fontFamily: "var(--font-sans, system-ui, sans-serif)",
+        minHeight: "100vh",
+        background: isLight ? "#f8fafc" : "#0a0f1d",
+        color: isLight ? "#0f172a" : "#f8fafc",
+        fontFamily: "var(--font-sans, system-ui, -apple-system, sans-serif)",
+        transition: "background 0.25s ease",
       }}
     >
       <style>{`
-        @keyframes pulseDot {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(0.85); }
+        .admin-nav-link {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 9px 12px;
+          border-radius: 8px;
+          font-size: 13px;
+          text-decoration: none;
+          transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        @keyframes subtleGlow {
-          0%, 100% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
-          50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.7); }
+        .admin-nav-dark-default {
+          color: #94a3b8;
         }
-        .admin-nav-item-dark:hover {
-          background: rgba(255, 255, 255, 0.06) !important;
-          color: #ffffff !important;
+        .admin-nav-dark-default:hover {
+          color: #ffffff;
+          background: rgba(255, 255, 255, 0.06);
+          transform: translateX(3px);
         }
-        .admin-nav-item-dark:hover svg {
-          color: #fb923c !important;
+        .admin-nav-dark-default:hover .nav-icon {
+          color: #f97316 !important;
+          transform: scale(1.08);
         }
-        .admin-nav-item-light:hover {
-          background: #f1f5f9 !important;
-          color: #0f172a !important;
+        .admin-nav-dark-active {
+          color: #ffffff;
+          background: linear-gradient(90deg, rgba(239, 68, 68, 0.22) 0%, rgba(249, 115, 22, 0.08) 100%);
+          font-weight: 700;
+          box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.35);
         }
-        .admin-nav-item-light:hover svg {
+        .admin-nav-dark-active::before {
+          content: "";
+          position: absolute;
+          left: 0;
+          top: 6px;
+          bottom: 6px;
+          width: 3px;
+          border-radius: 4px;
+          background: #ef4444;
+          box-shadow: 0 0 8px #ef4444;
+        }
+
+        .admin-nav-light-default {
+          color: #475569;
+        }
+        .admin-nav-light-default:hover {
+          color: #0f172a;
+          background: #f1f5f9;
+          transform: translateX(3px);
+        }
+        .admin-nav-light-default:hover .nav-icon {
           color: #ea580c !important;
+          transform: scale(1.08);
+        }
+        .admin-nav-light-active {
+          color: #dc2626;
+          background: #fef2f2;
+          font-weight: 700;
+          box-shadow: inset 0 0 0 1px #fecaca;
+        }
+        .admin-nav-light-active::before {
+          content: "";
+          position: absolute;
+          left: 0;
+          top: 6px;
+          bottom: 6px;
+          width: 3px;
+          border-radius: 4px;
+          background: #dc2626;
+        }
+
+        .nav-icon {
+          transition: transform 0.18s ease, color 0.18s ease;
         }
       `}</style>
 
-      {/* ─── SIDEBAR (Desktop: Dark Obsidian or Light White) ────────────────────────────── */}
+      {/* ─── SIDEBAR (Desktop) ────────────────────────────── */}
       <aside
         style={{
-          width: "260px",
-          background: isLight ? "#ffffff" : "linear-gradient(180deg, #0b0f19 0%, #080c14 100%)",
-          borderRight: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.07)",
+          width: "264px",
+          background: isLight
+            ? "#ffffff"
+            : "linear-gradient(180deg, #0e1526 0%, #090d18 100%)",
+          borderRight: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
           position: "sticky",
           top: 0,
-          height: "125vh",
+          height: "100vh",
           zIndex: 40,
-          boxShadow: isLight ? "2px 0 10px rgba(0, 0, 0, 0.04)" : "4px 0 24px rgba(0, 0, 0, 0.35)",
+          boxShadow: isLight ? "2px 0 16px rgba(0, 0, 0, 0.03)" : "4px 0 28px rgba(0, 0, 0, 0.45)",
           transition: "background 0.25s ease, border-color 0.25s ease",
         }}
         className="hidden md:flex"
@@ -329,7 +358,7 @@ export default function AdminShell({
         <div
           style={{
             padding: "20px 18px",
-            borderBottom: isLight ? "1px solid #f1f5f9" : "1px solid rgba(255, 255, 255, 0.08)",
+            borderBottom: isLight ? "1px solid #f1f5f9" : "1px solid rgba(255, 255, 255, 0.07)",
             display: "flex",
             alignItems: "center",
             gap: "12px",
@@ -337,24 +366,19 @@ export default function AdminShell({
         >
           <div
             style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "8px",
+              width: "42px",
+              height: "42px",
+              borderRadius: "10px",
               background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "#ffffff",
-              boxShadow: "0 4px 14px rgba(239, 68, 68, 0.45)",
+              boxShadow: "0 6px 18px rgba(239, 68, 68, 0.45)",
               flexShrink: 0,
             }}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 11h.01" />
-              <path d="M11 15h.01" />
-              <path d="M16 16h.01" />
-              <path d="m2 16 20 6-6-20A20 20 0 0 0 2 16Z" />
-            </svg>
+            <Flame size={22} className="animate-pulse" />
           </div>
 
           <div style={{ minWidth: 0, flex: 1 }}>
@@ -371,21 +395,29 @@ export default function AdminShell({
             >
               {activeBranch}
             </div>
-            <div style={{ fontSize: "11px", color: "#16a34a", display: "flex", alignItems: "center", gap: "6px", fontWeight: 700, marginTop: "2px" }}>
+            <div
+              style={{
+                fontSize: "11px",
+                color: "#16a34a",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontWeight: 700,
+                marginTop: "3px",
+              }}
+            >
               <span
                 style={{
                   width: 7,
                   height: 7,
                   borderRadius: "50%",
-                  background: "#16a34a",
+                  background: "#10b981",
                   display: "inline-block",
-                  boxShadow: "0 0 8px #16a34a",
-                  animation: "pulseDot 2s infinite ease-in-out",
                 }}
+                className="admin-pulse-green"
               />
               <span>Live Terminal</span>
             </div>
-
           </div>
         </div>
 
@@ -399,6 +431,7 @@ export default function AdminShell({
             flexDirection: "column",
             gap: "18px",
           }}
+          className="admin-sidebar-scroll"
         >
           {NAV_GROUPS.map((group) => (
             <div key={group.groupTitle}>
@@ -415,50 +448,42 @@ export default function AdminShell({
                 {group.groupTitle}
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
                 {group.items.map((item) => {
                   const isActive =
                     pathname === item.href ||
                     (item.href !== "/admin" && pathname.startsWith(item.href));
+                  const IconComponent = item.icon;
 
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={isLight ? "admin-nav-item-light" : "admin-nav-item-dark"}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "9px 12px",
-                        borderRadius: "6px",
-                        fontSize: "13px",
-                        fontWeight: isActive ? 700 : 500,
-                        textDecoration: "none",
-                        color: isActive
-                          ? isLight ? "#dc2626" : "#ffffff"
-                          : isLight ? "#475569" : "#94a3b8",
-                        background: isActive
+                      className={`admin-nav-link ${
+                        isActive
                           ? isLight
-                            ? "#fef2f2"
-                            : "linear-gradient(90deg, rgba(239, 68, 68, 0.22) 0%, rgba(249, 115, 22, 0.1) 100%)"
-                          : "transparent",
-                        borderLeft: isActive
-                          ? "3px solid #ef4444"
-                          : "3px solid transparent",
-                        transition: "all 0.15s ease",
-                      }}
+                            ? "admin-nav-light-active"
+                            : "admin-nav-dark-active"
+                          : isLight
+                          ? "admin-nav-light-default"
+                          : "admin-nav-dark-default"
+                      }`}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                         <span
+                          className="nav-icon"
                           style={{
                             color: isActive
-                              ? isLight ? "#dc2626" : "#f97316"
-                              : isLight ? "#64748b" : "#64748b",
+                              ? isLight
+                                ? "#dc2626"
+                                : "#f97316"
+                              : isLight
+                              ? "#64748b"
+                              : "#94a3b8",
                             display: "flex",
                           }}
                         >
-                          {item.icon}
+                          <IconComponent size={18} />
                         </span>
                         <span>{item.label}</span>
                       </div>
@@ -471,12 +496,19 @@ export default function AdminShell({
                             padding: "2px 6px",
                             borderRadius: "4px",
                             background: item.badgeColor
-                              ? isLight ? `${item.badgeColor}18` : `${item.badgeColor}22`
-                              : isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.1)",
+                              ? isLight
+                                ? `${item.badgeColor}18`
+                                : `${item.badgeColor}22`
+                              : isLight
+                              ? "#f1f5f9"
+                              : "rgba(255, 255, 255, 0.1)",
                             color: item.badgeColor || (isLight ? "#475569" : "#ffffff"),
-                            border: `1px solid ${item.badgeColor || (isLight ? "#cbd5e1" : "rgba(255,255,255,0.2)")}`,
+                            border: `1px solid ${
+                              item.badgeColor || (isLight ? "#cbd5e1" : "rgba(255,255,255,0.2)")
+                            }`,
                             letterSpacing: "0.04em",
                           }}
+                          className={item.badge === "LIVE" ? "admin-badge-live" : ""}
                         >
                           {item.badge}
                         </span>
@@ -497,7 +529,7 @@ export default function AdminShell({
             display: "flex",
             flexDirection: "column",
             gap: "10px",
-            background: isLight ? "#f8fafc" : "rgba(0, 0, 0, 0.2)",
+            background: isLight ? "#f8fafc" : "rgba(0, 0, 0, 0.22)",
           }}
         >
           {/* Theme Toggle Pill */}
@@ -507,12 +539,22 @@ export default function AdminShell({
               alignItems: "center",
               justifyContent: "space-between",
               padding: "6px 10px",
-              borderRadius: "6px",
+              borderRadius: "8px",
               background: isLight ? "#ffffff" : "rgba(255, 255, 255, 0.05)",
               border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.08)",
             }}
           >
-            <span style={{ fontSize: "11px", fontWeight: 700, color: isLight ? "#64748b" : "#94a3b8" }}>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: isLight ? "#64748b" : "#94a3b8",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+              }}
+            >
+              {isLight ? <Sun size={13} /> : <Moon size={13} />}
               Sidebar Theme
             </span>
             <button
@@ -522,18 +564,19 @@ export default function AdminShell({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "5px",
-                padding: "3px 9px",
-                borderRadius: "4px",
+                padding: "4px 10px",
+                borderRadius: "5px",
                 background: isLight ? "#0f172a" : "#ffffff",
                 color: isLight ? "#ffffff" : "#0f172a",
                 fontSize: "11px",
                 fontWeight: 800,
                 border: "none",
                 cursor: "pointer",
+                transition: "all 0.15s ease",
               }}
             >
-              <span>{isLight ? "☀️ White" : "🌙 Dark"}</span>
-              <span style={{ fontSize: "9px", opacity: 0.7 }}>Toggle</span>
+              {isLight ? <Moon size={11} /> : <Sun size={11} />}
+              <span>{isLight ? "Dark" : "Light"}</span>
             </button>
           </div>
 
@@ -542,7 +585,7 @@ export default function AdminShell({
             style={{
               padding: "10px 12px",
               background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.08)",
-              borderRadius: "6px",
+              borderRadius: "8px",
               border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.25)",
               display: "flex",
               flexDirection: "column",
@@ -557,8 +600,12 @@ export default function AdminShell({
                   color: isLight ? "#16a34a" : "#34d399",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
               >
+                <Store size={12} />
                 Live Customer Menu
               </span>
               <button
@@ -568,8 +615,12 @@ export default function AdminShell({
                   background: "transparent",
                   border: "none",
                   color: copiedLink
-                    ? isLight ? "#16a34a" : "#34d399"
-                    : isLight ? "#15803d" : "#6ee7b7",
+                    ? isLight
+                      ? "#16a34a"
+                      : "#34d399"
+                    : isLight
+                    ? "#15803d"
+                    : "#6ee7b7",
                   fontSize: "11px",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -577,10 +628,12 @@ export default function AdminShell({
                   alignItems: "center",
                   gap: "3px",
                   padding: 0,
+                  transition: "color 0.15s ease",
                 }}
                 title="Copy live customer menu link"
               >
-                {copiedLink ? "✓ Copied!" : "Copy Link"}
+                {copiedLink ? <Check size={12} /> : <Copy size={12} />}
+                <span>{copiedLink ? "Copied!" : "Copy"}</span>
               </button>
             </div>
 
@@ -602,11 +655,7 @@ export default function AdminShell({
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {customerMenuUrl}
               </span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
+              <ExternalLink size={12} />
             </Link>
           </div>
 
@@ -619,8 +668,8 @@ export default function AdminShell({
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "8px",
-                padding: "8px 12px",
-                borderRadius: "6px",
+                padding: "9px 12px",
+                borderRadius: "8px",
                 background: isLight ? "#fef2f2" : "rgba(239, 68, 68, 0.12)",
                 color: "#dc2626",
                 fontSize: "12px",
@@ -629,12 +678,9 @@ export default function AdminShell({
                 cursor: "pointer",
                 transition: "all 0.15s ease",
               }}
+              className="hover:opacity-90"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
+              <LogOut size={14} />
               <span>Sign Out Terminal</span>
             </button>
           </form>
@@ -642,13 +688,15 @@ export default function AdminShell({
       </aside>
 
       {/* ─── MAIN CONTENT AREA ────────────────────────────── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: "125vh" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: "100vh" }}>
         {/* Desktop Top Header Bar */}
         <header
           style={{
-            height: "60px",
-            background: "#ffffff",
-            borderBottom: "1px solid #e2e8f0",
+            height: "64px",
+            background: isLight ? "rgba(255, 255, 255, 0.88)" : "rgba(14, 21, 38, 0.85)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderBottom: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
             display: "none",
             alignItems: "center",
             justifyContent: "space-between",
@@ -656,15 +704,34 @@ export default function AdminShell({
             position: "sticky",
             top: 0,
             zIndex: 30,
-            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+            boxShadow: isLight ? "0 1px 3px rgba(0, 0, 0, 0.03)" : "0 4px 16px rgba(0, 0, 0, 0.25)",
+            transition: "all 0.2s ease",
           }}
           className="md:flex"
         >
           {/* Breadcrumb & Section Name */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-            <span style={{ fontSize: "13px", color: "#64748b", fontWeight: 500 }}>Admin Portal</span>
-            <span style={{ color: "#cbd5e1", fontSize: "14px" }}>/</span>
-            <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+            <span
+              style={{
+                fontSize: "13px",
+                color: isLight ? "#64748b" : "#94a3b8",
+                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+              }}
+            >
+              <Store size={14} />
+              Admin Portal
+            </span>
+            <ChevronRight size={14} style={{ color: isLight ? "#cbd5e1" : "#475569" }} />
+            <span
+              style={{
+                fontSize: "14px",
+                fontWeight: 800,
+                color: isLight ? "#0f172a" : "#ffffff",
+              }}
+            >
               {currentPageTitle}
             </span>
 
@@ -673,44 +740,75 @@ export default function AdminShell({
                 style={{
                   fontSize: "12px",
                   fontWeight: 700,
-                  color: "#1d4ed8",
-                  background: "#eff6ff",
-                  border: "1.5px solid #bfdbfe",
-                  borderRadius: "5px",
-                  padding: "2px 8px",
+                  color: isLight ? "#1d4ed8" : "#93c5fd",
+                  background: isLight ? "#eff6ff" : "rgba(59, 130, 246, 0.15)",
+                  border: isLight ? "1px solid #bfdbfe" : "1px solid rgba(59, 130, 246, 0.35)",
+                  borderRadius: "6px",
+                  padding: "3px 9px",
                   marginLeft: "8px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
                 }}
               >
-                🏪 {shopName}
+                <Store size={12} />
+                {shopName}
               </span>
             )}
           </div>
 
           {/* Quick Actions & Status Tools */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {/* Quick Sidebar Theme Toggle in Top Bar */}
-            <button
-              type="button"
-              onClick={toggleSidebarTheme}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {/* Live Pakistan Standard Time (PKT) Widget */}
+            <div
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                padding: "5px 12px",
+                gap: "8px",
+                padding: "6px 14px",
                 borderRadius: "20px",
-                background: isLight ? "#f1f5f9" : "#0f172a",
+                background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.06)",
+                border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
                 color: isLight ? "#0f172a" : "#ffffff",
-                border: "1px solid #cbd5e1",
-                fontSize: "12px",
-                fontWeight: 700,
-                cursor: "pointer",
-                transition: "all 0.15s ease",
+                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
               }}
-              title="Toggle sidebar white/dark theme"
+              title="Live Pakistan Standard Time (PKT / UTC+5, Asia/Karachi)"
             >
-              <span>{isLight ? "☀️ White Sidebar" : "🌙 Dark Sidebar"}</span>
-              <span style={{ fontSize: "10px", opacity: 0.6 }}>Switch</span>
-            </button>
+              <div
+                style={{
+                  width: "7px",
+                  height: "7px",
+                  borderRadius: "50%",
+                  background: "#10b981",
+                  boxShadow: "0 0 8px #10b981",
+                  flexShrink: 0,
+                }}
+              />
+              <Clock size={14} className="text-emerald-500" />
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontFamily: "monospace", fontSize: "13px", fontWeight: 800, letterSpacing: "0.02em" }}>
+                  {pakistanTime || "Loading..."}
+                </span>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 800,
+                    background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
+                    color: "#ffffff",
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  PKT
+                </span>
+                {pakistanDate && (
+                  <span style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8", fontWeight: 600 }}>
+                    ({pakistanDate})
+                  </span>
+                )}
+              </div>
+            </div>
 
             {/* Live Audio Status Pill */}
             <div
@@ -718,26 +816,18 @@ export default function AdminShell({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                padding: "5px 10px",
+                padding: "6px 12px",
                 borderRadius: "20px",
-                background: "#f0fdf4",
-                border: "1px solid #bbf7d0",
-                fontSize: "11px",
+                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
+                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
+                fontSize: "12px",
                 fontWeight: 700,
-                color: "#16a34a",
+                color: isLight ? "#16a34a" : "#34d399",
               }}
               title="Real-time order sound alerts active"
             >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "#16a34a",
-                  boxShadow: "0 0 6px #16a34a",
-                }}
-              />
-              <span>Audio Chime Active</span>
+              <Volume2 size={14} className="text-emerald-500" />
+              <span>Audio Active</span>
             </div>
 
             {/* Quick Kitchen Display button */}
@@ -748,16 +838,17 @@ export default function AdminShell({
                 alignItems: "center",
                 gap: "6px",
                 padding: "6px 12px",
-                borderRadius: "5px",
-                background: "#fff7ed",
-                border: "1px solid #fed7aa",
+                borderRadius: "6px",
+                background: isLight ? "#fff7ed" : "rgba(249, 115, 22, 0.15)",
+                border: isLight ? "1px solid #fed7aa" : "1px solid rgba(249, 115, 22, 0.3)",
                 fontSize: "12px",
                 fontWeight: 700,
-                color: "#c2410c",
+                color: isLight ? "#c2410c" : "#fdba74",
                 textDecoration: "none",
+                transition: "all 0.15s ease",
               }}
             >
-              <span>🔥</span>
+              <ChefHat size={14} />
               <span>Kitchen KDS</span>
             </Link>
 
@@ -769,23 +860,21 @@ export default function AdminShell({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                padding: "6px 14px",
-                borderRadius: "5px",
+                padding: "7px 14px",
+                borderRadius: "6px",
                 background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
                 color: "#ffffff",
                 fontSize: "12px",
                 fontWeight: 700,
                 textDecoration: "none",
-                boxShadow: "0 2px 6px rgba(239, 68, 68, 0.25)",
+                boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
+                transition: "transform 0.15s ease",
               }}
+              className="hover:scale-105"
             >
-              <span>🌐</span>
-              <span>Open Customer Menu</span>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
+              <Store size={14} />
+              <span>Customer Menu</span>
+              <ExternalLink size={12} />
             </Link>
 
             {/* User Profile Pill */}
@@ -794,10 +883,10 @@ export default function AdminShell({
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                padding: "4px 8px 4px 4px",
+                padding: "4px 10px 4px 4px",
                 borderRadius: "20px",
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
+                background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.06)",
+                border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
               }}
             >
               <div
@@ -805,18 +894,23 @@ export default function AdminShell({
                   width: "28px",
                   height: "28px",
                   borderRadius: "50%",
-                  background: "#0f172a",
+                  background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
                   color: "#ffffff",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "11px",
-                  fontWeight: 800,
+                  boxShadow: "0 2px 6px rgba(59, 130, 246, 0.3)",
                 }}
               >
-                POS
+                <ShieldCheck size={15} />
               </div>
-              <span style={{ fontSize: "12px", fontWeight: 700, color: "#334155" }}>
+              <span
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  color: isLight ? "#334155" : "#e2e8f0",
+                }}
+              >
                 Manager
               </span>
             </div>
@@ -826,9 +920,9 @@ export default function AdminShell({
         {/* Mobile Header */}
         <header
           style={{
-            height: "56px",
-            borderBottom: isLight ? "1px solid #e2e8f0" : "1px solid #1e293b",
-            background: isLight ? "#ffffff" : "#0b0f19",
+            height: "58px",
+            borderBottom: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
+            background: isLight ? "#ffffff" : "#0e1526",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -839,9 +933,9 @@ export default function AdminShell({
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div
               style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "6px",
+                width: "34px",
+                height: "34px",
+                borderRadius: "8px",
                 background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
                 display: "flex",
                 alignItems: "center",
@@ -849,31 +943,62 @@ export default function AdminShell({
                 color: "#fff",
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m2 16 20 6-6-20A20 20 0 0 0 2 16Z" />
-              </svg>
+              <Flame size={18} />
             </div>
-            <span style={{ fontWeight: 800, fontSize: "14px", color: isLight ? "#0f172a" : "#ffffff" }}>
+            <span
+              style={{
+                fontWeight: 800,
+                fontSize: "15px",
+                color: isLight ? "#0f172a" : "#ffffff",
+              }}
+            >
               {activeBranch}
             </span>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <button
-              type="button"
-              onClick={toggleSidebarTheme}
+            {/* Live Pakistan Standard Time (PKT) for Mobile */}
+            <div
               style={{
-                background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.1)",
-                border: "none",
-                fontSize: "14px",
-                padding: "6px 8px",
-                borderRadius: "5px",
-                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 10px",
+                borderRadius: "16px",
+                background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.08)",
+                border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.14)",
+                color: isLight ? "#0f172a" : "#ffffff",
               }}
-              title="Toggle Theme"
+              title="Current Pakistan Standard Time (PKT)"
             >
-              {isLight ? "🌙" : "☀️"}
-            </button>
+              <div
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: "#10b981",
+                  boxShadow: "0 0 6px #10b981",
+                  flexShrink: 0,
+                }}
+              />
+              <Clock size={13} className="text-emerald-500" />
+              <span style={{ fontFamily: "monospace", fontSize: "12px", fontWeight: 800 }}>
+                {pakistanTime ? pakistanTime.replace(/:\d\d\s/, " ") : "--:--"}
+              </span>
+              <span
+                style={{
+                  fontSize: "9px",
+                  fontWeight: 800,
+                  background: "#059669",
+                  color: "#ffffff",
+                  padding: "1px 5px",
+                  borderRadius: "3px",
+                  letterSpacing: "0.03em",
+                }}
+              >
+                PKT
+              </span>
+            </div>
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -881,17 +1006,16 @@ export default function AdminShell({
                 background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.08)",
                 border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.15)",
                 color: isLight ? "#0f172a" : "#ffffff",
-                padding: "6px 8px",
-                borderRadius: "5px",
+                padding: "7px 9px",
+                borderRadius: "6px",
                 cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
               aria-label="Toggle Navigation Menu"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
+              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
         </header>
@@ -900,7 +1024,7 @@ export default function AdminShell({
         {mobileMenuOpen && (
           <div
             style={{
-              background: isLight ? "#ffffff" : "#0b0f19",
+              background: isLight ? "#ffffff" : "#0e1526",
               borderBottom: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
               padding: "16px 14px",
               display: "flex",
@@ -909,10 +1033,11 @@ export default function AdminShell({
               maxHeight: "80vh",
               overflowY: "auto",
             }}
-            className="md:hidden"
+            className="md:hidden animate-fade-in"
           >
             {NAV_GROUPS.flatMap((g) => g.items).map((item) => {
               const isActive = pathname === item.href;
+              const IconComponent = item.icon;
               return (
                 <Link
                   key={item.href}
@@ -923,20 +1048,26 @@ export default function AdminShell({
                     alignItems: "center",
                     justifyContent: "space-between",
                     padding: "10px 12px",
-                    borderRadius: "6px",
+                    borderRadius: "8px",
                     textDecoration: "none",
                     color: isActive
-                      ? isLight ? "#dc2626" : "#ffffff"
-                      : isLight ? "#475569" : "#94a3b8",
+                      ? isLight
+                        ? "#dc2626"
+                        : "#ffffff"
+                      : isLight
+                      ? "#475569"
+                      : "#94a3b8",
                     background: isActive
-                      ? isLight ? "#fef2f2" : "rgba(239, 68, 68, 0.2)"
+                      ? isLight
+                        ? "#fef2f2"
+                        : "rgba(239, 68, 68, 0.2)"
                       : "transparent",
                     fontSize: "13px",
                     fontWeight: 600,
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span>{item.icon}</span>
+                    <IconComponent size={18} />
                     <span>{item.label}</span>
                   </div>
                   {item.badge && (
@@ -946,7 +1077,9 @@ export default function AdminShell({
                         fontWeight: 800,
                         padding: "2px 6px",
                         borderRadius: "4px",
-                        background: item.badgeColor ? `${item.badgeColor}22` : "rgba(255, 255, 255, 0.1)",
+                        background: item.badgeColor
+                          ? `${item.badgeColor}22`
+                          : "rgba(255, 255, 255, 0.1)",
                         color: item.badgeColor || (isLight ? "#475569" : "#ffffff"),
                         border: `1px solid ${item.badgeColor || "rgba(255,255,255,0.2)"}`,
                       }}
@@ -958,41 +1091,58 @@ export default function AdminShell({
               );
             })}
 
-            <div style={{ paddingTop: "12px", borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)", display: "flex", gap: "8px" }}>
+            <div
+              style={{
+                paddingTop: "12px",
+                borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
+                display: "flex",
+                gap: "8px",
+              }}
+            >
               <Link
                 href={customerMenuUrl}
                 target="_blank"
                 style={{
                   flex: 1,
                   textAlign: "center",
-                  padding: "9px",
-                  borderRadius: "5px",
+                  padding: "10px",
+                  borderRadius: "6px",
                   background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
                   border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
                   color: isLight ? "#16a34a" : "#34d399",
                   fontSize: "12px",
                   textDecoration: "none",
                   fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
                 }}
               >
-                Open Live Menu
+                <Store size={14} />
+                <span>Open Live Menu</span>
               </Link>
               <form action={adminLogout} style={{ flex: 1 }}>
                 <button
                   type="submit"
                   style={{
                     width: "100%",
-                    padding: "9px",
-                    borderRadius: "5px",
+                    padding: "10px",
+                    borderRadius: "6px",
                     background: isLight ? "#fef2f2" : "rgba(239, 68, 68, 0.15)",
                     color: "#dc2626",
                     fontSize: "12px",
                     border: isLight ? "1px solid #fecaca" : "1px solid rgba(239, 68, 68, 0.3)",
                     cursor: "pointer",
                     fontWeight: 700,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
                   }}
                 >
-                  Logout
+                  <LogOut size={14} />
+                  <span>Logout</span>
                 </button>
               </form>
             </div>
@@ -1007,7 +1157,7 @@ export default function AdminShell({
           style={{
             flex: 1,
             overflowY: "auto",
-            padding: "32px 36px",
+            padding: "28px 32px",
             maxWidth: "1440px",
             width: "100%",
             margin: "0 auto",

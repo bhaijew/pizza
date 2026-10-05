@@ -9,6 +9,17 @@ import { useState, useEffect, useMemo, useTransition } from "react";
 import type { Order } from "@/types/menu";
 import { updateOrderStatus } from "@/lib/admin-actions";
 import { createClient } from "@/utils/supabase/client";
+import {
+  ChefHat,
+  UtensilsCrossed,
+  ShoppingBag,
+  Volume2,
+  VolumeX,
+  Clock,
+  Flame,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
 
 interface KitchenDisplayProps {
   initialOrders: Order[];
@@ -126,23 +137,22 @@ export default function KitchenDisplay({
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div
             style={{
-              width: 38,
-              height: 38,
-              borderRadius: 4,
-              background: "#dc2626",
+              width: 42,
+              height: 42,
+              borderRadius: 10,
+              background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 20,
               color: "#ffffff",
-              boxShadow: "0 2px 6px rgba(220, 38, 38, 0.25)",
+              boxShadow: "0 4px 14px rgba(239, 68, 68, 0.35)",
             }}
           >
-            👨‍🍳
+            <ChefHat size={22} />
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <h1 style={{ fontSize: 18, fontWeight: 900, margin: 0, color: "#0f172a", letterSpacing: "0.01em" }}>
+              <h1 style={{ fontSize: 18, fontWeight: 900, margin: 0, color: "#0f172a", letterSpacing: "-0.01em" }}>
                 {shopName} &bull; Kitchen Display System
               </h1>
               <span
@@ -152,12 +162,16 @@ export default function KitchenDisplay({
                   background: "#dcfce7",
                   color: "#15803d",
                   border: "1px solid #bbf7d0",
-                  padding: "2px 7px",
-                  borderRadius: 3,
+                  padding: "2px 8px",
+                  borderRadius: 20,
                   textTransform: "uppercase",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
                 }}
               >
-                ● LIVE SYNC
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#16a34a" }} className="admin-pulse-green" />
+                <span>LIVE SYNC</span>
               </span>
             </div>
             <p style={{ fontSize: 12, color: "#64748b", margin: "2px 0 0" }}>
@@ -168,13 +182,13 @@ export default function KitchenDisplay({
 
         {/* Filter buttons & Sound toggle */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", background: "#f1f5f9", padding: 3, borderRadius: 5, border: "1px solid #e2e8f0" }}>
+          <div style={{ display: "flex", background: "#f1f5f9", padding: 3, borderRadius: 8, border: "1px solid #e2e8f0" }}>
             <button
               type="button"
               onClick={() => setFilterMode("all")}
               style={{
-                padding: "6px 12px",
-                borderRadius: 4,
+                padding: "6px 14px",
+                borderRadius: 6,
                 border: "none",
                 background: filterMode === "all" ? "#dc2626" : "transparent",
                 color: filterMode === "all" ? "#ffffff" : "#475569",
@@ -190,8 +204,8 @@ export default function KitchenDisplay({
               type="button"
               onClick={() => setFilterMode("tables")}
               style={{
-                padding: "6px 12px",
-                borderRadius: 4,
+                padding: "6px 14px",
+                borderRadius: 6,
                 border: "none",
                 background: filterMode === "tables" ? "#dc2626" : "transparent",
                 color: filterMode === "tables" ? "#ffffff" : "#475569",
@@ -199,16 +213,20 @@ export default function KitchenDisplay({
                 fontSize: 12,
                 cursor: "pointer",
                 transition: "all 0.15s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
               }}
             >
-              🍽️ Tables Only
+              <UtensilsCrossed size={13} />
+              <span>Tables Only</span>
             </button>
             <button
               type="button"
               onClick={() => setFilterMode("takeaway")}
               style={{
-                padding: "6px 12px",
-                borderRadius: 4,
+                padding: "6px 14px",
+                borderRadius: 6,
                 border: "none",
                 background: filterMode === "takeaway" ? "#dc2626" : "transparent",
                 color: filterMode === "takeaway" ? "#ffffff" : "#475569",
@@ -216,9 +234,13 @@ export default function KitchenDisplay({
                 fontSize: 12,
                 cursor: "pointer",
                 transition: "all 0.15s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
               }}
             >
-              🛍️ Takeaway Only
+              <ShoppingBag size={13} />
+              <span>Takeaway Only</span>
             </button>
           </div>
 
@@ -226,17 +248,22 @@ export default function KitchenDisplay({
             type="button"
             onClick={() => setSoundEnabled((prev) => !prev)}
             style={{
-              padding: "6px 12px",
-              borderRadius: 4,
+              padding: "7px 12px",
+              borderRadius: 6,
               border: soundEnabled ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
               background: soundEnabled ? "#f0fdf4" : "#ffffff",
               color: soundEnabled ? "#16a34a" : "#64748b",
               fontSize: 12,
               fontWeight: 700,
               cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              transition: "all 0.15s ease",
             }}
           >
-            {soundEnabled ? "🔔 Chime ON" : "🔕 Chime OFF"}
+            {soundEnabled ? <Volume2 size={14} className="text-emerald-500" /> : <VolumeX size={14} />}
+            <span>{soundEnabled ? "Chime ON" : "Chime OFF"}</span>
           </button>
         </div>
       </div>
@@ -247,17 +274,31 @@ export default function KitchenDisplay({
           style={{
             background: "#ffffff",
             border: "1px dashed #cbd5e1",
-            borderRadius: 6,
-            padding: "60px 20px",
+            borderRadius: 12,
+            padding: "64px 20px",
             textAlign: "center",
           }}
         >
-          <span style={{ fontSize: 40, display: "block", marginBottom: 12 }}>🍕</span>
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 16,
+              background: "#dcfce7",
+              color: "#16a34a",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 14,
+            }}
+          >
+            <CheckCircle2 size={30} />
+          </div>
           <h2 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 6px", color: "#0f172a" }}>
             All Kitchen Tickets Cleared!
           </h2>
-          <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
-            No pending or preparing pizza orders in the kitchen. New orders will appear here automatically.
+          <p style={{ fontSize: 13, color: "#64748b", margin: 0, maxWidth: 360, marginInline: "auto" }}>
+            No pending or preparing pizza orders in the kitchen. New orders will appear here automatically with live alerts.
           </p>
         </div>
       ) : (
@@ -265,7 +306,7 @@ export default function KitchenDisplay({
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-            gap: 16,
+            gap: 18,
           }}
         >
           {activeKitchenOrders.map((order) => {
@@ -292,13 +333,14 @@ export default function KitchenDisplay({
                     : order.status === "preparing"
                     ? "2px solid #ea580c"
                     : "1px solid #e2e8f0",
-                  borderRadius: 6,
+                  borderRadius: 10,
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  boxShadow: isLate ? "0 4px 14px rgba(239, 68, 68, 0.15)" : "0 2px 6px rgba(0,0,0,0.04)",
+                  boxShadow: isLate ? "0 8px 20px rgba(239, 68, 68, 0.18)" : "0 2px 8px rgba(0,0,0,0.04)",
                   overflow: "hidden",
                 }}
+                className="admin-card-hover"
               >
                 <div>
                   {/* Card Header: Table Number / Token & Elapsed Time */}
@@ -313,11 +355,15 @@ export default function KitchenDisplay({
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 16 }}>{isDineIn ? "🍽️" : "🛍️"}</span>
+                      {isDineIn ? (
+                        <UtensilsCrossed size={16} className="text-amber-800" />
+                      ) : (
+                        <ShoppingBag size={16} className="text-slate-700" />
+                      )}
                       <span
                         style={{
                           fontWeight: 900,
-                          fontSize: 17,
+                          fontSize: 16,
                           color: isDineIn ? "#92400e" : "#0f172a",
                           letterSpacing: "0.01em",
                         }}
@@ -330,22 +376,26 @@ export default function KitchenDisplay({
                     <span
                       style={{
                         padding: "3px 8px",
-                        borderRadius: 3,
+                        borderRadius: 4,
                         fontSize: 11,
                         fontWeight: 800,
                         background: isLate ? "#fee2e2" : isWarning ? "#fef3c7" : "#ecfdf5",
                         color: isLate ? "#b91c1c" : isWarning ? "#b45309" : "#047857",
                         border: isLate ? "1px solid #fecaca" : isWarning ? "1px solid #fde68a" : "1px solid #a7f3d0",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
                       }}
                     >
-                      ⏱️ {elapsedMins}m ago
+                      <Clock size={11} />
+                      <span>{elapsedMins}m ago</span>
                     </span>
                   </div>
 
                   {/* Order metadata */}
                   <div
                     style={{
-                      padding: "7px 14px",
+                      padding: "8px 14px",
                       background: "#f8fafc",
                       display: "flex",
                       justifyContent: "space-between",
@@ -355,7 +405,7 @@ export default function KitchenDisplay({
                       color: "#64748b",
                     }}
                   >
-                    <span style={{ fontFamily: "monospace", color: "#0f172a", fontWeight: 700 }}>
+                    <span style={{ fontFamily: "monospace", color: "#0f172a", fontWeight: 800 }}>
                       #{String(order.id).slice(0, 8)}
                     </span>
                     <span>
@@ -371,28 +421,27 @@ export default function KitchenDisplay({
                           key={idx}
                           style={{
                             display: "flex",
-                            alignItems: "flex-start",
+                            alignItems: "center",
                             justifyContent: "space-between",
                             gap: 8,
                             padding: "8px 10px",
                             background: "#f8fafc",
-                            borderRadius: 4,
-                            border: "1px solid #e2e8f0",
+                            borderRadius: 6,
+                            border: "1px solid #f1f5f9",
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                             <span
                               style={{
-                                width: 24,
-                                height: 24,
-                                borderRadius: 3,
-                                background: "#dc2626",
+                                width: 26,
+                                height: 26,
+                                borderRadius: 5,
+                                background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
                                 color: "#ffffff",
                                 fontWeight: 900,
                                 fontSize: 13,
                                 display: "inline-flex",
                                 alignItems: "center",
-                                justifyItems: "center",
                                 justifyContent: "center",
                               }}
                             >
@@ -411,7 +460,7 @@ export default function KitchenDisplay({
                         style={{
                           background: "#fffbeb",
                           border: "1px solid #fef08a",
-                          borderRadius: 4,
+                          borderRadius: 6,
                           padding: "6px 10px",
                           fontSize: 11,
                           color: "#854d0e",
@@ -431,10 +480,10 @@ export default function KitchenDisplay({
                       onClick={() => handleUpdateStatus(order.id, "preparing")}
                       style={{
                         width: "100%",
-                        padding: "10px",
-                        borderRadius: 4,
-                        background: "#ea580c",
-                        border: "1px solid #c2410c",
+                        padding: "11px",
+                        borderRadius: 6,
+                        background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                        border: "none",
                         color: "#ffffff",
                         fontSize: 13,
                         fontWeight: 800,
@@ -443,10 +492,11 @@ export default function KitchenDisplay({
                         alignItems: "center",
                         justifyContent: "center",
                         gap: 6,
-                        boxShadow: "0 2px 4px rgba(234, 88, 12, 0.2)",
+                        boxShadow: "0 2px 8px rgba(234, 88, 12, 0.3)",
                       }}
+                      className="hover:opacity-95"
                     >
-                      <span>🔥</span>
+                      <Flame size={16} />
                       <span>Put in Oven / Start Cooking</span>
                     </button>
                   ) : (
@@ -455,10 +505,10 @@ export default function KitchenDisplay({
                       onClick={() => handleUpdateStatus(order.id, "ready")}
                       style={{
                         width: "100%",
-                        padding: "10px",
-                        borderRadius: 4,
-                        background: "#16a34a",
-                        border: "1px solid #15803d",
+                        padding: "11px",
+                        borderRadius: 6,
+                        background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                        border: "none",
                         color: "#ffffff",
                         fontSize: 13,
                         fontWeight: 800,
@@ -467,10 +517,11 @@ export default function KitchenDisplay({
                         alignItems: "center",
                         justifyContent: "center",
                         gap: 6,
-                        boxShadow: "0 2px 4px rgba(22, 163, 74, 0.2)",
+                        boxShadow: "0 2px 8px rgba(22, 163, 74, 0.3)",
                       }}
+                      className="hover:opacity-95"
                     >
-                      <span>🛎️</span>
+                      <CheckCircle2 size={16} />
                       <span>
                         {isDineIn ? `Ready & Cooked (Table #${tableNum || ""})` : "Ready for Counter Pickup"}
                       </span>

@@ -4,6 +4,17 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import type { Order } from "@/types/menu";
+import {
+  Volume2,
+  VolumeX,
+  Bell,
+  UtensilsCrossed,
+  Bike,
+  ShoppingBag,
+  X,
+  ChefHat,
+  ArrowRight,
+} from "lucide-react";
 
 interface LiveOrderNotifierProps {
   shopId?: number | null;
@@ -189,58 +200,70 @@ export default function LiveOrderNotifier({
 
   return (
     <>
-      {/* ── Fixed Realtime Status & Sound Toggle Control (Top Right) ── */}
+      {/* ── Fixed Realtime Status & Sound Toggle Control (Bottom Right) ── */}
       <div
         style={{
           position: "fixed",
-          top: "14px",
+          bottom: "16px",
           right: "20px",
           zIndex: 9998,
           display: "flex",
           alignItems: "center",
           gap: "8px",
-          background: "rgba(255, 255, 255, 0.95)",
-          backdropFilter: "blur(8px)",
-          padding: "6px 12px",
+          background: "rgba(15, 23, 42, 0.88)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+          padding: "6px 14px",
           borderRadius: "30px",
-          border: "1px solid #e2e8f0",
-          boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
+          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.3)",
+          color: "#ffffff",
         }}
       >
-        <span
-          style={{
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
-            background: isConnected ? "#10b981" : "#f59e0b",
-            boxShadow: isConnected ? "0 0 8px #10b981" : "none",
-            display: "inline-block",
-          }}
-        />
-        <span style={{ fontSize: "11px", fontWeight: 700, color: "#475569" }}>
-          {isConnected ? "LIVE ORDERS" : "CONNECTING..."}
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span
+            style={{
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              background: isConnected ? "#10b981" : "#f59e0b",
+              display: "inline-block",
+            }}
+            className={isConnected ? "admin-pulse-green" : ""}
+          />
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: 800,
+              color: isConnected ? "#34d399" : "#fbbf24",
+              letterSpacing: "0.05em",
+            }}
+          >
+            {isConnected ? "LIVE RADAR" : "CONNECTING..."}
+          </span>
+        </div>
 
         <button
           onClick={toggleSound}
           type="button"
           title={soundEnabled ? "Sound Alerts: ON (Click to Mute)" : "Sound Alerts: MUTED (Click to Enable)"}
           style={{
-            background: soundEnabled ? "#fef3c7" : "#f1f5f9",
-            border: soundEnabled ? "1px solid #fde68a" : "1px solid #cbd5e1",
+            background: soundEnabled ? "rgba(234, 88, 12, 0.25)" : "rgba(255, 255, 255, 0.08)",
+            border: soundEnabled ? "1px solid rgba(249, 115, 22, 0.5)" : "1px solid rgba(255, 255, 255, 0.15)",
             borderRadius: "20px",
-            padding: "2px 8px",
+            padding: "4px 10px",
             fontSize: "11px",
             fontWeight: 800,
-            color: soundEnabled ? "#b45309" : "#64748b",
+            color: soundEnabled ? "#fdba74" : "#94a3b8",
             cursor: "pointer",
-            display: "flex",
+            display: "inline-flex",
             alignItems: "center",
-            gap: "4px",
+            gap: "5px",
             transition: "all 0.15s ease",
           }}
         >
-          <span>{soundEnabled ? "🔔 Sound ON" : "🔕 Muted"}</span>
+          {soundEnabled ? <Volume2 size={13} className="text-orange-400" /> : <VolumeX size={13} />}
+          <span>{soundEnabled ? "Chime ON" : "Muted"}</span>
         </button>
       </div>
 
@@ -248,24 +271,20 @@ export default function LiveOrderNotifier({
       <div
         style={{
           position: "fixed",
-          top: "60px",
-          right: "20px",
+          top: "74px",
+          right: "24px",
           zIndex: 9999,
           display: "flex",
           flexDirection: "column",
-          gap: "10px",
-          maxWidth: "380px",
-          width: "calc(100vw - 40px)",
+          gap: "12px",
+          maxWidth: "390px",
+          width: "calc(100vw - 48px)",
           pointerEvents: "none",
         }}
       >
         {notifications.map((notif) => {
-          const typeBadge =
-            notif.orderType === "dine_in"
-              ? `🍽️ Table #${notif.tableNumber || "N/A"}`
-              : notif.orderType === "delivery"
-              ? "🛵 Delivery"
-              : `🎟️ Token #${notif.tokenNumber || "N/A"}`;
+          const isDineIn = notif.orderType === "dine_in";
+          const isDelivery = notif.orderType === "delivery";
 
           return (
             <div
@@ -274,44 +293,44 @@ export default function LiveOrderNotifier({
                 pointerEvents: "auto",
                 background: "linear-gradient(135deg, #ffffff 0%, #fff7ed 100%)",
                 border: "2px solid #ea580c",
-                borderRadius: "10px",
-                padding: "16px",
-                boxShadow: "0 12px 28px -4px rgba(234, 88, 12, 0.28), 0 6px 14px -2px rgba(0, 0, 0, 0.1)",
-                animation: "notifSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both",
+                borderRadius: "14px",
+                padding: "18px",
+                boxShadow: "0 16px 36px -4px rgba(234, 88, 12, 0.32), 0 8px 18px -2px rgba(0, 0, 0, 0.12)",
+                animation: "notifSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both",
                 display: "flex",
                 flexDirection: "column",
-                gap: "8px",
+                gap: "10px",
               }}
             >
               <style>{`
                 @keyframes notifSlideIn {
-                  from { transform: translateX(120%) scale(0.9); opacity: 0; }
+                  from { transform: translateX(120%) scale(0.92); opacity: 0; }
                   to { transform: translateX(0) scale(1); opacity: 1; }
                 }
               `}</style>
 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div
                     style={{
-                      width: "28px",
-                      height: "28px",
-                      borderRadius: "6px",
-                      background: "#ea580c",
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "8px",
+                      background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
                       color: "#ffffff",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: "14px",
+                      boxShadow: "0 2px 8px rgba(234, 88, 12, 0.4)",
                     }}
                   >
-                    🔔
-                  </span>
+                    <Bell size={16} className="animate-bounce" />
+                  </div>
                   <div>
-                    <span style={{ fontSize: "14px", fontWeight: 800, color: "#9a3412" }}>
+                    <span style={{ fontSize: "14px", fontWeight: 900, color: "#9a3412", letterSpacing: "-0.01em" }}>
                       NEW ORDER ARRIVED!
                     </span>
-                    <span style={{ fontSize: "10px", color: "#64748b", marginLeft: "6px" }}>
+                    <span style={{ fontSize: "11px", color: "#64748b", marginLeft: "8px" }}>
                       {notif.createdAt}
                     </span>
                   </div>
@@ -321,78 +340,105 @@ export default function LiveOrderNotifier({
                   onClick={() => removeNotification(notif.id)}
                   type="button"
                   style={{
-                    background: "transparent",
+                    background: "rgba(0, 0, 0, 0.05)",
                     border: "none",
+                    borderRadius: "6px",
                     color: "#9a3412",
-                    fontSize: "16px",
+                    padding: "4px",
                     cursor: "pointer",
-                    padding: "4px 8px",
-                    lineHeight: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                   aria-label="Dismiss alert"
                 >
-                  ✕
+                  <X size={16} />
                 </button>
               </div>
 
               {/* Order Details Body */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "2px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
-                  <div style={{ fontSize: "16px", fontWeight: 800, color: "#0f172a" }}>
+                  <div style={{ fontSize: "17px", fontWeight: 900, color: "#0f172a", fontFamily: "monospace" }}>
                     {notif.orderNumber}
                   </div>
-                  <div style={{ fontSize: "12px", color: "#475569", fontWeight: 600 }}>
+                  <div style={{ fontSize: "13px", color: "#475569", fontWeight: 600 }}>
                     {notif.customerName} {notif.customerPhone ? `(${notif.customerPhone})` : ""}
                   </div>
                 </div>
 
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "15px", fontWeight: 800, color: "#16a34a" }}>
+                  <div style={{ fontSize: "17px", fontWeight: 900, color: "#16a34a" }}>
                     {currencySymbol} {notif.total.toFixed(2)}
                   </div>
                   <span
                     style={{
-                      display: "inline-block",
-                      marginTop: "2px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      marginTop: "3px",
                       fontSize: "11px",
-                      fontWeight: 700,
-                      background: "#fed7aa",
+                      fontWeight: 800,
+                      background: "#ffedd5",
                       color: "#9a3412",
-                      padding: "2px 6px",
-                      borderRadius: "4px",
+                      border: "1px solid #fed7aa",
+                      padding: "2px 8px",
+                      borderRadius: "5px",
                     }}
                   >
-                    {typeBadge}
+                    {isDineIn ? (
+                      <>
+                        <UtensilsCrossed size={11} />
+                        <span>Table #{notif.tableNumber || "N/A"}</span>
+                      </>
+                    ) : isDelivery ? (
+                      <>
+                        <Bike size={11} />
+                        <span>Delivery</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag size={11} />
+                        <span>Token #{notif.tokenNumber || "N/A"}</span>
+                      </>
+                    )}
                   </span>
                 </div>
               </div>
 
               {/* Quick Action Button */}
-              <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+              <div style={{ display: "flex", gap: "8px", marginTop: "2px" }}>
                 <Link
                   href="/admin/orders"
                   onClick={() => removeNotification(notif.id)}
                   style={{
                     flex: 1,
-                    textAlign: "center",
-                    padding: "8px 12px",
-                    borderRadius: "6px",
-                    background: "#ea580c",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    padding: "9px 14px",
+                    borderRadius: "8px",
+                    background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
                     color: "#ffffff",
                     fontSize: "12px",
-                    fontWeight: 700,
+                    fontWeight: 800,
                     textDecoration: "none",
-                    boxShadow: "0 2px 6px rgba(234, 88, 12, 0.2)",
+                    boxShadow: "0 2px 8px rgba(234, 88, 12, 0.3)",
                   }}
                 >
-                  View in Live Orders Board →
+                  <span>Open Live Board</span>
+                  <ArrowRight size={13} />
                 </Link>
                 <Link
                   href="/admin/kitchen"
                   onClick={() => removeNotification(notif.id)}
                   style={{
-                    padding: "8px 12px",
-                    borderRadius: "6px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "9px 12px",
+                    borderRadius: "8px",
                     background: "#ffffff",
                     border: "1px solid #fdba74",
                     color: "#c2410c",
@@ -401,7 +447,8 @@ export default function LiveOrderNotifier({
                     textDecoration: "none",
                   }}
                 >
-                  🍳 Kitchen
+                  <ChefHat size={14} />
+                  <span>Kitchen</span>
                 </Link>
               </div>
             </div>

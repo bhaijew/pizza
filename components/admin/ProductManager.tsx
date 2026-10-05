@@ -4,6 +4,15 @@ import { useState, useMemo, useTransition } from "react";
 import Link from "next/link";
 import type { Product, Category } from "@/types/menu";
 import { updateProduct, deleteProduct } from "@/lib/admin-actions";
+import {
+  Plus,
+  Search,
+  Image as ImageIcon,
+  Edit2,
+  Trash2,
+  Pizza,
+  Tag,
+} from "lucide-react";
 
 interface ProductManagerProps {
   initialProducts: Product[];
@@ -115,19 +124,18 @@ export default function ProductManager({
             alignItems: "center",
             gap: "6px",
             padding: "9px 16px",
-            borderRadius: "5px",
-            background: "#ef4444",
+            borderRadius: "6px",
+            background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
             color: "#ffffff",
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: "13px",
             textDecoration: "none",
-            boxShadow: "0 2px 4px rgba(239, 68, 68, 0.2)",
+            boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
+            transition: "transform 0.15s ease",
           }}
+          className="hover:scale-105"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
+          <Plus size={16} />
           <span>Add New Product</span>
         </Link>
       </div>
@@ -165,20 +173,10 @@ export default function ProductManager({
               boxSizing: "border-box",
             }}
           />
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <Search
+            size={15}
             style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }}
-          >
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
+          />
         </div>
 
         {/* Category Filter */}
@@ -187,7 +185,7 @@ export default function ProductManager({
           onChange={(e) => setSelectedCategoryFilter(e.target.value)}
           style={{
             padding: "9px 12px",
-            borderRadius: "5px",
+            borderRadius: "6px",
             border: "1px solid #cbd5e1",
             background: "#ffffff",
             color: "#0f172a",
@@ -209,7 +207,7 @@ export default function ProductManager({
           onChange={(e) => setAvailabilityFilter(e.target.value)}
           style={{
             padding: "9px 12px",
-            borderRadius: "5px",
+            borderRadius: "6px",
             border: "1px solid #cbd5e1",
             background: "#ffffff",
             color: "#0f172a",
@@ -229,23 +227,31 @@ export default function ProductManager({
           style={{
             background: "#ffffff",
             border: "1px dashed #cbd5e1",
-            borderRadius: "5px",
+            borderRadius: "10px",
             padding: "54px 24px",
             textAlign: "center",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px", color: "#94a3b8" }}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path>
-              <path d="M12 22V12"></path>
-              <path d="m3.3 7 8.7 5 8.7-5"></path>
-              <path d="m12 12 8.5-5"></path>
-            </svg>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "14px" }}>
+            <div
+              style={{
+                width: "56px",
+                height: "56px",
+                borderRadius: "14px",
+                background: "#fff7ed",
+                color: "#ea580c",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Pizza size={28} />
+            </div>
           </div>
-          <h3 style={{ fontSize: "16px", fontWeight: 700, margin: "0 0 6px", color: "#0f172a" }}>
+          <h3 style={{ fontSize: "16px", fontWeight: 800, margin: "0 0 6px", color: "#0f172a" }}>
             {products.length === 0 ? "No products in database yet" : "No products matched your filters"}
           </h3>
-          <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 18px" }}>
+          <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 18px", maxWidth: 360, marginInline: "auto" }}>
             {products.length === 0
               ? "Start building your menu by adding your first real food product."
               : "Try clearing your search query or choosing another category."}
@@ -253,17 +259,21 @@ export default function ProductManager({
           <Link
             href="/admin/products/new"
             style={{
-              display: "inline-block",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
               padding: "9px 20px",
-              borderRadius: "5px",
-              background: "#ef4444",
+              borderRadius: "6px",
+              background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
               color: "#fff",
               textDecoration: "none",
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: "13px",
+              boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
             }}
           >
-            + Add Product
+            <Plus size={16} />
+            <span>Add Product</span>
           </Link>
         </div>
       ) : (
@@ -322,11 +332,7 @@ export default function ProductManager({
                               style={{ width: "100%", height: "100%", objectFit: "cover" }}
                             />
                           ) : (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
-                              <circle cx="9" cy="9" r="2"></circle>
-                              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
-                            </svg>
+                            <ImageIcon size={18} />
                           )}
                         </div>
                         <div>
@@ -416,47 +422,44 @@ export default function ProductManager({
                         <Link
                           href={`/admin/products/${p.id}/edit`}
                           style={{
-                            padding: "5px 10px",
-                            borderRadius: "5px",
+                            padding: "6px 12px",
+                            borderRadius: "6px",
                             background: "#ffffff",
                             border: "1px solid #cbd5e1",
                             color: "#334155",
                             textDecoration: "none",
                             fontSize: "12px",
-                            fontWeight: 600,
+                            fontWeight: 700,
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "4px",
+                            gap: "5px",
+                            transition: "all 0.15s ease",
                           }}
+                          className="hover:border-slate-400"
                         >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
-                            <path d="m15 5 4 4"></path>
-                          </svg>
+                          <Edit2 size={13} className="text-slate-600" />
                           <span>Edit</span>
                         </Link>
 
                         <button
                           onClick={() => handleDelete(p.id, p.name)}
                           style={{
-                            padding: "5px 10px",
-                            borderRadius: "5px",
+                            padding: "6px 12px",
+                            borderRadius: "6px",
                             background: "#fef2f2",
                             color: "#dc2626",
                             border: "1px solid #fecaca",
                             cursor: "pointer",
                             fontSize: "12px",
-                            fontWeight: 600,
+                            fontWeight: 700,
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "4px",
+                            gap: "5px",
+                            transition: "all 0.15s ease",
                           }}
+                          className="hover:bg-red-100"
                         >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 6h18"></path>
-                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                          </svg>
+                          <Trash2 size={13} />
                           <span>Delete</span>
                         </button>
                       </div>

@@ -4,6 +4,7 @@ import AdminShell from "@/components/admin/AdminShell";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { ADMIN_SHOP_COOKIE } from "@/lib/admin-auth";
 import { adminLogout } from "@/lib/admin-actions";
+import { ShieldAlert, Store } from "@/components/admin/AdminIcons";
 
 export const dynamic = "force-dynamic";
 
@@ -72,8 +73,8 @@ export default async function AdminLayout({
               >
                 <div
                   style={{
-                    width: "68px",
-                    height: "68px",
+                    width: "72px",
+                    height: "72px",
                     borderRadius: "50%",
                     background: "rgba(239, 68, 68, 0.15)",
                     border: "2px solid #ef4444",
@@ -81,11 +82,11 @@ export default async function AdminLayout({
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "30px",
                     marginBottom: "20px",
                   }}
+                  className="admin-pulse-red"
                 >
-                  🚫
+                  <ShieldAlert size={36} />
                 </div>
 
                 <h1 style={{ fontSize: "22px", fontWeight: 900, color: "#ffffff", margin: "0 0 8px" }}>
@@ -96,15 +97,18 @@ export default async function AdminLayout({
                   style={{
                     background: "#1e293b",
                     padding: "8px 16px",
-                    borderRadius: "5px",
-                    display: "inline-block",
+                    borderRadius: "6px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
                     fontSize: "14px",
                     fontWeight: 800,
                     color: "#fde047",
                     marginBottom: "16px",
                   }}
                 >
-                  🏪 {shop.name}
+                  <Store size={15} />
+                  <span>{shop.name}</span>
                 </div>
 
                 <p style={{ fontSize: "13px", color: "#94a3b8", lineHeight: 1.6, margin: "0 0 24px" }}>

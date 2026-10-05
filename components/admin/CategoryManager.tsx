@@ -3,6 +3,15 @@
 import { useState, useTransition } from "react";
 import type { Category } from "@/types/menu";
 import { createCategory, updateCategory, deleteCategory } from "@/lib/admin-actions";
+import {
+  Plus,
+  Tags,
+  Edit2,
+  Trash2,
+  Image as ImageIcon,
+  X,
+  Layers,
+} from "lucide-react";
 
 interface CategoryManagerProps {
   initialCategories: Category[];
@@ -161,20 +170,19 @@ export default function CategoryManager({
             alignItems: "center",
             gap: "6px",
             padding: "9px 16px",
-            borderRadius: "5px",
-            background: "#ef4444",
+            borderRadius: "6px",
+            background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
             color: "#ffffff",
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: "13px",
             border: "none",
             cursor: "pointer",
-            boxShadow: "0 2px 4px rgba(239, 68, 68, 0.2)",
+            boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
+            transition: "transform 0.15s ease",
           }}
+          className="hover:scale-105"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
+          <Plus size={16} />
           <span>Add New Category</span>
         </button>
       </div>
@@ -185,37 +193,52 @@ export default function CategoryManager({
           style={{
             background: "#ffffff",
             border: "1px dashed #cbd5e1",
-            borderRadius: "5px",
-            padding: "48px 24px",
+            borderRadius: "10px",
+            padding: "54px 24px",
             textAlign: "center",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px", color: "#94a3b8" }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"></path>
-              <path d="M7 7h.01"></path>
-            </svg>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "14px" }}>
+            <div
+              style={{
+                width: "56px",
+                height: "56px",
+                borderRadius: "14px",
+                background: "#eff6ff",
+                color: "#2563eb",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Tags size={28} />
+            </div>
           </div>
-          <h3 style={{ fontSize: "16px", fontWeight: 700, margin: "0 0 6px", color: "#0f172a" }}>
+          <h3 style={{ fontSize: "16px", fontWeight: 800, margin: "0 0 6px", color: "#0f172a" }}>
             No categories created yet
           </h3>
-          <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 16px" }}>
+          <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 18px", maxWidth: 360, marginInline: "auto" }}>
             Create your first category (like "Classic Pizzas", "Beverages", or "Desserts") to get started.
           </p>
           <button
             onClick={openAddModal}
             style={{
-              padding: "9px 18px",
-              borderRadius: "5px",
-              background: "#ef4444",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "9px 20px",
+              borderRadius: "6px",
+              background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
               color: "#fff",
               border: "none",
               cursor: "pointer",
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: "13px",
+              boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
             }}
           >
-            Create Category
+            <Plus size={16} />
+            <span>Create Category</span>
           </button>
         </div>
       ) : (
@@ -293,32 +316,44 @@ export default function CategoryManager({
                         <button
                           onClick={() => openEditModal(cat)}
                           style={{
-                            padding: "5px 10px",
-                            borderRadius: "5px",
+                            padding: "6px 12px",
+                            borderRadius: "6px",
                             background: "#ffffff",
                             border: "1px solid #cbd5e1",
                             color: "#334155",
                             cursor: "pointer",
                             fontSize: "12px",
-                            fontWeight: 600,
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            transition: "all 0.15s ease",
                           }}
+                          className="hover:border-slate-400"
                         >
-                          Edit
+                          <Edit2 size={13} className="text-slate-600" />
+                          <span>Edit</span>
                         </button>
                         <button
                           onClick={() => handleDelete(cat.id, cat.name)}
                           style={{
-                            padding: "5px 10px",
-                            borderRadius: "5px",
+                            padding: "6px 12px",
+                            borderRadius: "6px",
                             background: "#fef2f2",
                             color: "#dc2626",
                             border: "1px solid #fecaca",
                             cursor: "pointer",
                             fontSize: "12px",
-                            fontWeight: 600,
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            transition: "all 0.15s ease",
                           }}
+                          className="hover:bg-red-100"
                         >
-                          Delete
+                          <Trash2 size={13} />
+                          <span>Delete</span>
                         </button>
                       </div>
                     </td>
@@ -349,7 +384,7 @@ export default function CategoryManager({
             style={{
               background: "#ffffff",
               border: "1px solid #e2e8f0",
-              borderRadius: "5px",
+              borderRadius: "12px",
               padding: "24px",
               width: "100%",
               maxWidth: "480px",
@@ -357,7 +392,7 @@ export default function CategoryManager({
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-              <h3 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "#0f172a" }}>
+              <h3 style={{ fontSize: "16px", fontWeight: 800, margin: 0, color: "#0f172a" }}>
                 {editingCategory ? "Edit Category" : "Add New Category"}
               </h3>
               <button
@@ -369,12 +404,12 @@ export default function CategoryManager({
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
+                  padding: "4px",
+                  borderRadius: "6px",
                 }}
+                aria-label="Close modal"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+                <X size={18} />
               </button>
             </div>
 
