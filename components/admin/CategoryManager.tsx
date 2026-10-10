@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   X,
   Layers,
+  Lock,
 } from "lucide-react";
 
 interface CategoryManagerProps {
@@ -66,7 +67,7 @@ export default function CategoryManager({
     setFormImageUrl(cat.image_url || "");
     setFormSortOrder(cat.sort_order || 0);
     setFormIsActive(cat.is_active ?? true);
-    setFormShopId(cat.shop_id != null ? String(cat.shop_id) : (currentShopId ? String(currentShopId) : ""));
+    setFormShopId(currentShopId ? String(currentShopId) : (cat.shop_id != null ? String(cat.shop_id) : ""));
     setErrorMessage(null);
     setIsModalOpen(true);
   };
@@ -95,7 +96,7 @@ export default function CategoryManager({
     formData.set("image_url", formImageUrl);
     formData.set("sort_order", formSortOrder.toString());
     formData.set("is_active", formIsActive ? "true" : "false");
-    formData.set("shop_id", formShopId);
+    formData.set("shop_id", currentShopId ? String(currentShopId) : formShopId);
 
     startTransition(async () => {
       let res;
@@ -539,7 +540,42 @@ export default function CategoryManager({
               </div>
 
               {/* Branch Assignment Selector */}
-              {availableShops && availableShops.length > 0 ? (
+              {currentShopId ? (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#334155" }}>
+                      Assigned Branch / Store
+                    </label>
+                    <span style={{ fontSize: "11px", color: "#16a34a", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                      <Lock size={12} /> Locked to Current Branch
+                    </span>
+                  </div>
+                  <select
+                    value={String(currentShopId)}
+                    disabled
+                    style={{
+                      width: "100%",
+                      padding: "9px 12px",
+                      borderRadius: "5px",
+                      border: "1px solid #cbd5e1",
+                      background: "#f8fafc",
+                      color: "#0f172a",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      outline: "none",
+                      boxSizing: "border-box",
+                      cursor: "not-allowed",
+                    }}
+                  >
+                    <option value={String(currentShopId)}>
+                      🏪 {currentShopName} (#{currentShopId})
+                    </option>
+                  </select>
+                  <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
+                    This category will strictly appear on this branch&apos;s menu ({currentShopName}) and its admin management.
+                  </p>
+                </div>
+              ) : availableShops && availableShops.length > 0 ? (
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "5px" }}>
                     Assigned Branch / Store
@@ -576,10 +612,10 @@ export default function CategoryManager({
                   style={{
                     padding: "8px 12px",
                     borderRadius: "5px",
-                    background: currentShopId ? "#eff6ff" : "#f8fafc",
-                    border: currentShopId ? "1px solid #bfdbfe" : "1px solid #e2e8f0",
+                    background: "#eff6ff",
+                    border: "1px solid #bfdbfe",
                     fontSize: "12px",
-                    color: currentShopId ? "#1e40af" : "#475569",
+                    color: "#1e40af",
                     display: "flex",
                     alignItems: "center",
                     gap: "6px",

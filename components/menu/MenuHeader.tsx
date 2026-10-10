@@ -6,6 +6,7 @@
  */
 import Link from "next/link";
 import { useCart } from "./CartContext";
+import BrandLogo from "@/components/BrandLogo";
 
 interface MenuHeaderProps {
   onCartOpen: () => void;
@@ -41,28 +42,7 @@ export default function MenuHeader({ onCartOpen, shopName = "Pizza Shop", verifi
         >
           {/* Logo / Brand — Vibrant Red, Orange & Golden Yellow Square Emblem */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 4,
-                background: "linear-gradient(135deg, #dc2626 0%, #ea580c 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fde047",
-                boxShadow: "0 2px 6px rgba(220, 38, 38, 0.25)",
-                flexShrink: 0,
-              }}
-            >
-              {/* Pizza slice / flame SVG icon in Golden Yellow */}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="square">
-                <polygon points="12 2 22 20 2 20 12 2" stroke="currentColor" fill="rgba(253, 224, 71, 0.25)" />
-                <circle cx="12" cy="14" r="1.5" fill="currentColor" />
-                <circle cx="9" cy="17" r="1.2" fill="currentColor" />
-                <circle cx="15" cy="17" r="1.2" fill="currentColor" />
-              </svg>
-            </div>
+            <BrandLogo size={36} variant="iconOnly" />
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <h1

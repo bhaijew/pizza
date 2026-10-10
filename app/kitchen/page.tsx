@@ -20,7 +20,7 @@ export default async function FullscreenKitchenPage() {
   let ordersQuery = db
     .from("orders")
     .select("*")
-    .in("status", ["received", "preparing"])
+    .in("status", ["pending", "confirmed", "preparing"])
     .order("created_at", { ascending: true });
 
   if (activeShop.shopId) {
@@ -39,6 +39,7 @@ export default async function FullscreenKitchenPage() {
       <KitchenDisplay
         initialOrders={(orders as Order[]) || []}
         shopName={settings.shop_name || "Pizza Kitchen"}
+        shopId={activeShop.shopId ? Number(activeShop.shopId) : null}
       />
     </div>
   );

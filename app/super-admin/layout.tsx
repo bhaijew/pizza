@@ -13,9 +13,9 @@ export default function SuperAdminLayout({
   return (
     <div
       style={{
-        minHeight: "125vh",
-        background: "#f8fafc",
-        color: "#0f172a",
+        minHeight: "100vh",
+        background: "#090d16",
+        color: "#f8fafc",
         fontFamily: "var(--font-sans, system-ui, sans-serif)",
       }}
     >

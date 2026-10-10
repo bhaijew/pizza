@@ -24,11 +24,13 @@ import {
 interface KitchenDisplayProps {
   initialOrders: Order[];
   shopName?: string;
+  shopId?: number | null;
 }
 
 export default function KitchenDisplay({
   initialOrders,
   shopName = "Pizza Kitchen",
+  shopId,
 }: KitchenDisplayProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [filterMode, setFilterMode] = useState<"all" | "tables" | "takeaway">("all");
@@ -45,14 +47,24 @@ export default function KitchenDisplay({
   // Realtime Supabase subscription
   useEffect(() => {
     const supabase = createClient();
+    const channelName = `kitchen-orders-${shopId || "all"}-${Math.random().toString(36).substring(2, 7)}`;
+
     const channel = supabase
-      .channel("kitchen-orders-realtime")
+      .channel(channelName)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          ...(shopId ? { filter: `shop_id=eq.${shopId}` } : {}),
+        },
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newOrder = payload.new as Order;
+            if (shopId && newOrder.shop_id && Number(newOrder.shop_id) !== Number(shopId)) {
+              return;
+            }
             setOrders((prev) => [newOrder, ...prev]);
 
             // Audio beep for new kitchen ticket
@@ -63,7 +75,7 @@ export default function KitchenDisplay({
                 const gain = ctx.createGain();
                 osc.type = "sine";
                 osc.frequency.setValueAtTime(880, ctx.currentTime);
-                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.setValueAtTime(0.18, ctx.currentTime);
                 osc.connect(gain);
                 gain.connect(ctx.destination);
                 osc.start();
@@ -72,6 +84,9 @@ export default function KitchenDisplay({
             }
           } else if (payload.eventType === "UPDATE") {
             const updated = payload.new as Order;
+            if (shopId && updated.shop_id && Number(updated.shop_id) !== Number(shopId)) {
+              return;
+            }
             setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
           } else if (payload.eventType === "DELETE") {
             setOrders((prev) => prev.filter((o) => o.id !== (payload.old as any).id));
@@ -83,7 +98,7 @@ export default function KitchenDisplay({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [soundEnabled]);
+  }, [shopId, soundEnabled]);
 
   const handleUpdateStatus = (orderId: number, nextStatus: string) => {
     setOrders((prev) =>

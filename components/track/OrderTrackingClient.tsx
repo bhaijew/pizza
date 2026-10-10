@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { getTrackableOrder } from "@/lib/order-actions";
 import { Order, OrderStatus } from "@/types/menu";
+import { createClient } from "@/utils/supabase/client";
 
 interface OrderTrackingClientProps {
   initialOrderNumber: string;
@@ -18,6 +19,7 @@ export default function OrderTrackingClient({
   const [loading, setLoading] = useState(!initialOrder);
   const [error, setError] = useState<string | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
   const prevStatusRef = useRef<OrderStatus | null>(initialOrder?.status || null);
 
   // Play subtle web audio notification chime when status progresses
@@ -58,12 +60,54 @@ export default function OrderTrackingClient({
     setLoading(false);
   }, [initialOrderNumber, order, playStatusChime]);
 
-  // Initial fetch and 5-second polling interval
+  // Enterprise-Grade 100% Live WebSocket Realtime Subscription
   useEffect(() => {
+    // 1. Initial snapshot fetch
     fetchLatest();
-    const interval = setInterval(fetchLatest, 5000);
-    return () => clearInterval(interval);
-  }, [fetchLatest]);
+
+    // 2. Supabase Realtime WebSocket Channel
+    const supabase = createClient();
+    const channelName = `customer-tracker-${initialOrderNumber}`;
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `order_number=eq.${initialOrderNumber}`,
+        },
+        (payload) => {
+          if (payload.eventType === "UPDATE" || payload.eventType === "INSERT") {
+            const updated = payload.new as Order;
+            if (prevStatusRef.current && prevStatusRef.current !== updated.status) {
+              playStatusChime();
+            }
+            prevStatusRef.current = updated.status;
+            setOrder(updated);
+            setLastRefreshed(new Date());
+            setError(null);
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          setIsRealtimeConnected(true);
+        } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
+          setIsRealtimeConnected(false);
+        }
+      });
+
+    // 3. Gentle defensive fallback heartbeat (every 45s) in case of device sleep/reconnect
+    const heartbeat = setInterval(fetchLatest, 45000);
+
+    return () => {
+      clearInterval(heartbeat);
+      supabase.removeChannel(channel);
+    };
+  }, [initialOrderNumber, fetchLatest, playStatusChime]);
 
   const status = order?.status || "pending";
   const orderType = order?.order_type || "takeaway";
@@ -252,13 +296,20 @@ export default function OrderTrackingClient({
                 width: 8,
                 height: 8,
                 borderRadius: "50%",
-                background: "#10b981",
-                boxShadow: "0 0 6px #10b981",
+                background: isRealtimeConnected ? "#10b981" : "#f59e0b",
+                boxShadow: isRealtimeConnected ? "0 0 8px #10b981" : "0 0 6px #f59e0b",
                 animation: "pulse 1.8s infinite",
               }}
             />
-            <span style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>
-              Live Polling (every 5s) &bull; Refreshed {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            <span
+              style={{
+                fontSize: 11,
+                color: isRealtimeConnected ? "#059669" : "#d97706",
+                fontWeight: 700,
+                letterSpacing: "0.01em",
+              }}
+            >
+              {isRealtimeConnected ? "⚡ 100% Live Radar (WebSocket)" : "Connecting Radar..."} &bull; Synced {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
             </span>
           </div>
         </div>

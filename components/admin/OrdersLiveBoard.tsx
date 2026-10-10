@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useTransition } from "react";
+import { useState, useEffect, useMemo, useTransition, useCallback } from "react";
 import type { Order } from "@/types/menu";
 import { updateOrderStatus, assignOrderRider, triggerRiderWhatsAppAlert } from "@/lib/admin-actions";
 import { createClient } from "@/utils/supabase/client";
@@ -19,11 +19,14 @@ import {
   MapPin,
   Phone,
   User,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 interface OrdersLiveBoardProps {
   initialOrders: Order[];
   currencySymbol?: string;
+  shopId?: number | null;
 }
 
 type FilterTab = "all" | "active" | "delivery" | "tables" | "tokens" | "pending" | "preparing" | "ready" | "delivered" | "cancelled";
@@ -121,12 +124,47 @@ const STATUS_CONFIG: Record<
 export default function OrdersLiveBoard({
   initialOrders,
   currencySymbol = "$",
+  shopId,
 }: OrdersLiveBoardProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [activeTab, setActiveTab] = useState<FilterTab>("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
   const [realtimeActive, setRealtimeActive] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Play crisp 2-tone enterprise POS alert chime (A5 -> D6)
+  const playPosOrderChime = useCallback(() => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(880, now); // A5
+      osc2.type = "triangle";
+      osc2.frequency.setValueAtTime(1174.66, now + 0.12); // D6
+
+      gain.gain.setValueAtTime(0.24, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now);
+      osc1.stop(now + 0.18);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.6);
+    } catch {
+      // Audio autoplay policy fallback
+    }
+  }, []);
 
   // Feature 8: Rider assignment state
   const [assigningRiderOrderId, setAssigningRiderOrderId] = useState<number | null>(null);
@@ -172,25 +210,37 @@ export default function OrdersLiveBoard({
     }
   };
 
-  // Subscribe to real-time order updates via Supabase Realtime
+  // Enterprise Multi-Tenant Realtime WebSocket Subscription
   useEffect(() => {
     const supabase = createClient();
+    const channelName = `pos-live-orders-${shopId || "all"}-${Math.random().toString(36).substring(2, 7)}`;
 
     const channel = supabase
-      .channel("admin-orders-live")
+      .channel(channelName)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          ...(shopId ? { filter: `shop_id=eq.${shopId}` } : {}),
+        },
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newOrder = payload.new as Order;
+            // Additional branch isolation guard
+            if (shopId && newOrder.shop_id && Number(newOrder.shop_id) !== Number(shopId)) {
+              return;
+            }
             setOrders((prev) => [newOrder, ...prev]);
-            try {
-              const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbqWEzHkyc4uq0ZDIXS5rn8L5yPB1Nmej0wXNAIEib5/XGdUUpTZro98h8TTBMmej3yXxNMEyZ6PfJfE0wTJno98l8TTBMmej3yXxN");
-              audio.play().catch(() => {});
-            } catch (_) {}
+            if (soundEnabled) {
+              playPosOrderChime();
+            }
           } else if (payload.eventType === "UPDATE") {
             const updated = payload.new as Order;
+            if (shopId && updated.shop_id && Number(updated.shop_id) !== Number(shopId)) {
+              return;
+            }
             setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
           } else if (payload.eventType === "DELETE") {
             setOrders((prev) => prev.filter((o) => o.id !== (payload.old as any).id));
@@ -200,13 +250,15 @@ export default function OrdersLiveBoard({
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           setRealtimeActive(true);
+        } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
+          setRealtimeActive(false);
         }
       });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [shopId, soundEnabled, playPosOrderChime]);
 
   const handleStatusChange = (orderId: number, nextStatus: string) => {
     setOrders((prev) =>
@@ -313,29 +365,61 @@ export default function OrdersLiveBoard({
           </p>
         </div>
 
-        {/* Search */}
-        <div style={{ position: "relative", width: "240px" }}>
-          <input
-            type="text"
-            placeholder="Search order # or name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "9px 12px 9px 34px",
-              borderRadius: "6px",
-              border: "1px solid #cbd5e1",
-              background: "#ffffff",
-              color: "#0f172a",
-              fontSize: "13px",
-              outline: "none",
-              boxSizing: "border-box",
+        {/* Sound Alert Toggle & Search */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <button
+            type="button"
+            onClick={() => {
+              const next = !soundEnabled;
+              setSoundEnabled(next);
+              if (next) {
+                playPosOrderChime();
+              }
             }}
-          />
-          <Search
-            size={15}
-            style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }}
-          />
+            title={soundEnabled ? "Mute live order sound alerts" : "Enable live order sound alerts"}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 12px",
+              borderRadius: "6px",
+              border: soundEnabled ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
+              background: soundEnabled ? "#f0fdf4" : "#f8fafc",
+              color: soundEnabled ? "#16a34a" : "#64748b",
+              fontSize: "12px",
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
+            <span>{soundEnabled ? "Sound: ON" : "Sound: OFF"}</span>
+          </button>
+
+          {/* Search */}
+          <div style={{ position: "relative", width: "240px" }}>
+            <input
+              type="text"
+              placeholder="Search order # or name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "9px 12px 9px 34px",
+                borderRadius: "6px",
+                border: "1px solid #cbd5e1",
+                background: "#ffffff",
+                color: "#0f172a",
+                fontSize: "13px",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+            <Search
+              size={15}
+              style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }}
+            />
+          </div>
         </div>
       </div>
 

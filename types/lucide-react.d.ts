@@ -89,6 +89,8 @@ declare module "lucide-react" {
   export const Database: LucideIcon;
   export const Power: LucideIcon;
   export const Mail: LucideIcon;
+  export const Laptop: LucideIcon;
+  export const Radio: LucideIcon;
 
   // Fallback for any other Lucide icons
   const icons: { [key: string]: LucideIcon };

@@ -167,3 +167,106 @@ export interface Shop {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface PosStaff {
+  id: string;
+  name: string;
+  email?: string | null;
+  role: "manager" | "cashier" | "waiter" | "chef" | "owner";
+  pin: string;
+  has_pos_access: boolean;
+  is_active: boolean;
+  shop_id?: number | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// ─── RECIPE & RAW MATERIAL INVENTORY (PHASE 1) ───────────────────────
+
+export type RawIngredientCategory =
+  | "meat"
+  | "dairy"
+  | "vegetables"
+  | "sauces"
+  | "bakery"
+  | "packaging"
+  | "spices"
+  | "other";
+
+export interface RawIngredient {
+  id: number;
+  shop_id?: number | null;
+  name: string;
+  category: RawIngredientCategory | string;
+  unit: "kg" | "g" | "l" | "ml" | "pcs" | string;
+  current_stock: number;
+  low_stock_threshold: number;
+  cost_per_unit: number; // e.g. Rs. 850 per kg or Rs. 25 per box
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProductRecipeItem {
+  id?: number;
+  shop_id?: number | null;
+  product_id: number;
+  variation_name?: string | null; // e.g. 'Small', 'Medium', 'Large' or null for all
+  ingredient_id: number;
+  quantity_required: number; // e.g. 0.500 kg meat for small pizza
+  notes?: string | null;
+  ingredient?: RawIngredient;
+}
+
+export interface StockAuditItem {
+  ingredient_id: number;
+  name: string;
+  unit: string;
+  cost_per_unit: number;
+  opening_stock: number;
+  restocked_stock: number;
+  ideal_consumed: number; // calculated from order sales count × recipe
+  expected_stock: number; // opening + restocked - ideal_consumed
+  actual_counted: number; // measured physically on kitchen scale
+  variance: number;       // actual_counted - expected_stock (negative = missing/wasted)
+  loss_amount: number;    // negative variance * cost_per_unit
+}
+
+export interface StockAudit {
+  id: number;
+  shop_id?: number | null;
+  audit_title: string;
+  period_start: string;
+  period_end: string;
+  status: "draft" | "completed";
+  audited_by: string;
+  items_data: StockAuditItem[];
+  total_loss_amount: number;
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface IngredientWastageLog {
+  id: number;
+  shop_id?: number | null;
+  ingredient_id: number;
+  quantity_wasted: number;
+  reason: string;
+  reported_by: string;
+  cost_loss: number;
+  created_at: string;
+  ingredient?: RawIngredient;
+}
+
+export interface IngredientStockLog {
+  id: number;
+  shop_id?: number | null;
+  ingredient_id: number;
+  change_type: "restock" | "order_deduction" | "wastage" | "audit_adjustment";
+  quantity_change: number;
+  previous_stock: number;
+  new_stock: number;
+  reference_id?: string | null;
+  notes?: string | null;
+  created_at: string;
+  ingredient?: RawIngredient;
+}

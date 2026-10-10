@@ -273,10 +273,10 @@ export async function createCategory(
   const sort_order = parseInt(formData.get("sort_order") as string) || 0;
   const is_active = formData.get("is_active") === "true";
 
-  // Check explicit shop_id from form or fallback to activeShop.shopId
+  // Check explicit shop_id from form (only super/master admins can reassign, branch admins are locked to their activeShop.shopId)
   const rawShopId = formData.get("shop_id");
   let targetShopId: number | null = activeShop.shopId;
-  if (rawShopId !== null && rawShopId !== undefined && rawShopId !== "") {
+  if (activeShop.isMasterAdmin && rawShopId !== null && rawShopId !== undefined && rawShopId !== "") {
     const parsed = parseInt(rawShopId as string, 10);
     if (!isNaN(parsed)) {
       targetShopId = parsed;
@@ -336,7 +336,7 @@ export async function updateCategory(
 
   const rawShopId = formData.get("shop_id");
   let targetShopId: number | null = activeShop.shopId;
-  if (rawShopId !== null && rawShopId !== undefined && rawShopId !== "") {
+  if (activeShop.isMasterAdmin && rawShopId !== null && rawShopId !== undefined && rawShopId !== "") {
     const parsed = parseInt(rawShopId as string, 10);
     if (!isNaN(parsed)) {
       targetShopId = parsed;

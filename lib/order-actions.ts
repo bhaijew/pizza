@@ -176,7 +176,7 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       return { success: false, error: error.message };
     }
 
-    // Feature 7: Inventory Automatic Stock Deduction
+    // Feature 7: Inventory Automatic Stock Deduction (Finished Products)
     try {
       for (const orderedItem of input.items) {
         if (!orderedItem.id) continue;
@@ -197,6 +197,85 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       }
     } catch (stockErr) {
       console.warn("[placeCustomerOrder stock deduction non-blocking error]", stockErr);
+    }
+
+    // Phase 1: Recipe & Raw Material Automatic Stock Deduction (Kacha Maal)
+    try {
+      for (const orderedItem of input.items) {
+        if (!orderedItem.id) continue;
+        const prodId = Number(orderedItem.id);
+        const qty = Number(orderedItem.qty || (orderedItem as any).quantity || 1);
+
+        // Robustly extract variation name whether it's string, object or null
+        const rawVar =
+          (orderedItem as any).selected_variation ||
+          (orderedItem as any).selectedVariation;
+        const variationName = (
+          typeof rawVar === "string"
+            ? rawVar
+            : rawVar && typeof rawVar === "object"
+            ? rawVar.name || ""
+            : ""
+        ).toLowerCase().trim();
+
+        // Check if recipes exist for this product
+        const { data: recipes } = await supabase
+          .from("product_recipes")
+          .select("ingredient_id, quantity_required, variation_name")
+          .eq("product_id", prodId);
+
+        if (recipes && recipes.length > 0) {
+          // 1. If variationName exists (e.g. "Small"), look for recipes matching this variation
+          let matchedRecipes = variationName
+            ? recipes.filter(
+                (r) =>
+                  r.variation_name &&
+                  r.variation_name.toLowerCase().trim() === variationName
+              )
+            : [];
+
+          // 2. If no variation-specific recipe matched, fall back to base recipes (where variation_name is null/empty)
+          if (matchedRecipes.length === 0) {
+            matchedRecipes = recipes.filter((r) => !r.variation_name);
+          }
+
+          for (const recipe of matchedRecipes) {
+            const reqQty = Number(recipe.quantity_required) || 0;
+            const deductAmount = Number((reqQty * qty).toFixed(3));
+
+            if (deductAmount > 0) {
+              const { data: ing } = await supabase
+                .from("raw_ingredients")
+                .select("current_stock")
+                .eq("id", recipe.ingredient_id)
+                .maybeSingle();
+
+              if (ing) {
+                const currentStock = Number(ing.current_stock) || 0;
+                const newStock = Math.max(0, Number((currentStock - deductAmount).toFixed(3)));
+
+                await supabase
+                  .from("raw_ingredients")
+                  .update({ current_stock: newStock, updated_at: new Date().toISOString() })
+                  .eq("id", recipe.ingredient_id);
+
+                await supabase.from("ingredient_stock_logs").insert({
+                  shop_id: targetShopId || null,
+                  ingredient_id: recipe.ingredient_id,
+                  change_type: "order_deduction",
+                  quantity_change: -deductAmount,
+                  previous_stock: currentStock,
+                  new_stock: newStock,
+                  reference_id: orderNumber,
+                  notes: `Used in Order #${orderNumber} (${qty}x ${variationName || "Base"})`,
+                });
+              }
+            }
+          }
+        }
+      }
+    } catch (recipeErr) {
+      console.warn("[placeCustomerOrder recipe deduction non-blocking error]", recipeErr);
     }
 
     // If order succeeded and belongs to a registered shop, increment its aggregate counters

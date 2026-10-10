@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
-import type { Shop } from "@/types/menu";
+import type { Shop, PosStaff } from "@/types/menu";
 
 async function getSupabase() {
   const cookieStore = await cookies();
@@ -13,6 +13,8 @@ export interface SuperAdminMetrics {
   suspendedShops: number;
   totalOrders: number;
   totalRevenue: number;
+  totalStaff: number;
+  activeStaff: number;
   isDatabaseConfigured: boolean;
 }
 
@@ -38,12 +40,38 @@ export async function fetchShops(): Promise<{ shops: Shop[]; isDatabaseConfigure
   }
 }
 
+export async function fetchStaff(): Promise<{ staff: PosStaff[] }> {
+  try {
+    const supabase = await getSupabase();
+    const { data, error } = await supabase
+      .from("pos_staff")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return { staff: [] };
+    }
+
+    return {
+      staff: (data || []) as PosStaff[],
+    };
+  } catch {
+    return { staff: [] };
+  }
+}
+
 export async function fetchSuperAdminMetrics(): Promise<SuperAdminMetrics> {
-  const { shops, isDatabaseConfigured } = await fetchShops();
+  const [{ shops, isDatabaseConfigured }, { staff }] = await Promise.all([
+    fetchShops(),
+    fetchStaff(),
+  ]);
 
   const totalShops = shops.length;
   const activeShops = shops.filter((s) => s.status === "active").length;
   const suspendedShops = shops.filter((s) => s.status === "suspended").length;
+
+  const totalStaff = staff.length;
+  const activeStaff = staff.filter((st) => st.is_active && st.has_pos_access !== false).length;
 
   let totalOrders = 0;
   let totalRevenue = 0;
@@ -81,6 +109,8 @@ export async function fetchSuperAdminMetrics(): Promise<SuperAdminMetrics> {
     suspendedShops,
     totalOrders,
     totalRevenue: Number(totalRevenue.toFixed(2)),
+    totalStaff,
+    activeStaff,
     isDatabaseConfigured,
   };
 }

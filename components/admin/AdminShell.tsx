@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { adminLogout } from "@/lib/admin-actions";
 import LiveOrderNotifier from "@/components/admin/LiveOrderNotifier";
+import BrandLogo from "@/components/BrandLogo";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -129,8 +130,10 @@ const NAV_GROUPS: NavGroup[] = [
         icon: BarChart3,
       },
       {
-        label: "Inventory & Stock",
+        label: "Recipe & Inventory",
         href: "/admin/inventory",
+        badge: "BOM",
+        badgeColor: "#8b5cf6",
         icon: Boxes,
       },
       {
@@ -365,22 +368,7 @@ export default function AdminShell({
             gap: "12px",
           }}
         >
-          <div
-            style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#ffffff",
-              boxShadow: "0 6px 18px rgba(239, 68, 68, 0.45)",
-              flexShrink: 0,
-            }}
-          >
-            <Flame size={22} className="animate-pulse" />
-          </div>
+          <BrandLogo size={42} variant="iconOnly" />
 
           <div style={{ minWidth: 0, flex: 1 }}>
             <div
@@ -934,20 +922,7 @@ export default function AdminShell({
           className="md:hidden"
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                width: "34px",
-                height: "34px",
-                borderRadius: "8px",
-                background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fff",
-              }}
-            >
-              <Flame size={18} />
-            </div>
+            <BrandLogo size={34} variant="iconOnly" />
             <span
               style={{
                 fontWeight: 800,

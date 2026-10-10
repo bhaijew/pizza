@@ -16,7 +16,7 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
 
   // If query parameter shop_id is explicitly provided and valid, use it; otherwise use activeShop context
   let effectiveShopId = activeShop.shopId;
-  if (sParams?.shop_id) {
+  if (activeShop.isMasterAdmin && sParams?.shop_id) {
     const parsed = parseInt(sParams.shop_id, 10);
     if (!isNaN(parsed)) {
       effectiveShopId = parsed;

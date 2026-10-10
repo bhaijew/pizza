@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
-import { Geist_Mono } from "next/font/google";
-import { Inter, Outfit } from "next/font/google";
+import { Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const poppins = Poppins({
   subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-poppins",
   display: "swap",
 });
 
@@ -42,7 +36,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${outfit.variable} ${geistMono.variable}`}
+      className={`${poppins.variable} ${geistMono.variable}`}
     >
       <body suppressHydrationWarning>{children}</body>
     </html>

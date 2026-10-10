@@ -43,6 +43,7 @@ export default function ShopModal({
   const [ownerEmail, setOwnerEmail] = useState(editingShop?.owner_email || "");
   const [branchAddress, setBranchAddress] = useState(editingShop?.branch_address || "");
   const [password, setPassword] = useState(editingShop?.password || "shop123");
+  const [posPin, setPosPin] = useState("1234");
   const [currencySymbol, setCurrencySymbol] = useState(editingShop?.currency_symbol || "Rs.");
   const [plan, setPlan] = useState<"starter" | "pro" | "enterprise">(editingShop?.plan || "pro");
   const [status, setStatus] = useState<"active" | "suspended" | "pending">(editingShop?.status || "active");
@@ -64,6 +65,11 @@ export default function ShopModal({
     setPassword(generated);
   };
 
+  const handleGeneratePosPin = () => {
+    const pin = String(Math.floor(1000 + Math.random() * 9000));
+    setPosPin(pin);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -80,6 +86,7 @@ export default function ShopModal({
     formData.append("owner_email", ownerEmail.trim());
     formData.append("branch_address", branchAddress.trim());
     formData.append("password", password.trim());
+    formData.append("pos_pin", posPin.trim() || "1234");
     formData.append("currency_symbol", currencySymbol.trim());
     formData.append("plan", plan);
     formData.append("status", status);
@@ -367,54 +374,110 @@ export default function ShopModal({
               </span>
             </div>
 
-            <div style={{ marginBottom: "12px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569" }}>
-                  Store Manager Password (/admin/login) <span style={{ color: "#ef4444" }}>*</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={handleGeneratePassword}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+              {/* Web Manager Password */}
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569" }}>
+                    Web Manager Password (/admin) <span style={{ color: "#ef4444" }}>*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGeneratePassword}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "#ea580c",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <RefreshCw size={11} />
+                    <span>Generate</span>
+                  </button>
+                </div>
+
+                <input
+                  type="text"
+                  required
+                  placeholder="Password for /admin/login"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   style={{
-                    background: "transparent",
-                    border: "none",
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
                     color: "#ea580c",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
+                    fontSize: "13px",
+                    fontFamily: "monospace",
+                    fontWeight: 800,
+                    outline: "none",
+                    boxSizing: "border-box",
                   }}
-                >
-                  <RefreshCw size={11} />
-                  <span>Generate New PIN</span>
-                </button>
+                />
+                <span style={{ fontSize: "10px", color: "#64748b", marginTop: "4px", display: "block" }}>
+                  Used for branch web portal login.
+                </span>
               </div>
 
-              <input
-                type="text"
-                required
-                placeholder="Password for /admin/login"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  background: "#ffffff",
-                  color: "#ea580c",
-                  fontSize: "14px",
-                  fontFamily: "monospace",
-                  fontWeight: 800,
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-              <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", display: "block" }}>
-                Branch manager logs into <code>/admin/login</code> with this access PIN.
-              </span>
+              {/* POS Terminal 4-Digit PIN */}
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569" }}>
+                    POS Terminal 4-Digit PIN <span style={{ color: "#ef4444" }}>*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGeneratePosPin}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "#16a34a",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <RefreshCw size={11} />
+                    <span>New PIN</span>
+                  </button>
+                </div>
+
+                <input
+                  type="text"
+                  required
+                  maxLength={6}
+                  placeholder="1234"
+                  value={posPin}
+                  onChange={(e) => setPosPin(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#16a34a",
+                    fontSize: "14px",
+                    fontFamily: "monospace",
+                    fontWeight: 900,
+                    letterSpacing: "0.2em",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <span style={{ fontSize: "10px", color: "#64748b", marginTop: "4px", display: "block" }}>
+                  Auto-provisions Owner POS terminal access.
+                </span>
+              </div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>

@@ -74,6 +74,14 @@ export default function ProductForm({
           .replace(/[^\w\s-]/g, "")
           .replace(/\s+/g, "-")
       );
+      // Auto-populate variations if not already set
+      if (variations.length === 0) {
+        if (val.toLowerCase().includes("pizza")) {
+          applyPizzaSizesPreset();
+        } else if (val.toLowerCase().includes("burger")) {
+          applyBurgerSizesPreset();
+        }
+      }
     }
   };
 
@@ -89,6 +97,14 @@ export default function ProductForm({
           .replace(/[^\w\s-]/g, "")
           .replace(/\s+/g, "-")
       );
+    }
+    // Auto-populate variations if empty
+    if (!initialProduct && variations.length === 0) {
+      if (preset.category === "Pizza" || preset.name.toLowerCase().includes("pizza")) {
+        applyPizzaSizesPreset();
+      } else if (preset.category === "Burger" || preset.name.toLowerCase().includes("burger")) {
+        applyBurgerSizesPreset();
+      }
     }
   };
 
@@ -162,13 +178,31 @@ export default function ProductForm({
     setVariations((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const applyPizzaSizesPreset = () => {
-    const baseP = parseFloat(price) || 800;
+  const applyPizzaSizesPreset = (customBase?: number) => {
+    const baseP = customBase !== undefined ? customBase : (parseFloat(price) || 1000);
     setVariations([
-      { id: "var-small", name: 'Small (8")', price: Math.round(baseP * 0.75), is_default: false },
-      { id: "var-medium", name: 'Medium (10")', price: baseP, is_default: true },
-      { id: "var-large", name: 'Large (12")', price: Math.round(baseP * 1.45), is_default: false },
-      { id: "var-xl", name: 'Family / XL (14")', price: Math.round(baseP * 1.9), is_default: false },
+      { id: `var-small-${Date.now()}`, name: "Small", price: Math.round(baseP * 0.65), is_default: false },
+      { id: `var-big-${Date.now()}`, name: "Big", price: baseP, is_default: true },
+      { id: `var-large-${Date.now()}`, name: "Large", price: Math.round(baseP * 1.45), is_default: false },
+      { id: `var-xl-${Date.now()}`, name: "Extra Large", price: Math.round(baseP * 1.9), is_default: false },
+    ]);
+  };
+
+  const applyBurgerSizesPreset = (customBase?: number) => {
+    const baseP = customBase !== undefined ? customBase : (parseFloat(price) || 500);
+    setVariations([
+      { id: `var-single-${Date.now()}`, name: "Single Patty", price: baseP, is_default: true },
+      { id: `var-double-${Date.now()}`, name: "Double Patty", price: Math.round(baseP + 200), is_default: false },
+      { id: `var-combo-${Date.now()}`, name: "Combo (Fries + Drink)", price: Math.round(baseP + 280), is_default: false },
+    ]);
+  };
+
+  const applyDrinkSizesPreset = (customBase?: number) => {
+    const baseP = customBase !== undefined ? customBase : (parseFloat(price) || 120);
+    setVariations([
+      { id: `var-regular-${Date.now()}`, name: "Regular (250ml)", price: baseP, is_default: true },
+      { id: `var-large-${Date.now()}`, name: "Large (500ml)", price: Math.round(baseP * 1.6), is_default: false },
+      { id: `var-jumbo-${Date.now()}`, name: "Family (1.5 Liter)", price: Math.round(baseP * 2.8), is_default: false },
     ]);
   };
 
@@ -396,7 +430,21 @@ export default function ProductForm({
                 <select
                   required
                   value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
+                  onChange={(e) => {
+                    const newCatId = e.target.value;
+                    setCategoryId(newCatId);
+                    if (!initialProduct && variations.length === 0) {
+                      const matchedCat = categories.find((c) => String(c.id) === String(newCatId));
+                      if (matchedCat) {
+                        const cname = (matchedCat.name || "").toLowerCase();
+                        if (cname.includes("pizza")) {
+                          applyPizzaSizesPreset();
+                        } else if (cname.includes("burger")) {
+                          applyBurgerSizesPreset();
+                        }
+                      }
+                    }
+                  }}
                   style={{
                     width: "100%",
                     padding: "10px 12px",
@@ -817,10 +865,10 @@ export default function ProductForm({
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
               <button
                 type="button"
-                onClick={applyPizzaSizesPreset}
+                onClick={() => applyPizzaSizesPreset()}
                 style={{
                   padding: "6px 12px",
                   borderRadius: "5px",
@@ -828,11 +876,43 @@ export default function ProductForm({
                   background: "#f8fafc",
                   color: "#0f172a",
                   fontSize: "12px",
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: "pointer",
                 }}
               >
-                ⚡ Add Pizza Sizes (S / M / L / XL)
+                🍕 Pizza Sizes (Small, Big, Large, XL)
+              </button>
+              <button
+                type="button"
+                onClick={() => applyBurgerSizesPreset()}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "5px",
+                  border: "1px solid #cbd5e1",
+                  background: "#f8fafc",
+                  color: "#0f172a",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                🍔 Burger Sizes (Single, Double, Combo)
+              </button>
+              <button
+                type="button"
+                onClick={() => applyDrinkSizesPreset()}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "5px",
+                  border: "1px solid #cbd5e1",
+                  background: "#f8fafc",
+                  color: "#0f172a",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                🥤 Drink Sizes (Regular, Large, 1.5L)
               </button>
               <button
                 type="button"
@@ -848,10 +928,38 @@ export default function ProductForm({
                   cursor: "pointer",
                 }}
               >
-                + Add Size
+                + Custom Size
               </button>
             </div>
           </div>
+
+          {variations.length > 0 && parseFloat(price) > 0 && (
+            <div style={{ marginBottom: "14px", display: "flex", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const hasSmallOrBig = variations.some((v) => ["small", "big", "large", "medium"].includes(v.name.toLowerCase()));
+                  if (hasSmallOrBig) {
+                    applyPizzaSizesPreset(parseFloat(price));
+                  } else {
+                    applyBurgerSizesPreset(parseFloat(price));
+                  }
+                }}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: "4px",
+                  border: "1px solid #bbf7d0",
+                  background: "#f0fdf4",
+                  color: "#15803d",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                🔄 Re-calculate all sizes using Base Price ({currencySymbol}{price})
+              </button>
+            </div>
+          )}
 
           {variations.length === 0 ? (
             <div

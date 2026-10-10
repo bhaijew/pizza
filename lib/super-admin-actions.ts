@@ -18,7 +18,7 @@ import {
   COOKIE_MAX_AGE,
   generateSessionToken,
 } from "@/lib/admin-auth";
-import type { Shop } from "@/types/menu";
+import type { Shop, PosStaff } from "@/types/menu";
 
 // ─── Super Admin Guard ───────────────────────────────────────────
 export async function requireSuperAdmin() {
@@ -146,6 +146,28 @@ export async function createShop(
     return { error: error.message, success: false };
   }
 
+  const pos_pin = (formData.get("pos_pin") as string)?.trim() || "1234";
+
+  // Auto-provision branch Owner in pos_staff with POS access and the specified PIN
+  if (data && (data as any).id) {
+    try {
+      const staffPayload: Record<string, any> = {
+        name: `${owner_name} (Owner)`,
+        email: owner_email || `shop_${(data as any).id}_owner@pos.local`,
+        role: "owner",
+        pin: pos_pin,
+        has_pos_access: true,
+        is_active: status === "active",
+      };
+      const tryWithShop = await db.from("pos_staff").insert({ ...staffPayload, shop_id: (data as any).id });
+      if (tryWithShop.error && tryWithShop.error.message.includes("shop_id")) {
+        await db.from("pos_staff").insert(staffPayload);
+      }
+    } catch (e) {
+      console.warn("[SuperAdmin] Auto-provision owner pos_staff note:", e);
+    }
+  }
+
   revalidatePath("/super-admin");
   return { error: null, success: true, shop: data as Shop };
 }
@@ -207,6 +229,28 @@ export async function updateShop(
   }
 
   if (error) return { error: error.message, success: false };
+
+  const pos_pin = (formData.get("pos_pin") as string)?.trim();
+  if (pos_pin) {
+    try {
+      const tryShopId = await db
+        .from("pos_staff")
+        .update({ pin: pos_pin, is_active: status === "active" })
+        .eq("shop_id", id)
+        .eq("role", "owner");
+
+      if (tryShopId.error && tryShopId.error.message.includes("shop_id")) {
+        if (owner_email) {
+          await db
+            .from("pos_staff")
+            .update({ pin: pos_pin, is_active: status === "active" })
+            .eq("email", owner_email);
+        }
+      }
+    } catch (e) {
+      console.warn("[SuperAdmin] Update pos_staff pin note:", e);
+    }
+  }
 
   revalidatePath("/super-admin");
   return { error: null, success: true };
@@ -306,4 +350,238 @@ export async function impersonateShop(shopId?: number | string, shopName?: strin
   }
 
   redirect("/admin");
+}
+
+// ─── STAFF & POS TERMINAL ACCESS ACTIONS ────────────────────────
+export async function createStaff(
+  _prev: { error: string | null; success: boolean },
+  formData: FormData
+): Promise<{ error: string | null; success: boolean; staff?: PosStaff }> {
+  await requireSuperAdmin();
+  const db = createAdminClient();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, success: false };
+  }
+
+  const name = (formData.get("name") as string)?.trim();
+  const email = (formData.get("email") as string)?.trim() || null;
+  const role = (formData.get("role") as string) || "cashier";
+  const pin = (formData.get("pin") as string)?.trim() || "1234";
+  const rawShopId = (formData.get("shop_id") as string)?.trim();
+  const shop_id = rawShopId && rawShopId !== "all" && !isNaN(Number(rawShopId)) ? Number(rawShopId) : null;
+  const has_pos_access = formData.get("has_pos_access") === "true" || formData.get("has_pos_access") === "on";
+  const is_active = formData.get("is_active") !== "false";
+
+  if (!name) {
+    return { error: "Staff member name is required.", success: false };
+  }
+
+  if (!pin || pin.length < 4) {
+    return { error: "POS PIN must be at least 4 digits.", success: false };
+  }
+
+  const insertPayload = {
+    name,
+    email,
+    role,
+    pin,
+    shop_id,
+    has_pos_access,
+    is_active,
+  };
+
+  const { data, error } = await db
+    .from("pos_staff")
+    .insert(insertPayload)
+    .select()
+    .single();
+
+  if (error) {
+    return { error: error.message, success: false };
+  }
+
+  revalidatePath("/super-admin");
+  return { error: null, success: true, staff: data as PosStaff };
+}
+
+export async function updateStaff(
+  id: string,
+  formData: FormData
+): Promise<{ error: string | null; success: boolean }> {
+  await requireSuperAdmin();
+  const db = createAdminClient();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, success: false };
+  }
+
+  const name = (formData.get("name") as string)?.trim();
+  const email = (formData.get("email") as string)?.trim() || null;
+  const role = (formData.get("role") as string) || "cashier";
+  const pin = (formData.get("pin") as string)?.trim();
+  const rawShopId = (formData.get("shop_id") as string)?.trim();
+  const has_pos_access = formData.get("has_pos_access") === "true" || formData.get("has_pos_access") === "on";
+  const is_active = formData.get("is_active") === "true" || formData.get("is_active") === "on";
+
+  if (!name) {
+    return { error: "Staff member name is required.", success: false };
+  }
+
+  const updatePayload: Record<string, any> = {
+    name,
+    email,
+    role,
+    has_pos_access,
+    is_active,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (rawShopId !== undefined) {
+    const parsedShopId = rawShopId && rawShopId !== "all" && !isNaN(Number(rawShopId)) ? Number(rawShopId) : null;
+    updatePayload.shop_id = parsedShopId;
+  }
+
+  if (pin && pin.length >= 4) {
+    updatePayload.pin = pin;
+  }
+
+  const { error } = await db.from("pos_staff").update(updatePayload).eq("id", id);
+  if (error) return { error: error.message, success: false };
+
+  revalidatePath("/super-admin");
+  return { error: null, success: true };
+}
+
+export async function toggleStaffStatus(
+  id: string,
+  currentStatus: boolean
+): Promise<{ error: string | null; newStatus: boolean }> {
+  await requireSuperAdmin();
+  const db = createAdminClient();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, newStatus: currentStatus };
+  }
+
+  const newStatus = !currentStatus;
+  const { error } = await db
+    .from("pos_staff")
+    .update({ is_active: newStatus, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { error: error.message, newStatus: currentStatus };
+
+  revalidatePath("/super-admin");
+  return { error: null, newStatus };
+}
+
+export async function toggleStaffPosAccess(
+  id: string,
+  currentAccess: boolean
+): Promise<{ error: string | null; newAccess: boolean }> {
+  await requireSuperAdmin();
+  const db = createAdminClient();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, newAccess: currentAccess };
+  }
+
+  const newAccess = !currentAccess;
+  const { error } = await db
+    .from("pos_staff")
+    .update({ has_pos_access: newAccess, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { error: error.message, newAccess: currentAccess };
+
+  revalidatePath("/super-admin");
+  return { error: null, newAccess };
+}
+
+export async function deleteStaff(id: string): Promise<{ error: string | null }> {
+  await requireSuperAdmin();
+  const db = createAdminClient();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR };
+  }
+
+  const { error } = await db.from("pos_staff").delete().eq("id", id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/super-admin");
+  return { error: null };
+}
+
+export async function seedMasterBranch(): Promise<{ error: string | null; shop?: Shop }> {
+  await requireSuperAdmin();
+  const db = createAdminClient();
+
+  const { data: existing } = await db.from("shops").select("id").limit(1);
+  if (existing && existing.length > 0) {
+    return { error: "Branches already exist in the database." };
+  }
+
+  const payload = {
+    name: "Pizza Crust - Master Branch",
+    slug: "pizza-crust-main",
+    owner_name: "Tariq Mehmood (Super Admin)",
+    owner_email: "admin@pizzacrust.com",
+    owner_phone: "0300-1234567",
+    branch_address: "Main Boulevard, Gulberg III, Lahore",
+    password: "admin",
+    currency_symbol: "Rs.",
+    plan: "enterprise",
+    status: "active",
+    notes: "Main Headquarters & Flagship POS Store",
+  };
+
+  const { data, error } = await db.from("shops").insert(payload).select().single();
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/super-admin");
+  return { error: null, shop: data as Shop };
+}
+
+export async function verifyCloudSyncHealth(): Promise<{
+  success: boolean;
+  message: string;
+  totalStaff: number;
+  totalShops: number;
+}> {
+  await requireSuperAdmin();
+  const db = createAdminClient();
+
+  try {
+    const [{ count: staffCount, error: staffErr }, { count: shopCount, error: shopErr }] = await Promise.all([
+      db.from("pos_staff").select("*", { count: "exact", head: true }),
+      db.from("shops").select("*", { count: "exact", head: true }),
+    ]);
+
+    if (staffErr || shopErr) {
+      return {
+        success: false,
+        message: staffErr?.message || shopErr?.message || "Cloud error",
+        totalStaff: 0,
+        totalShops: 0,
+      };
+    }
+
+    return {
+      success: true,
+      message: `Supabase Cloud Live! ${staffCount ?? 0} Staff members & ${shopCount ?? 0} branches verified in cloud.`,
+      totalStaff: staffCount ?? 0,
+      totalShops: shopCount ?? 0,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err?.message || String(err),
+      totalStaff: 0,
+      totalShops: 0,
+    };
+  }
 }

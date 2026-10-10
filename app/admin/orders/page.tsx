@@ -28,6 +28,7 @@ export default async function AdminOrdersPage() {
       <OrdersLiveBoard
         initialOrders={(orders as Order[]) || []}
         currencySymbol={settings.currency_symbol || "$"}
+        shopId={activeShop.shopId ? Number(activeShop.shopId) : null}
       />
     </div>
   );
