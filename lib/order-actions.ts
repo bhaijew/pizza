@@ -218,11 +218,17 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
             : ""
         ).toLowerCase().trim();
 
-        // Check if recipes exist for this product
-        const { data: recipes } = await supabase
+        // Check if recipes exist for this product FOR THIS SHOP
+        let recQuery = supabase
           .from("product_recipes")
           .select("ingredient_id, quantity_required, variation_name")
           .eq("product_id", prodId);
+
+        if (targetShopId) {
+          recQuery = recQuery.eq("shop_id", targetShopId);
+        }
+
+        const { data: recipes } = await recQuery;
 
         if (recipes && recipes.length > 0) {
           // 1. If variationName exists (e.g. "Small"), look for recipes matching this variation

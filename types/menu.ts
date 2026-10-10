@@ -270,3 +270,23 @@ export interface IngredientStockLog {
   created_at: string;
   ingredient?: RawIngredient;
 }
+
+
+export interface Deal {
+  id: number | string;
+  title: string;
+  slug: string;
+  description?: string | null;
+  deal_price: number;
+  original_price?: number | null;
+  image_url?: string | null;
+  items_included?: string[] | null;
+  badge?: string | null;
+  is_available?: boolean | null;
+  is_active?: boolean | null;
+  sort_order?: number | null;
+  shop_id?: number | null;
+  product_id?: number | string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}

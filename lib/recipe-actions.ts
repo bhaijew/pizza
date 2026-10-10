@@ -35,7 +35,7 @@ export async function getRawIngredients(): Promise<{
       .order("name", { ascending: true });
 
     if (activeShop.shopId) {
-      query = query.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
+      query = query.eq("shop_id", activeShop.shopId);
     }
 
     const { data, error } = await query;
@@ -124,7 +124,13 @@ export async function deleteRawIngredient(id: number): Promise<{ success: boolea
 
   try {
     const db = createAdminClient();
-    const { error } = await db.from("raw_ingredients").delete().eq("id", id);
+    const activeShop = await getActiveShopContext();
+
+    let query = db.from("raw_ingredients").delete().eq("id", id);
+    if (activeShop.shopId) {
+      query = query.eq("shop_id", activeShop.shopId);
+    }
+    const { error } = await query;
     if (error) return { success: false, error: error.message };
 
     revalidatePath("/admin/inventory");
@@ -209,10 +215,18 @@ export async function getProductRecipes(productId: number | string): Promise<{
 
   try {
     const db = createAdminClient();
-    const { data, error } = await db
+    const activeShop = await getActiveShopContext();
+
+    let query = db
       .from("product_recipes")
       .select("*, ingredient:raw_ingredients(*)")
       .eq("product_id", Number(productId));
+
+    if (activeShop.shopId) {
+      query = query.eq("shop_id", activeShop.shopId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       return { success: false, data: [], error: error.message };
@@ -240,11 +254,15 @@ export async function saveProductRecipe(
     const db = createAdminClient();
     const activeShop = await getActiveShopContext();
 
-    // 1. Delete existing recipe lines for this product and variation
+    // 1. Delete existing recipe lines for this product and variation FOR THIS SHOP
     let delQuery = db
       .from("product_recipes")
       .delete()
       .eq("product_id", productId);
+
+    if (activeShop.shopId) {
+      delQuery = delQuery.eq("shop_id", activeShop.shopId);
+    }
 
     if (variationName) {
       delQuery = delQuery.eq("variation_name", variationName);
@@ -366,7 +384,7 @@ export async function getWastageLogs(): Promise<{
       .limit(50);
 
     if (activeShop.shopId) {
-      query = query.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
+      query = query.eq("shop_id", activeShop.shopId);
     }
 
     const { data, error } = await query;
@@ -404,20 +422,20 @@ export async function calculateKitchenAuditData(
     const db = createAdminClient();
     const activeShop = await getActiveShopContext();
 
-    // 1. Fetch all raw ingredients
+    // 1. Fetch all raw ingredients for this shop
     let ingQuery = db.from("raw_ingredients").select("*").order("name", { ascending: true });
     if (activeShop.shopId) {
-      ingQuery = ingQuery.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
+      ingQuery = ingQuery.eq("shop_id", activeShop.shopId);
     }
     const { data: rawIngredients, error: ingErr } = await ingQuery;
     if (ingErr || !rawIngredients) {
       return { success: false, items: [], totalTheoreticalUsedCost: 0, ordersCount: 0, error: ingErr?.message || "Failed to load ingredients" };
     }
 
-    // 2. Fetch all product recipes
+    // 2. Fetch all product recipes for this shop
     let recQuery = db.from("product_recipes").select("*");
     if (activeShop.shopId) {
-      recQuery = recQuery.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
+      recQuery = recQuery.eq("shop_id", activeShop.shopId);
     }
     const { data: allRecipes } = await recQuery;
     const recipes = (allRecipes as ProductRecipeItem[]) || [];
@@ -470,7 +488,7 @@ export async function calculateKitchenAuditData(
       .lte("created_at", periodEnd);
 
     if (activeShop.shopId) {
-      logsQuery = logsQuery.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
+      logsQuery = logsQuery.eq("shop_id", activeShop.shopId);
     }
 
     const { data: logsData } = await logsQuery;
@@ -619,7 +637,7 @@ export async function getStockAudits(): Promise<{
       .limit(20);
 
     if (activeShop.shopId) {
-      query = query.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
+      query = query.eq("shop_id", activeShop.shopId);
     }
 
     const { data, error } = await query;

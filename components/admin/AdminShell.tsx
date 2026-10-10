@@ -98,6 +98,13 @@ const NAV_GROUPS: NavGroup[] = [
         icon: Tags,
       },
       {
+        label: "Special Deals",
+        href: "/admin/deals",
+        badge: "DEALS",
+        badgeColor: "#ea580c",
+        icon: Sparkles,
+      },
+      {
         label: "Table QR Codes",
         href: "/admin/tables",
         icon: QrCode,
