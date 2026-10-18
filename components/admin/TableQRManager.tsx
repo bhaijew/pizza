@@ -473,12 +473,12 @@ export default function TableQRManager({
       {/* ─── TAB 2: TABLE LIST VIEW ───────────────────────────────── */}
       {activeTab === "list" && (
         <div
-          className="no-print"
+          className="no-print overflow-x-auto w-full"
           style={{
             background: "#ffffff",
             borderRadius: 6,
             border: "1px solid #fed7aa",
-            overflow: "hidden",
+            overflowX: "auto",
             boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
           }}
         >
@@ -619,7 +619,7 @@ export default function TableQRManager({
           className="qr-grid"
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 290px), 1fr))",
             gap: "22px",
           }}
         >

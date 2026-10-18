@@ -130,7 +130,7 @@ export default function AdminPromosClient({
       </div>
 
       {/* Grid: Promos Table + Loyalty Lookup */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))", gap: 24 }}>
         {/* LEFT COLUMN: Active Promo Codes */}
         <div>
           <div

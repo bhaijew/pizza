@@ -934,7 +934,7 @@ export default function InventoryManager({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))",
               gap: 16,
               marginBottom: 24,
             }}
@@ -1932,7 +1932,7 @@ export default function InventoryManager({
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
                   gap: 16,
                   marginBottom: 20,
                 }}

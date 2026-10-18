@@ -271,9 +271,9 @@ export default function AdminShell({
 
   return (
     <div
+      className="admin-shell-root min-h-screen w-full flex flex-col md:flex-row"
       style={{
-        display: "flex",
-        minHeight: "125vh",
+        minHeight: "100vh",
         background: isLight ? "#f8fafc" : "#0a0f1d",
         color: isLight ? "#0f172a" : "#f8fafc",
         fontFamily: "var(--font-sans, system-ui, -apple-system, sans-serif)",
@@ -281,6 +281,29 @@ export default function AdminShell({
       }}
     >
       <style>{`
+        @media (max-width: 767px) {
+          .admin-desktop-sidebar {
+            display: none !important;
+          }
+          .admin-desktop-header {
+            display: none !important;
+          }
+          .admin-mobile-header {
+            display: flex !important;
+          }
+        }
+        @media (min-width: 768px) {
+          .admin-desktop-sidebar {
+            display: flex !important;
+          }
+          .admin-desktop-header {
+            display: flex !important;
+          }
+          .admin-mobile-header {
+            display: none !important;
+          }
+        }
+
         .admin-nav-link {
           position: relative;
           display: flex;
@@ -356,7 +379,7 @@ export default function AdminShell({
         }
       `}</style>
 
-      {/* ─── SIDEBAR (Desktop) ────────────────────────────── */}
+      {/* ─── SIDEBAR (Desktop Only) ────────────────────────────── */}
       <aside
         style={{
           width: "264px",
@@ -364,18 +387,17 @@ export default function AdminShell({
             ? "#ffffff"
             : "linear-gradient(180deg, #0e1526 0%, #090d18 100%)",
           borderRight: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
-          display: "flex",
           flexDirection: "column",
           flexShrink: 0,
           position: "sticky",
           top: 0,
-          height: "125vh",
-          maxHeight: "125vh",
+          height: "100vh",
+          maxHeight: "100vh",
           zIndex: 40,
           boxShadow: isLight ? "2px 0 16px rgba(0, 0, 0, 0.03)" : "4px 0 28px rgba(0, 0, 0, 0.45)",
           transition: "background 0.25s ease, border-color 0.25s ease",
         }}
-        className="hidden md:flex"
+        className="admin-desktop-sidebar hidden md:flex"
       >
         {/* Brand Header */}
         <div
@@ -737,7 +759,7 @@ export default function AdminShell({
       </aside>
 
       {/* ─── MAIN CONTENT AREA ────────────────────────────── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: "125vh" }}>
+      <div className="w-full min-w-0 flex-1 flex flex-col" style={{ minWidth: 0, minHeight: "100vh" }}>
         {/* Desktop Top Header Bar */}
         <header
           style={{
@@ -756,7 +778,7 @@ export default function AdminShell({
             boxShadow: isLight ? "0 1px 3px rgba(0, 0, 0, 0.03)" : "0 4px 16px rgba(0, 0, 0, 0.25)",
             transition: "all 0.2s ease",
           }}
-          className="md:flex"
+          className="admin-desktop-header md:flex"
         >
           {/* Breadcrumb & Section Name */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -991,41 +1013,63 @@ export default function AdminShell({
           </div>
         </header>
 
-        {/* Mobile Header */}
+        {/* Mobile Top Header */}
         <header
           style={{
-            height: "58px",
+            height: "56px",
             borderBottom: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
             background: isLight ? "#ffffff" : "#0e1526",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "0 16px",
+            padding: "0 14px",
+            position: "sticky",
+            top: 0,
+            zIndex: 30,
           }}
-          className="md:hidden"
+          className="admin-mobile-header md:hidden"
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <BrandLogo size={34} variant="iconOnly" />
-            <span
-              style={{
-                fontWeight: 800,
-                fontSize: "15px",
-                color: isLight ? "#0f172a" : "#ffffff",
-              }}
-            >
-              {activeBranch}
-            </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+            <BrandLogo size={32} variant="iconOnly" />
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontWeight: 900,
+                  fontSize: "13px",
+                  color: isLight ? "#0f172a" : "#ffffff",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "140px",
+                }}
+              >
+                {activeBranch}
+              </div>
+              <div
+                style={{
+                  fontSize: "10px",
+                  color: isLight ? "#64748b" : "#94a3b8",
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "140px",
+                }}
+              >
+                {currentPageTitle}
+              </div>
+            </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             {/* Live Pakistan Standard Time (PKT) for Mobile */}
             <div
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                padding: "6px 10px",
-                borderRadius: "16px",
+                gap: "5px",
+                padding: "4px 8px",
+                borderRadius: "14px",
                 background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.08)",
                 border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.14)",
                 color: isLight ? "#0f172a" : "#ffffff",
@@ -1034,25 +1078,25 @@ export default function AdminShell({
             >
               <div
                 style={{
-                  width: "6px",
-                  height: "6px",
+                  width: "5px",
+                  height: "5px",
                   borderRadius: "50%",
                   background: "#10b981",
                   boxShadow: "0 0 6px #10b981",
                   flexShrink: 0,
                 }}
               />
-              <Clock size={13} className="text-emerald-500" />
-              <span style={{ fontFamily: "monospace", fontSize: "12px", fontWeight: 800 }}>
+              <Clock size={11} className="text-emerald-500" />
+              <span style={{ fontFamily: "monospace", fontSize: "11px", fontWeight: 800 }}>
                 {pakistanTime ? pakistanTime.replace(/:\d\d\s/, " ") : "--:--"}
               </span>
               <span
                 style={{
-                  fontSize: "9px",
-                  fontWeight: 800,
+                  fontSize: "8px",
+                  fontWeight: 900,
                   background: "#059669",
                   color: "#ffffff",
-                  padding: "1px 5px",
+                  padding: "1px 4px",
                   borderRadius: "3px",
                   letterSpacing: "0.03em",
                 }}
@@ -1068,8 +1112,8 @@ export default function AdminShell({
               style={{
                 background: "rgba(16, 185, 129, 0.18)",
                 border: "1px solid rgba(16, 185, 129, 0.35)",
-                color: "#34d399",
-                padding: "7px 9px",
+                color: "#10b981",
+                padding: "6px 8px",
                 borderRadius: "6px",
                 cursor: "pointer",
                 display: "flex",
@@ -1078,204 +1122,378 @@ export default function AdminShell({
               }}
               title="Download POS Terminal"
             >
-              <Download size={16} />
+              <Download size={15} />
             </button>
 
+            {/* Mobile Slider / Menu Open Button */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
               style={{
                 background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.08)",
                 border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.15)",
                 color: isLight ? "#0f172a" : "#ffffff",
-                padding: "7px 9px",
+                padding: "6px 8px",
                 borderRadius: "6px",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              aria-label="Toggle Navigation Menu"
+              aria-label="Open Navigation Slider"
             >
-              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+              <Menu size={18} />
             </button>
           </div>
         </header>
 
-        {/* Mobile Dropdown */}
-        {mobileMenuOpen && (
-          <div
-            style={{
-              background: isLight ? "#ffffff" : "#0e1526",
-              borderBottom: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
-              padding: "16px 14px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-              maxHeight: "80vh",
-              overflowY: "auto",
-            }}
-            className="md:hidden animate-fade-in"
-          >
-            {NAV_GROUPS.flatMap((g) => g.items).map((item) => {
-              const isActive = pathname === item.href;
-              const IconComponent = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    textDecoration: "none",
-                    color: isActive
-                      ? isLight
-                        ? "#dc2626"
-                        : "#ffffff"
-                      : isLight
-                      ? "#475569"
-                      : "#94a3b8",
-                    background: isActive
-                      ? isLight
-                        ? "#fef2f2"
-                        : "rgba(239, 68, 68, 0.2)"
-                      : "transparent",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <IconComponent size={18} />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.badge && (
-                    <span
-                      style={{
-                        fontSize: "9px",
-                        fontWeight: 800,
-                        padding: "2px 6px",
-                        borderRadius: "4px",
-                        background: item.badgeColor
-                          ? `${item.badgeColor}22`
-                          : "rgba(255, 255, 255, 0.1)",
-                        color: item.badgeColor || (isLight ? "#475569" : "#ffffff"),
-                        border: `1px solid ${item.badgeColor || "rgba(255,255,255,0.2)"}`,
-                      }}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-
-            <div
-              style={{
-                paddingTop: "12px",
-                borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setDownloadPosOpen(true);
-                }}
-                style={{
-                  width: "100%",
-                  textAlign: "center",
-                  padding: "11px",
-                  borderRadius: "8px",
-                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                  color: "#ffffff",
-                  fontSize: "13px",
-                  fontWeight: 800,
-                  border: "none",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "7px",
-                  boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
-                }}
-              >
-                <Download size={16} />
-                <span>Download POS Terminal App (.BAT)</span>
-              </button>
-
-              <div style={{ display: "flex", gap: "8px" }}>
-                <Link
-                  href={customerMenuUrl}
-                  target="_blank"
-                  style={{
-                    flex: 1,
-                    textAlign: "center",
-                    padding: "10px",
-                    borderRadius: "6px",
-                    background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
-                    border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
-                    color: isLight ? "#16a34a" : "#34d399",
-                    fontSize: "12px",
-                    textDecoration: "none",
-                    fontWeight: 700,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px",
-                  }}
-                >
-                  <Store size={14} />
-                  <span>Open Live Menu</span>
-                </Link>
-                <form action={adminLogout} style={{ flex: 1 }}>
-                  <button
-                    type="submit"
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      borderRadius: "6px",
-                      background: isLight ? "#fef2f2" : "rgba(239, 68, 68, 0.15)",
-                      color: "#dc2626",
-                      fontSize: "12px",
-                      border: isLight ? "1px solid #fecaca" : "1px solid rgba(239, 68, 68, 0.3)",
-                      cursor: "pointer",
-                      fontWeight: 700,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <LogOut size={14} />
-                    <span>Logout</span>
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Mobile Backdrop overlay */}
+        {/* ─── MOBILE SLIDER / DRAWER (Off-Canvas Overlay) ─── */}
+        {/* Backdrop overlay */}
         {mobileMenuOpen && (
           <div
             onClick={() => setMobileMenuOpen(false)}
             style={{
               position: "fixed",
               inset: 0,
-              background: "rgba(0, 0, 0, 0.6)",
-              backdropFilter: "blur(4px)",
-              WebkitBackdropFilter: "blur(4px)",
-              zIndex: 35,
+              background: "rgba(0, 0, 0, 0.65)",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
+              zIndex: 49,
             }}
-            className="md:hidden"
+            className="md:hidden transition-opacity duration-300"
+            aria-hidden="true"
           />
         )}
+
+        {/* Slide-out Drawer Panel */}
+        <div
+          className={`fixed inset-y-0 left-0 z-50 w-[295px] max-w-[85vw] flex flex-col md:hidden transition-transform duration-300 ease-in-out shadow-2xl ${
+            mobileMenuOpen ? "translate-x-0" : "-translate-x-full pointer-events-none"
+          }`}
+          style={{
+            background: isLight
+              ? "#ffffff"
+              : "linear-gradient(180deg, #0e1526 0%, #090d18 100%)",
+            borderRight: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.12)",
+          }}
+        >
+          {/* Drawer Header with Close Button */}
+          <div
+            style={{
+              padding: "16px 14px",
+              borderBottom: isLight ? "1px solid #f1f5f9" : "1px solid rgba(255, 255, 255, 0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+              <BrandLogo size={36} variant="iconOnly" />
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontWeight: 900,
+                    fontSize: "14px",
+                    color: isLight ? "#0f172a" : "#ffffff",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    maxWidth: "160px",
+                  }}
+                >
+                  {activeBranch}
+                </div>
+                <div
+                  style={{
+                    fontSize: "10px",
+                    color: "#16a34a",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontWeight: 700,
+                  }}
+                >
+                  <span
+                    style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }}
+                    className="admin-pulse-green"
+                  />
+                  <span>Live Terminal</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "8px",
+                border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
+                background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.06)",
+                color: isLight ? "#0f172a" : "#ffffff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+              }}
+              aria-label="Close navigation drawer"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Drawer Navigation List */}
+          <nav
+            style={{
+              padding: "14px 12px",
+              flex: "1 1 auto",
+              minHeight: 0,
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              WebkitOverflowScrolling: "touch",
+            }}
+            className="admin-sidebar-scroll"
+          >
+            {NAV_GROUPS.map((group) => (
+              <div key={group.groupTitle}>
+                <div
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 800,
+                    color: isLight ? "#94a3b8" : "#64748b",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    padding: "0 10px 6px",
+                  }}
+                >
+                  {group.groupTitle}
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                  {group.items.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      (item.href !== "/admin" && pathname.startsWith(item.href));
+                    const IconComponent = item.icon;
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`admin-nav-link ${
+                          isActive
+                            ? isLight
+                              ? "admin-nav-light-active"
+                              : "admin-nav-dark-active"
+                            : isLight
+                            ? "admin-nav-light-default"
+                            : "admin-nav-dark-default"
+                        }`}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span
+                            className="nav-icon"
+                            style={{
+                              color: isActive
+                                ? isLight
+                                  ? "#dc2626"
+                                  : "#f97316"
+                                : isLight
+                                ? "#64748b"
+                                : "#94a3b8",
+                              display: "flex",
+                            }}
+                          >
+                            <IconComponent size={18} />
+                          </span>
+                          <span>{item.label}</span>
+                        </div>
+
+                        {item.badge && (
+                          <span
+                            style={{
+                              fontSize: "9px",
+                              fontWeight: 800,
+                              padding: "2px 6px",
+                              borderRadius: "4px",
+                              background: item.badgeColor
+                                ? isLight
+                                  ? `${item.badgeColor}18`
+                                  : `${item.badgeColor}22`
+                                : isLight
+                                ? "#f1f5f9"
+                                : "rgba(255, 255, 255, 0.1)",
+                              color: item.badgeColor || (isLight ? "#475569" : "#ffffff"),
+                              border: `1px solid ${
+                                item.badgeColor || (isLight ? "#cbd5e1" : "rgba(255,255,255,0.2)")
+                              }`,
+                              letterSpacing: "0.04em",
+                            }}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </nav>
+
+          {/* Drawer Bottom Actions */}
+          <div
+            style={{
+              marginTop: "auto",
+              padding: "12px",
+              borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              background: isLight ? "#f8fafc" : "rgba(0, 0, 0, 0.25)",
+            }}
+          >
+            {/* Theme Toggle */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "6px 10px",
+                borderRadius: "8px",
+                background: isLight ? "#ffffff" : "rgba(255, 255, 255, 0.05)",
+                border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.08)",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: isLight ? "#64748b" : "#94a3b8",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                }}
+              >
+                {isLight ? <Sun size={13} /> : <Moon size={13} />}
+                Sidebar Theme
+              </span>
+              <button
+                type="button"
+                onClick={toggleSidebarTheme}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "3px 8px",
+                  borderRadius: "5px",
+                  background: isLight ? "#0f172a" : "#ffffff",
+                  color: isLight ? "#ffffff" : "#0f172a",
+                  fontSize: "11px",
+                  fontWeight: 800,
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                {isLight ? <Moon size={11} /> : <Sun size={11} />}
+                <span>{isLight ? "Dark" : "Light"}</span>
+              </button>
+            </div>
+
+            {/* Download POS Terminal Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setDownloadPosOpen(true);
+              }}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "9px 12px",
+                borderRadius: "8px",
+                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                color: "#ffffff",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: 800,
+                fontSize: "12px",
+                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Download size={15} />
+                <span>Download POS Terminal</span>
+              </div>
+              <span
+                style={{
+                  fontSize: "9px",
+                  background: "rgba(255, 255, 255, 0.25)",
+                  padding: "2px 5px",
+                  borderRadius: "3px",
+                }}
+              >
+                APP
+              </span>
+            </button>
+
+            {/* Customer Live Menu Link */}
+            <Link
+              href={customerMenuUrl}
+              target="_blank"
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
+                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.25)",
+                color: isLight ? "#16a34a" : "#34d399",
+                fontSize: "12px",
+                fontWeight: 700,
+                textDecoration: "none",
+              }}
+            >
+              <Store size={14} />
+              <span>Open Customer Menu</span>
+              <ExternalLink size={12} />
+            </Link>
+
+            {/* Sign Out */}
+            <form action={adminLogout}>
+              <button
+                type="submit"
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "7px",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  background: isLight ? "#fef2f2" : "rgba(239, 68, 68, 0.12)",
+                  color: "#dc2626",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  border: isLight ? "1px solid #fecaca" : "1px solid rgba(239, 68, 68, 0.3)",
+                  cursor: "pointer",
+                }}
+              >
+                <LogOut size={13} />
+                <span>Sign Out Terminal</span>
+              </button>
+            </form>
+          </div>
+        </div>
 
         {/* Realtime Live Order Notifications */}
         <LiveOrderNotifier shopId={shopId} />

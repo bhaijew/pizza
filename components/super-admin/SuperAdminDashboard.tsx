@@ -603,7 +603,44 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.6; transform: scale(1.2); }
         }
+
+        @media (max-width: 767px) {
+          .super-admin-sidebar:not(.is-mobile-open) {
+            display: none !important;
+          }
+          .super-admin-sidebar.is-mobile-open {
+            display: flex !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            bottom: 0 !important;
+            z-index: 50 !important;
+          }
+        }
+        @media (min-width: 768px) {
+          .super-admin-sidebar {
+            display: flex !important;
+            position: sticky !important;
+          }
+        }
       `}</style>
+
+      {/* Backdrop overlay for Mobile */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.65)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            zIndex: 49,
+          }}
+          className="md:hidden transition-opacity duration-300"
+          aria-hidden="true"
+        />
+      )}
 
       {/* ─── SIDEBAR / SLIDER (Desktop & Mobile Drawer) ────────────────────────── */}
       <aside
@@ -613,10 +650,8 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
             ? "#ffffff"
             : "linear-gradient(180deg, #0e1526 0%, #090d18 100%)",
           borderRight: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
-          display: "flex",
           flexDirection: "column",
           flexShrink: 0,
-          position: "sticky",
           top: 0,
           height: "100vh",
           maxHeight: "100vh",
@@ -624,7 +659,11 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
           boxShadow: isLight ? "2px 0 16px rgba(0, 0, 0, 0.03)" : "4px 0 30px rgba(0, 0, 0, 0.5)",
           transition: "background 0.2s ease, transform 0.25s ease",
         }}
-        className={`${mobileMenuOpen ? "flex fixed inset-y-0 left-0 z-50" : "hidden md:flex"}`}
+        className={`super-admin-sidebar ${
+          mobileMenuOpen
+            ? "is-mobile-open flex fixed inset-y-0 left-0 z-50 shadow-2xl"
+            : "hidden md:flex"
+        }`}
       >
         {/* Brand Header */}
         <div

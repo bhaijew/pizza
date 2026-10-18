@@ -397,7 +397,7 @@ export default function OrdersLiveBoard({
           </button>
 
           {/* Search */}
-          <div style={{ position: "relative", width: "240px" }}>
+          <div style={{ position: "relative" }} className="w-full sm:w-[240px]">
             <input
               type="text"
               placeholder="Search order # or name..."
@@ -655,7 +655,7 @@ export default function OrdersLiveBoard({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
             gap: "16px",
           }}
         >

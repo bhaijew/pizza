@@ -278,11 +278,12 @@ export default function ProductManager({
         </div>
       ) : (
         <div
+          className="overflow-x-auto w-full"
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
             borderRadius: "5px",
-            overflow: "hidden",
+            overflowX: "auto",
           }}
         >
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>

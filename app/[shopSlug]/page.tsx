@@ -73,7 +73,7 @@ export default async function DynamicShopMenuPage({
     return (
       <div
         style={{
-          minHeight: "125vh",
+          minHeight: "100vh",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -154,7 +154,7 @@ export default async function DynamicShopMenuPage({
     return (
       <div
         style={{
-          minHeight: "125vh",
+          minHeight: "100vh",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

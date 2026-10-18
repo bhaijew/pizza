@@ -248,7 +248,7 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
       </div>
 
       {/* ─── Gateway Connection Status Row ─── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: "16px" }}>
         {/* Status Card 1 */}
         <div
           style={{
@@ -371,7 +371,7 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
       </div>
 
       {/* ─── Main Content Grid: Configuration & Live Test ─── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "20px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: "20px" }}>
         {/* Left Column: Credentials & Settings */}
         <div
           style={{
