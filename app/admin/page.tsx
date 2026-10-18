@@ -23,6 +23,8 @@ import {
   Sparkles,
   AlertTriangle,
   Store,
+  Download,
+  MessageSquare,
 } from "@/components/admin/AdminIcons";
 
 export const dynamic = "force-dynamic";
@@ -131,19 +133,19 @@ export default async function AdminDashboardPage() {
         style={{
           background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
           borderRadius: 14,
-          padding: "26px 30px",
           color: "#ffffff",
-          marginBottom: 28,
+          marginBottom: 24,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: 20,
+          gap: 16,
           boxShadow: "0 12px 32px rgba(15, 23, 42, 0.2)",
           border: "1px solid rgba(255, 255, 255, 0.08)",
           position: "relative",
           overflow: "hidden",
         }}
+        className="p-4 sm:p-6 md:p-7"
       >
         <div
           style={{
@@ -261,6 +263,67 @@ export default async function AdminDashboardPage() {
           </Link>
 
           <Link
+            href="/admin/sole-what"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 16px",
+              borderRadius: 8,
+              background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+              color: "#ffffff",
+              fontWeight: 800,
+              fontSize: 13,
+              textDecoration: "none",
+              boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)",
+              border: "none",
+              transition: "transform 0.18s ease",
+            }}
+            className="hover:scale-105"
+            title="Sole-What WhatsApp Gateway Hub"
+          >
+            <MessageSquare size={16} />
+            <span>Sole-What WA</span>
+            <span
+              style={{
+                background: "#ffffff",
+                color: "#059669",
+                padding: "1px 6px",
+                borderRadius: 4,
+                fontSize: 10,
+                fontWeight: 900,
+              }}
+            >
+              BOT
+            </span>
+          </Link>
+
+          <Link
+            href="/demo/pos"
+            target="_blank"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 16px",
+              borderRadius: 8,
+              background: "rgba(255, 255, 255, 0.08)",
+              color: "#34d399",
+              fontWeight: 700,
+              fontSize: 13,
+              textDecoration: "none",
+              border: "1px solid rgba(16, 185, 129, 0.35)",
+              backdropFilter: "blur(6px)",
+              transition: "all 0.18s ease",
+            }}
+            className="hover:bg-emerald-500/15"
+            title="Open Cashier POS Terminal"
+          >
+            <Download size={15} />
+            <span>Open POS</span>
+          </Link>
+
+          <Link
             href="/admin/products?action=new"
             style={{
               display: "inline-flex",
@@ -285,14 +348,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* ─── Metric KPI Cards Grid ─── */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: 18,
-          marginBottom: 28,
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4.5 mb-6 sm:mb-8">
         {/* KPI 1: Active Orders */}
         <Link
           href="/admin/orders"
@@ -581,7 +637,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* ─── Operations Grid: Recent Orders + Quick Management ─── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: 24 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
         {/* LEFT: Live Order Stream */}
         <div
           style={{

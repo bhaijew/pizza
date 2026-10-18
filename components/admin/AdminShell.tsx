@@ -34,7 +34,11 @@ import {
   ChevronRight,
   Sparkles,
   Clock,
+  Download,
+  MessageSquare,
+  Laptop,
 } from "lucide-react";
+import DownloadPosModal from "@/components/admin/DownloadPosModal";
 
 interface AdminShellProps {
   children: React.ReactNode;
@@ -81,6 +85,13 @@ const NAV_GROUPS: NavGroup[] = [
         badge: "KDS",
         badgeColor: "#f97316",
         icon: ChefHat,
+      },
+      {
+        label: "Sole-What Gateway",
+        href: "/admin/sole-what",
+        badge: "WA BOT",
+        badgeColor: "#10b981",
+        icon: MessageSquare,
       },
     ],
   },
@@ -163,6 +174,7 @@ export default function AdminShell({
 }: AdminShellProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [downloadPosOpen, setDownloadPosOpen] = useState(false);
   const [activeBranch, setActiveBranch] = useState<string>(shopName || "Pizza Admin");
   const [copiedLink, setCopiedLink] = useState(false);
   const [sidebarTheme, setSidebarTheme] = useState<"dark" | "light">("dark");
@@ -657,6 +669,45 @@ export default function AdminShell({
             </Link>
           </div>
 
+          {/* Download POS Terminal Option */}
+          <button
+            type="button"
+            onClick={() => setDownloadPosOpen(true)}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "10px 12px",
+              borderRadius: "8px",
+              background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
+              border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
+              color: isLight ? "#16a34a" : "#34d399",
+              cursor: "pointer",
+              transition: "all 0.18s ease",
+            }}
+            className="hover:scale-[1.02]"
+            title="Download FloDesktop Windows POS Launcher or Install PWA"
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Download size={15} />
+              <span style={{ fontSize: "12px", fontWeight: 800 }}>Download POS</span>
+            </div>
+            <span
+              style={{
+                fontSize: "9px",
+                fontWeight: 900,
+                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                color: "#ffffff",
+                padding: "2px 6px",
+                borderRadius: "4px",
+                letterSpacing: "0.04em",
+              }}
+            >
+              APP
+            </span>
+          </button>
+
           <form action={adminLogout}>
             <button
               type="submit"
@@ -828,6 +879,31 @@ export default function AdminShell({
               <span>Audio Active</span>
             </div>
 
+            {/* Download POS Terminal Quick Button */}
+            <button
+              type="button"
+              onClick={() => setDownloadPosOpen(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 13px",
+                borderRadius: "6px",
+                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
+                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.35)",
+                fontSize: "12px",
+                fontWeight: 800,
+                color: isLight ? "#16a34a" : "#34d399",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              className="hover:scale-105"
+              title="Download FloDesktop POS Launcher (.BAT) or Web App"
+            >
+              <Download size={14} />
+              <span>Download POS</span>
+            </button>
+
             {/* Quick Kitchen Display button */}
             <Link
               href="/admin/kitchen"
@@ -985,6 +1061,26 @@ export default function AdminShell({
               </span>
             </div>
 
+            {/* Mobile Download POS quick button */}
+            <button
+              type="button"
+              onClick={() => setDownloadPosOpen(true)}
+              style={{
+                background: "rgba(16, 185, 129, 0.18)",
+                border: "1px solid rgba(16, 185, 129, 0.35)",
+                color: "#34d399",
+                padding: "7px 9px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              title="Download POS Terminal"
+            >
+              <Download size={16} />
+            </button>
+
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               style={{
@@ -1081,44 +1177,52 @@ export default function AdminShell({
                 paddingTop: "12px",
                 borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
                 display: "flex",
+                flexDirection: "column",
                 gap: "8px",
               }}
             >
-              <Link
-                href={customerMenuUrl}
-                target="_blank"
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setDownloadPosOpen(true);
+                }}
                 style={{
-                  flex: 1,
+                  width: "100%",
                   textAlign: "center",
-                  padding: "10px",
-                  borderRadius: "6px",
-                  background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
-                  border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
-                  color: isLight ? "#16a34a" : "#34d399",
-                  fontSize: "12px",
-                  textDecoration: "none",
-                  fontWeight: 700,
+                  padding: "11px",
+                  borderRadius: "8px",
+                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                  color: "#ffffff",
+                  fontSize: "13px",
+                  fontWeight: 800,
+                  border: "none",
+                  cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "6px",
+                  gap: "7px",
+                  boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
                 }}
               >
-                <Store size={14} />
-                <span>Open Live Menu</span>
-              </Link>
-              <form action={adminLogout} style={{ flex: 1 }}>
-                <button
-                  type="submit"
+                <Download size={16} />
+                <span>Download POS Terminal App (.BAT)</span>
+              </button>
+
+              <div style={{ display: "flex", gap: "8px" }}>
+                <Link
+                  href={customerMenuUrl}
+                  target="_blank"
                   style={{
-                    width: "100%",
+                    flex: 1,
+                    textAlign: "center",
                     padding: "10px",
                     borderRadius: "6px",
-                    background: isLight ? "#fef2f2" : "rgba(239, 68, 68, 0.15)",
-                    color: "#dc2626",
+                    background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
+                    border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
+                    color: isLight ? "#16a34a" : "#34d399",
                     fontSize: "12px",
-                    border: isLight ? "1px solid #fecaca" : "1px solid rgba(239, 68, 68, 0.3)",
-                    cursor: "pointer",
+                    textDecoration: "none",
                     fontWeight: 700,
                     display: "flex",
                     alignItems: "center",
@@ -1126,30 +1230,189 @@ export default function AdminShell({
                     gap: "6px",
                   }}
                 >
-                  <LogOut size={14} />
-                  <span>Logout</span>
-                </button>
-              </form>
+                  <Store size={14} />
+                  <span>Open Live Menu</span>
+                </Link>
+                <form action={adminLogout} style={{ flex: 1 }}>
+                  <button
+                    type="submit"
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      borderRadius: "6px",
+                      background: isLight ? "#fef2f2" : "rgba(239, 68, 68, 0.15)",
+                      color: "#dc2626",
+                      fontSize: "12px",
+                      border: isLight ? "1px solid #fecaca" : "1px solid rgba(239, 68, 68, 0.3)",
+                      cursor: "pointer",
+                      fontWeight: 700,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <LogOut size={14} />
+                    <span>Logout</span>
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
+        )}
+
+        {/* Mobile Backdrop overlay */}
+        {mobileMenuOpen && (
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0, 0, 0, 0.6)",
+              backdropFilter: "blur(4px)",
+              WebkitBackdropFilter: "blur(4px)",
+              zIndex: 35,
+            }}
+            className="md:hidden"
+          />
         )}
 
         {/* Realtime Live Order Notifications */}
         <LiveOrderNotifier shopId={shopId} />
 
-        {/* Content Body */}
+        {/* Content Body with Mobile Responsive Padding */}
         <main
           style={{
             flex: 1,
-            padding: "24px 28px 48px",
             maxWidth: "1440px",
             width: "100%",
             margin: "0 auto",
             boxSizing: "border-box",
           }}
+          className="p-3 sm:p-5 md:p-7 pb-24 md:pb-12"
         >
           {children}
         </main>
+
+        {/* ─── STICKY MOBILE BOTTOM DOCK (5 Quick Touch Actions) ─── */}
+        <nav
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: "64px",
+            background: isLight ? "rgba(255, 255, 255, 0.94)" : "rgba(14, 21, 38, 0.95)",
+            backdropFilter: "blur(14px)",
+            WebkitBackdropFilter: "blur(14px)",
+            borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
+            zIndex: 40,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-around",
+            padding: "0 8px",
+            boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.25)",
+          }}
+          className="md:hidden"
+        >
+          <Link
+            href="/admin"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "3px",
+              textDecoration: "none",
+              color: pathname === "/admin" ? "#ef4444" : isLight ? "#64748b" : "#94a3b8",
+              fontSize: "10px",
+              fontWeight: 800,
+            }}
+          >
+            <LayoutDashboard size={18} />
+            <span>Dashboard</span>
+          </Link>
+
+          <Link
+            href="/admin/orders"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "3px",
+              textDecoration: "none",
+              color: pathname.startsWith("/admin/orders") ? "#ef4444" : isLight ? "#64748b" : "#94a3b8",
+              fontSize: "10px",
+              fontWeight: 800,
+              position: "relative",
+            }}
+          >
+            <ShoppingBag size={18} />
+            <span>Orders</span>
+          </Link>
+
+          <Link
+            href="/admin/kitchen"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "3px",
+              textDecoration: "none",
+              color: pathname.startsWith("/admin/kitchen") ? "#f97316" : isLight ? "#64748b" : "#94a3b8",
+              fontSize: "10px",
+              fontWeight: 800,
+            }}
+          >
+            <ChefHat size={18} />
+            <span>Kitchen</span>
+          </Link>
+
+          <Link
+            href="/admin/sole-what"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "3px",
+              textDecoration: "none",
+              color: pathname.startsWith("/admin/sole-what") ? "#10b981" : isLight ? "#64748b" : "#94a3b8",
+              fontSize: "10px",
+              fontWeight: 800,
+            }}
+          >
+            <MessageSquare size={18} />
+            <span>WhatsApp</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setDownloadPosOpen(true)}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "3px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "#34d399",
+              fontSize: "10px",
+              fontWeight: 800,
+            }}
+          >
+            <Download size={18} />
+            <span>POS App</span>
+          </button>
+        </nav>
+
+        {/* Download POS Modal instance */}
+        <DownloadPosModal
+          isOpen={downloadPosOpen}
+          onClose={() => setDownloadPosOpen(false)}
+          shopName={activeBranch}
+          shopSlug={shopSlug}
+          shopId={shopId}
+        />
       </div>
     </div>
   );

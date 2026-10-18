@@ -52,4 +52,7 @@ export {
   Copy,
   Sun,
   Moon,
+  Download,
+  MessageSquare,
+  Laptop,
 } from "lucide-react";

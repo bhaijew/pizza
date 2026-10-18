@@ -68,7 +68,9 @@ import {
   FileText,
   Activity,
   CheckCircle,
+  Download,
 } from "lucide-react";
+import DownloadPosModal from "@/components/admin/DownloadPosModal";
 
 interface SuperAdminDashboardProps {
   initialShops: Shop[];
@@ -115,6 +117,7 @@ export default function SuperAdminDashboard({
   // FloDesktop Sync Status State
   const [isSyncingFloDesktop, setIsSyncingFloDesktop] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
+  const [downloadPosOpen, setDownloadPosOpen] = useState(false);
 
   // Pakistan Time
   const [pakistanTime, setPakistanTime] = useState<string>("");
@@ -923,6 +926,20 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                 </div>
                 <ArrowUpRight size={13} style={{ opacity: 0.5 }} />
               </a>
+
+              <a
+                href="/admin/sole-what"
+                className={`super-nav-btn ${isLight ? "super-nav-light-default" : "super-nav-dark-default"}`}
+                style={{ textDecoration: "none" }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span className="nav-icon" style={{ display: "flex", color: "#10b981" }}>
+                    <MessageSquare size={18} />
+                  </span>
+                  <span>Sole-What Gateway</span>
+                </div>
+                <ArrowUpRight size={13} style={{ opacity: 0.5 }} />
+              </a>
             </div>
           </div>
 
@@ -1065,6 +1082,42 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
             </button>
           </div>
 
+          {/* Download POS Terminal Option */}
+          <button
+            type="button"
+            onClick={() => setDownloadPosOpen(true)}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "9px 12px",
+              borderRadius: "8px",
+              background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
+              border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
+              color: isLight ? "#16a34a" : "#34d399",
+              cursor: "pointer",
+            }}
+            title="Download FloDesktop POS Launcher (.BAT) or Web App"
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+              <Download size={14} />
+              <span style={{ fontSize: "12px", fontWeight: 800 }}>Download POS</span>
+            </div>
+            <span
+              style={{
+                fontSize: "9px",
+                fontWeight: 900,
+                background: "#10b981",
+                color: "#ffffff",
+                padding: "2px 5px",
+                borderRadius: "3px",
+              }}
+            >
+              APP
+            </span>
+          </button>
+
           {/* Store Manager Quick Switch */}
           <button
             type="button"
@@ -1194,6 +1247,30 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
               </span>
             </div>
 
+            {/* Quick Download POS */}
+            <button
+              type="button"
+              onClick={() => setDownloadPosOpen(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                background: "rgba(16, 185, 129, 0.15)",
+                border: "1px solid rgba(16, 185, 129, 0.35)",
+                color: isLight ? "#16a34a" : "#34d399",
+                fontSize: "12px",
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
+              title="Download POS Terminal App"
+            >
+              <Download size={14} />
+              <span className="hidden sm:inline">Download POS</span>
+              <span className="sm:hidden">POS</span>
+            </button>
+
             {/* Quick Register Branch */}
             <button
               type="button"
@@ -1270,8 +1347,17 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
           </div>
         )}
 
-        {/* Tab Body Content */}
-        <main style={{ padding: "24px 28px", flex: 1, maxWidth: "1400px", width: "100%", boxSizing: "border-box", margin: "0 auto" }}>
+        {/* Tab Body Content with Mobile Responsive Padding */}
+        <main
+          style={{
+            flex: 1,
+            maxWidth: "1400px",
+            width: "100%",
+            boxSizing: "border-box",
+            margin: "0 auto",
+          }}
+          className="p-3.5 sm:p-5 md:p-7 pb-24 md:pb-12"
+        >
           {/* ═══════════════════════════════════════════════════════════════════
               TAB 1: HQ OVERVIEW
           ═══════════════════════════════════════════════════════════════════ */}
@@ -2995,6 +3081,144 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
             </div>
           )}
         </main>
+
+        {/* Mobile Backdrop overlay */}
+        {mobileMenuOpen && (
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0, 0, 0, 0.65)",
+              backdropFilter: "blur(4px)",
+              WebkitBackdropFilter: "blur(4px)",
+              zIndex: 45,
+            }}
+            className="md:hidden"
+          />
+        )}
+
+        {/* ─── STICKY MOBILE BOTTOM DOCK FOR SUPER ADMIN ─── */}
+        <nav
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: "64px",
+            background: isLight ? "rgba(255, 255, 255, 0.94)" : "rgba(14, 21, 38, 0.95)",
+            backdropFilter: "blur(14px)",
+            WebkitBackdropFilter: "blur(14px)",
+            borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
+            zIndex: 40,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-around",
+            padding: "0 8px",
+            boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.25)",
+          }}
+          className="md:hidden"
+        >
+          <button
+            type="button"
+            onClick={() => setActiveTab("overview")}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "3px",
+              background: "transparent",
+              border: "none",
+              color: activeTab === "overview" ? "#ef4444" : isLight ? "#64748b" : "#94a3b8",
+              fontSize: "10px",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            <Crown size={18} />
+            <span>Overview</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("branches")}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "3px",
+              background: "transparent",
+              border: "none",
+              color: activeTab === "branches" ? "#ef4444" : isLight ? "#64748b" : "#94a3b8",
+              fontSize: "10px",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            <Building2 size={18} />
+            <span>Branches</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("staff")}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "3px",
+              background: "transparent",
+              border: "none",
+              color: activeTab === "staff" ? "#ef4444" : isLight ? "#64748b" : "#94a3b8",
+              fontSize: "10px",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            <Users size={18} />
+            <span>Staff</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("flodesktop")}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "3px",
+              background: "transparent",
+              border: "none",
+              color: activeTab === "flodesktop" ? "#6366f1" : isLight ? "#64748b" : "#94a3b8",
+              fontSize: "10px",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            <Laptop size={18} />
+            <span>FloPOS</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDownloadPosOpen(true)}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "3px",
+              background: "transparent",
+              border: "none",
+              color: "#34d399",
+              fontSize: "10px",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            <Download size={18} />
+            <span>Download</span>
+          </button>
+        </nav>
       </div>
 
       {/* ─── MODALS ───────────────────────────────────────────────────────────── */}
@@ -3013,6 +3237,14 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
         onSubmit={handleStaffModalSubmit}
         editingStaff={editingStaff}
         shops={shops}
+      />
+
+      {/* Download POS Modal instance */}
+      <DownloadPosModal
+        isOpen={downloadPosOpen}
+        onClose={() => setDownloadPosOpen(false)}
+        shopName="Master Fleet"
+        shopSlug="master"
       />
     </div>
   );
