@@ -515,17 +515,6 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
       }}
     >
       <style>{`
-        @media (min-width: 768px) {
-          .super-mobile-dock {
-            display: none !important;
-          }
-        }
-        @media (max-width: 767px) {
-          .super-mobile-dock {
-            display: flex !important;
-          }
-        }
-
         .super-nav-btn {
           width: 100%;
           display: flex;
@@ -1367,7 +1356,7 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
             boxSizing: "border-box",
             margin: "0 auto",
           }}
-          className="p-3.5 sm:p-5 md:p-7 pb-20 md:pb-8"
+          className="p-3.5 sm:p-5 md:p-7 max-w-[1400px] w-full mx-auto box-border"
         >
           {/* ═══════════════════════════════════════════════════════════════════
               TAB 1: HQ OVERVIEW
@@ -3108,127 +3097,6 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
             className="md:hidden"
           />
         )}
-
-        {/* ─── STICKY MOBILE BOTTOM DOCK FOR SUPER ADMIN (MOBILE ONLY) ─── */}
-        <nav
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: "64px",
-            background: isLight ? "rgba(255, 255, 255, 0.94)" : "rgba(14, 21, 38, 0.95)",
-            backdropFilter: "blur(14px)",
-            WebkitBackdropFilter: "blur(14px)",
-            borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
-            zIndex: 40,
-            alignItems: "center",
-            justifyContent: "space-around",
-            padding: "0 8px",
-            boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.25)",
-          }}
-          className="super-mobile-dock md:hidden"
-        >
-          <button
-            type="button"
-            onClick={() => setActiveTab("overview")}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "3px",
-              background: "transparent",
-              border: "none",
-              color: activeTab === "overview" ? "#ef4444" : isLight ? "#64748b" : "#94a3b8",
-              fontSize: "10px",
-              fontWeight: 800,
-              cursor: "pointer",
-            }}
-          >
-            <Crown size={18} />
-            <span>Overview</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("branches")}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "3px",
-              background: "transparent",
-              border: "none",
-              color: activeTab === "branches" ? "#ef4444" : isLight ? "#64748b" : "#94a3b8",
-              fontSize: "10px",
-              fontWeight: 800,
-              cursor: "pointer",
-            }}
-          >
-            <Building2 size={18} />
-            <span>Branches</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("staff")}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "3px",
-              background: "transparent",
-              border: "none",
-              color: activeTab === "staff" ? "#ef4444" : isLight ? "#64748b" : "#94a3b8",
-              fontSize: "10px",
-              fontWeight: 800,
-              cursor: "pointer",
-            }}
-          >
-            <Users size={18} />
-            <span>Staff</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("flodesktop")}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "3px",
-              background: "transparent",
-              border: "none",
-              color: activeTab === "flodesktop" ? "#6366f1" : isLight ? "#64748b" : "#94a3b8",
-              fontSize: "10px",
-              fontWeight: 800,
-              cursor: "pointer",
-            }}
-          >
-            <Laptop size={18} />
-            <span>FloPOS</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setDownloadPosOpen(true)}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "3px",
-              background: "transparent",
-              border: "none",
-              color: "#34d399",
-              fontSize: "10px",
-              fontWeight: 800,
-              cursor: "pointer",
-            }}
-          >
-            <Download size={18} />
-            <span>Download</span>
-          </button>
-        </nav>
       </div>
 
       {/* ─── MODALS ───────────────────────────────────────────────────────────── */}

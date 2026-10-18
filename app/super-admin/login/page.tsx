@@ -48,7 +48,7 @@ export default function SuperAdminLoginPage() {
       <div
         suppressHydrationWarning
         style={{
-          minHeight: "125vh",
+          minHeight: "100dvh",
           background: "#090d16",
         }}
       />
@@ -59,7 +59,7 @@ export default function SuperAdminLoginPage() {
     <div
       suppressHydrationWarning
       style={{
-        minHeight: "125vh",
+        minHeight: "100dvh",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -293,7 +293,7 @@ export default function SuperAdminLoginPage() {
                   border: "1px solid rgba(255, 255, 255, 0.15)",
                   background: "rgba(10, 15, 29, 0.8)",
                   color: "#ffffff",
-                  fontSize: "14px",
+                  fontSize: "16px",
                   outline: "none",
                   boxSizing: "border-box",
                   fontFamily: showPassword ? "inherit" : "monospace",

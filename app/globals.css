@@ -434,3 +434,12 @@ button, input, select, textarea, optgroup { font-family: inherit; }
   background: rgba(148, 163, 184, 0.45);
 }
 
+/* Prevent mobile browsers (iOS Safari, Android Chrome) from zooming in on input/select/textarea focus */
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+

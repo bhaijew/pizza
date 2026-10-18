@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
       <div
         suppressHydrationWarning
         style={{
-          minHeight: "125vh",
+          minHeight: "100dvh",
           background: "#f1f5f9",
         }}
       />
@@ -30,11 +30,11 @@ export default function AdminLoginPage() {
     <div
       suppressHydrationWarning
       style={{
-        minHeight: "125vh",
+        minHeight: "100dvh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "24px",
+        padding: "16px",
         background: "#f1f5f9",
         color: "#0f172a",
         fontFamily: "var(--font-sans, system-ui, sans-serif)",
@@ -46,8 +46,8 @@ export default function AdminLoginPage() {
           maxWidth: "400px",
           background: "#ffffff",
           border: "1px solid #e2e8f0",
-          borderRadius: "5px",
-          padding: "36px 32px",
+          borderRadius: "8px",
+          padding: "32px 24px",
           boxShadow: "0 4px 20px -2px rgba(0, 0, 0, 0.06)",
         }}
       >
@@ -141,12 +141,12 @@ export default function AdminLoginPage() {
                 autoFocus
                 style={{
                   width: "100%",
-                  padding: "11px 40px 11px 14px",
-                  borderRadius: "5px",
+                  padding: "12px 42px 12px 14px",
+                  borderRadius: "6px",
                   border: "1px solid #cbd5e1",
                   background: "#ffffff",
                   color: "#0f172a",
-                  fontSize: "14px",
+                  fontSize: "16px",
                   outline: "none",
                   boxSizing: "border-box",
                 }}

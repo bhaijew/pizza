@@ -281,17 +281,6 @@ export default function AdminShell({
       }}
     >
       <style>{`
-        @media (min-width: 768px) {
-          .admin-mobile-dock {
-            display: none !important;
-          }
-        }
-        @media (max-width: 767px) {
-          .admin-mobile-dock {
-            display: flex !important;
-          }
-        }
-
         .admin-nav-link {
           position: relative;
           display: flex;
@@ -1300,120 +1289,10 @@ export default function AdminShell({
             margin: "0 auto",
             boxSizing: "border-box",
           }}
-          className="p-3 sm:p-5 md:p-7 pb-20 md:pb-8"
+          className="p-3.5 sm:p-5 md:p-7 max-w-[1440px] w-full mx-auto box-border"
         >
           {children}
         </main>
-
-        {/* ─── STICKY MOBILE BOTTOM DOCK (5 Quick Touch Actions - MOBILE ONLY) ─── */}
-        <nav
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: "64px",
-            background: isLight ? "rgba(255, 255, 255, 0.94)" : "rgba(14, 21, 38, 0.95)",
-            backdropFilter: "blur(14px)",
-            WebkitBackdropFilter: "blur(14px)",
-            borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
-            zIndex: 40,
-            alignItems: "center",
-            justifyContent: "space-around",
-            padding: "0 8px",
-            boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.25)",
-          }}
-          className="admin-mobile-dock md:hidden"
-        >
-          <Link
-            href="/admin"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "3px",
-              textDecoration: "none",
-              color: pathname === "/admin" ? "#ef4444" : isLight ? "#64748b" : "#94a3b8",
-              fontSize: "10px",
-              fontWeight: 800,
-            }}
-          >
-            <LayoutDashboard size={18} />
-            <span>Dashboard</span>
-          </Link>
-
-          <Link
-            href="/admin/orders"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "3px",
-              textDecoration: "none",
-              color: pathname.startsWith("/admin/orders") ? "#ef4444" : isLight ? "#64748b" : "#94a3b8",
-              fontSize: "10px",
-              fontWeight: 800,
-              position: "relative",
-            }}
-          >
-            <ShoppingBag size={18} />
-            <span>Orders</span>
-          </Link>
-
-          <Link
-            href="/admin/kitchen"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "3px",
-              textDecoration: "none",
-              color: pathname.startsWith("/admin/kitchen") ? "#f97316" : isLight ? "#64748b" : "#94a3b8",
-              fontSize: "10px",
-              fontWeight: 800,
-            }}
-          >
-            <ChefHat size={18} />
-            <span>Kitchen</span>
-          </Link>
-
-          <Link
-            href="/admin/sole-what"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "3px",
-              textDecoration: "none",
-              color: pathname.startsWith("/admin/sole-what") ? "#10b981" : isLight ? "#64748b" : "#94a3b8",
-              fontSize: "10px",
-              fontWeight: 800,
-            }}
-          >
-            <MessageSquare size={18} />
-            <span>WhatsApp</span>
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => setDownloadPosOpen(true)}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "3px",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "#34d399",
-              fontSize: "10px",
-              fontWeight: 800,
-            }}
-          >
-            <Download size={18} />
-            <span>POS App</span>
-          </button>
-        </nav>
 
         {/* Download POS Modal instance */}
         <DownloadPosModal
