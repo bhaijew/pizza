@@ -273,7 +273,7 @@ export default function AdminShell({
     <div
       className="admin-shell-root min-h-screen w-full flex flex-col md:flex-row"
       style={{
-        minHeight: "100vh",
+        minHeight: "125vh",
         background: isLight ? "#f8fafc" : "#0a0f1d",
         color: isLight ? "#0f172a" : "#f8fafc",
         fontFamily: "var(--font-sans, system-ui, -apple-system, sans-serif)",
@@ -291,16 +291,34 @@ export default function AdminShell({
           .admin-mobile-header {
             display: flex !important;
           }
+          .admin-shell-root {
+            min-height: 100vh !important;
+            min-height: 100dvh !important;
+          }
+          .admin-main-wrapper {
+            min-height: 100vh !important;
+            min-height: 100dvh !important;
+          }
         }
         @media (min-width: 768px) {
           .admin-desktop-sidebar {
             display: flex !important;
+            height: 125vh !important;
+            max-height: 125vh !important;
+            position: sticky !important;
+            top: 0 !important;
           }
           .admin-desktop-header {
             display: flex !important;
           }
           .admin-mobile-header {
             display: none !important;
+          }
+          .admin-shell-root {
+            min-height: 125vh !important;
+          }
+          .admin-main-wrapper {
+            min-height: 125vh !important;
           }
         }
 
@@ -391,8 +409,8 @@ export default function AdminShell({
           flexShrink: 0,
           position: "sticky",
           top: 0,
-          height: "100vh",
-          maxHeight: "100vh",
+          height: "125vh",
+          maxHeight: "125vh",
           zIndex: 40,
           boxShadow: isLight ? "2px 0 16px rgba(0, 0, 0, 0.03)" : "4px 0 28px rgba(0, 0, 0, 0.45)",
           transition: "background 0.25s ease, border-color 0.25s ease",
@@ -759,7 +777,7 @@ export default function AdminShell({
       </aside>
 
       {/* ─── MAIN CONTENT AREA ────────────────────────────── */}
-      <div className="w-full min-w-0 flex-1 flex flex-col" style={{ minWidth: 0, minHeight: "100vh" }}>
+      <div className="admin-main-wrapper w-full min-w-0 flex-1 flex flex-col" style={{ minWidth: 0, minHeight: "125vh" }}>
         {/* Desktop Top Header Bar */}
         <header
           style={{

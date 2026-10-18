@@ -505,9 +505,9 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
 
   return (
     <div
+      className="super-admin-root min-h-screen w-full flex flex-col md:flex-row"
       style={{
-        display: "flex",
-        minHeight: "100vh",
+        minHeight: "125vh",
         background: isLight ? "#f8fafc" : "#090d16",
         color: isLight ? "#0f172a" : "#f8fafc",
         fontFamily: "var(--font-sans, system-ui, -apple-system, sans-serif)",
@@ -621,6 +621,15 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
           .super-admin-sidebar {
             display: flex !important;
             position: sticky !important;
+            top: 0 !important;
+            height: 125vh !important;
+            max-height: 125vh !important;
+          }
+          .super-admin-root {
+            min-height: 125vh !important;
+          }
+          .super-admin-main {
+            min-height: 125vh !important;
           }
         }
       `}</style>
@@ -653,8 +662,8 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
           flexDirection: "column",
           flexShrink: 0,
           top: 0,
-          height: "100vh",
-          maxHeight: "100vh",
+          height: "125vh",
+          maxHeight: "125vh",
           zIndex: 50,
           boxShadow: isLight ? "2px 0 16px rgba(0, 0, 0, 0.03)" : "4px 0 30px rgba(0, 0, 0, 0.5)",
           transition: "background 0.2s ease, transform 0.25s ease",
@@ -1209,7 +1218,7 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
       </aside>
 
       {/* ─── MAIN CONTENT AREA ─────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: "100vh" }}>
+      <div className="super-admin-main" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: "125vh" }}>
         {/* Top Header Bar */}
         <header
           style={{
