@@ -281,6 +281,17 @@ export default function AdminShell({
       }}
     >
       <style>{`
+        @media (min-width: 768px) {
+          .admin-mobile-dock {
+            display: none !important;
+          }
+        }
+        @media (max-width: 767px) {
+          .admin-mobile-dock {
+            display: flex !important;
+          }
+        }
+
         .admin-nav-link {
           position: relative;
           display: flex;
@@ -1289,12 +1300,12 @@ export default function AdminShell({
             margin: "0 auto",
             boxSizing: "border-box",
           }}
-          className="p-3 sm:p-5 md:p-7 pb-24 md:pb-12"
+          className="p-3 sm:p-5 md:p-7 pb-20 md:pb-8"
         >
           {children}
         </main>
 
-        {/* ─── STICKY MOBILE BOTTOM DOCK (5 Quick Touch Actions) ─── */}
+        {/* ─── STICKY MOBILE BOTTOM DOCK (5 Quick Touch Actions - MOBILE ONLY) ─── */}
         <nav
           style={{
             position: "fixed",
@@ -1307,13 +1318,12 @@ export default function AdminShell({
             WebkitBackdropFilter: "blur(14px)",
             borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
             zIndex: 40,
-            display: "flex",
             alignItems: "center",
             justifyContent: "space-around",
             padding: "0 8px",
             boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.25)",
           }}
-          className="md:hidden"
+          className="admin-mobile-dock md:hidden"
         >
           <Link
             href="/admin"

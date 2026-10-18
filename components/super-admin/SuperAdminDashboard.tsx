@@ -515,6 +515,17 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
       }}
     >
       <style>{`
+        @media (min-width: 768px) {
+          .super-mobile-dock {
+            display: none !important;
+          }
+        }
+        @media (max-width: 767px) {
+          .super-mobile-dock {
+            display: flex !important;
+          }
+        }
+
         .super-nav-btn {
           width: 100%;
           display: flex;
@@ -1356,7 +1367,7 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
             boxSizing: "border-box",
             margin: "0 auto",
           }}
-          className="p-3.5 sm:p-5 md:p-7 pb-24 md:pb-12"
+          className="p-3.5 sm:p-5 md:p-7 pb-20 md:pb-8"
         >
           {/* ═══════════════════════════════════════════════════════════════════
               TAB 1: HQ OVERVIEW
@@ -3098,7 +3109,7 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
           />
         )}
 
-        {/* ─── STICKY MOBILE BOTTOM DOCK FOR SUPER ADMIN ─── */}
+        {/* ─── STICKY MOBILE BOTTOM DOCK FOR SUPER ADMIN (MOBILE ONLY) ─── */}
         <nav
           style={{
             position: "fixed",
@@ -3111,13 +3122,12 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
             WebkitBackdropFilter: "blur(14px)",
             borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
             zIndex: 40,
-            display: "flex",
             alignItems: "center",
             justifyContent: "space-around",
             padding: "0 8px",
             boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.25)",
           }}
-          className="md:hidden"
+          className="super-mobile-dock md:hidden"
         >
           <button
             type="button"
