@@ -62,8 +62,14 @@ export default function KitchenDisplay({
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newOrder = payload.new as Order;
-            if (shopId && newOrder.shop_id && Number(newOrder.shop_id) !== Number(shopId)) {
-              return;
+            if (shopId) {
+              if (!newOrder.shop_id || Number(newOrder.shop_id) !== Number(shopId)) {
+                return;
+              }
+            } else {
+              if (newOrder.shop_id != null) {
+                return;
+              }
             }
             setOrders((prev) => [newOrder, ...prev]);
 
@@ -84,8 +90,16 @@ export default function KitchenDisplay({
             }
           } else if (payload.eventType === "UPDATE") {
             const updated = payload.new as Order;
-            if (shopId && updated.shop_id && Number(updated.shop_id) !== Number(shopId)) {
-              return;
+            if (shopId) {
+              if (!updated.shop_id || Number(updated.shop_id) !== Number(shopId)) {
+                setOrders((prev) => prev.filter((o) => o.id !== updated.id));
+                return;
+              }
+            } else {
+              if (updated.shop_id != null) {
+                setOrders((prev) => prev.filter((o) => o.id !== updated.id));
+                return;
+              }
             }
             setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
           } else if (payload.eventType === "DELETE") {

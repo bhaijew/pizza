@@ -299,7 +299,13 @@ export default async function AdminDashboardPage() {
           </Link>
 
           <Link
-            href="/demo/pos"
+            href={
+              activeShop.shopSlug
+                ? `/demo/pos?shop=${encodeURIComponent(activeShop.shopSlug)}`
+                : activeShop.shopId
+                ? `/demo/pos?shopId=${activeShop.shopId}`
+                : "/demo/pos"
+            }
             target="_blank"
             style={{
               display: "inline-flex",
