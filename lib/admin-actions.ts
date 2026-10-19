@@ -754,6 +754,19 @@ export async function updateSettings(
   const whatsapp_api_key = (formData.get("whatsapp_api_key") as string)?.trim() || null;
   const opening_time = (formData.get("opening_time") as string)?.trim() || "11:00";
   const closing_time = (formData.get("closing_time") as string)?.trim() || "01:00";
+  const theme_color = (formData.get("theme_color") as string)?.trim() || "#ea580c";
+  const slider_enabled = formData.get("slider_enabled") !== "false";
+  const slider_height_mobile = parseInt(formData.get("slider_height_mobile") as string, 10) || 180;
+  
+  let slider_images: any = null;
+  const rawSliderImages = formData.get("slider_images") as string;
+  if (rawSliderImages) {
+    try {
+      slider_images = JSON.parse(rawSliderImages);
+    } catch {
+      slider_images = null;
+    }
+  }
 
   if (!shop_name || !menu_title || !meta_title) {
     return { error: "Shop name, menu title, and meta title are required.", success: false };
@@ -768,7 +781,13 @@ export async function updateSettings(
       whatsapp_api_key,
       opening_time,
       closing_time,
+      theme_color,
+      slider_enabled,
+      slider_height_mobile,
     };
+    if (slider_images !== null) {
+      updatePayload.slider_images = slider_images;
+    }
 
     let { error: shopError } = await db
       .from("shops")
@@ -776,7 +795,16 @@ export async function updateSettings(
       .eq("id", activeShop.shopId);
 
     // Fallback if columns pending migration
-    if (shopError && (shopError.message.includes("whatsapp_session_id") || shopError.message.includes("whatsapp_api_key") || shopError.message.includes("opening_time") || shopError.message.includes("closing_time"))) {
+    if (shopError) {
+      delete updatePayload.theme_color;
+      delete updatePayload.slider_enabled;
+      delete updatePayload.slider_height_mobile;
+      delete updatePayload.slider_images;
+      delete updatePayload.whatsapp_session_id;
+      delete updatePayload.whatsapp_api_key;
+      delete updatePayload.opening_time;
+      delete updatePayload.closing_time;
+
       const retry = await db
         .from("shops")
         .update({ name: shop_name, currency_symbol })
@@ -808,14 +836,29 @@ export async function updateSettings(
       whatsapp_api_key,
       opening_time,
       closing_time,
+      theme_color,
+      slider_enabled,
+      slider_height_mobile,
     };
+    if (slider_images !== null) {
+      upsertPayload.slider_images = slider_images;
+    }
 
     let { error } = await db
       .from("shop_settings")
       .upsert(upsertPayload);
 
     // Fallback if columns pending migration
-    if (error && (error.message.includes("whatsapp_session_id") || error.message.includes("whatsapp_api_key") || error.message.includes("opening_time") || error.message.includes("closing_time"))) {
+    if (error) {
+      delete upsertPayload.theme_color;
+      delete upsertPayload.slider_enabled;
+      delete upsertPayload.slider_height_mobile;
+      delete upsertPayload.slider_images;
+      delete upsertPayload.whatsapp_session_id;
+      delete upsertPayload.whatsapp_api_key;
+      delete upsertPayload.opening_time;
+      delete upsertPayload.closing_time;
+
       const retry = await db
         .from("shop_settings")
         .upsert({ id: "main", shop_name, menu_title, meta_title, meta_description, currency_symbol });

@@ -13,6 +13,7 @@ import type { ShopSettings } from "@/lib/menu-data";
 import { CartProvider } from "./CartContext";
 import MenuHeader from "./MenuHeader";
 import HeroSection from "./HeroSection";
+import MenuPromoSlider from "./MenuPromoSlider";
 import CategoryTabs from "./CategoryTabs";
 import ProductCard from "./ProductCard";
 import ProductDetailSheet from "./ProductDetailSheet";
@@ -99,7 +100,27 @@ function MenuInner({
       />
 
       <main id="main-content" style={{ minHeight: "80vh" }}>
-        <HeroSection verifiedTable={currentVerifiedTable} />
+        <HeroSection
+          verifiedTable={currentVerifiedTable}
+          themeColor={settings?.theme_color || "#991b1b"}
+        />
+
+        {/* Featured Deals & Promo Banner Slider */}
+        {settings?.slider_enabled !== false && (
+          <div style={{ marginTop: "12px", marginBottom: "4px" }}>
+            <MenuPromoSlider
+              slides={
+                Array.isArray(settings?.slider_images)
+                  ? (settings.slider_images as any)
+                  : typeof settings?.slider_images === "string"
+                  ? JSON.parse(settings.slider_images)
+                  : undefined
+              }
+              mobileHeight={settings?.slider_height_mobile || 180}
+              themeColor={settings?.theme_color || "#ea580c"}
+            />
+          </div>
+        )}
 
         {/* Menu section */}
         <section

@@ -148,7 +148,7 @@ export async function createShop(
 
   const pos_pin = (formData.get("pos_pin") as string)?.trim() || "1234";
 
-  // Auto-provision branch Owner in pos_staff with POS access and the specified PIN
+  // Auto-provision or update branch Owner in pos_staff with POS access and the specified PIN
   if (data && (data as any).id) {
     try {
       const staffPayload: Record<string, any> = {
@@ -158,9 +158,11 @@ export async function createShop(
         pin: pos_pin,
         has_pos_access: true,
         is_active: status === "active",
+        shop_id: (data as any).id,
       };
-      const tryWithShop = await db.from("pos_staff").insert({ ...staffPayload, shop_id: (data as any).id });
+      const tryWithShop = await db.from("pos_staff").insert(staffPayload);
       if (tryWithShop.error && tryWithShop.error.message.includes("shop_id")) {
+        delete staffPayload.shop_id;
         await db.from("pos_staff").insert(staffPayload);
       }
     } catch (e) {
@@ -169,7 +171,7 @@ export async function createShop(
   }
 
   revalidatePath("/super-admin");
-  return { error: null, success: true, shop: data as Shop };
+  return { error: null, success: true, shop: { ...(data as Shop), pos_pin } };
 }
 
 export async function updateShop(
@@ -189,6 +191,7 @@ export async function updateShop(
   const owner_phone = (formData.get("owner_phone") as string)?.trim() || null;
   const branch_address = (formData.get("branch_address") as string)?.trim() || null;
   const password = (formData.get("password") as string)?.trim();
+  const pos_pin = (formData.get("pos_pin") as string)?.trim() || "1234";
   const currency_symbol = (formData.get("currency_symbol") as string)?.trim() || "Rs.";
   const plan = (formData.get("plan") as "starter" | "pro" | "enterprise") || "pro";
   const status = (formData.get("status") as "active" | "suspended" | "pending") || "active";
@@ -212,6 +215,7 @@ export async function updateShop(
     notes,
     whatsapp_session_id,
     whatsapp_api_key,
+    pos_pin,
     updated_at: new Date().toISOString(),
   };
 
@@ -221,35 +225,43 @@ export async function updateShop(
 
   let { error } = await db.from("shops").update(updatePayload).eq("id", id);
 
-  if (error && (error.message.includes("whatsapp_session_id") || error.message.includes("whatsapp_api_key"))) {
+  if (error && (error.message.includes("whatsapp_session_id") || error.message.includes("whatsapp_api_key") || error.message.includes("pos_pin"))) {
     delete updatePayload.whatsapp_session_id;
     delete updatePayload.whatsapp_api_key;
+    delete updatePayload.pos_pin;
     const retry = await db.from("shops").update(updatePayload).eq("id", id);
     error = retry.error;
   }
 
   if (error) return { error: error.message, success: false };
 
-  const pos_pin = (formData.get("pos_pin") as string)?.trim();
-  if (pos_pin) {
-    try {
-      const tryShopId = await db
+  // Always upsert owner in pos_staff so the PIN is permanently saved & linked
+  try {
+    const { data: existingStaff } = await db
+      .from("pos_staff")
+      .select("id")
+      .eq("shop_id", id)
+      .eq("role", "owner")
+      .maybeSingle();
+
+    if (existingStaff) {
+      await db
         .from("pos_staff")
         .update({ pin: pos_pin, is_active: status === "active" })
-        .eq("shop_id", id)
-        .eq("role", "owner");
-
-      if (tryShopId.error && tryShopId.error.message.includes("shop_id")) {
-        if (owner_email) {
-          await db
-            .from("pos_staff")
-            .update({ pin: pos_pin, is_active: status === "active" })
-            .eq("email", owner_email);
-        }
-      }
-    } catch (e) {
-      console.warn("[SuperAdmin] Update pos_staff pin note:", e);
+        .eq("id", existingStaff.id);
+    } else {
+      await db.from("pos_staff").insert({
+        name: `${owner_name} (Owner)`,
+        email: owner_email || `shop_${id}_owner@pos.local`,
+        role: "owner",
+        pin: pos_pin,
+        has_pos_access: true,
+        is_active: status === "active",
+        shop_id: id,
+      });
     }
+  } catch (e) {
+    console.warn("[SuperAdmin] Sync pos_staff pin note:", e);
   }
 
   revalidatePath("/super-admin");

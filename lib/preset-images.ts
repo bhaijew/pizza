@@ -4,6 +4,46 @@ export interface PresetFoodImage {
   url: string;
 }
 
+export interface PromoSlide {
+  id: string;
+  title: string;
+  subtitle?: string;
+  image_url: string;
+  badge?: string;
+  link_url?: string;
+  is_active?: boolean;
+}
+
+export const DEFAULT_PROMO_SLIDES: PromoSlide[] = [
+  {
+    id: "slide-1",
+    title: "Weekend Pizza Feast — 20% OFF",
+    subtitle: "Crispy crusts, oozing cheese & fresh artisan toppings",
+    image_url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1000&auto=format&fit=crop&q=80",
+    badge: "Hot Deal 🔥",
+    link_url: "#menu",
+    is_active: true,
+  },
+  {
+    id: "slide-2",
+    title: "Buy 1 Large Pizza, Get 1 FREE",
+    subtitle: "Valid on all handcrafted signature sourdough pizzas",
+    image_url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1000&auto=format&fit=crop&q=80",
+    badge: "1+1 Free 🍕",
+    link_url: "#menu",
+    is_active: true,
+  },
+  {
+    id: "slide-3",
+    title: "Family Crunch Combo Deal",
+    subtitle: "2 Large Pizzas + Loaded Cheesy Bread + 1.5L Drink",
+    image_url: "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=1000&auto=format&fit=crop&q=80",
+    badge: "Save 35% 👨‍👩‍👧‍👦",
+    link_url: "#menu",
+    is_active: true,
+  },
+];
+
 export const PRESET_FOOD_IMAGES: PresetFoodImage[] = [
   // ─── Pizzas ──────────────────────────────────────────
   {

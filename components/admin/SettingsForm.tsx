@@ -1,8 +1,34 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useMemo } from "react";
 import { updateSettings } from "@/lib/admin-actions";
 import type { ShopSettings } from "@/lib/menu-data";
+import { DEFAULT_PROMO_SLIDES, type PromoSlide, PRESET_FOOD_IMAGES } from "@/lib/preset-images";
+import {
+  Smartphone,
+  Sparkles,
+  Plus,
+  Trash2,
+  Image as ImageIcon,
+  Check,
+  ChevronRight,
+  Sliders,
+  X,
+  Store,
+  Clock,
+  MessageSquare,
+  Globe,
+} from "lucide-react";
+
+const PaletteIcon = ({ size = 16, style }: { size?: number; style?: React.CSSProperties }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+    <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+    <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+    <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+  </svg>
+);
 
 interface SettingsFormProps {
   initialSettings: ShopSettings;
@@ -17,6 +43,23 @@ const CURRENCY_PRESETS = [
   { label: "AED (Dirham)", symbol: "AED " },
   { label: "SAR (Riyal)", symbol: "SAR " },
   { label: "C$ (CAD / Dollar)", symbol: "C$" },
+];
+
+const THEME_COLOR_PRESETS = [
+  { label: "Pizza Red", color: "#dc2626", bg: "#fef2f2" },
+  { label: "Fire Orange", color: "#ea580c", bg: "#fff7ed" },
+  { label: "Golden Amber", color: "#d97706", bg: "#fffbeb" },
+  { label: "Basil Green", color: "#16a34a", bg: "#f0fdf4" },
+  { label: "Royal Blue", color: "#2563eb", bg: "#eff6ff" },
+  { label: "Charcoal Dark", color: "#0f172a", bg: "#f8fafc" },
+  { label: "Violet Plum", color: "#7c3aed", bg: "#f5f3ff" },
+];
+
+const SLIDER_SIZE_PRESETS = [
+  { label: "Compact", height: 140, desc: "Fast ordering, saves vertical space" },
+  { label: "Standard", height: 180, desc: "Balanced mobile aspect ratio (Recommended)" },
+  { label: "Prominent", height: 220, desc: "Large visual banners for deals" },
+  { label: "Hero Banner", height: 260, desc: "Full visual impact on mobile" },
 ];
 
 export default function SettingsForm({ initialSettings }: SettingsFormProps) {
@@ -35,29 +78,92 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [openingTime, setOpeningTime] = useState(initialSettings.opening_time || "11:00");
   const [closingTime, setClosingTime] = useState(initialSettings.closing_time || "01:00");
 
+  // ─── Theme Color State ─────────────────────────────
+  const [themeColor, setThemeColor] = useState(initialSettings.theme_color || "#ea580c");
+
+  // ─── Mobile Slider State ───────────────────────────
+  const [sliderEnabled, setSliderEnabled] = useState(initialSettings.slider_enabled !== false);
+  const [sliderHeight, setSliderHeight] = useState(initialSettings.slider_height_mobile || 180);
+
+  const initialSlides: PromoSlide[] = useMemo(() => {
+    if (Array.isArray(initialSettings.slider_images) && initialSettings.slider_images.length > 0) {
+      return initialSettings.slider_images as PromoSlide[];
+    }
+    if (typeof initialSettings.slider_images === "string") {
+      try {
+        const parsed = JSON.parse(initialSettings.slider_images);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    return DEFAULT_PROMO_SLIDES;
+  }, [initialSettings.slider_images]);
+
+  const [slides, setSlides] = useState<PromoSlide[]>(initialSlides);
+  const [previewSlideIdx, setPreviewSlideIdx] = useState(0);
+
+  // Add slide modal state
+  const [showAddSlideModal, setShowAddSlideModal] = useState(false);
+  const [newSlideTitle, setNewSlideTitle] = useState("Special Deal — 20% OFF");
+  const [newSlideSubtitle, setNewSlideSubtitle] = useState("Fresh artisanal sourdough pizza combo");
+  const [newSlideBadge, setNewSlideBadge] = useState("Hot Deal 🔥");
+  const [newSlideImage, setNewSlideImage] = useState(
+    PRESET_FOOD_IMAGES[0]?.url || "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1000&auto=format&fit=crop&q=80"
+  );
+  const [newSlideLink, setNewSlideLink] = useState("#menu");
+
+  const handleAddSlide = () => {
+    if (!newSlideTitle.trim() || !newSlideImage.trim()) return;
+    const newSlide: PromoSlide = {
+      id: `slide-${Date.now()}`,
+      title: newSlideTitle.trim(),
+      subtitle: newSlideSubtitle.trim() || undefined,
+      badge: newSlideBadge.trim() || undefined,
+      image_url: newSlideImage.trim(),
+      link_url: newSlideLink.trim() || "#menu",
+      is_active: true,
+    };
+    setSlides((prev) => [...prev, newSlide]);
+    setShowAddSlideModal(false);
+    setNewSlideTitle("Special Deal — 20% OFF");
+    setNewSlideSubtitle("Fresh artisanal sourdough pizza combo");
+  };
+
+  const handleDeleteSlide = (id: string) => {
+    setSlides((prev) => prev.filter((s) => s.id !== id));
+    if (previewSlideIdx >= slides.length - 1) {
+      setPreviewSlideIdx(Math.max(0, slides.length - 2));
+    }
+  };
+
+  const activeSlide = slides[previewSlideIdx] || slides[0] || DEFAULT_PROMO_SLIDES[0];
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))", gap: "24px" }}>
-      {/* ─── SETTINGS FORM ───────────────────────────── */}
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 460px), 1fr))", gap: "28px", alignItems: "start" }}>
+      {/* ─── LEFT COLUMN: SETTINGS FORM ───────────────────────────── */}
       <div
         style={{
           background: "#ffffff",
           border: "1px solid #e2e8f0",
-          borderRadius: "5px",
+          borderRadius: "10px",
           padding: "24px",
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
         }}
       >
-        <h2 style={{ fontSize: "16px", fontWeight: 700, margin: "0 0 4px", color: "#0f172a" }}>
-          Shop, Currency &amp; Menu Branding
-        </h2>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+          <Store size={20} className="text-orange-500" />
+          <h2 style={{ fontSize: "17px", fontWeight: 800, margin: 0, color: "#0f172a" }}>
+            Shop, Menu Colors &amp; Mobile Slider
+          </h2>
+        </div>
         <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 20px" }}>
-          Customize store name, menu title, currency symbol, and Google SEO metadata.
+          Customize store branding, menu theme color palette, deal banners &amp; mobile slider size.
         </p>
 
         {state.success && (
           <div
             style={{
-              padding: "10px 14px",
-              borderRadius: "5px",
+              padding: "12px 14px",
+              borderRadius: "8px",
               background: "#f0fdf4",
               border: "1px solid #bbf7d0",
               color: "#16a34a",
@@ -66,40 +172,345 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              fontWeight: 600,
+              fontWeight: 700,
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Settings saved successfully! Changes are now live on the customer menu.</span>
+            <Check size={18} />
+            <span>Settings saved successfully! Menu theme &amp; mobile slider are now live.</span>
           </div>
         )}
 
         {state.error && (
           <div
             style={{
-              padding: "10px 14px",
-              borderRadius: "5px",
+              padding: "12px 14px",
+              borderRadius: "8px",
               background: "#fef2f2",
               border: "1px solid #fecaca",
               color: "#b91c1c",
               fontSize: "13px",
               marginBottom: "18px",
+              fontWeight: 600,
             }}
           >
             {state.error}
           </div>
         )}
 
-        <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {/* Shop Name */}
+        <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Hidden inputs for custom controls */}
+          <input type="hidden" name="theme_color" value={themeColor} />
+          <input type="hidden" name="slider_enabled" value={sliderEnabled ? "true" : "false"} />
+          <input type="hidden" name="slider_height_mobile" value={sliderHeight} />
+          <input type="hidden" name="slider_images" value={JSON.stringify(slides)} />
+
+          {/* ═══════════════════════════════════════════════════
+              SECTION 1: MENU THEME COLOR CUSTOMIZER
+          ═══════════════════════════════════════════════════ */}
+          <div
+            style={{
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: "10px",
+              padding: "16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <PaletteIcon size={16} style={{ color: themeColor }} />
+              <span style={{ fontSize: "13px", fontWeight: 800, color: "#0f172a" }}>
+                Menu Theme &amp; Accent Color
+              </span>
+            </div>
+            <p style={{ margin: "0 0 12px", fontSize: "11px", color: "#64748b" }}>
+              Choose your restaurant&apos;s primary theme color. Tint will apply to menu buttons, banners, category pills and cart highlights.
+            </p>
+
+            {/* Color Presets */}
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "12px" }}>
+              {THEME_COLOR_PRESETS.map((p) => {
+                const isSelected = themeColor.toLowerCase() === p.color.toLowerCase();
+                return (
+                  <button
+                    key={p.color}
+                    type="button"
+                    onClick={() => setThemeColor(p.color)}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "6px 10px",
+                      borderRadius: "7px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      border: isSelected ? `2px solid ${p.color}` : "1px solid #cbd5e1",
+                      background: isSelected ? p.bg : "#ffffff",
+                      color: isSelected ? p.color : "#475569",
+                      boxShadow: isSelected ? `0 2px 8px ${p.color}35` : "none",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: "12px",
+                        height: "12px",
+                        borderRadius: "50%",
+                        background: p.color,
+                        display: "inline-block",
+                      }}
+                    />
+                    <span>{p.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom Color Input */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569" }}>
+                Custom Hex:
+              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <input
+                  type="color"
+                  value={themeColor}
+                  onChange={(e) => setThemeColor(e.target.value)}
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    padding: 0,
+                    background: "transparent",
+                  }}
+                  title="Pick a custom color"
+                />
+                <input
+                  type="text"
+                  value={themeColor}
+                  onChange={(e) => setThemeColor(e.target.value)}
+                  style={{
+                    width: "100px",
+                    padding: "7px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "12px",
+                    fontFamily: "monospace",
+                    fontWeight: 700,
+                    color: "#0f172a",
+                    outline: "none",
+                  }}
+                />
+              </div>
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: themeColor,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                ● Active Palette
+              </span>
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════
+              SECTION 2: MOBILE PROMO & DEAL SLIDER SETTINGS
+          ═══════════════════════════════════════════════════ */}
+          <div
+            style={{
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: "10px",
+              padding: "16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Smartphone size={16} className="text-indigo-500" />
+                <span style={{ fontSize: "13px", fontWeight: 800, color: "#0f172a" }}>
+                  Mobile Menu Promo &amp; Deal Slider
+                </span>
+              </div>
+
+              {/* Slider Enable/Disable Toggle */}
+              <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "12px", fontWeight: 700, color: "#334155" }}>
+                <input
+                  type="checkbox"
+                  checked={sliderEnabled}
+                  onChange={(e) => setSliderEnabled(e.target.checked)}
+                  style={{ accentColor: themeColor, width: "16px", height: "16px", cursor: "pointer" }}
+                />
+                <span>Enable Slider</span>
+              </label>
+            </div>
+
+            <p style={{ margin: "0 0 14px", fontSize: "11px", color: "#64748b" }}>
+              Controls the banner slider displayed to mobile customers. Adjust the height in pixels to fit your menu perfectly.
+            </p>
+
+            {sliderEnabled && (
+              <>
+                {/* Mobile Slider Height Selector */}
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                    <label style={{ fontSize: "11px", fontWeight: 800, color: "#334155", textTransform: "uppercase" }}>
+                      Mobile Slider Height: <span style={{ color: themeColor }}>{sliderHeight}px</span>
+                    </label>
+                    <span style={{ fontSize: "11px", color: "#64748b" }}>
+                      Live Mobile Preview updates instantly 👉
+                    </span>
+                  </div>
+
+                  {/* Quick Preset Buttons */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px", marginBottom: "10px" }}>
+                    {SLIDER_SIZE_PRESETS.map((p) => {
+                      const isSelected = sliderHeight === p.height;
+                      return (
+                        <button
+                          key={p.height}
+                          type="button"
+                          onClick={() => setSliderHeight(p.height)}
+                          style={{
+                            padding: "8px 10px",
+                            borderRadius: "7px",
+                            textAlign: "left",
+                            cursor: "pointer",
+                            border: isSelected ? `2px solid ${themeColor}` : "1px solid #cbd5e1",
+                            background: isSelected ? "#ffffff" : "#ffffff",
+                            boxShadow: isSelected ? `0 2px 8px ${themeColor}25` : "none",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 800, color: isSelected ? themeColor : "#0f172a" }}>
+                              {p.label}
+                            </span>
+                            <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b" }}>
+                              {p.height}px
+                            </span>
+                          </div>
+                          <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "2px" }}>
+                            {p.desc}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Range Slider for Fine-tuning */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ fontSize: "11px", color: "#64748b" }}>120px</span>
+                    <input
+                      type="range"
+                      min={120}
+                      max={300}
+                      step={10}
+                      value={sliderHeight}
+                      onChange={(e) => setSliderHeight(Number(e.target.value))}
+                      style={{ flex: 1, accentColor: themeColor, cursor: "pointer" }}
+                    />
+                    <span style={{ fontSize: "11px", color: "#64748b" }}>300px</span>
+                  </div>
+                </div>
+
+                {/* Slides Manager List */}
+                <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                    <span style={{ fontSize: "11px", fontWeight: 800, color: "#334155", textTransform: "uppercase" }}>
+                      Active Slides ({slides.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddSlideModal(true)}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        padding: "5px 10px",
+                        borderRadius: "6px",
+                        background: themeColor,
+                        color: "#ffffff",
+                        border: "none",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Plus size={12} />
+                      <span>Add Promo Slide</span>
+                    </button>
+                  </div>
+
+                  {/* Slides List */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {slides.map((s, idx) => (
+                      <div
+                        key={s.id || idx}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "8px 10px",
+                          borderRadius: "6px",
+                          background: "#ffffff",
+                          border: "1px solid #e2e8f0",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                          <img
+                            src={s.image_url}
+                            alt={s.title}
+                            style={{
+                              width: "44px",
+                              height: "32px",
+                              borderRadius: "4px",
+                              objectFit: "cover",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {s.title}
+                            </div>
+                            <div style={{ fontSize: "10px", color: "#64748b" }}>
+                              {s.badge || "Deal"} &bull; {s.subtitle || "No subtitle"}
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSlide(s.id)}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "#ef4444",
+                            cursor: "pointer",
+                            padding: "4px",
+                          }}
+                          title="Delete slide"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* ═══════════════════════════════════════════════════
+              SECTION 3: SHOP NAME & BRANDING
+          ═══════════════════════════════════════════════════ */}
           <div>
-            <label
-              htmlFor="shop_name"
-              style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "5px" }}
-            >
-              Shop Name (Logo &amp; Brand)
+            <label htmlFor="shop_name" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "5px" }}>
+              Shop Name (Logo &amp; Brand) <span style={{ color: "#ef4444" }}>*</span>
             </label>
             <input
               id="shop_name"
@@ -112,7 +523,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
               style={{
                 width: "100%",
                 padding: "9px 12px",
-                borderRadius: "5px",
+                borderRadius: "6px",
                 border: "1px solid #cbd5e1",
                 background: "#ffffff",
                 color: "#0f172a",
@@ -121,21 +532,13 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
                 boxSizing: "border-box",
               }}
             />
-            <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
-              Displayed on the header navbar and browser tab.
-            </p>
           </div>
 
           {/* Currency Selection */}
           <div>
-            <label
-              htmlFor="currency_symbol"
-              style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "5px" }}
-            >
-              Currency Symbol / Prefix *
+            <label htmlFor="currency_symbol" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "5px" }}>
+              Currency Symbol / Prefix <span style={{ color: "#ef4444" }}>*</span>
             </label>
-
-            {/* Quick preset buttons */}
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
               {CURRENCY_PRESETS.map((p) => {
                 const isSelected = currencySymbol.trim() === p.symbol.trim();
@@ -150,9 +553,9 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
                       fontSize: "12px",
                       fontWeight: 600,
                       cursor: "pointer",
-                      border: isSelected ? "1px solid #fecaca" : "1px solid #e2e8f0",
-                      background: isSelected ? "#fef2f2" : "#f8fafc",
-                      color: isSelected ? "#dc2626" : "#475569",
+                      border: isSelected ? `1px solid ${themeColor}` : "1px solid #e2e8f0",
+                      background: isSelected ? `${themeColor}15` : "#f8fafc",
+                      color: isSelected ? themeColor : "#475569",
                     }}
                   >
                     {p.symbol.trim()} ({p.label.split(" ")[0]})
@@ -169,35 +572,29 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
                 required
                 value={currencySymbol}
                 onChange={(e) => setCurrencySymbol(e.target.value)}
-                placeholder="e.g. $, Rs. , €, £, AED"
+                placeholder="e.g. Rs., $, AED"
                 style={{
                   width: "120px",
                   padding: "9px 12px",
-                  borderRadius: "5px",
+                  borderRadius: "6px",
                   border: "1px solid #cbd5e1",
                   background: "#ffffff",
                   color: "#0f172a",
                   fontSize: "14px",
-                  fontWeight: 700,
+                  fontWeight: 800,
                   outline: "none",
                   boxSizing: "border-box",
                 }}
               />
               <span style={{ fontSize: "12px", color: "#64748b" }}>
-                Preview price: <strong style={{ color: "#dc2626" }}>{currencySymbol}14.99</strong>
+                Price display preview: <strong style={{ color: themeColor }}>{currencySymbol}14.99</strong>
               </span>
             </div>
-            <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
-              Shown in front of all product prices, cart totals, and customer orders.
-            </p>
           </div>
 
           {/* Menu Title */}
           <div>
-            <label
-              htmlFor="menu_title"
-              style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "5px" }}
-            >
+            <label htmlFor="menu_title" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "5px" }}>
               Menu Section Heading
             </label>
             <input
@@ -211,7 +608,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
               style={{
                 width: "100%",
                 padding: "9px 12px",
-                borderRadius: "5px",
+                borderRadius: "6px",
                 border: "1px solid #cbd5e1",
                 background: "#ffffff",
                 color: "#0f172a",
@@ -220,18 +617,48 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
                 boxSizing: "border-box",
               }}
             />
-            <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
-              The main headline above the category tabs and product list.
-            </p>
           </div>
 
-          {/* Meta Title */}
+          {/* Operating Hours */}
+          <div style={{ padding: "16px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <Clock size={16} className="text-amber-500" />
+              <span style={{ fontSize: "13px", fontWeight: 800, color: "#0f172a" }}>
+                Operating Hours &amp; Shift Reporting
+              </span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "8px" }}>
+              <div>
+                <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "3px" }}>
+                  Opening Time
+                </label>
+                <input
+                  type="time"
+                  name="opening_time"
+                  value={openingTime}
+                  onChange={(e) => setOpeningTime(e.target.value)}
+                  style={{ width: "100%", padding: "7px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", fontWeight: 700 }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "3px" }}>
+                  Closing Time
+                </label>
+                <input
+                  type="time"
+                  name="closing_time"
+                  value={closingTime}
+                  onChange={(e) => setClosingTime(e.target.value)}
+                  style={{ width: "100%", padding: "7px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", fontWeight: 700 }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* SEO Metadata */}
           <div>
-            <label
-              htmlFor="meta_title"
-              style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "5px" }}
-            >
-              SEO / Browser Meta Title Tag
+            <label htmlFor="meta_title" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "5px" }}>
+              SEO Browser Title
             </label>
             <input
               id="meta_title"
@@ -244,7 +671,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
               style={{
                 width: "100%",
                 padding: "9px 12px",
-                borderRadius: "5px",
+                borderRadius: "6px",
                 border: "1px solid #cbd5e1",
                 background: "#ffffff",
                 color: "#0f172a",
@@ -253,355 +680,377 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
                 boxSizing: "border-box",
               }}
             />
-            <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
-              Shown in browser tabs and Google search engine results.
-            </p>
           </div>
 
-          {/* Meta Description */}
           <div>
-            <label
-              htmlFor="meta_description"
-              style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "5px" }}
-            >
+            <label htmlFor="meta_description" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "5px" }}>
               SEO Meta Description
             </label>
             <textarea
               id="meta_description"
               name="meta_description"
-              rows={3}
+              rows={2}
               value={metaDescription}
               onChange={(e) => setMetaDescription(e.target.value)}
-              placeholder="e.g. Order hot, crispy pizzas crafted with organic sourdough and artisan cheeses."
               style={{
                 width: "100%",
                 padding: "9px 12px",
-                borderRadius: "5px",
+                borderRadius: "6px",
                 border: "1px solid #cbd5e1",
                 background: "#ffffff",
                 color: "#0f172a",
                 fontSize: "13px",
                 outline: "none",
                 boxSizing: "border-box",
-                resize: "vertical",
               }}
             />
           </div>
 
-          {/* WhatsApp Order Alerts */}
-          <div style={{ marginTop: "6px", padding: "16px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-              <span style={{ fontSize: "16px" }}>📱</span>
-              <div>
-                <h3 style={{ fontSize: "13px", fontWeight: 700, margin: 0, color: "#0f172a" }}>
-                  WhatsApp Order Alerts (Railway Gateway)
-                </h3>
-                <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#64748b" }}>
-                  Sends instant WhatsApp order confirmations to customers.
-                </p>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "12px" }}>
-              <div>
-                <label
-                  htmlFor="whatsapp_session_id"
-                  style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", marginBottom: "4px" }}
-                >
-                  WhatsApp Session ID
-                </label>
-                <input
-                  id="whatsapp_session_id"
-                  name="whatsapp_session_id"
-                  type="text"
-                  value={whatsappSessionId}
-                  onChange={(e) => setWhatsappSessionId(e.target.value)}
-                  placeholder="e.g. rhs5o"
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: "5px",
-                    border: "1px solid #cbd5e1",
-                    background: "#ffffff",
-                    color: "#0f172a",
-                    fontSize: "13px",
-                    fontFamily: "monospace",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-                <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
-                  Your Railway device session ID. Endpoint: <code>/api/messages/{whatsappSessionId || "{sessionId}"}/send</code>
-                </p>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="whatsapp_api_key"
-                  style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", marginBottom: "4px" }}
-                >
-                  WhatsApp Gateway API Key (Optional)
-                </label>
-                <input
-                  id="whatsapp_api_key"
-                  name="whatsapp_api_key"
-                  type="password"
-                  value={whatsappApiKey}
-                  onChange={(e) => setWhatsappApiKey(e.target.value)}
-                  placeholder="Leave empty to use system default key"
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: "5px",
-                    border: "1px solid #cbd5e1",
-                    background: "#ffffff",
-                    color: "#0f172a",
-                    fontSize: "13px",
-                    fontFamily: "monospace",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-                <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
-                  Optional custom x-api-key for this branch shop.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* ─── SHOP OPERATING HOURS & CROSS-MIDNIGHT SHIFT ──────── */}
-          <div
-            style={{
-              padding: "16px",
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
-              borderRadius: "6px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-              <span style={{ fontSize: "16px" }}>🕒</span>
-              <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>
-                Shop Operating Hours &amp; 24h Daily Shift Reporting
-              </span>
-            </div>
-            <p style={{ margin: "0 0 14px", fontSize: "12px", color: "#64748b", lineHeight: "1.5" }}>
-              Configure your daily pizza shop shift. If you open at 11:00 AM and close post-midnight (e.g. 01:00 AM), all late-night orders placed at 12:30 AM will be recorded in that active day&apos;s closing report!
-            </p>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <div>
-                <label
-                  htmlFor="opening_time"
-                  style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", marginBottom: "4px" }}
-                >
-                  Opening Time (Morning / Noon)
-                </label>
-                <input
-                  id="opening_time"
-                  name="opening_time"
-                  type="time"
-                  value={openingTime}
-                  onChange={(e) => setOpeningTime(e.target.value)}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: "5px",
-                    border: "1px solid #cbd5e1",
-                    background: "#ffffff",
-                    color: "#0f172a",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-                <span style={{ fontSize: "11px", color: "#64748b", marginTop: "3px", display: "block" }}>
-                  e.g. 11:00 AM (Shop opens)
-                </span>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="closing_time"
-                  style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", marginBottom: "4px" }}
-                >
-                  Closing Time (Night / Cross-Midnight)
-                </label>
-                <input
-                  id="closing_time"
-                  name="closing_time"
-                  type="time"
-                  value={closingTime}
-                  onChange={(e) => setClosingTime(e.target.value)}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: "5px",
-                    border: "1px solid #cbd5e1",
-                    background: "#ffffff",
-                    color: "#0f172a",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-                <span style={{ fontSize: "11px", color: "#64748b", marginTop: "3px", display: "block" }}>
-                  e.g. 01:00 AM (Next morning)
-                </span>
-              </div>
-            </div>
-
-            {/* Quick Shift Presets */}
-            <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 600 }}>Quick Presets:</span>
-              <button
-                type="button"
-                onClick={() => { setOpeningTime("11:00"); setClosingTime("01:00"); }}
-                style={{
-                  fontSize: "10.5px",
-                  padding: "2px 7px",
-                  borderRadius: "4px",
-                  background: openingTime === "11:00" && closingTime === "01:00" ? "#dbeafe" : "#ffffff",
-                  border: "1px solid #cbd5e1",
-                  cursor: "pointer",
-                  color: "#1e40af",
-                  fontWeight: 700,
-                }}
-              >
-                11:00 AM – 01:00 AM
-              </button>
-              <button
-                type="button"
-                onClick={() => { setOpeningTime("12:00"); setClosingTime("02:00"); }}
-                style={{
-                  fontSize: "10.5px",
-                  padding: "2px 7px",
-                  borderRadius: "4px",
-                  background: openingTime === "12:00" && closingTime === "02:00" ? "#dbeafe" : "#ffffff",
-                  border: "1px solid #cbd5e1",
-                  cursor: "pointer",
-                  color: "#1e40af",
-                  fontWeight: 700,
-                }}
-              >
-                12:00 PM – 02:00 AM
-              </button>
-              <button
-                type="button"
-                onClick={() => { setOpeningTime("10:00"); setClosingTime("00:00"); }}
-                style={{
-                  fontSize: "10.5px",
-                  padding: "2px 7px",
-                  borderRadius: "4px",
-                  background: openingTime === "10:00" && closingTime === "00:00" ? "#dbeafe" : "#ffffff",
-                  border: "1px solid #cbd5e1",
-                  cursor: "pointer",
-                  color: "#1e40af",
-                  fontWeight: 700,
-                }}
-              >
-                10:00 AM – 12:00 AM
-              </button>
-            </div>
-          </div>
-
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={isPending}
             style={{
-              padding: "11px 18px",
-              borderRadius: "5px",
-              background: "#ef4444",
+              padding: "12px 20px",
+              borderRadius: "8px",
+              background: themeColor,
               color: "#ffffff",
-              fontSize: "13px",
-              fontWeight: 700,
+              fontSize: "14px",
+              fontWeight: 800,
               border: "none",
               cursor: isPending ? "not-allowed" : "pointer",
               opacity: isPending ? 0.7 : 1,
-              marginTop: "6px",
-              boxShadow: "0 2px 4px rgba(239, 68, 68, 0.2)",
+              boxShadow: `0 4px 14px ${themeColor}40`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
             }}
           >
-            {isPending ? "Saving Changes..." : "Save Settings & Update Menu"}
+            <Check size={16} />
+            <span>{isPending ? "Saving..." : "Save Settings & Update Live Menu"}</span>
           </button>
         </form>
       </div>
 
-      {/* ─── LIVE PREVIEW CARD ───────────────────────────── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        {/* Customer Header Preview */}
+      {/* ─── RIGHT COLUMN: LIVE MOBILE PHONE REVIEW CARD ─────────────── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px", position: "sticky", top: "20px" }}>
         <div
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "5px",
+            borderRadius: "10px",
             padding: "20px",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
           }}
         >
-          <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b", fontWeight: 700, marginBottom: "12px" }}>
-            Customer Menu Header &amp; Pricing Preview
-          </div>
-
-          <div
-            style={{
-              background: "#ffffff",
-              borderRadius: "5px",
-              padding: "16px",
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
-            }}
-          >
-            {/* Header simulation */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "10px", marginBottom: "14px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <div style={{ width: "24px", height: "24px", borderRadius: "5px", background: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m2 16 20 6-6-20A20 20 0 0 0 2 16Z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: "14px", color: "#0f172a", lineHeight: 1.1 }}>
-                    {shopName || "Pizza Shop"}
-                  </div>
-                  <div style={{ fontSize: "10px", color: "#64748b" }}>Fresh &amp; Delicious</div>
-                </div>
-              </div>
-              <div style={{ fontSize: "11px", padding: "3px 8px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "5px", color: "#475569", fontWeight: 600 }}>
-                Cart ({currencySymbol}0.00)
-              </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Smartphone size={16} style={{ color: themeColor }} />
+              <span style={{ fontSize: "12px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: "#0f172a" }}>
+                Live Mobile Customer View
+              </span>
             </div>
-
-            {/* Menu heading simulation */}
-            <div style={{ marginBottom: "12px" }}>
-              <div style={{ fontSize: "18px", fontWeight: 800, color: "#0f172a", marginBottom: "2px" }}>
-                {menuTitle || "Our Menu"}
-              </div>
-              <div style={{ fontSize: "11px", color: "#64748b" }}>
-                Items available from our kitchen
-              </div>
-            </div>
-
-            {/* Sample product card simulation showing chosen currency */}
-            <div
+            <span
               style={{
-                border: "1px solid #e2e8f0",
-                borderRadius: "5px",
-                padding: "10px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                background: "#f8fafc",
+                fontSize: "11px",
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: "12px",
+                background: `${themeColor}15`,
+                color: themeColor,
               }}
             >
-              <div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>Margherita Speciale</div>
-                <div style={{ fontSize: "11px", color: "#64748b" }}>Fresh basil, mozzarella, pomodoro</div>
+              Height: {sliderHeight}px
+            </span>
+          </div>
+
+          <p style={{ margin: "0 0 16px", fontSize: "11px", color: "#64748b" }}>
+            Exact real-time simulation of customer mobile phone scan with your selected theme color and slider height.
+          </p>
+
+          {/* ─── Realistic Mobile Phone Mockup ─── */}
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "340px",
+              margin: "0 auto",
+              background: "#0f172a",
+              borderRadius: "36px",
+              padding: "10px",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 2px #334155",
+            }}
+          >
+            {/* Phone Screen Area */}
+            <div
+              style={{
+                background: "#f8fafc",
+                borderRadius: "28px",
+                overflow: "hidden",
+                border: "1px solid #1e293b",
+                position: "relative",
+              }}
+            >
+              {/* Mobile Top Status Bar & Notch */}
+              <div
+                style={{
+                  background: "#0f172a",
+                  color: "#ffffff",
+                  padding: "6px 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                }}
+              >
+                <span>9:41</span>
+                {/* Dynamic island / notch */}
+                <div
+                  style={{
+                    width: "60px",
+                    height: "12px",
+                    background: "#000000",
+                    borderRadius: "8px",
+                  }}
+                />
+                <span>5G 100%</span>
               </div>
-              <div style={{ fontSize: "15px", fontWeight: 800, color: "#dc2626" }}>
-                {currencySymbol}12.99
+
+              {/* Mobile Menu Navbar */}
+              <div
+                style={{
+                  background: "#ffffff",
+                  padding: "10px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid #e2e8f0",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <div
+                    style={{
+                      width: "22px",
+                      height: "22px",
+                      borderRadius: "6px",
+                      background: themeColor,
+                      color: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "11px",
+                      fontWeight: 800,
+                    }}
+                  >
+                    🍕
+                  </div>
+                  <span style={{ fontSize: "12px", fontWeight: 800, color: "#0f172a" }}>
+                    {shopName || "Pizza Shop"}
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    background: `${themeColor}15`,
+                    color: themeColor,
+                    padding: "3px 8px",
+                    borderRadius: "5px",
+                  }}
+                >
+                  Cart ({currencySymbol}0)
+                </div>
+              </div>
+
+              {/* Mobile Live Slider Preview */}
+              {sliderEnabled && activeSlide ? (
+                <div style={{ position: "relative", padding: "10px 10px 6px" }}>
+                  <div
+                    style={{
+                      height: `${sliderHeight}px`,
+                      borderRadius: "12px",
+                      position: "relative",
+                      overflow: "hidden",
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                      transition: "height 0.25s ease",
+                    }}
+                  >
+                    <img
+                      src={activeSlide.image_url}
+                      alt={activeSlide.title}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                    {/* Gradient Overlay */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        background: "linear-gradient(90deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.3) 100%)",
+                      }}
+                    />
+                    {/* Slide Content */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        padding: "10px 12px",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        color: "#ffffff",
+                      }}
+                    >
+                      {activeSlide.badge && (
+                        <span
+                          style={{
+                            display: "inline-block",
+                            alignSelf: "flex-start",
+                            padding: "2px 6px",
+                            borderRadius: "4px",
+                            background: themeColor,
+                            color: "#ffffff",
+                            fontSize: "9px",
+                            fontWeight: 800,
+                            marginBottom: "4px",
+                          }}
+                        >
+                          {activeSlide.badge}
+                        </span>
+                      )}
+                      <div
+                        style={{
+                          fontSize: sliderHeight > 160 ? "13px" : "11px",
+                          fontWeight: 900,
+                          lineHeight: 1.2,
+                          marginBottom: "2px",
+                          textShadow: "0 1px 4px rgba(0,0,0,0.7)",
+                        }}
+                      >
+                        {activeSlide.title}
+                      </div>
+                      {sliderHeight > 160 && activeSlide.subtitle && (
+                        <div style={{ fontSize: "9px", color: "#e2e8f0", lineHeight: 1.2 }}>
+                          {activeSlide.subtitle}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Mini Slider Controls */}
+                    {slides.length > 1 && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: "6px",
+                          right: "8px",
+                          display: "flex",
+                          gap: "3px",
+                        }}
+                      >
+                        {slides.map((_, dotIdx) => (
+                          <button
+                            key={dotIdx}
+                            type="button"
+                            onClick={() => setPreviewSlideIdx(dotIdx)}
+                            style={{
+                              width: dotIdx === previewSlideIdx ? "12px" : "4px",
+                              height: "4px",
+                              borderRadius: "2px",
+                              background: dotIdx === previewSlideIdx ? themeColor : "rgba(255, 255, 255, 0.5)",
+                              border: "none",
+                              padding: 0,
+                              cursor: "pointer",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ padding: "12px", textAlign: "center", color: "#94a3b8", fontSize: "11px" }}>
+                  [Slider Disabled]
+                </div>
+              )}
+
+              {/* Simulated Category Pills in Mobile View */}
+              <div style={{ padding: "6px 10px 4px", display: "flex", gap: "6px", overflowX: "hidden" }}>
+                <span
+                  style={{
+                    padding: "3px 8px",
+                    borderRadius: "14px",
+                    background: themeColor,
+                    color: "#ffffff",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                  }}
+                >
+                  All Items
+                </span>
+                <span
+                  style={{
+                    padding: "3px 8px",
+                    borderRadius: "14px",
+                    background: "#ffffff",
+                    border: "1px solid #cbd5e1",
+                    color: "#475569",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                  }}
+                >
+                  Pizzas
+                </span>
+                <span
+                  style={{
+                    padding: "3px 8px",
+                    borderRadius: "14px",
+                    background: "#ffffff",
+                    border: "1px solid #cbd5e1",
+                    color: "#475569",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                  }}
+                >
+                  Burgers
+                </span>
+              </div>
+
+              {/* Simulated 2-Column Product Grid in Mobile View */}
+              <div style={{ padding: "6px 10px 14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <div style={{ background: "#ffffff", borderRadius: "8px", padding: "6px", border: "1px solid #e2e8f0" }}>
+                  <div style={{ height: "55px", borderRadius: "5px", background: "#fef3c7", marginBottom: "4px", overflow: "hidden" }}>
+                    <img
+                      src={PRESET_FOOD_IMAGES[0]?.url}
+                      alt="Sample"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  </div>
+                  <div style={{ fontSize: "10px", fontWeight: 800, color: "#0f172a" }}>Margherita Classica</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
+                    <span style={{ fontSize: "10px", fontWeight: 800, color: themeColor }}>{currencySymbol}12.99</span>
+                    <span style={{ padding: "2px 6px", borderRadius: "4px", background: themeColor, color: "#fff", fontSize: "9px", fontWeight: 800 }}>+ Add</span>
+                  </div>
+                </div>
+
+                <div style={{ background: "#ffffff", borderRadius: "8px", padding: "6px", border: "1px solid #e2e8f0" }}>
+                  <div style={{ height: "55px", borderRadius: "5px", background: "#fef3c7", marginBottom: "4px", overflow: "hidden" }}>
+                    <img
+                      src={PRESET_FOOD_IMAGES[1]?.url}
+                      alt="Sample"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  </div>
+                  <div style={{ fontSize: "10px", fontWeight: 800, color: "#0f172a" }}>Pepperoni Passion</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
+                    <span style={{ fontSize: "10px", fontWeight: 800, color: themeColor }}>{currencySymbol}14.99</span>
+                    <span style={{ padding: "2px 6px", borderRadius: "4px", background: themeColor, color: "#fff", fontSize: "9px", fontWeight: 800 }}>+ Add</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -612,41 +1061,177 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "5px",
-            padding: "20px",
+            borderRadius: "10px",
+            padding: "16px",
           }}
         >
-          <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b", fontWeight: 700, marginBottom: "12px" }}>
-            Browser Tab &amp; Google Search Preview
+          <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b", fontWeight: 700, marginBottom: "8px" }}>
+            Google Search &amp; Browser Tab
           </div>
-
-          <div
-            style={{
-              background: "#f8fafc",
-              borderRadius: "5px",
-              padding: "14px 16px",
-              border: "1px solid #e2e8f0",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-              <div style={{ width: "16px", height: "16px", color: "#ef4444" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m2 16 20 6-6-20A20 20 0 0 0 2 16Z"></path>
-                </svg>
-              </div>
-              <span style={{ fontSize: "14px", fontWeight: 600, color: "#1d4ed8" }}>
-                {metaTitle || "Pizza Shop"}
-              </span>
+          <div style={{ background: "#f8fafc", borderRadius: "6px", padding: "10px", border: "1px solid #e2e8f0" }}>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "#1d4ed8", marginBottom: "2px" }}>
+              {metaTitle || "Pizza Shop"}
             </div>
-            <div style={{ fontSize: "12px", color: "#16a34a", marginBottom: "4px" }}>
-              https://yourpizzashop.com
+            <div style={{ fontSize: "11px", color: "#16a34a", marginBottom: "2px" }}>
+              https://yourshop.com
             </div>
-            <div style={{ fontSize: "12px", color: "#475569", lineHeight: 1.4 }}>
-              {metaDescription || "Fresh, made-to-order pizzas."}
+            <div style={{ fontSize: "11px", color: "#64748b" }}>
+              {metaDescription || "Fresh pizzas made to order."}
             </div>
           </div>
         </div>
       </div>
+
+      {/* ─── MODAL: ADD PROMO SLIDE ────────────────────────────────────── */}
+      {showAddSlideModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "rgba(10, 15, 29, 0.72)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "460px",
+              background: "#ffffff",
+              borderRadius: "12px",
+              padding: "22px",
+              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Sparkles size={16} style={{ color: themeColor }} />
+                <h3 style={{ fontSize: "15px", fontWeight: 800, margin: 0, color: "#0f172a" }}>
+                  Add New Mobile Promo Slide
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddSlideModal(false)}
+                style={{ background: "#f1f5f9", border: "none", borderRadius: "6px", padding: "4px", cursor: "pointer" }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div>
+                <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                  Slide Headline / Title *
+                </label>
+                <input
+                  type="text"
+                  value={newSlideTitle}
+                  onChange={(e) => setNewSlideTitle(e.target.value)}
+                  placeholder="e.g. 50% OFF Family Pizza Feast"
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                  Subtitle / Promo Details
+                </label>
+                <input
+                  type="text"
+                  value={newSlideSubtitle}
+                  onChange={(e) => setNewSlideSubtitle(e.target.value)}
+                  placeholder="e.g. Valid today on all large sourdough pizzas"
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                    Badge Tag
+                  </label>
+                  <input
+                    type="text"
+                    value={newSlideBadge}
+                    onChange={(e) => setNewSlideBadge(e.target.value)}
+                    placeholder="e.g. 1+1 FREE"
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                    Link Action
+                  </label>
+                  <input
+                    type="text"
+                    value={newSlideLink}
+                    onChange={(e) => setNewSlideLink(e.target.value)}
+                    placeholder="#menu"
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                  Image URL *
+                </label>
+                <input
+                  type="text"
+                  value={newSlideImage}
+                  onChange={(e) => setNewSlideImage(e.target.value)}
+                  placeholder="https://..."
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px", fontFamily: "monospace", boxSizing: "border-box", marginBottom: "6px" }}
+                />
+
+                {/* Quick Presets */}
+                <div style={{ fontSize: "10px", color: "#64748b", marginBottom: "4px" }}>Quick Preset Images:</div>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  {PRESET_FOOD_IMAGES.slice(0, 5).map((img, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setNewSlideImage(img.url)}
+                      style={{
+                        padding: "3px 6px",
+                        borderRadius: "4px",
+                        background: newSlideImage === img.url ? `${themeColor}20` : "#f1f5f9",
+                        border: newSlideImage === img.url ? `1px solid ${themeColor}` : "1px solid #e2e8f0",
+                        fontSize: "10px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {img.name.split(" ")[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddSlideModal(false)}
+                  style={{ padding: "8px 14px", borderRadius: "6px", background: "#f1f5f9", border: "none", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddSlide}
+                  style={{ padding: "8px 18px", borderRadius: "6px", background: themeColor, color: "#ffffff", border: "none", fontSize: "12px", fontWeight: 800, cursor: "pointer" }}
+                >
+                  Add Slide
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

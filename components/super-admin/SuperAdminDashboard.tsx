@@ -244,6 +244,7 @@ export default function SuperAdminDashboard({
                 owner_email: (formData.get("owner_email") as string) || null,
                 branch_address: (formData.get("branch_address") as string) || null,
                 password: newPassword || s.password,
+                pos_pin: newPosPin,
                 currency_symbol: formData.get("currency_symbol") as string,
                 plan: formData.get("plan") as "starter" | "pro" | "enterprise",
                 status: nextStatus,
@@ -2344,44 +2345,93 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                             </button>
                           </div>
 
-                          {/* Manager Password Strip */}
-                          <div
-                            style={{
-                              background: isLight ? "#fff7ed" : "rgba(249, 115, 22, 0.08)",
-                              borderRadius: "8px",
-                              padding: "8px 12px",
-                              border: isLight ? "1px solid #fed7aa" : "1px solid rgba(249, 115, 22, 0.2)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                            }}
-                          >
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <KeyRound size={13} className="text-orange-500" />
-                              <span style={{ fontSize: "11px", fontWeight: 700, color: "#ea580c" }}>Manager PIN:</span>
-                              <span style={{ fontFamily: "monospace", fontWeight: 800, fontSize: "12px", color: isLight ? "#0f172a" : "#ffffff" }}>
-                                {isPasswordVisible ? shop.password || "admin" : "••••••••"}
-                              </span>
+                          {/* Credentials Strips: Web Manager & POS PIN */}
+                          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                            {/* Manager Password Strip */}
+                            <div
+                              style={{
+                                background: isLight ? "#fff7ed" : "rgba(249, 115, 22, 0.08)",
+                                borderRadius: "8px",
+                                padding: "7px 10px",
+                                border: isLight ? "1px solid #fed7aa" : "1px solid rgba(249, 115, 22, 0.2)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <KeyRound size={12} className="text-orange-500" />
+                                <span style={{ fontSize: "11px", fontWeight: 700, color: "#ea580c" }}>Manager Pass:</span>
+                                <span style={{ fontFamily: "monospace", fontWeight: 800, fontSize: "12px", color: isLight ? "#0f172a" : "#ffffff" }}>
+                                  {isPasswordVisible ? shop.password || "admin" : "••••••••"}
+                                </span>
+                              </div>
+
+                              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setRevealedPasswords((prev) => ({ ...prev, [shop.id]: !prev[shop.id] }))}
+                                  style={{ background: "transparent", border: "none", color: "#ea580c", cursor: "pointer", padding: "2px" }}
+                                  title="Toggle password visibility"
+                                >
+                                  {isPasswordVisible ? <EyeOff size={13} /> : <Eye size={13} />}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyText(shop.password || "admin", shop.id)}
+                                  style={{ background: "transparent", border: "none", color: copiedId === shop.id ? "#16a34a" : "#ea580c", cursor: "pointer", padding: "2px" }}
+                                  title="Copy password"
+                                >
+                                  {copiedId === shop.id ? <Check size={13} /> : <Copy size={13} />}
+                                </button>
+                              </div>
                             </div>
 
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <button
-                                type="button"
-                                onClick={() => setRevealedPasswords((prev) => ({ ...prev, [shop.id]: !prev[shop.id] }))}
-                                style={{ background: "transparent", border: "none", color: "#ea580c", cursor: "pointer", padding: "2px" }}
-                                title="Toggle visibility"
-                              >
-                                {isPasswordVisible ? <EyeOff size={13} /> : <Eye size={13} />}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleCopyText(shop.password || "admin", shop.id)}
-                                style={{ background: "transparent", border: "none", color: copiedId === shop.id ? "#16a34a" : "#ea580c", cursor: "pointer", padding: "2px" }}
-                                title="Copy password"
-                              >
-                                {copiedId === shop.id ? <Check size={13} /> : <Copy size={13} />}
-                              </button>
-                            </div>
+                            {/* POS Terminal PIN Strip */}
+                            {(() => {
+                              const posPin = (shop as any).pos_pin || staffList.find(st => (st.shop_id === shop.id || String(st.shop_id) === String(shop.id)) && st.role === "owner")?.pin || "1234";
+                              const isPinVisible = revealedPins[String(shop.id)];
+                              return (
+                                <div
+                                  style={{
+                                    background: isLight ? "#f0fdf4" : "rgba(34, 197, 94, 0.08)",
+                                    borderRadius: "8px",
+                                    padding: "7px 10px",
+                                    border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(34, 197, 94, 0.2)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                  }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    <Laptop size={12} className="text-emerald-500" />
+                                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#16a34a" }}>POS Terminal PIN:</span>
+                                    <span style={{ fontFamily: "monospace", fontWeight: 800, fontSize: "12px", color: isLight ? "#0f172a" : "#ffffff", letterSpacing: "0.08em" }}>
+                                      {isPinVisible ? posPin : "••••"}
+                                    </span>
+                                  </div>
+
+                                  <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => setRevealedPins((prev) => ({ ...prev, [String(shop.id)]: !prev[String(shop.id)] }))}
+                                      style={{ background: "transparent", border: "none", color: "#16a34a", cursor: "pointer", padding: "2px" }}
+                                      title="Toggle PIN visibility"
+                                    >
+                                      {isPinVisible ? <EyeOff size={13} /> : <Eye size={13} />}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyText(posPin, `pin-${shop.id}`)}
+                                      style={{ background: "transparent", border: "none", color: copiedId === `pin-${shop.id}` ? "#16a34a" : "#16a34a", cursor: "pointer", padding: "2px" }}
+                                      title="Copy POS PIN"
+                                    >
+                                      {copiedId === `pin-${shop.id}` ? <Check size={13} /> : <Copy size={13} />}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
 

@@ -243,6 +243,10 @@ export default async function DynamicShopMenuPage({
     meta_title: `${shop.name} — Fresh Pizzas Online`,
     meta_description: `Order fresh from ${shop.name}${shop.branch_address ? ` (${shop.branch_address})` : ""}.`,
     currency_symbol: shop.currency_symbol || baseSettings.currency_symbol || "Rs.",
+    theme_color: (shop as any).theme_color || baseSettings.theme_color || "#ea580c",
+    slider_enabled: (shop as any).slider_enabled !== undefined ? (shop as any).slider_enabled : (baseSettings.slider_enabled ?? true),
+    slider_height_mobile: (shop as any).slider_height_mobile || baseSettings.slider_height_mobile || 180,
+    slider_images: (shop as any).slider_images || baseSettings.slider_images,
     shop_id: shop.id,
   };
 

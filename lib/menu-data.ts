@@ -99,7 +99,11 @@ export async function fetchProducts(
   return { data: data as Product[], error: null, tableMissing: false };
 }
 
-// ─── Shop Settings ────────────────────────────────────────────────
+// ─── Shop Settings & Mobile Promo Slider ──────────────────────────
+import { DEFAULT_PROMO_SLIDES, type PromoSlide } from "./preset-images";
+export type { PromoSlide };
+export { DEFAULT_PROMO_SLIDES };
+
 export interface ShopSettings {
   shop_name: string;
   menu_title: string;
@@ -111,6 +115,10 @@ export interface ShopSettings {
   whatsapp_api_key?: string | null;
   opening_time?: string;
   closing_time?: string;
+  theme_color?: string;
+  slider_enabled?: boolean;
+  slider_height_mobile?: number;
+  slider_images?: PromoSlide[] | string | null;
 }
 
 const DEFAULT_SETTINGS: ShopSettings = {
@@ -124,6 +132,10 @@ const DEFAULT_SETTINGS: ShopSettings = {
   whatsapp_api_key: null,
   opening_time: "11:00",
   closing_time: "01:00",
+  theme_color: "#ea580c",
+  slider_enabled: true,
+  slider_height_mobile: 180,
+  slider_images: DEFAULT_PROMO_SLIDES,
 };
 
 export async function fetchShopBySlugOrId(identifier: string | number): Promise<any | null> {
@@ -159,11 +171,19 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
     try {
       const { data: branchData } = await supabase
         .from("shops")
-        .select("id, name, currency_symbol, status, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time")
+        .select("id, name, currency_symbol, status, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images")
         .eq("id", targetShopId)
         .maybeSingle();
 
       if (branchData) {
+        let parsedSlides = (branchData as any).slider_images;
+        if (typeof parsedSlides === "string") {
+          try {
+            parsedSlides = JSON.parse(parsedSlides);
+          } catch {
+            parsedSlides = DEFAULT_PROMO_SLIDES;
+          }
+        }
         return {
           shop_name: branchData.name,
           menu_title: `${branchData.name} Menu`,
@@ -175,6 +195,10 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
           whatsapp_api_key: (branchData as any).whatsapp_api_key || null,
           opening_time: (branchData as any).opening_time || "11:00",
           closing_time: (branchData as any).closing_time || "01:00",
+          theme_color: (branchData as any).theme_color || "#ea580c",
+          slider_enabled: (branchData as any).slider_enabled !== false,
+          slider_height_mobile: Number((branchData as any).slider_height_mobile) || 180,
+          slider_images: Array.isArray(parsedSlides) && parsedSlides.length > 0 ? parsedSlides : DEFAULT_PROMO_SLIDES,
         };
       }
     } catch {
@@ -185,17 +209,29 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
   try {
     const { data, error } = await supabase
       .from("shop_settings")
-      .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time")
+      .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images")
       .eq("id", "main")
       .single();
 
     if (!error && data) {
+      let parsedSlides = (data as any).slider_images;
+      if (typeof parsedSlides === "string") {
+        try {
+          parsedSlides = JSON.parse(parsedSlides);
+        } catch {
+          parsedSlides = DEFAULT_PROMO_SLIDES;
+        }
+      }
       return {
         ...data,
         currency_symbol: data.currency_symbol || "$",
         shop_id: null,
         opening_time: (data as any).opening_time || "11:00",
         closing_time: (data as any).closing_time || "01:00",
+        theme_color: (data as any).theme_color || "#ea580c",
+        slider_enabled: (data as any).slider_enabled !== false,
+        slider_height_mobile: Number((data as any).slider_height_mobile) || 180,
+        slider_images: Array.isArray(parsedSlides) && parsedSlides.length > 0 ? parsedSlides : DEFAULT_PROMO_SLIDES,
       } as ShopSettings;
     }
   } catch {
@@ -217,6 +253,10 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
       whatsapp_api_key: null,
       opening_time: "11:00",
       closing_time: "01:00",
+      theme_color: "#ea580c",
+      slider_enabled: true,
+      slider_height_mobile: 180,
+      slider_images: DEFAULT_PROMO_SLIDES,
     } as ShopSettings;
   }
 

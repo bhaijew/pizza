@@ -8,9 +8,10 @@ import { useEffect, useState } from "react";
 
 interface HeroSectionProps {
   verifiedTable?: string;
+  themeColor?: string;
 }
 
-export default function HeroSection({ verifiedTable }: HeroSectionProps = {}) {
+export default function HeroSection({ verifiedTable, themeColor = "#991b1b" }: HeroSectionProps = {}) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -25,7 +26,7 @@ export default function HeroSection({ verifiedTable }: HeroSectionProps = {}) {
       style={{
         position: "relative",
         overflow: "hidden",
-        background: "linear-gradient(135deg, #991b1b 0%, #b91c1c 30%, #c2410c 70%, #d97706 100%)",
+        background: `linear-gradient(135deg, ${themeColor} 0%, #b91c1c 30%, #c2410c 70%, #d97706 100%)`,
         color: "#ffffff",
         padding: "clamp(20px, 3.2vw, 36px) clamp(16px, 2.5vw, 24px)",
         borderBottom: "2px solid #f59e0b",

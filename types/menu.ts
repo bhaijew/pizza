@@ -164,6 +164,11 @@ export interface Shop {
   notes?: string | null;
   whatsapp_session_id?: string | null;
   whatsapp_api_key?: string | null;
+  pos_pin?: string;
+  theme_color?: string;
+  slider_enabled?: boolean;
+  slider_height_mobile?: number;
+  slider_images?: any;
   created_at?: string;
   updated_at?: string;
 }

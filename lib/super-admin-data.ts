@@ -31,8 +31,30 @@ export async function fetchShops(): Promise<{ shops: Shop[]; isDatabaseConfigure
       return { shops: [], isDatabaseConfigured: false };
     }
 
+    // Merge owner PIN from pos_staff so pos_pin is permanently available on shop objects
+    let ownerPins = new Map<string, string>();
+    try {
+      const { data: staffData } = await supabase
+        .from("pos_staff")
+        .select("shop_id, pin, role")
+        .eq("role", "owner");
+
+      if (staffData) {
+        for (const st of staffData) {
+          if (st.shop_id) {
+            ownerPins.set(String(st.shop_id), st.pin);
+          }
+        }
+      }
+    } catch {}
+
+    const mergedShops = ((data || []) as Shop[]).map((s) => ({
+      ...s,
+      pos_pin: (s as any).pos_pin || ownerPins.get(String(s.id)) || "1234",
+    }));
+
     return {
-      shops: (data || []) as Shop[],
+      shops: mergedShops,
       isDatabaseConfigured: true,
     };
   } catch {
