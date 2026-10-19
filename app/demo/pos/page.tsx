@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import DemoNav from "@/components/demo/DemoNav";
 import { createClient } from "@/utils/supabase/client";
+import OrderRecreateModal from "@/components/admin/OrderRecreateModal";
+import type { Order } from "@/types/menu";
 
 interface POSOrder {
   id: string;
@@ -126,7 +128,35 @@ function POSContent() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [viewingReceiptOrder, setViewingReceiptOrder] = useState<POSOrder | null>(null);
   const [whatsappModalOrder, setWhatsappModalOrder] = useState<POSOrder | null>(null);
+  const [recreatingOrder, setRecreatingOrder] = useState<Order | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
+
+  const handleOpenRecreate = (ord: POSOrder) => {
+    const rawOrder: Order = {
+      id: Number(ord.id),
+      order_number: ord.orderNumber,
+      customer_name: ord.customerName,
+      customer_phone: ord.customerPhone,
+      order_type: ord.orderType,
+      table_number: ord.tableNumber ? ord.tableNumber.replace("Table #", "").trim() : null,
+      delivery_address: ord.address || null,
+      delivery_rider_name: ord.riderName || null,
+      items: ord.items.map((it) => ({
+        name: it.name,
+        price: it.price,
+        qty: it.qty,
+        quantity: it.qty,
+        detail: it.detail,
+      })) as any,
+      total: ord.total,
+      status: ord.status as any,
+      notes: ord.notes || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      shop_id: ord.shopId || activeShop?.id || null,
+    };
+    setRecreatingOrder(rawOrder);
+  };
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -756,6 +786,21 @@ function POSContent() {
                           : "🥡 Takeaway"}
                       </span>
                       <span style={{ fontSize: 12, color: "#a1a1aa" }}>• {ord.timeAgo}</span>
+                      {ord.notes?.includes("[RECREATED") && (
+                        <span
+                          style={{
+                            background: "#ea580c",
+                            color: "#ffffff",
+                            fontSize: 10,
+                            fontWeight: 900,
+                            padding: "2px 6px",
+                            borderRadius: 3,
+                            letterSpacing: "0.02em",
+                          }}
+                        >
+                          🔄 RECREATED
+                        </span>
+                      )}
                     </div>
 
                     {/* Status Badge */}
@@ -961,8 +1006,27 @@ function POSContent() {
                       )}
                     </div>
 
-                    {/* Secondary Tools: Print & WhatsApp */}
-                    <div style={{ display: "flex", gap: 8 }}>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        onClick={() => handleOpenRecreate(ord)}
+                        style={{
+                          background: "#ea580c",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: 4,
+                          padding: "6px 12px",
+                          fontSize: 11,
+                          fontWeight: 900,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                          boxShadow: "0 1px 3px rgba(234, 88, 12, 0.4)",
+                        }}
+                        title="Recreate order: add burger/items, refresh time to now, keep same Order ID"
+                      >
+                        🔄 Recreate Order
+                      </button>
                       <button
                         onClick={() => setViewingReceiptOrder(ord)}
                         style={{
@@ -1199,6 +1263,20 @@ function POSContent() {
           </div>
         </div>
       )}
+
+      {/* ─── ORDER RECREATE MODAL ───────────────────────────── */}
+      <OrderRecreateModal
+        isOpen={!!recreatingOrder}
+        onClose={() => setRecreatingOrder(null)}
+        order={recreatingOrder}
+        currencySymbol="Rs."
+        shopId={activeShop?.id}
+        onSuccess={(updatedOrder) => {
+          const mapped = mapCloudOrderToPOS(updatedOrder);
+          setOrders((prev) => [mapped, ...prev.filter((o) => o.id !== mapped.id)]);
+          playChime(true);
+        }}
+      />
     </div>
   );
 }

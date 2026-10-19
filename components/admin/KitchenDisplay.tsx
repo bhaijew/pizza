@@ -19,6 +19,7 @@ import {
   Flame,
   CheckCircle2,
   Sparkles,
+  RefreshCw,
 } from "lucide-react";
 
 interface KitchenDisplayProps {
@@ -441,6 +442,26 @@ export default function KitchenDisplay({
                       {order.customer_name ? `Customer: ${order.customer_name}` : "Guest"}
                     </span>
                   </div>
+
+                  {/* Recreated Ticket Alert for Cook */}
+                  {order.notes?.includes("[RECREATED") && (
+                    <div
+                      style={{
+                        background: "#fff7ed",
+                        borderBottom: "1px solid #fed7aa",
+                        padding: "6px 14px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        fontSize: "11px",
+                        fontWeight: 800,
+                        color: "#c2410c",
+                      }}
+                    >
+                      <RefreshCw size={12} />
+                      <span>🔄 TICKET RECREATED / ITEMS ADDED (Prepare updated list)</span>
+                    </div>
+                  )}
 
                   {/* Food Items Checklist */}
                   <div style={{ padding: "14px" }}>

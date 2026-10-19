@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { adminLogout } from "@/lib/admin-actions";
+import { adminLogout, switchAdminStaffRole } from "@/lib/admin-actions";
 import LiveOrderNotifier from "@/components/admin/LiveOrderNotifier";
 import BrandLogo from "@/components/BrandLogo";
 import {
@@ -37,6 +37,8 @@ import {
   Download,
   MessageSquare,
   Laptop,
+  Users,
+  Lock,
 } from "lucide-react";
 import DownloadPosModal from "@/components/admin/DownloadPosModal";
 
@@ -48,6 +50,9 @@ interface AdminShellProps {
   shopSlug?: string;
   shopId?: number | null;
   availableShops?: { id: number; name: string; slug: string }[];
+  userRole?: "admin" | "sub_admin" | "staff";
+  staffName?: string;
+  canCancelOrders?: boolean;
 }
 
 interface NavItem {
@@ -155,6 +160,13 @@ const NAV_GROUPS: NavGroup[] = [
         icon: Boxes,
       },
       {
+        label: "Staff & Sub-Admins",
+        href: "/admin/staff",
+        badge: "ROLES",
+        badgeColor: "#3b82f6",
+        icon: Users,
+      },
+      {
         label: "Shop & Settings",
         href: "/admin/settings",
         icon: Settings,
@@ -171,6 +183,9 @@ export default function AdminShell({
   shopSlug,
   shopId,
   availableShops = [],
+  userRole = "admin",
+  staffName = "Shop Admin",
+  canCancelOrders = true,
 }: AdminShellProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -178,6 +193,19 @@ export default function AdminShell({
   const [activeBranch, setActiveBranch] = useState<string>(shopName || "Pizza Admin");
   const [copiedLink, setCopiedLink] = useState(false);
   const [sidebarTheme, setSidebarTheme] = useState<"dark" | "light">("dark");
+  const [roleSwitching, setRoleSwitching] = useState(false);
+
+  const isAdmin = userRole === "admin";
+
+  const handleRoleSwitch = async (targetRole: "admin" | "sub_admin" | "staff") => {
+    setRoleSwitching(true);
+    try {
+      await switchAdminStaffRole(targetRole);
+      window.location.reload();
+    } catch {
+      setRoleSwitching(false);
+    }
+  };
 
   const customerMenuUrl = shopSlug ? `/${shopSlug}` : "/";
 
@@ -274,8 +302,15 @@ export default function AdminShell({
       className="admin-shell-root min-h-screen w-full flex flex-col md:flex-row"
       style={{
         minHeight: "125vh",
-        background: isLight ? "#f8fafc" : "#0a0f1d",
+        background: isLight
+          ? isAdmin
+            ? "#fffdf8"
+            : "#f8fafc"
+          : isAdmin
+          ? "#0b0e17"
+          : "#070e17",
         color: isLight ? "#0f172a" : "#f8fafc",
+        borderTop: isAdmin ? "3px solid #eab308" : "3px solid #10b981",
         fontFamily: "var(--font-sans, system-ui, -apple-system, sans-serif)",
         transition: "background 0.25s ease",
       }}
@@ -452,19 +487,37 @@ export default function AdminShell({
                 gap: "6px",
                 fontWeight: 700,
                 marginTop: "3px",
+                flexWrap: "wrap",
               }}
             >
+              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: "#10b981",
+                    display: "inline-block",
+                  }}
+                  className="admin-pulse-green"
+                />
+                <span>Live Terminal</span>
+              </div>
+
               <span
                 style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: "#10b981",
-                  display: "inline-block",
+                  fontSize: "9px",
+                  fontWeight: 900,
+                  padding: "1px 6px",
+                  borderRadius: "4px",
+                  background: isAdmin ? "rgba(245, 158, 11, 0.2)" : "rgba(16, 185, 129, 0.2)",
+                  color: isAdmin ? "#fde047" : "#6ee7b7",
+                  border: `1px solid ${isAdmin ? "rgba(245, 158, 11, 0.4)" : "rgba(16, 185, 129, 0.4)"}`,
+                  letterSpacing: "0.03em",
                 }}
-                className="admin-pulse-green"
-              />
-              <span>Live Terminal</span>
+              >
+                {isAdmin ? "👑 ADMIN" : "👤 STAFF"}
+              </span>
             </div>
           </div>
         </div>
@@ -991,42 +1044,127 @@ export default function AdminShell({
               <ExternalLink size={12} />
             </Link>
 
-            {/* User Profile Pill */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "4px 10px 4px 4px",
-                borderRadius: "20px",
-                background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.06)",
-                border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
-              }}
-            >
+            {/* ─── ROLE SELECTOR & ACTIVE PROFILE BADGE ─── */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {/* Quick Role Switcher for Admin preview */}
               <div
                 style={{
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "50%",
-                  background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
-                  color: "#ffffff",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.08)",
+                  padding: "2px",
+                  borderRadius: "8px",
+                  border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
+                }}
+                title="Switch between Shop Master Admin and Staff / Sub-Admin view"
+              >
+                <button
+                  type="button"
+                  disabled={roleSwitching}
+                  onClick={() => handleRoleSwitch("admin")}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "6px",
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    border: "none",
+                    background: isAdmin ? "linear-gradient(135deg, #f59e0b, #d97706)" : "transparent",
+                    color: isAdmin ? "#ffffff" : isLight ? "#64748b" : "#94a3b8",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "3px",
+                    boxShadow: isAdmin ? "0 1px 4px rgba(245, 158, 11, 0.3)" : "none",
+                  }}
+                  title="👑 Master Admin mode (Full access, Order cancel allowed)"
+                >
+                  <span>👑 Admin</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={roleSwitching}
+                  onClick={() => handleRoleSwitch("staff")}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "6px",
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    border: "none",
+                    background: !isAdmin ? "linear-gradient(135deg, #10b981, #059669)" : "transparent",
+                    color: !isAdmin ? "#ffffff" : isLight ? "#64748b" : "#94a3b8",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "3px",
+                    boxShadow: !isAdmin ? "0 1px 4px rgba(16, 185, 129, 0.3)" : "none",
+                  }}
+                  title="👤 Staff / Sub-Admin mode (Order cancellation restricted)"
+                >
+                  <span>👤 Staff</span>
+                </button>
+              </div>
+
+              {/* User Profile Pill */}
+              <div
+                style={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 2px 6px rgba(59, 130, 246, 0.3)",
+                  gap: "8px",
+                  padding: "4px 12px 4px 5px",
+                  borderRadius: "20px",
+                  background: isAdmin
+                    ? isLight ? "#fffbeb" : "rgba(245, 158, 11, 0.12)"
+                    : isLight ? "#ecfdf5" : "rgba(16, 185, 129, 0.12)",
+                  border: isAdmin
+                    ? isLight ? "1px solid #fde68a" : "1px solid rgba(245, 158, 11, 0.35)"
+                    : isLight ? "1px solid #a7f3d0" : "1px solid rgba(16, 185, 129, 0.35)",
                 }}
               >
-                <ShieldCheck size={15} />
+                <div
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    borderRadius: "50%",
+                    background: isAdmin
+                      ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+                      : "linear-gradient(135deg, #10b981 0%, #047857 100%)",
+                    color: "#ffffff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: isAdmin
+                      ? "0 2px 6px rgba(245, 158, 11, 0.4)"
+                      : "0 2px 6px rgba(16, 185, 129, 0.4)",
+                    fontSize: "13px",
+                  }}
+                >
+                  {isAdmin ? "👑" : "👤"}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.15" }}>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 800,
+                      color: isAdmin ? (isLight ? "#92400e" : "#fef08a") : (isLight ? "#065f46" : "#6ee7b7"),
+                      letterSpacing: "0.02em",
+                    }}
+                  >
+                    {isAdmin ? "SHOP ADMIN" : staffName || "STAFF MEMBER"}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "9px",
+                      fontWeight: 700,
+                      color: isAdmin ? (isLight ? "#b45309" : "#fde047") : (isLight ? "#047857" : "#a7f3d0"),
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "3px",
+                    }}
+                  >
+                    {isAdmin ? "Cancel: Allowed ✓" : "Cancel: Admin Only 🔒"}
+                  </span>
+                </div>
               </div>
-              <span
-                style={{
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  color: isLight ? "#334155" : "#e2e8f0",
-                }}
-              >
-                Manager
-              </span>
             </div>
           </div>
         </header>
@@ -1515,6 +1653,86 @@ export default function AdminShell({
 
         {/* Realtime Live Order Notifications */}
         <LiveOrderNotifier shopId={shopId} />
+
+        {/* Operational Security & Role Notice Banner */}
+        {!isAdmin ? (
+          <div
+            style={{
+              background: "linear-gradient(90deg, #064e3b 0%, #065f46 100%)",
+              color: "#ecfdf5",
+              padding: "9px 24px",
+              fontSize: "12px",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderBottom: "1px solid #059669",
+              boxShadow: "0 2px 8px rgba(6, 78, 59, 0.25)",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "14px" }}>👤</span>
+              <span>
+                <strong>Operating in Staff / Sub-Admin Mode ({staffName}):</strong> Full POS order taking and kitchen processing are enabled. Order cancellation is <strong>strictly restricted to Shop Admin only</strong>.
+              </span>
+            </div>
+            <button
+              type="button"
+              disabled={roleSwitching}
+              onClick={() => handleRoleSwitch("admin")}
+              style={{
+                background: "rgba(0, 0, 0, 0.3)",
+                color: "#fde047",
+                border: "1px solid rgba(253, 224, 71, 0.4)",
+                padding: "3px 10px",
+                borderRadius: "5px",
+                fontSize: "11px",
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
+            >
+              👑 Switch to Admin View
+            </button>
+          </div>
+        ) : (
+          <div
+            style={{
+              background: isLight ? "#fffbeb" : "linear-gradient(90deg, rgba(180, 83, 9, 0.15) 0%, rgba(217, 119, 6, 0.08) 100%)",
+              color: isLight ? "#92400e" : "#fef3c7",
+              padding: "7px 24px",
+              fontSize: "11px",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderBottom: isLight ? "1px solid #fde68a" : "1px solid rgba(245, 158, 11, 0.2)",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span>👑</span>
+              <span>
+                <strong>Master Shop Admin Mode:</strong> You have full control over orders, deals, daily closing, staff management, and order cancellation.
+              </span>
+            </div>
+            <span
+              style={{
+                fontSize: "10px",
+                fontWeight: 800,
+                color: "#b45309",
+                background: "#fef3c7",
+                padding: "2px 8px",
+                borderRadius: "4px",
+                border: "1px solid #fde68a",
+              }}
+            >
+              Full Order Cancel Rights ✓
+            </span>
+          </div>
+        )}
 
         {/* Content Body with Mobile Responsive Padding */}
         <main

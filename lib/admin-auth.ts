@@ -9,6 +9,9 @@ export const ADMIN_COOKIE = "pizza_admin_session";
 export const ADMIN_SHOP_COOKIE = "pizza_admin_shop_id";
 export const ADMIN_SHOP_NAME_COOKIE = "pizza_admin_shop_name";
 export const ADMIN_SHOP_SLUG_COOKIE = "pizza_admin_shop_slug";
+export const ADMIN_ROLE_COOKIE = "pizza_admin_role"; // "admin" | "sub_admin" | "staff"
+export const ADMIN_STAFF_NAME_COOKIE = "pizza_admin_staff_name";
+export const ADMIN_STAFF_ID_COOKIE = "pizza_admin_staff_id";
 export const COOKIE_MAX_AGE = 60 * 60 * 8; // 8 hours
 
 async function hmacHex(secret: string, message: string): Promise<string> {

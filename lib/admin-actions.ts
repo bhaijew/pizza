@@ -14,6 +14,9 @@ import {
   ADMIN_SHOP_COOKIE,
   ADMIN_SHOP_NAME_COOKIE,
   ADMIN_SHOP_SLUG_COOKIE,
+  ADMIN_ROLE_COOKIE,
+  ADMIN_STAFF_NAME_COOKIE,
+  ADMIN_STAFF_ID_COOKIE,
   COOKIE_MAX_AGE,
   generateSessionToken,
   verifySessionToken,
@@ -34,17 +37,26 @@ export async function getActiveShopContext(): Promise<{
   shopName: string;
   shopSlug: string | null;
   isMasterAdmin: boolean;
+  role: "admin" | "sub_admin" | "staff";
+  staffName: string;
+  canCancelOrders: boolean;
 }> {
   const cookieStore = await cookies();
   const shopIdStr = cookieStore.get(ADMIN_SHOP_COOKIE)?.value;
   const shopName = cookieStore.get(ADMIN_SHOP_NAME_COOKIE)?.value || "Master Store";
   const shopSlug = cookieStore.get(ADMIN_SHOP_SLUG_COOKIE)?.value || null;
+  const role = (cookieStore.get(ADMIN_ROLE_COOKIE)?.value as any) || "admin";
+  const staffName =
+    cookieStore.get(ADMIN_STAFF_NAME_COOKIE)?.value || (role === "admin" ? "Shop Admin" : "Staff Member");
   const shopId = shopIdStr ? parseInt(shopIdStr, 10) : null;
   return {
     shopId: isNaN(shopId as number) ? null : shopId,
     shopName,
     shopSlug,
     isMasterAdmin: !shopId,
+    role,
+    staffName,
+    canCancelOrders: role === "admin", // Strict RBAC: only Admin can cancel orders!
   };
 }
 
@@ -92,6 +104,10 @@ export async function adminLogin(
   let isAuthorized = false;
   let matchedShopData: { id: number; name: string; slug: string } | null = null;
 
+  let userRole: "admin" | "sub_admin" | "staff" = "admin";
+  let staffName = "Shop Admin";
+  let staffId: string | null = null;
+
   // Case 1: Specific shop branch was selected on login screen
   if (shopIdRaw && shopIdRaw !== "master" && db) {
     const shopIdNum = parseInt(shopIdRaw, 10);
@@ -110,9 +126,9 @@ export async function adminLogin(
       // Authorized if password matches this shop's password OR platform master password
       if (matchedShop.password === password || password === adminPassword) {
         isAuthorized = true;
+        userRole = "admin";
+        staffName = `${matchedShop.name} Admin`;
         matchedShopData = { id: matchedShop.id, name: matchedShop.name, slug: matchedShop.slug };
-      } else {
-        return { error: `Incorrect password for "${matchedShop.name}".` };
       }
     } else {
       return { error: "Selected branch was not found." };
@@ -121,6 +137,8 @@ export async function adminLogin(
     // Case 2: No specific shop selected or "master" chosen
     if (password === adminPassword) {
       isAuthorized = true;
+      userRole = "admin";
+      staffName = "Master Store Admin";
       matchedShopData = null; // Master store
     } else if (db) {
       // Check if password matches a registered shop
@@ -137,6 +155,8 @@ export async function adminLogin(
           };
         }
         isAuthorized = true;
+        userRole = "admin";
+        staffName = `${matchedShop.name} Admin`;
         matchedShopData = { id: matchedShop.id, name: matchedShop.name, slug: matchedShop.slug };
       } else if (matchedShops && matchedShops.length > 1) {
         return {
@@ -146,8 +166,37 @@ export async function adminLogin(
     }
   }
 
+  // Case 3: Check if entered password matches a staff / sub-admin PIN
+  if (!isAuthorized && db) {
+    let staffQuery = db
+      .from("pos_staff")
+      .select("id, name, role, pin, is_active, shop_id, shops:shops(id, name, slug)")
+      .eq("pin", password)
+      .eq("is_active", true);
+
+    if (shopIdRaw && shopIdRaw !== "master") {
+      staffQuery = staffQuery.eq("shop_id", parseInt(shopIdRaw, 10));
+    }
+
+    const { data: staffMembers } = await staffQuery;
+    if (staffMembers && staffMembers.length > 0) {
+      const matchedStaff = staffMembers[0];
+      isAuthorized = true;
+      userRole = matchedStaff.role === "admin" ? "admin" : matchedStaff.role === "sub_admin" ? "sub_admin" : "staff";
+      staffName = matchedStaff.name;
+      staffId = matchedStaff.id;
+      if (matchedStaff.shop_id) {
+        matchedShopData = {
+          id: matchedStaff.shop_id,
+          name: (matchedStaff.shops as any)?.name || "Branch Store",
+          slug: (matchedStaff.shops as any)?.slug || null,
+        };
+      }
+    }
+  }
+
   if (!isAuthorized) {
-    return { error: "Incorrect password. Please verify your shop credentials." };
+    return { error: "Incorrect password or staff PIN. Please verify your credentials." };
   }
 
   const token = await generateSessionToken();
@@ -159,6 +208,32 @@ export async function adminLogin(
     maxAge: COOKIE_MAX_AGE,
     path: "/",
   });
+
+  cookieStore.set(ADMIN_ROLE_COOKIE, userRole, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: COOKIE_MAX_AGE,
+    path: "/",
+  });
+  cookieStore.set(ADMIN_STAFF_NAME_COOKIE, staffName, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: COOKIE_MAX_AGE,
+    path: "/",
+  });
+  if (staffId) {
+    cookieStore.set(ADMIN_STAFF_ID_COOKIE, staffId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: COOKIE_MAX_AGE,
+      path: "/",
+    });
+  } else {
+    cookieStore.delete(ADMIN_STAFF_ID_COOKIE);
+  }
 
   if (matchedShopData) {
     cookieStore.set(ADMIN_SHOP_COOKIE, String(matchedShopData.id), {
@@ -248,7 +323,45 @@ export async function adminLogout() {
   cookieStore.delete(ADMIN_SHOP_COOKIE);
   cookieStore.delete(ADMIN_SHOP_NAME_COOKIE);
   cookieStore.delete(ADMIN_SHOP_SLUG_COOKIE);
+  cookieStore.delete(ADMIN_ROLE_COOKIE);
+  cookieStore.delete(ADMIN_STAFF_NAME_COOKIE);
+  cookieStore.delete(ADMIN_STAFF_ID_COOKIE);
   redirect("/admin/login");
+}
+
+export async function switchAdminStaffRole(
+  targetRole: "admin" | "sub_admin" | "staff",
+  targetStaffName?: string
+): Promise<{ success: boolean; role: string }> {
+  await requireAdmin();
+  const cookieStore = await cookies();
+  cookieStore.set(ADMIN_ROLE_COOKIE, targetRole, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: COOKIE_MAX_AGE,
+    path: "/",
+  });
+
+  const defaultName =
+    targetRole === "admin"
+      ? "Shop Admin"
+      : targetRole === "sub_admin"
+      ? "Supervisor (Sub-Admin)"
+      : "Cashier (Staff)";
+
+  cookieStore.set(ADMIN_STAFF_NAME_COOKIE, targetStaffName || defaultName, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: COOKIE_MAX_AGE,
+    path: "/",
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/staff");
+  return { success: true, role: targetRole };
 }
 
 // ─── CATEGORY ACTIONS ─────────────────────────────────────────────
@@ -727,6 +840,13 @@ export async function updateOrderStatus(
   const validStatuses = ["pending","confirmed","preparing","ready","delivered","cancelled"];
   if (!validStatuses.includes(status)) return { error: "Invalid status." };
 
+  // STRICT RBAC: Order cancellation is strictly restricted to Shop Admin!
+  if (status === "cancelled" && activeShop.role !== "admin") {
+    return {
+      error: "Permission Denied: Order cancellation is strictly restricted to Shop Admin. Staff and Sub-Admins cannot cancel orders.",
+    };
+  }
+
   let query = db
     .from("orders")
     .update({ status })
@@ -882,6 +1002,233 @@ export async function triggerRiderWhatsAppAlert(orderId: number): Promise<{
     total: order.total,
     shopId: activeShop.shopId,
   });
+}
+
+// ─── ORDER RECREATE SYSTEM ────────────────────────────────────────
+
+export interface RecreateOrderItemInput {
+  id?: string | number;
+  name: string;
+  price: number;
+  qty: number;
+  quantity?: number;
+  detail?: string;
+  selected_variation?: any;
+  selected_toppings?: any;
+}
+
+export interface RecreateOrderParams {
+  orderId: number;
+  items: RecreateOrderItemInput[];
+  total: number;
+  deliveryFee?: number;
+  deliveryAddress?: string;
+  tableNumber?: string;
+  tokenNumber?: string;
+  customerName?: string;
+  customerPhone?: string;
+  status?: string;
+  notes?: string;
+  resetTime?: boolean; // Default true: updates created_at to now, order ID stays unchanged
+}
+
+/**
+ * Recreate or modify an existing order.
+ * Keeps Order ID and order_number strictly unchanged ("order id same raha").
+ * Updates the timestamp to now ("only time ho") so it moves to the top of kitchen & live board.
+ */
+export async function recreateOrder(params: RecreateOrderParams): Promise<{
+  success: boolean;
+  error: string | null;
+  order?: any;
+}> {
+  if (!isServiceRoleConfigured()) {
+    return { success: false, error: SERVICE_ROLE_ERROR };
+  }
+
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  // 1. Fetch existing order to preserve identity and shop isolation
+  const { data: currentOrder, error: fetchErr } = await db
+    .from("orders")
+    .select("*")
+    .eq("id", params.orderId)
+    .maybeSingle();
+
+  if (fetchErr || !currentOrder) {
+    return { success: false, error: fetchErr?.message || "Order not found." };
+  }
+
+  if (activeShop.shopId && currentOrder.shop_id && Number(currentOrder.shop_id) !== Number(activeShop.shopId)) {
+    return { success: false, error: "Unauthorized: this order belongs to another branch." };
+  }
+
+  // 2. Standardize items structure
+  const normalizedItems = params.items.map((it) => {
+    const qty = Math.max(1, Number(it.qty || it.quantity || 1));
+    const price = Math.max(0, Number(it.price || 0));
+    return {
+      id: it.id || undefined,
+      name: it.name?.trim() || "Item",
+      price,
+      qty,
+      quantity: qty,
+      detail: it.detail || (it.selected_variation ? (typeof it.selected_variation === "object" ? it.selected_variation.name : String(it.selected_variation)) : undefined),
+      selected_variation: it.selected_variation || (it.detail ? { name: it.detail } : null),
+      selected_toppings: it.selected_toppings || null,
+    };
+  });
+
+  const nowIso = new Date().toISOString();
+  const timeFormatted = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  // 3. Build enriched notes — preserves delivery/dine-in metadata while appending recreate audit tag
+  const existingNotes = currentOrder.notes || "";
+  const auditReason = params.notes?.trim() ? `: ${params.notes.trim()}` : "";
+  const recreateAuditTag = `[RECREATED ${timeFormatted}${auditReason}]`;
+  const updatedNotes = existingNotes
+    ? `${existingNotes} ${recreateAuditTag}`.trim()
+    : recreateAuditTag;
+
+  // 4. Build update payload — PRESERVING id and order_number
+  const updatePayload: Record<string, any> = {
+    items: normalizedItems,
+    total: Number(params.total.toFixed(2)),
+    updated_at: nowIso,
+    status: params.status || "preparing", // Default send back to kitchen so newly added items get cooked
+    notes: updatedNotes,
+  };
+
+  // User requirement: "only time ho but order id same raha"
+  // Updating created_at causes it to jump to the top of active orders and restarts kitchen timer
+  if (params.resetTime !== false) {
+    updatePayload.created_at = nowIso;
+  }
+
+  if (params.customerName?.trim()) {
+    updatePayload.customer_name = params.customerName.trim();
+  }
+  if (params.customerPhone?.trim()) {
+    updatePayload.customer_phone = params.customerPhone.trim();
+  }
+  if (params.deliveryAddress !== undefined) {
+    updatePayload.delivery_address = params.deliveryAddress?.trim() || null;
+  }
+  if (params.deliveryFee !== undefined) {
+    updatePayload.delivery_fee = Number(params.deliveryFee) || 0;
+  }
+  if (params.tableNumber !== undefined) {
+    updatePayload.table_number = params.tableNumber?.trim() || null;
+  }
+  if (params.tokenNumber !== undefined) {
+    updatePayload.token_number = params.tokenNumber?.trim() || null;
+  }
+
+  // 5. Update row in database
+  let { data: updatedOrder, error: updateErr } = await db
+    .from("orders")
+    .update(updatePayload)
+    .eq("id", params.orderId)
+    .select()
+    .single();
+
+  // Graceful fallback if certain columns (like delivery_fee) are missing in older schema
+  if (
+    updateErr &&
+    (updateErr.message.includes("delivery_fee") ||
+      updateErr.message.includes("delivery_address") ||
+      updateErr.message.includes("table_number") ||
+      updateErr.message.includes("token_number"))
+  ) {
+    const fallbackPayload: Record<string, any> = {
+      items: normalizedItems,
+      total: Number(params.total.toFixed(2)),
+      updated_at: nowIso,
+      status: params.status || "preparing",
+      notes: updatedNotes,
+    };
+    if (params.resetTime !== false) {
+      fallbackPayload.created_at = nowIso;
+    }
+    const retry = await db
+      .from("orders")
+      .update(fallbackPayload)
+      .eq("id", params.orderId)
+      .select()
+      .single();
+    updateErr = retry.error;
+    updatedOrder = retry.data;
+  }
+
+  if (updateErr) {
+    return { success: false, error: updateErr.message };
+  }
+
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/kitchen");
+  revalidatePath("/kitchen");
+  revalidatePath("/admin");
+  if (currentOrder.order_number) {
+    revalidatePath(`/track/${encodeURIComponent(currentOrder.order_number)}`);
+  }
+
+  return { success: true, error: null, order: updatedOrder };
+}
+
+/**
+ * Fetch available shop products for adding to recreated orders.
+ */
+export async function getShopMenuProducts(shopId?: number | null): Promise<{
+  id: number;
+  name: string;
+  price: number;
+  category_name?: string;
+  is_available: boolean;
+}[]> {
+  try {
+    const db = createAdminClient();
+    let query = db
+      .from("products")
+      .select("id, name, price, is_available, category:categories(name)")
+      .eq("is_available", true)
+      .order("name", { ascending: true });
+
+    if (shopId) {
+      query = query.eq("shop_id", shopId);
+    } else {
+      query = query.is("shop_id", null);
+    }
+
+    const { data, error } = await query;
+    if (error || !data) {
+      // Fallback without category join
+      const { data: fallbackData } = await db
+        .from("products")
+        .select("id, name, price, is_available")
+        .eq("is_available", true)
+        .order("name", { ascending: true });
+      return (
+        fallbackData?.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          price: Number(p.price) || 0,
+          category_name: "General",
+          is_available: p.is_available,
+        })) || []
+      );
+    }
+
+    return data.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      price: Number(p.price) || 0,
+      category_name: p.category?.name || "General",
+      is_available: p.is_available,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 // ─── INVENTORY ACTIONS (FEATURE 7) ────────────────────────────────
@@ -1306,3 +1653,229 @@ export async function recordDailyClosing(
   return { error: null, success: true };
 }
 
+// ─── STAFF & SUB-ADMIN MANAGEMENT ACTIONS ────────────────────────
+
+export interface ShopStaffMember {
+  id: string;
+  name: string;
+  email: string | null;
+  role: "admin" | "sub_admin" | "staff" | "cashier" | "manager" | "chef" | "waiter";
+  pin: string;
+  has_pos_access: boolean;
+  is_active: boolean;
+  shop_id: number | null;
+  created_at: string;
+  updated_at?: string;
+}
+
+export async function getShopStaffMembers(): Promise<ShopStaffMember[]> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  let query = db
+    .from("pos_staff")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (activeShop.shopId) {
+    query = query.eq("shop_id", activeShop.shopId);
+  } else {
+    query = query.is("shop_id", null);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("Error fetching staff:", error);
+    return [];
+  }
+  return (data as ShopStaffMember[]) || [];
+}
+
+export async function createShopStaffMember(
+  formData: FormData
+): Promise<{ error: string | null; success: boolean; staff?: ShopStaffMember }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, success: false };
+  }
+
+  // Strict check: only Admin can create staff or sub-admins
+  if (activeShop.role !== "admin") {
+    return {
+      error: "Permission Denied: Only Shop Admin can create or manage staff members.",
+      success: false,
+    };
+  }
+
+  const name = (formData.get("name") as string)?.trim();
+  const email = (formData.get("email") as string)?.trim() || null;
+  const role = ((formData.get("role") as string)?.trim() || "staff") as any;
+  const pin = (formData.get("pin") as string)?.trim() || "1234";
+  const has_pos_access = formData.get("has_pos_access") === "true";
+  const is_active = formData.get("is_active") !== "false";
+
+  if (!name) {
+    return { error: "Staff member name is required.", success: false };
+  }
+
+  if (!pin || pin.length < 3) {
+    return { error: "Staff PIN must be at least 3 digits.", success: false };
+  }
+
+  const validRoles = ["admin", "sub_admin", "staff", "cashier", "manager", "chef", "waiter"];
+  if (!validRoles.includes(role)) {
+    return { error: "Invalid staff role specified.", success: false };
+  }
+
+  const payload = {
+    name,
+    email,
+    role,
+    pin,
+    has_pos_access,
+    is_active,
+    shop_id: activeShop.shopId || null,
+  };
+
+  const { data, error } = await db.from("pos_staff").insert(payload).select().single();
+
+  if (error) {
+    return { error: error.message, success: false };
+  }
+
+  revalidatePath("/admin/staff");
+  revalidatePath("/admin");
+  return { error: null, success: true, staff: data as ShopStaffMember };
+}
+
+export async function updateShopStaffMember(
+  id: string,
+  formData: FormData
+): Promise<{ error: string | null; success: boolean }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, success: false };
+  }
+
+  if (activeShop.role !== "admin") {
+    return {
+      error: "Permission Denied: Only Shop Admin can modify staff members.",
+      success: false,
+    };
+  }
+
+  const name = (formData.get("name") as string)?.trim();
+  const email = (formData.get("email") as string)?.trim() || null;
+  const role = ((formData.get("role") as string)?.trim() || "staff") as any;
+  const pin = (formData.get("pin") as string)?.trim();
+  const has_pos_access = formData.get("has_pos_access") === "true";
+  const is_active = formData.get("is_active") !== "false";
+
+  if (!name) {
+    return { error: "Staff member name is required.", success: false };
+  }
+
+  const updates: Record<string, any> = {
+    name,
+    email,
+    role,
+    has_pos_access,
+    is_active,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (pin && pin.length >= 3) {
+    updates.pin = pin;
+  }
+
+  let query = db.from("pos_staff").update(updates).eq("id", id);
+  if (activeShop.shopId) {
+    query = query.eq("shop_id", activeShop.shopId);
+  }
+
+  const { error } = await query;
+  if (error) {
+    return { error: error.message, success: false };
+  }
+
+  revalidatePath("/admin/staff");
+  revalidatePath("/admin");
+  return { error: null, success: true };
+}
+
+export async function deleteShopStaffMember(
+  id: string
+): Promise<{ error: string | null; success: boolean }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, success: false };
+  }
+
+  if (activeShop.role !== "admin") {
+    return {
+      error: "Permission Denied: Only Shop Admin can delete staff members.",
+      success: false,
+    };
+  }
+
+  let query = db.from("pos_staff").delete().eq("id", id);
+  if (activeShop.shopId) {
+    query = query.eq("shop_id", activeShop.shopId);
+  }
+
+  const { error } = await query;
+  if (error) {
+    return { error: error.message, success: false };
+  }
+
+  revalidatePath("/admin/staff");
+  revalidatePath("/admin");
+  return { error: null, success: true };
+}
+
+export async function toggleShopStaffStatus(
+  id: string,
+  isActive: boolean
+): Promise<{ error: string | null; success: boolean }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, success: false };
+  }
+
+  if (activeShop.role !== "admin") {
+    return {
+      error: "Permission Denied: Only Shop Admin can toggle staff status.",
+      success: false,
+    };
+  }
+
+  let query = db
+    .from("pos_staff")
+    .update({ is_active: isActive, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (activeShop.shopId) {
+    query = query.eq("shop_id", activeShop.shopId);
+  }
+
+  const { error } = await query;
+  if (error) {
+    return { error: error.message, success: false };
+  }
+
+  revalidatePath("/admin/staff");
+  return { error: null, success: true };
+}

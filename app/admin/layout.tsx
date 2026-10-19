@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import AdminShell from "@/components/admin/AdminShell";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { ADMIN_SHOP_COOKIE } from "@/lib/admin-auth";
-import { adminLogout } from "@/lib/admin-actions";
+import { adminLogout, getActiveShopContext } from "@/lib/admin-actions";
 import { ShieldAlert, Store } from "@/components/admin/AdminIcons";
 
 export const dynamic = "force-dynamic";
@@ -161,6 +161,8 @@ export default async function AdminLayout({
     } catch {}
   }
 
+  const activeContext = await getActiveShopContext();
+
   return (
     <AdminShell
       shopName={shopName}
@@ -169,6 +171,9 @@ export default async function AdminLayout({
       shopSlug={shopSlug}
       shopId={shopIdNum}
       availableShops={availableShops}
+      userRole={activeContext.role}
+      staffName={activeContext.staffName}
+      canCancelOrders={activeContext.canCancelOrders}
     >
       {children}
     </AdminShell>

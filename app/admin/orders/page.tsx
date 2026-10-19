@@ -18,10 +18,31 @@ export default async function AdminOrdersPage() {
     ordersQuery = ordersQuery.is("shop_id", null);
   }
 
-  const [{ data: orders }, settings] = await Promise.all([
+  let productsQuery = db
+    .from("products")
+    .select("id, name, price, is_available, category:categories(name)")
+    .eq("is_available", true)
+    .order("name", { ascending: true });
+
+  if (activeShop.shopId) {
+    productsQuery = productsQuery.eq("shop_id", activeShop.shopId);
+  } else {
+    productsQuery = productsQuery.is("shop_id", null);
+  }
+
+  const [{ data: orders }, settings, { data: products }] = await Promise.all([
     ordersQuery,
     fetchSettings(),
+    productsQuery,
   ]);
+
+  const formattedProducts = (products || []).map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    price: Number(p.price) || 0,
+    category_name: p.category?.name || "General",
+    is_available: p.is_available,
+  }));
 
   return (
     <div>
@@ -29,6 +50,9 @@ export default async function AdminOrdersPage() {
         initialOrders={(orders as Order[]) || []}
         currencySymbol={settings.currency_symbol || "$"}
         shopId={activeShop.shopId ? Number(activeShop.shopId) : null}
+        availableProducts={formattedProducts}
+        userRole={activeShop.role}
+        canCancelOrders={activeShop.canCancelOrders}
       />
     </div>
   );

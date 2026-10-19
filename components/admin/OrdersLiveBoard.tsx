@@ -21,12 +21,23 @@ import {
   User,
   Volume2,
   VolumeX,
+  RefreshCw,
 } from "lucide-react";
+import OrderRecreateModal from "@/components/admin/OrderRecreateModal";
 
 interface OrdersLiveBoardProps {
   initialOrders: Order[];
   currencySymbol?: string;
   shopId?: number | null;
+  availableProducts?: {
+    id: number;
+    name: string;
+    price: number;
+    category_name?: string;
+    is_available?: boolean;
+  }[];
+  userRole?: "admin" | "sub_admin" | "staff";
+  canCancelOrders?: boolean;
 }
 
 type FilterTab = "all" | "active" | "delivery" | "tables" | "tokens" | "pending" | "preparing" | "ready" | "delivered" | "cancelled";
@@ -125,6 +136,9 @@ export default function OrdersLiveBoard({
   initialOrders,
   currencySymbol = "$",
   shopId,
+  availableProducts = [],
+  userRole = "admin",
+  canCancelOrders = true,
 }: OrdersLiveBoardProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [activeTab, setActiveTab] = useState<FilterTab>("active");
@@ -132,6 +146,7 @@ export default function OrdersLiveBoard({
   const [isPending, startTransition] = useTransition();
   const [realtimeActive, setRealtimeActive] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [recreatingOrder, setRecreatingOrder] = useState<Order | null>(null);
 
   // Play crisp 2-tone enterprise POS alert chime (A5 -> D6)
   const playPosOrderChime = useCallback(() => {
@@ -238,7 +253,11 @@ export default function OrdersLiveBoard({
                 return;
               }
             }
-            setOrders((prev) => [newOrder, ...prev]);
+            setOrders((prev) =>
+              [newOrder, ...prev.filter((o) => o.id !== newOrder.id)].sort(
+                (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              )
+            );
             if (soundEnabled) {
               playPosOrderChime();
             }
@@ -255,7 +274,12 @@ export default function OrdersLiveBoard({
                 return;
               }
             }
-            setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+            setOrders((prev) => {
+              const updatedList = prev.map((o) => (o.id === updated.id ? updated : o));
+              return updatedList.sort(
+                (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              );
+            });
           } else if (payload.eventType === "DELETE") {
             setOrders((prev) => prev.filter((o) => o.id !== (payload.old as any).id));
           }
@@ -316,7 +340,7 @@ export default function OrdersLiveBoard({
       }
 
       return true;
-    });
+    }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [orders, activeTab, searchQuery]);
 
   const activeCount = orders.filter(
@@ -779,16 +803,38 @@ export default function OrdersLiveBoard({
                       marginBottom: "12px",
                     }}
                   >
-                    <span
-                      style={{
-                        fontFamily: "monospace",
-                        fontSize: "15px",
-                        fontWeight: 800,
-                        color: "#0f172a",
-                      }}
-                    >
-                      {order.order_number}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <span
+                        style={{
+                          fontFamily: "monospace",
+                          fontSize: "15px",
+                          fontWeight: 800,
+                          color: "#0f172a",
+                        }}
+                      >
+                        {order.order_number}
+                      </span>
+                      {order.notes?.includes("[RECREATED") && (
+                        <span
+                          style={{
+                            padding: "2px 6px",
+                            borderRadius: "4px",
+                            fontSize: "10px",
+                            fontWeight: 800,
+                            background: "#fff7ed",
+                            color: "#ea580c",
+                            border: "1px solid #fed7aa",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                          }}
+                          title="This order was recreated/modified while keeping the exact same Order ID"
+                        >
+                          <RefreshCw size={10} />
+                          <span>RECREATED</span>
+                        </span>
+                      )}
+                    </div>
                     <div style={{ fontSize: "11px", color: "#64748b" }}>
                       {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(order.created_at).toLocaleDateString()}
                     </div>
@@ -1122,26 +1168,73 @@ export default function OrdersLiveBoard({
                       </div>
                     )}
 
+                    {/* Recreate / Modify Order Button */}
+                    <button
+                      type="button"
+                      onClick={() => setRecreatingOrder(order)}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: "5px",
+                        background: "#fff7ed",
+                        color: "#ea580c",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        border: "1px solid #fed7aa",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                      }}
+                      title="Recreate order (keep same Order ID, add burger/pizza, refresh time to now)"
+                    >
+                      <RefreshCw size={13} />
+                      <span>Recreate</span>
+                    </button>
+
                     {order.status !== "cancelled" && order.status !== "delivered" && (
-                      <button
-                        onClick={() => {
-                          if (confirm(`Cancel order ${order.order_number}?`)) {
-                            handleStatusChange(order.id, "cancelled");
-                          }
-                        }}
-                        style={{
-                          padding: "8px 10px",
-                          borderRadius: "5px",
-                          background: "#ffffff",
-                          color: "#dc2626",
-                          fontSize: "12px",
-                          fontWeight: 600,
-                          border: "1px solid #fecaca",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Cancel
-                      </button>
+                      canCancelOrders ? (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Cancel order ${order.order_number}?`)) {
+                              handleStatusChange(order.id, "cancelled");
+                            }
+                          }}
+                          style={{
+                            padding: "8px 10px",
+                            borderRadius: "5px",
+                            background: "#ffffff",
+                            color: "#dc2626",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            border: "1px solid #fecaca",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled
+                          style={{
+                            padding: "8px 10px",
+                            borderRadius: "5px",
+                            background: "#f8fafc",
+                            color: "#94a3b8",
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            border: "1px solid #e2e8f0",
+                            cursor: "not-allowed",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                          title="Cancellation restricted: Only Shop Admin can cancel orders"
+                        >
+                          <span>🔒</span>
+                          <span>Cancel (Admin Only)</span>
+                        </button>
+                      )
                     )}
                   </div>
                 </div>
@@ -1150,6 +1243,22 @@ export default function OrdersLiveBoard({
           })}
         </div>
       )}
+      {/* ─── ORDER RECREATE MODAL ───────────────────────────── */}
+      <OrderRecreateModal
+        isOpen={!!recreatingOrder}
+        onClose={() => setRecreatingOrder(null)}
+        order={recreatingOrder}
+        currencySymbol={currencySymbol}
+        shopId={shopId}
+        initialProducts={availableProducts}
+        onSuccess={(updatedOrder) => {
+          setOrders((prev) => {
+            const list = prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o));
+            return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          });
+          playPosOrderChime();
+        }}
+      />
     </div>
   );
 }
