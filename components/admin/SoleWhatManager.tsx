@@ -223,7 +223,7 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
             </button>
 
             <a
-              href="https://solewhat-production.up.railway.app"
+              href="https://solewhat-production-33f6.up.railway.app/dashboard"
               target="_blank"
               rel="noreferrer"
               style={{

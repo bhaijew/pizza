@@ -153,7 +153,7 @@ export async function sendWhatsAppOrderAlert({
     }
 
     const gatewayBaseUrl = (
-      process.env.WHATSAPP_GATEWAY_URL || "https://solewhat-production.up.railway.app"
+      process.env.WHATSAPP_GATEWAY_URL || "https://solewhat-production-33f6.up.railway.app"
     ).replace(/\/+$/, "");
 
     const endpoint = `${gatewayBaseUrl}/api/messages/${targetSessionId}/send`;

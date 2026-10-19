@@ -9,7 +9,7 @@
  * 
  * Requirements:
  *   - Node.js 18+
- *   - Local sole_what running on http://localhost:3001 OR cloud gateway at https://solewhat-production.up.railway.app
+ *   - Local sole_what running on http://localhost:3001 OR cloud gateway at https://solewhat-production-33f6.up.railway.app
  */
 
 const https = require("https");
@@ -17,7 +17,7 @@ const http = require("http");
 
 const CONFIG = {
   // Sole-What Gateway URL (change to http://localhost:3001 if using local sole_what-main)
-  GATEWAY_URL: process.env.WHATSAPP_GATEWAY_URL || "https://solewhat-production.up.railway.app",
+  GATEWAY_URL: process.env.WHATSAPP_GATEWAY_URL || "https://solewhat-production-33f6.up.railway.app",
   
   // Default session ID (configure in Pizza Admin Settings)
   SESSION_ID: process.env.WHATSAPP_SESSION_ID || "rhs5o",
