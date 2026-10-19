@@ -23,6 +23,9 @@ interface DailyClosingProps {
     closingRecord?: any;
     orders: any[];
     expenses: any[];
+    shiftWindow?: string;
+    openingTime?: string;
+    closingTime?: string;
   };
   currencySymbol?: string;
   shopName?: string;
@@ -89,6 +92,12 @@ export default function DailyClosingManager({
           <p className="text-xs text-gray-500">
             Reconcile daily table and takeaway sales against expenses for exact daily net profit.
           </p>
+          {data.shiftWindow && (
+            <div className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold">
+              <span>🕒</span>
+              <span>Shop Operating Shift: <strong>{data.shiftWindow}</strong> (PKT / UTC+5)</span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">

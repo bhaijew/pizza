@@ -22,6 +22,7 @@ import {
   verifySessionToken,
 } from "@/lib/admin-auth";
 import { sendWhatsAppRiderAlert, sendWhatsAppCustomerDispatchedAlert } from "@/lib/whatsapp";
+import { getCurrentBusinessDate, getBusinessShiftUtcRange } from "@/lib/business-hours";
 
 // ─── Auth helper ─────────────────────────────────────────────────
 async function requireAdmin() {
@@ -751,6 +752,8 @@ export async function updateSettings(
   const currency_symbol = (formData.get("currency_symbol") as string)?.trim() || "$";
   const whatsapp_session_id = (formData.get("whatsapp_session_id") as string)?.trim() || null;
   const whatsapp_api_key = (formData.get("whatsapp_api_key") as string)?.trim() || null;
+  const opening_time = (formData.get("opening_time") as string)?.trim() || "11:00";
+  const closing_time = (formData.get("closing_time") as string)?.trim() || "01:00";
 
   if (!shop_name || !menu_title || !meta_title) {
     return { error: "Shop name, menu title, and meta title are required.", success: false };
@@ -763,6 +766,8 @@ export async function updateSettings(
       currency_symbol: currency_symbol,
       whatsapp_session_id,
       whatsapp_api_key,
+      opening_time,
+      closing_time,
     };
 
     let { error: shopError } = await db
@@ -771,7 +776,7 @@ export async function updateSettings(
       .eq("id", activeShop.shopId);
 
     // Fallback if columns pending migration
-    if (shopError && (shopError.message.includes("whatsapp_session_id") || shopError.message.includes("whatsapp_api_key"))) {
+    if (shopError && (shopError.message.includes("whatsapp_session_id") || shopError.message.includes("whatsapp_api_key") || shopError.message.includes("opening_time") || shopError.message.includes("closing_time"))) {
       const retry = await db
         .from("shops")
         .update({ name: shop_name, currency_symbol })
@@ -801,6 +806,8 @@ export async function updateSettings(
       currency_symbol,
       whatsapp_session_id,
       whatsapp_api_key,
+      opening_time,
+      closing_time,
     };
 
     let { error } = await db
@@ -808,7 +815,7 @@ export async function updateSettings(
       .upsert(upsertPayload);
 
     // Fallback if columns pending migration
-    if (error && (error.message.includes("whatsapp_session_id") || error.message.includes("whatsapp_api_key"))) {
+    if (error && (error.message.includes("whatsapp_session_id") || error.message.includes("whatsapp_api_key") || error.message.includes("opening_time") || error.message.includes("closing_time"))) {
       const retry = await db
         .from("shop_settings")
         .upsert({ id: "main", shop_name, menu_title, meta_title, meta_description, currency_symbol });
@@ -1523,19 +1530,54 @@ export async function fetchDailyClosingData(targetDate?: string): Promise<{
   closingRecord?: any;
   orders: any[];
   expenses: any[];
+  shiftWindow?: string;
+  openingTime?: string;
+  closingTime?: string;
 }> {
   await requireAdmin();
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
 
-  const dateStr = targetDate || new Date().toISOString().split("T")[0];
+  // Retrieve shop operating shift timing (e.g. 11:00 AM to 01:00 AM Next Day)
+  let openingTime = "11:00";
+  let closingTime = "01:00";
 
-  // Fetch orders for this date and shop
+  if (activeShop.shopId) {
+    const { data: sData } = await db
+      .from("shops")
+      .select("opening_time, closing_time")
+      .eq("id", activeShop.shopId)
+      .maybeSingle();
+    if (sData) {
+      if (sData.opening_time) openingTime = sData.opening_time;
+      if (sData.closing_time) closingTime = sData.closing_time;
+    }
+  } else {
+    const { data: stData } = await db
+      .from("shop_settings")
+      .select("opening_time, closing_time")
+      .eq("id", "main")
+      .maybeSingle();
+    if (stData) {
+      if (stData.opening_time) openingTime = stData.opening_time;
+      if (stData.closing_time) closingTime = stData.closing_time;
+    }
+  }
+
+  // Determine current active operational date based on shop hours
+  const dateStr = targetDate || getCurrentBusinessDate(openingTime, closingTime);
+  const { startUtc, endUtc, label: shiftWindow } = getBusinessShiftUtcRange(
+    dateStr,
+    openingTime,
+    closingTime
+  );
+
+  // Fetch orders strictly within this operational business shift window
   let ordersQuery = db
     .from("orders")
     .select("*")
-    .gte("created_at", `${dateStr}T00:00:00.000Z`)
-    .lte("created_at", `${dateStr}T23:59:59.999Z`);
+    .gte("created_at", startUtc)
+    .lte("created_at", endUtc);
 
   if (activeShop.shopId) {
     ordersQuery = ordersQuery.eq("shop_id", activeShop.shopId);
@@ -1613,6 +1655,9 @@ export async function fetchDailyClosingData(targetDate?: string): Promise<{
     closingRecord: closingRecord || null,
     orders,
     expenses,
+    shiftWindow,
+    openingTime,
+    closingTime,
   };
 }
 

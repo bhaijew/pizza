@@ -900,19 +900,29 @@ export default function AdminShell({
           </div>
 
           {/* Quick Actions & Status Tools */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              flexShrink: 0,
+              flexWrap: "nowrap",
+            }}
+          >
             {/* Live Pakistan Standard Time (PKT) Widget */}
             <div
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "8px",
-                padding: "6px 14px",
+                gap: "7px",
+                padding: "5px 12px",
                 borderRadius: "20px",
                 background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.06)",
                 border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
                 color: isLight ? "#0f172a" : "#ffffff",
                 boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
               }}
               title="Live Pakistan Standard Time (PKT / UTC+5, Asia/Karachi)"
             >
@@ -926,26 +936,27 @@ export default function AdminShell({
                   flexShrink: 0,
                 }}
               />
-              <Clock size={14} className="text-emerald-500" />
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ fontFamily: "monospace", fontSize: "13px", fontWeight: 800, letterSpacing: "0.02em" }}>
+              <Clock size={13} className="text-emerald-500" style={{ flexShrink: 0 }} />
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", whiteSpace: "nowrap" }}>
+                <span style={{ fontFamily: "monospace", fontSize: "12.5px", fontWeight: 800, letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
                   {pakistanTime || "Loading..."}
                 </span>
                 <span
                   style={{
-                    fontSize: "10px",
+                    fontSize: "9.5px",
                     fontWeight: 800,
                     background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
                     color: "#ffffff",
-                    padding: "2px 6px",
+                    padding: "2px 5px",
                     borderRadius: "4px",
                     letterSpacing: "0.05em",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   PKT
                 </span>
                 {pakistanDate && (
-                  <span style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8", fontWeight: 600 }}>
+                  <span style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8", fontWeight: 600, whiteSpace: "nowrap" }}>
                     ({pakistanDate})
                   </span>
                 )}
@@ -957,18 +968,20 @@ export default function AdminShell({
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                padding: "6px 12px",
+                gap: "5px",
+                padding: "5px 10px",
                 borderRadius: "20px",
                 background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
                 border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
-                fontSize: "12px",
+                fontSize: "11.5px",
                 fontWeight: 700,
                 color: isLight ? "#16a34a" : "#34d399",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
               }}
               title="Real-time order sound alerts active"
             >
-              <Volume2 size={14} className="text-emerald-500" />
+              <Volume2 size={13} className="text-emerald-500" style={{ flexShrink: 0 }} />
               <span>Audio Active</span>
             </div>
 
@@ -979,21 +992,23 @@ export default function AdminShell({
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                padding: "6px 13px",
+                gap: "5px",
+                padding: "5px 11px",
                 borderRadius: "6px",
                 background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
                 border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.35)",
-                fontSize: "12px",
+                fontSize: "11.5px",
                 fontWeight: 800,
                 color: isLight ? "#16a34a" : "#34d399",
                 cursor: "pointer",
                 transition: "all 0.15s ease",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
               }}
               className="hover:scale-105"
               title="Download FloDesktop POS Launcher (.BAT) or Web App"
             >
-              <Download size={14} />
+              <Download size={13} style={{ flexShrink: 0 }} />
               <span>Download POS</span>
             </button>
 
@@ -1003,19 +1018,21 @@ export default function AdminShell({
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                padding: "6px 12px",
+                gap: "5px",
+                padding: "5px 11px",
                 borderRadius: "6px",
                 background: isLight ? "#fff7ed" : "rgba(249, 115, 22, 0.15)",
                 border: isLight ? "1px solid #fed7aa" : "1px solid rgba(249, 115, 22, 0.3)",
-                fontSize: "12px",
+                fontSize: "11.5px",
                 fontWeight: 700,
                 color: isLight ? "#c2410c" : "#fdba74",
                 textDecoration: "none",
                 transition: "all 0.15s ease",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
               }}
             >
-              <ChefHat size={14} />
+              <ChefHat size={13} style={{ flexShrink: 0 }} />
               <span>Kitchen KDS</span>
             </Link>
 
@@ -1026,91 +1043,98 @@ export default function AdminShell({
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                padding: "7px 14px",
+                gap: "5px",
+                padding: "5px 12px",
                 borderRadius: "6px",
                 background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
                 color: "#ffffff",
-                fontSize: "12px",
+                fontSize: "11.5px",
                 fontWeight: 700,
                 textDecoration: "none",
                 boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
                 transition: "transform 0.15s ease",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
               }}
               className="hover:scale-105"
             >
-              <Store size={14} />
+              <Store size={13} style={{ flexShrink: 0 }} />
               <span>Customer Menu</span>
-              <ExternalLink size={12} />
+              <ExternalLink size={11} style={{ flexShrink: 0 }} />
             </Link>
 
-            {/* ─── ROLE SELECTOR & ACTIVE PROFILE BADGE ─── */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              {/* Quick Role Switcher for Admin preview */}
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.08)",
-                  padding: "2px",
-                  borderRadius: "8px",
-                  border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
-                }}
-                title="Switch between Shop Master Admin and Staff / Sub-Admin view"
-              >
-                <button
-                  type="button"
-                  disabled={roleSwitching}
-                  onClick={() => handleRoleSwitch("admin")}
+            {/* ─── ROLE SELECTOR (Admin only) & ACTIVE PROFILE BADGE ─── */}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+              {/* Quick Role Switcher for Admin preview (Hidden for Staff/Cashier) */}
+              {isAdmin && (
+                <div
                   style={{
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    fontSize: "11px",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    border: "none",
-                    background: isAdmin ? "linear-gradient(135deg, #f59e0b, #d97706)" : "transparent",
-                    color: isAdmin ? "#ffffff" : isLight ? "#64748b" : "#94a3b8",
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "3px",
-                    boxShadow: isAdmin ? "0 1px 4px rgba(245, 158, 11, 0.3)" : "none",
+                    background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.08)",
+                    padding: "2px",
+                    borderRadius: "8px",
+                    border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
+                    flexShrink: 0,
                   }}
-                  title="👑 Master Admin mode (Full access, Order cancel allowed)"
+                  title="Switch between Shop Master Admin and Staff / Sub-Admin view"
                 >
-                  <span>👑 Admin</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={roleSwitching}
-                  onClick={() => handleRoleSwitch("staff")}
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    fontSize: "11px",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    border: "none",
-                    background: !isAdmin ? "linear-gradient(135deg, #10b981, #059669)" : "transparent",
-                    color: !isAdmin ? "#ffffff" : isLight ? "#64748b" : "#94a3b8",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "3px",
-                    boxShadow: !isAdmin ? "0 1px 4px rgba(16, 185, 129, 0.3)" : "none",
-                  }}
-                  title="👤 Staff / Sub-Admin mode (Order cancellation restricted)"
-                >
-                  <span>👤 Staff</span>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    disabled={roleSwitching}
+                    onClick={() => handleRoleSwitch("admin")}
+                    style={{
+                      padding: "3px 8px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      border: "none",
+                      background: isAdmin ? "linear-gradient(135deg, #f59e0b, #d97706)" : "transparent",
+                      color: isAdmin ? "#ffffff" : isLight ? "#64748b" : "#94a3b8",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "3px",
+                      boxShadow: isAdmin ? "0 1px 4px rgba(245, 158, 11, 0.3)" : "none",
+                      whiteSpace: "nowrap",
+                    }}
+                    title="👑 Master Admin mode (Full access, Order cancel allowed)"
+                  >
+                    <span>👑 Admin</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={roleSwitching}
+                    onClick={() => handleRoleSwitch("staff")}
+                    style={{
+                      padding: "3px 8px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      border: "none",
+                      background: !isAdmin ? "linear-gradient(135deg, #10b981, #059669)" : "transparent",
+                      color: !isAdmin ? "#ffffff" : isLight ? "#64748b" : "#94a3b8",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "3px",
+                      boxShadow: !isAdmin ? "0 1px 4px rgba(16, 185, 129, 0.3)" : "none",
+                      whiteSpace: "nowrap",
+                    }}
+                    title="👤 Staff / Sub-Admin mode (Order cancellation restricted)"
+                  >
+                    <span>👤 Staff</span>
+                  </button>
+                </div>
+              )}
 
               {/* User Profile Pill */}
               <div
                 style={{
-                  display: "flex",
+                  display: "inline-flex",
                   alignItems: "center",
-                  gap: "8px",
-                  padding: "4px 12px 4px 5px",
+                  gap: "7px",
+                  padding: "4px 10px 4px 4px",
                   borderRadius: "20px",
                   background: isAdmin
                     ? isLight ? "#fffbeb" : "rgba(245, 158, 11, 0.12)"
@@ -1118,12 +1142,14 @@ export default function AdminShell({
                   border: isAdmin
                     ? isLight ? "1px solid #fde68a" : "1px solid rgba(245, 158, 11, 0.35)"
                     : isLight ? "1px solid #a7f3d0" : "1px solid rgba(16, 185, 129, 0.35)",
+                  flexShrink: 0,
+                  whiteSpace: "nowrap",
                 }}
               >
                 <div
                   style={{
-                    width: "28px",
-                    height: "28px",
+                    width: "26px",
+                    height: "26px",
                     borderRadius: "50%",
                     background: isAdmin
                       ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
@@ -1135,18 +1161,20 @@ export default function AdminShell({
                     boxShadow: isAdmin
                       ? "0 2px 6px rgba(245, 158, 11, 0.4)"
                       : "0 2px 6px rgba(16, 185, 129, 0.4)",
-                    fontSize: "13px",
+                    fontSize: "12px",
+                    flexShrink: 0,
                   }}
                 >
                   {isAdmin ? "👑" : "👤"}
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.15" }}>
+                <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.15", whiteSpace: "nowrap" }}>
                   <span
                     style={{
-                      fontSize: "11px",
+                      fontSize: "10.5px",
                       fontWeight: 800,
                       color: isAdmin ? (isLight ? "#92400e" : "#fef08a") : (isLight ? "#065f46" : "#6ee7b7"),
                       letterSpacing: "0.02em",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {isAdmin ? "SHOP ADMIN" : staffName || "STAFF MEMBER"}
@@ -1159,6 +1187,7 @@ export default function AdminShell({
                       display: "flex",
                       alignItems: "center",
                       gap: "3px",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {isAdmin ? "Cancel: Allowed ✓" : "Cancel: Admin Only 🔒"}
@@ -1654,85 +1683,7 @@ export default function AdminShell({
         {/* Realtime Live Order Notifications */}
         <LiveOrderNotifier shopId={shopId} />
 
-        {/* Operational Security & Role Notice Banner */}
-        {!isAdmin ? (
-          <div
-            style={{
-              background: "linear-gradient(90deg, #064e3b 0%, #065f46 100%)",
-              color: "#ecfdf5",
-              padding: "9px 24px",
-              fontSize: "12px",
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderBottom: "1px solid #059669",
-              boxShadow: "0 2px 8px rgba(6, 78, 59, 0.25)",
-              flexWrap: "wrap",
-              gap: "8px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "14px" }}>👤</span>
-              <span>
-                <strong>Operating in Staff / Sub-Admin Mode ({staffName}):</strong> Full POS order taking and kitchen processing are enabled. Order cancellation is <strong>strictly restricted to Shop Admin only</strong>.
-              </span>
-            </div>
-            <button
-              type="button"
-              disabled={roleSwitching}
-              onClick={() => handleRoleSwitch("admin")}
-              style={{
-                background: "rgba(0, 0, 0, 0.3)",
-                color: "#fde047",
-                border: "1px solid rgba(253, 224, 71, 0.4)",
-                padding: "3px 10px",
-                borderRadius: "5px",
-                fontSize: "11px",
-                fontWeight: 800,
-                cursor: "pointer",
-              }}
-            >
-              👑 Switch to Admin View
-            </button>
-          </div>
-        ) : (
-          <div
-            style={{
-              background: isLight ? "#fffbeb" : "linear-gradient(90deg, rgba(180, 83, 9, 0.15) 0%, rgba(217, 119, 6, 0.08) 100%)",
-              color: isLight ? "#92400e" : "#fef3c7",
-              padding: "7px 24px",
-              fontSize: "11px",
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderBottom: isLight ? "1px solid #fde68a" : "1px solid rgba(245, 158, 11, 0.2)",
-              flexWrap: "wrap",
-              gap: "8px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span>👑</span>
-              <span>
-                <strong>Master Shop Admin Mode:</strong> You have full control over orders, deals, daily closing, staff management, and order cancellation.
-              </span>
-            </div>
-            <span
-              style={{
-                fontSize: "10px",
-                fontWeight: 800,
-                color: "#b45309",
-                background: "#fef3c7",
-                padding: "2px 8px",
-                borderRadius: "4px",
-                border: "1px solid #fde68a",
-              }}
-            >
-              Full Order Cancel Rights ✓
-            </span>
-          </div>
-        )}
+
 
         {/* Content Body with Mobile Responsive Padding */}
         <main

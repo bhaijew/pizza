@@ -310,7 +310,9 @@ function POSContent() {
     setIsSimulating(true);
 
     try {
-      const randomOrderNum = `PZ-${Math.floor(1000 + Math.random() * 9000)}`;
+      const nextSeq = orders.length + 1;
+      const orderSeqStr = String(nextSeq).padStart(3, "0");
+      const seqOrderNum = `ORD-${activeShop.id ? activeShop.id + "-" : ""}${orderSeqStr}`;
       const sampleCustomerNames = ["Hamza Tariq", "Zahid Qureshi", "Ayesha Malik", "Usman Khan", "Bilal Sheikh"];
       const randomName = sampleCustomerNames[Math.floor(Math.random() * sampleCustomerNames.length)];
       const sampleItems = [
@@ -321,7 +323,7 @@ function POSContent() {
       const totalAmount = 3110;
 
       const payload = {
-        order_number: randomOrderNum,
+        order_number: seqOrderNum,
         shop_id: activeShop.id,
         customer_name: randomName,
         customer_phone: "0300-8889922",

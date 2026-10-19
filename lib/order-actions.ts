@@ -78,17 +78,6 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       }
     }
 
-    // Generate human-friendly order number e.g. ORD-7492
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const orderNumber = `ORD-${randomSuffix}`;
-
-    // Generate delivery verification token number for table dine-in & takeaway
-    let tokenNumber = input.token_number?.trim();
-    if (!tokenNumber && input.order_type !== "delivery") {
-      const tokenDigit = Math.floor(10 + Math.random() * 90);
-      tokenNumber = `TK-${tokenDigit}`;
-    }
-
     const tableNumber = input.table_number?.trim() || null;
 
     // Prefer service role client if configured, otherwise use standard server client
@@ -119,6 +108,44 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       if (adminCookieShop) {
         targetShopId = parseInt(adminCookieShop, 10);
       }
+    }
+
+    // Sequential Order Numbering Per Shop — every new shop starts from #1 (#001)
+    let nextSeq = 1;
+    try {
+      let seqQuery = supabase
+        .from("orders")
+        .select("order_number, id")
+        .order("id", { ascending: false })
+        .limit(1);
+
+      if (targetShopId) {
+        seqQuery = seqQuery.eq("shop_id", targetShopId);
+      } else {
+        seqQuery = seqQuery.is("shop_id", null);
+      }
+
+      const { data: latestRows } = await seqQuery;
+      if (latestRows && latestRows.length > 0) {
+        const lastNum = String(latestRows[0].order_number || "");
+        const match = lastNum.match(/(\d+)$/);
+        if (match) {
+          nextSeq = parseInt(match[1], 10) + 1;
+        } else {
+          nextSeq = (Number(latestRows[0].id) || 0) + 1;
+        }
+      }
+    } catch {
+      nextSeq = 1;
+    }
+
+    const seqStr = String(nextSeq).padStart(3, "0");
+    const orderNumber = targetShopId ? `ORD-${targetShopId}-${seqStr}` : `ORD-${seqStr}`;
+
+    // Generate delivery verification token number for table dine-in & takeaway
+    let tokenNumber = input.token_number?.trim();
+    if (!tokenNumber && input.order_type !== "delivery") {
+      tokenNumber = `TK-${String(nextSeq).padStart(2, "0")}`;
     }
 
     // Build base notes with metadata

@@ -53,6 +53,8 @@ export default async function AdminOrdersPage() {
         availableProducts={formattedProducts}
         userRole={activeShop.role}
         canCancelOrders={activeShop.canCancelOrders}
+        openingTime={settings.opening_time || "11:00"}
+        closingTime={settings.closing_time || "01:00"}
       />
     </div>
   );

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useTransition, useCallback } from "react"
 import type { Order } from "@/types/menu";
 import { updateOrderStatus, assignOrderRider, triggerRiderWhatsAppAlert } from "@/lib/admin-actions";
 import { createClient } from "@/utils/supabase/client";
+import { isOrderInTodayShift } from "@/lib/business-hours";
 import {
   Search,
   Bike,
@@ -22,6 +23,8 @@ import {
   Volume2,
   VolumeX,
   RefreshCw,
+  TrendingUp,
+  X,
 } from "lucide-react";
 import OrderRecreateModal from "@/components/admin/OrderRecreateModal";
 
@@ -38,9 +41,11 @@ interface OrdersLiveBoardProps {
   }[];
   userRole?: "admin" | "sub_admin" | "staff";
   canCancelOrders?: boolean;
+  openingTime?: string;
+  closingTime?: string;
 }
 
-type FilterTab = "all" | "active" | "delivery" | "tables" | "tokens" | "pending" | "preparing" | "ready" | "delivered" | "cancelled";
+type FilterTab = "active" | "today" | "all" | "delivery" | "tables" | "tokens" | "pending" | "preparing" | "ready" | "delivered" | "cancelled";
 
 function getOrderServiceInfo(order: Order) {
   let tableNumber = order.table_number || null;
@@ -139,6 +144,8 @@ export default function OrdersLiveBoard({
   availableProducts = [],
   userRole = "admin",
   canCancelOrders = true,
+  openingTime = "11:00",
+  closingTime = "01:00",
 }: OrdersLiveBoardProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [activeTab, setActiveTab] = useState<FilterTab>("active");
@@ -147,6 +154,45 @@ export default function OrdersLiveBoard({
   const [realtimeActive, setRealtimeActive] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [recreatingOrder, setRecreatingOrder] = useState<Order | null>(null);
+
+  // Today's shift orders (Cross-midnight 24h operational cycle aware)
+  const todayOrders = useMemo(() => {
+    return orders.filter((o) => isOrderInTodayShift(o.created_at, openingTime, closingTime));
+  }, [orders, openingTime, closingTime]);
+
+  // Real-Time live sales metrics updated via Supabase websocket stream
+  const salesStats = useMemo(() => {
+    const validToday = todayOrders.filter((o) => o.status !== "cancelled");
+    const netSales = validToday.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+    let deliveryCount = 0;
+    let dineInCount = 0;
+    let takeawayCount = 0;
+
+    validToday.forEach((o) => {
+      const info = getOrderServiceInfo(o);
+      if (info.type === "delivery") deliveryCount++;
+      else if (info.type === "dine_in") dineInCount++;
+      else takeawayCount++;
+    });
+
+    const activeInKitchen = orders.filter((o) => o.status === "pending" || o.status === "preparing").length;
+    const readyCount = orders.filter((o) => o.status === "ready").length;
+    const deliveredCount = todayOrders.filter((o) => o.status === "delivered").length;
+    const cancelledCount = todayOrders.filter((o) => o.status === "cancelled").length;
+
+    return {
+      netSales,
+      totalCount: validToday.length,
+      deliveryCount,
+      dineInCount,
+      takeawayCount,
+      activeInKitchen,
+      readyCount,
+      deliveredCount,
+      cancelledCount,
+    };
+  }, [todayOrders, orders]);
 
   // Play crisp 2-tone enterprise POS alert chime (A5 -> D6)
   const playPosOrderChime = useCallback(() => {
@@ -318,6 +364,8 @@ export default function OrdersLiveBoard({
 
       if (activeTab === "active") {
         if (order.status === "delivered" || order.status === "cancelled") return false;
+      } else if (activeTab === "today") {
+        if (!isOrderInTodayShift(order.created_at, openingTime, closingTime)) return false;
       } else if (activeTab === "delivery") {
         if (info.type !== "delivery") return false;
       } else if (activeTab === "tables") {
@@ -329,19 +377,36 @@ export default function OrdersLiveBoard({
       }
 
       if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        const matchNumber = order.order_number.toLowerCase().includes(q);
-        const matchCustomer = order.customer_name?.toLowerCase().includes(q);
-        const matchPhone = order.customer_phone?.toLowerCase().includes(q);
-        const matchLabel = info.label.toLowerCase().includes(q);
-        const matchRider = info.riderName?.toLowerCase().includes(q);
-        const matchAddress = info.deliveryAddress?.toLowerCase().includes(q);
-        return matchNumber || matchCustomer || matchPhone || matchLabel || !!matchRider || !!matchAddress;
+        const q = searchQuery.toLowerCase().trim();
+        const cleanDigits = q.replace(/[^0-9]/g, "");
+        const rawClean = q.replace(/^[#\s]+/, "");
+
+        const orderNumLower = (order.order_number || "").toLowerCase();
+        const matchNumber =
+          orderNumLower.includes(q) ||
+          orderNumLower.includes(rawClean) ||
+          orderNumLower.replace(/^ord-/, "").includes(rawClean) ||
+          String(order.id) === rawClean;
+
+        const matchCustomer = (order.customer_name || "").toLowerCase().includes(q);
+
+        const custPhoneClean = (order.customer_phone || "").replace(/[^0-9]/g, "");
+        const matchPhone =
+          (order.customer_phone || "").toLowerCase().includes(q) ||
+          (cleanDigits.length >= 3 && custPhoneClean.includes(cleanDigits));
+
+        const matchLabel = (info.label || "").toLowerCase().includes(q);
+        const matchTable = (order.table_number || "").toLowerCase().includes(rawClean);
+        const matchToken = (order.token_number || "").toLowerCase().includes(rawClean);
+        const matchRider = (info.riderName || "").toLowerCase().includes(q);
+        const matchAddress = (info.deliveryAddress || "").toLowerCase().includes(q);
+
+        return matchNumber || matchCustomer || matchPhone || matchLabel || matchTable || matchToken || !!matchRider || !!matchAddress;
       }
 
       return true;
     }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [orders, activeTab, searchQuery]);
+  }, [orders, activeTab, searchQuery, openingTime, closingTime]);
 
   const activeCount = orders.filter(
     (o) => o.status !== "delivered" && o.status !== "cancelled"
@@ -349,6 +414,133 @@ export default function OrdersLiveBoard({
 
   return (
     <div>
+      {/* ─── REAL-TIME SALES & SHIFT SUMMARY STRIP ────────────── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+          gap: "12px",
+          marginBottom: "20px",
+        }}
+      >
+        {/* Real-time Net Sales */}
+        <div
+          style={{
+            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+            color: "#ffffff",
+            padding: "14px 18px",
+            borderRadius: "8px",
+            boxShadow: "0 2px 10px rgba(16, 185, 129, 0.2)",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", opacity: 0.9 }}>
+                Today&apos;s Net Sales
+              </span>
+              <div style={{ fontSize: "22px", fontWeight: 800, marginTop: "4px", letterSpacing: "-0.02em" }}>
+                {currencySymbol}{salesStats.netSales.toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </div>
+            </div>
+            <div style={{ background: "rgba(255, 255, 255, 0.2)", padding: "6px", borderRadius: "8px" }}>
+              <TrendingUp size={18} />
+            </div>
+          </div>
+          <div style={{ fontSize: "11px", marginTop: "6px", opacity: 0.92, display: "flex", alignItems: "center", gap: "4px" }}>
+            <span>🕒 Operating Shift:</span>
+            <strong>{openingTime} – {closingTime}</strong>
+          </div>
+        </div>
+
+        {/* Today's Shift Orders */}
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            padding: "14px 18px",
+            borderRadius: "8px",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b" }}>
+                Today&apos;s Orders
+              </span>
+              <div style={{ fontSize: "22px", fontWeight: 800, marginTop: "4px", color: "#0f172a" }}>
+                {salesStats.totalCount} <span style={{ fontSize: "13px", fontWeight: 600, color: "#64748b" }}>Orders</span>
+              </div>
+            </div>
+            <div style={{ background: "#f1f5f9", padding: "6px", borderRadius: "8px", color: "#334155" }}>
+              <ShoppingBag size={18} />
+            </div>
+          </div>
+          <div style={{ fontSize: "11px", marginTop: "6px", color: "#64748b", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            <span>🛵 {salesStats.deliveryCount} Deliv</span>
+            <span>🍽️ {salesStats.dineInCount} Dine-In</span>
+            <span>🛍️ {salesStats.takeawayCount} Takeaway</span>
+          </div>
+        </div>
+
+        {/* In Kitchen Active */}
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #fed7aa",
+            padding: "14px 18px",
+            borderRadius: "8px",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#ea580c" }}>
+                Active in Kitchen
+              </span>
+              <div style={{ fontSize: "22px", fontWeight: 800, marginTop: "4px", color: "#c2410c" }}>
+                {salesStats.activeInKitchen} <span style={{ fontSize: "13px", fontWeight: 600, color: "#9a3412" }}>in progress</span>
+              </div>
+            </div>
+            <div style={{ background: "#fff7ed", padding: "6px", borderRadius: "8px", color: "#ea580c" }}>
+              <Flame size={18} />
+            </div>
+          </div>
+          <div style={{ fontSize: "11px", marginTop: "6px", color: "#9a3412" }}>
+            {orders.filter(o => o.status === "pending").length} Pending • {orders.filter(o => o.status === "preparing").length} In Oven
+          </div>
+        </div>
+
+        {/* Completed & Delivered */}
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #bbf7d0",
+            padding: "14px 18px",
+            borderRadius: "8px",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#16a34a" }}>
+                Completed / Out
+              </span>
+              <div style={{ fontSize: "22px", fontWeight: 800, marginTop: "4px", color: "#15803d" }}>
+                {salesStats.deliveredCount} <span style={{ fontSize: "13px", fontWeight: 600, color: "#166534" }}>Delivered</span>
+              </div>
+            </div>
+            <div style={{ background: "#f0fdf4", padding: "6px", borderRadius: "8px", color: "#16a34a" }}>
+              <CheckCircle2 size={18} />
+            </div>
+          </div>
+          <div style={{ fontSize: "11px", marginTop: "6px", color: "#166534" }}>
+            {salesStats.readyCount} Ready for pickup • {salesStats.cancelledCount} Cancelled
+          </div>
+        </div>
+      </div>
+
       {/* ─── LIVE HEADER ────────────────────────────────────── */}
       <div
         style={{
@@ -404,7 +596,7 @@ export default function OrdersLiveBoard({
         </div>
 
         {/* Sound Alert Toggle & Search */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
           <button
             type="button"
             onClick={() => {
@@ -434,32 +626,93 @@ export default function OrdersLiveBoard({
             <span>{soundEnabled ? "Sound: ON" : "Sound: OFF"}</span>
           </button>
 
-          {/* Search */}
-          <div style={{ position: "relative" }} className="w-full sm:w-[240px]">
+          {/* Sahi Search input with clear button */}
+          <div style={{ position: "relative" }} className="w-full sm:w-[280px]">
             <input
               type="text"
-              placeholder="Search order # or name..."
+              placeholder="Search #1, 001, phone, name, table..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 width: "100%",
-                padding: "9px 12px 9px 34px",
+                padding: "9px 34px 9px 34px",
                 borderRadius: "6px",
-                border: "1px solid #cbd5e1",
+                border: searchQuery ? "1px solid #10b981" : "1px solid #cbd5e1",
                 background: "#ffffff",
                 color: "#0f172a",
                 fontSize: "13px",
                 outline: "none",
                 boxSizing: "border-box",
+                boxShadow: searchQuery ? "0 0 0 2px rgba(16, 185, 129, 0.15)" : "none",
               }}
             />
             <Search
               size={15}
-              style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }}
+              style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: searchQuery ? "#10b981" : "#64748b" }}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                style={{
+                  position: "absolute",
+                  right: "8px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#94a3b8",
+                  padding: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Active Search Result Pill */}
+      {searchQuery && (
+        <div
+          style={{
+            padding: "8px 14px",
+            background: "#f0fdf4",
+            border: "1px solid #bbf7d0",
+            borderRadius: "6px",
+            marginBottom: "16px",
+            fontSize: "12px",
+            color: "#166534",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <span>
+            🔍 Found <strong>{filteredOrders.length}</strong> matching orders for <strong>&quot;{searchQuery}&quot;</strong>
+          </span>
+          <button
+            type="button"
+            onClick={() => setSearchQuery("")}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#16a34a",
+              fontWeight: 700,
+              cursor: "pointer",
+              fontSize: "11px",
+              textDecoration: "underline",
+            }}
+          >
+            Clear Search
+          </button>
+        </div>
+      )}
 
       {/* ─── STATUS FILTER TABS ──────────────────────────────── */}
       <div
@@ -472,6 +725,7 @@ export default function OrdersLiveBoard({
           paddingBottom: "12px",
         }}
       >
+        {/* Active tab */}
         <button
           onClick={() => setActiveTab("active")}
           style={{
@@ -493,6 +747,29 @@ export default function OrdersLiveBoard({
           <span>Active ({activeCount})</span>
         </button>
 
+        {/* Today's Orders (Shift-based) */}
+        <button
+          onClick={() => setActiveTab("today")}
+          style={{
+            padding: "7px 14px",
+            borderRadius: "6px",
+            fontSize: "13px",
+            fontWeight: 700,
+            cursor: "pointer",
+            border: activeTab === "today" ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
+            background: activeTab === "today" ? "#f0fdf4" : "#ffffff",
+            color: activeTab === "today" ? "#16a34a" : "#64748b",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <Clock size={14} className={activeTab === "today" ? "text-emerald-500" : ""} />
+          <span>Today ({todayOrders.length})</span>
+        </button>
+
+        {/* Delivery tab */}
         <button
           onClick={() => setActiveTab("delivery")}
           style={{
@@ -514,6 +791,7 @@ export default function OrdersLiveBoard({
           <span>Delivery ({orders.filter((o) => getOrderServiceInfo(o).type === "delivery").length})</span>
         </button>
 
+        {/* All Orders tab */}
         <button
           onClick={() => setActiveTab("all")}
           style={{

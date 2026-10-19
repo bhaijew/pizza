@@ -32,6 +32,8 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [currencySymbol, setCurrencySymbol] = useState(initialSettings.currency_symbol || "$");
   const [whatsappSessionId, setWhatsappSessionId] = useState(initialSettings.whatsapp_session_id || "");
   const [whatsappApiKey, setWhatsappApiKey] = useState(initialSettings.whatsapp_api_key || "");
+  const [openingTime, setOpeningTime] = useState(initialSettings.opening_time || "11:00");
+  const [closingTime, setClosingTime] = useState(initialSettings.closing_time || "01:00");
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))", gap: "24px" }}>
@@ -364,6 +366,145 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
                   Optional custom x-api-key for this branch shop.
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* ─── SHOP OPERATING HOURS & CROSS-MIDNIGHT SHIFT ──────── */}
+          <div
+            style={{
+              padding: "16px",
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: "6px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <span style={{ fontSize: "16px" }}>🕒</span>
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>
+                Shop Operating Hours &amp; 24h Daily Shift Reporting
+              </span>
+            </div>
+            <p style={{ margin: "0 0 14px", fontSize: "12px", color: "#64748b", lineHeight: "1.5" }}>
+              Configure your daily pizza shop shift. If you open at 11:00 AM and close post-midnight (e.g. 01:00 AM), all late-night orders placed at 12:30 AM will be recorded in that active day&apos;s closing report!
+            </p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div>
+                <label
+                  htmlFor="opening_time"
+                  style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", marginBottom: "4px" }}
+                >
+                  Opening Time (Morning / Noon)
+                </label>
+                <input
+                  id="opening_time"
+                  name="opening_time"
+                  type="time"
+                  value={openingTime}
+                  onChange={(e) => setOpeningTime(e.target.value)}
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "5px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <span style={{ fontSize: "11px", color: "#64748b", marginTop: "3px", display: "block" }}>
+                  e.g. 11:00 AM (Shop opens)
+                </span>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="closing_time"
+                  style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#334155", marginBottom: "4px" }}
+                >
+                  Closing Time (Night / Cross-Midnight)
+                </label>
+                <input
+                  id="closing_time"
+                  name="closing_time"
+                  type="time"
+                  value={closingTime}
+                  onChange={(e) => setClosingTime(e.target.value)}
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "5px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <span style={{ fontSize: "11px", color: "#64748b", marginTop: "3px", display: "block" }}>
+                  e.g. 01:00 AM (Next morning)
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Shift Presets */}
+            <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 600 }}>Quick Presets:</span>
+              <button
+                type="button"
+                onClick={() => { setOpeningTime("11:00"); setClosingTime("01:00"); }}
+                style={{
+                  fontSize: "10.5px",
+                  padding: "2px 7px",
+                  borderRadius: "4px",
+                  background: openingTime === "11:00" && closingTime === "01:00" ? "#dbeafe" : "#ffffff",
+                  border: "1px solid #cbd5e1",
+                  cursor: "pointer",
+                  color: "#1e40af",
+                  fontWeight: 700,
+                }}
+              >
+                11:00 AM – 01:00 AM
+              </button>
+              <button
+                type="button"
+                onClick={() => { setOpeningTime("12:00"); setClosingTime("02:00"); }}
+                style={{
+                  fontSize: "10.5px",
+                  padding: "2px 7px",
+                  borderRadius: "4px",
+                  background: openingTime === "12:00" && closingTime === "02:00" ? "#dbeafe" : "#ffffff",
+                  border: "1px solid #cbd5e1",
+                  cursor: "pointer",
+                  color: "#1e40af",
+                  fontWeight: 700,
+                }}
+              >
+                12:00 PM – 02:00 AM
+              </button>
+              <button
+                type="button"
+                onClick={() => { setOpeningTime("10:00"); setClosingTime("00:00"); }}
+                style={{
+                  fontSize: "10.5px",
+                  padding: "2px 7px",
+                  borderRadius: "4px",
+                  background: openingTime === "10:00" && closingTime === "00:00" ? "#dbeafe" : "#ffffff",
+                  border: "1px solid #cbd5e1",
+                  cursor: "pointer",
+                  color: "#1e40af",
+                  fontWeight: 700,
+                }}
+              >
+                10:00 AM – 12:00 AM
+              </button>
             </div>
           </div>
 

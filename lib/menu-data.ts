@@ -109,6 +109,8 @@ export interface ShopSettings {
   shop_id?: number | null;
   whatsapp_session_id?: string | null;
   whatsapp_api_key?: string | null;
+  opening_time?: string;
+  closing_time?: string;
 }
 
 const DEFAULT_SETTINGS: ShopSettings = {
@@ -120,6 +122,8 @@ const DEFAULT_SETTINGS: ShopSettings = {
   shop_id: null,
   whatsapp_session_id: null,
   whatsapp_api_key: null,
+  opening_time: "11:00",
+  closing_time: "01:00",
 };
 
 export async function fetchShopBySlugOrId(identifier: string | number): Promise<any | null> {
@@ -155,7 +159,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
     try {
       const { data: branchData } = await supabase
         .from("shops")
-        .select("id, name, currency_symbol, status, whatsapp_session_id, whatsapp_api_key")
+        .select("id, name, currency_symbol, status, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time")
         .eq("id", targetShopId)
         .maybeSingle();
 
@@ -169,6 +173,8 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
           shop_id: branchData.id,
           whatsapp_session_id: (branchData as any).whatsapp_session_id || null,
           whatsapp_api_key: (branchData as any).whatsapp_api_key || null,
+          opening_time: (branchData as any).opening_time || "11:00",
+          closing_time: (branchData as any).closing_time || "01:00",
         };
       }
     } catch {
@@ -179,7 +185,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
   try {
     const { data, error } = await supabase
       .from("shop_settings")
-      .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key")
+      .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time")
       .eq("id", "main")
       .single();
 
@@ -188,6 +194,8 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
         ...data,
         currency_symbol: data.currency_symbol || "$",
         shop_id: null,
+        opening_time: (data as any).opening_time || "11:00",
+        closing_time: (data as any).closing_time || "01:00",
       } as ShopSettings;
     }
   } catch {
@@ -207,6 +215,8 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
       shop_id: null,
       whatsapp_session_id: null,
       whatsapp_api_key: null,
+      opening_time: "11:00",
+      closing_time: "01:00",
     } as ShopSettings;
   }
 
