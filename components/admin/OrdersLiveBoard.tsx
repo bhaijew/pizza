@@ -25,13 +25,21 @@ import {
   RefreshCw,
   TrendingUp,
   X,
+  Printer,
+  Copy,
+  Check,
 } from "lucide-react";
 import OrderRecreateModal from "@/components/admin/OrderRecreateModal";
+import ThermalDualPrintModal from "@/components/admin/ThermalDualPrintModal";
 
 interface OrdersLiveBoardProps {
   initialOrders: Order[];
   currencySymbol?: string;
   shopId?: number | null;
+  shopSlug?: string | null;
+  shopName?: string;
+  shopAddress?: string | null;
+  shopPhone?: string | null;
   availableProducts?: {
     id: number;
     name: string;
@@ -44,6 +52,7 @@ interface OrdersLiveBoardProps {
   openingTime?: string;
   closingTime?: string;
 }
+
 
 type FilterTab = "active" | "today" | "all" | "delivery" | "tables" | "tokens" | "pending" | "preparing" | "ready" | "delivered" | "cancelled";
 
@@ -141,6 +150,10 @@ export default function OrdersLiveBoard({
   initialOrders,
   currencySymbol = "$",
   shopId,
+  shopSlug,
+  shopName = "Pizza Restaurant",
+  shopAddress,
+  shopPhone,
   availableProducts = [],
   userRole = "admin",
   canCancelOrders = true,
@@ -154,6 +167,22 @@ export default function OrdersLiveBoard({
   const [realtimeActive, setRealtimeActive] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [recreatingOrder, setRecreatingOrder] = useState<Order | null>(null);
+
+  // Thermal Printing state
+  const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
+  const [printTab, setPrintTab] = useState<"counter" | "kitchen" | "dual">("dual");
+  const [copiedKdsLink, setCopiedKdsLink] = useState(false);
+
+  const handleCopyKdsLink = () => {
+    if (typeof window !== "undefined") {
+      const param = shopSlug ? `?shop=${shopSlug}` : shopId ? `?shop=${shopId}` : "";
+      const kdsUrl = `${window.location.origin}/kitchen${param}`;
+      navigator.clipboard.writeText(kdsUrl);
+      setCopiedKdsLink(true);
+      setTimeout(() => setCopiedKdsLink(false), 2500);
+    }
+  };
+
 
   // Today's shift orders (Cross-midnight 24h operational cycle aware)
   const todayOrders = useMemo(() => {
@@ -625,6 +654,56 @@ export default function OrdersLiveBoard({
             {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
             <span>{soundEnabled ? "Sound: ON" : "Sound: OFF"}</span>
           </button>
+
+          {/* Standalone KDS Screen Tablet Link */}
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            <button
+              type="button"
+              onClick={handleCopyKdsLink}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "8px 12px",
+                borderRadius: "6px",
+                border: copiedKdsLink ? "1px solid #86efac" : "1px solid #cbd5e1",
+                background: copiedKdsLink ? "#f0fdf4" : "#ffffff",
+                color: copiedKdsLink ? "#15803d" : "#334155",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              title="Copy direct KDS link to open on any kitchen display/tablet"
+            >
+              {copiedKdsLink ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+              <span>{copiedKdsLink ? "KDS Link Copied!" : "📋 KDS Link"}</span>
+            </button>
+
+            <a
+              href={`/kitchen${shopSlug ? `?shop=${shopSlug}` : shopId ? `?shop=${shopId}` : ""}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "8px 12px",
+                borderRadius: "6px",
+                background: "#dc2626",
+                color: "#ffffff",
+                fontSize: "12px",
+                fontWeight: 800,
+                textDecoration: "none",
+                boxShadow: "0 1px 3px rgba(220, 38, 38, 0.25)",
+              }}
+              title="Open Standalone Kitchen Display System in new window"
+            >
+              <span>🖥️ KDS Screen</span>
+              <ExternalLink size={12} />
+            </a>
+          </div>
+
 
           {/* Sahi Search input with clear button */}
           <div style={{ position: "relative" }} className="w-full sm:w-[280px]">
@@ -1446,6 +1525,32 @@ export default function OrdersLiveBoard({
                       </div>
                     )}
 
+                    {/* Dual Thermal Print Button (Counter Bill & Kitchen KOT) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPrintingOrder(order);
+                        setPrintTab("dual");
+                      }}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: "5px",
+                        background: "#f0f9ff",
+                        color: "#0369a1",
+                        fontSize: "12px",
+                        fontWeight: 800,
+                        border: "1px solid #bae6fd",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                      }}
+                      title="Print Counter Receipt & Kitchen KOT (Dual Slips)"
+                    >
+                      <Printer size={13} />
+                      <span>🖨️ Print Slips</span>
+                    </button>
+
                     {/* Recreate / Modify Order Button */}
                     <button
                       type="button"
@@ -1537,6 +1642,22 @@ export default function OrdersLiveBoard({
           playPosOrderChime();
         }}
       />
+
+      {/* ─── THERMAL DUAL PRINT MODAL (COUNTER RECEIPT + KITCHEN KOT) ── */}
+      {printingOrder && (
+        <ThermalDualPrintModal
+          order={printingOrder}
+          shopInfo={{
+            name: shopName,
+            address: shopAddress,
+            phone: shopPhone,
+            currencySymbol: currencySymbol,
+          }}
+          defaultTab={printTab}
+          onClose={() => setPrintingOrder(null)}
+        />
+      )}
     </div>
   );
 }
+

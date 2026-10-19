@@ -27,9 +27,15 @@ export default async function AdminKitchenPage() {
     fetchSettings(),
   ]);
 
+  const kdsUrl = activeShop.shopSlug
+    ? `/kitchen?shop=${activeShop.shopSlug}`
+    : activeShop.shopId
+    ? `/kitchen?shop=${activeShop.shopId}`
+    : "/kitchen";
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+      <div className="flex items-center justify-between pb-3 border-b border-gray-200 flex-wrap gap-2">
         <div>
           <h1 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
             <span>👨‍🍳</span> Kitchen Display System (KDS)
@@ -38,22 +44,34 @@ export default async function AdminKitchenPage() {
             Live tickets for cooks & chefs. Table orders highlighted with timers and checklist.
           </p>
         </div>
-        <a
-          href="/kitchen"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 rounded"
-        >
-          <span>🖥️ Fullscreen Kitchen Tablet Mode</span>
-          <span>↗</span>
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href={kdsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 rounded shadow-sm"
+          >
+            <span>🖥️ Open Tablet KDS Screen</span>
+            <span>↗</span>
+          </a>
+        </div>
       </div>
 
       <KitchenDisplay
         initialOrders={(orders as Order[]) || []}
-        shopName={settings.shop_name || "Pizza Kitchen"}
+        shopName={activeShop.shopName || settings.shop_name || "Pizza Kitchen"}
         shopId={activeShop.shopId ? Number(activeShop.shopId) : null}
+        shopSlug={activeShop.shopSlug}
+        shopInfo={{
+          name: activeShop.shopName || settings.shop_name,
+          address: (settings as any).shop_address || "Main Boulevard, Food Street",
+          phone: (settings as any).shop_phone || "0300-1234567",
+          currencySymbol: settings.currency_symbol || "Rs.",
+          slug: activeShop.shopSlug,
+        }}
+
       />
     </div>
   );
 }
+

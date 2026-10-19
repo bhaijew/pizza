@@ -20,24 +20,86 @@ import {
   CheckCircle2,
   Sparkles,
   RefreshCw,
+  Printer,
+  Receipt,
+  Copy,
+  Check,
+  ExternalLink,
+  Zap,
 } from "lucide-react";
+import ThermalDualPrintModal from "@/components/admin/ThermalDualPrintModal";
 
 interface KitchenDisplayProps {
   initialOrders: Order[];
   shopName?: string;
   shopId?: number | null;
+  shopSlug?: string | null;
+  shopInfo?: {
+    name?: string;
+    address?: string | null;
+    phone?: string | null;
+    currencySymbol?: string;
+    slug?: string | null;
+  };
+  isStandalone?: boolean;
 }
 
 export default function KitchenDisplay({
   initialOrders,
   shopName = "Pizza Kitchen",
   shopId,
+  shopSlug,
+  shopInfo,
+  isStandalone = false,
 }: KitchenDisplayProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [filterMode, setFilterMode] = useState<"all" | "tables" | "takeaway">("all");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [currentTime, setCurrentTime] = useState(Date.now());
   const [isPending, startTransition] = useTransition();
+
+  // Printing state
+  const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
+  const [printTab, setPrintTab] = useState<"counter" | "kitchen" | "dual">("kitchen");
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [liveClock, setLiveClock] = useState<string>("");
+
+  // Live second clock for kitchen chefs
+  useEffect(() => {
+    const updateTime = () => {
+      try {
+        const now = new Date();
+        setLiveClock(now.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true }));
+      } catch {
+        setLiveClock(new Date().toLocaleTimeString());
+      }
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleCopyKdsLink = () => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const param = shopSlug ? `?shop=${shopSlug}` : shopId ? `?shop=${shopId}` : "";
+    const kdsUrl = `${origin}/kitchen${param}`;
+    navigator.clipboard.writeText(kdsUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+  };
+
+  const handleToggleFullscreen = () => {
+    if (typeof document === "undefined") return;
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen().catch(() => {});
+      setIsFullscreen(false);
+    }
+  };
+
 
   // Tick every 30 seconds to update order elapsed times
   useEffect(() => {
@@ -273,6 +335,76 @@ export default function KitchenDisplay({
               <span>Takeaway Only</span>
             </button>
           </div>
+
+          {/* Live Clock for Kitchen Chefs */}
+          {liveClock && (
+            <div
+              style={{
+                padding: "6px 12px",
+                borderRadius: 6,
+                background: "#0f172a",
+                color: "#f8fafc",
+                fontSize: 12,
+                fontWeight: 800,
+                fontFamily: "monospace",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+              }}
+            >
+              <Clock size={13} className="text-amber-400" />
+              <span>{liveClock}</span>
+            </div>
+          )}
+
+          {/* Copy KDS Direct Link Button */}
+          <button
+            type="button"
+            onClick={handleCopyKdsLink}
+            style={{
+              padding: "7px 12px",
+              borderRadius: 6,
+              border: copiedLink ? "1px solid #86efac" : "1px solid #cbd5e1",
+              background: copiedLink ? "#f0fdf4" : "#ffffff",
+              color: copiedLink ? "#15803d" : "#334155",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              transition: "all 0.15s ease",
+            }}
+            title="Copy standalone KDS link to open on any kitchen tablet, iPad, or TV"
+          >
+            {copiedLink ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+            <span>{copiedLink ? "KDS Link Copied!" : "📋 KDS Link"}</span>
+          </button>
+
+          {/* Fullscreen Button */}
+          <button
+            type="button"
+            onClick={handleToggleFullscreen}
+            style={{
+              padding: "7px 12px",
+              borderRadius: 6,
+              border: "1px solid #cbd5e1",
+              background: "#ffffff",
+              color: "#334155",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              transition: "all 0.15s ease",
+            }}
+            title="Toggle fullscreen mode for kitchen tablet display"
+          >
+            <span>🖥️</span>
+            <span>{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
+          </button>
 
           <button
             type="button"
@@ -522,8 +654,88 @@ export default function KitchenDisplay({
                   </div>
                 </div>
 
-                {/* 1-Click Cook Actions */}
+                {/* 1-Click Cook Actions & Thermal Printing */}
                 <div style={{ padding: "12px 14px", background: "#f8fafc", borderTop: "1px solid #e2e8f0" }}>
+                  {/* Thermal Slip Print Quick Buttons */}
+                  <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPrintingOrder(order);
+                        setPrintTab("kitchen");
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: "6px 8px",
+                        borderRadius: "5px",
+                        background: "#fffbeb",
+                        border: "1px solid #fde68a",
+                        color: "#b45309",
+                        fontSize: "11px",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                      }}
+                      title="Print Chef KOT Ticket without prices"
+                    >
+                      <Printer size={13} />
+                      <span>Print KOT</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPrintingOrder(order);
+                        setPrintTab("counter");
+                      }}
+                      style={{
+                        padding: "6px 8px",
+                        borderRadius: "5px",
+                        background: "#f0f9ff",
+                        border: "1px solid #bae6fd",
+                        color: "#0369a1",
+                        fontSize: "11px",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                      title="Print Customer Counter Bill with pricing & totals"
+                    >
+                      <Receipt size={13} />
+                      <span>Bill</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPrintingOrder(order);
+                        setPrintTab("dual");
+                      }}
+                      style={{
+                        padding: "6px 8px",
+                        borderRadius: "5px",
+                        background: "#fef2f2",
+                        border: "1px solid #fecaca",
+                        color: "#dc2626",
+                        fontSize: "11px",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                      title="Print Both: Counter Bill + Kitchen KOT (2 Slips)"
+                    >
+                      <Zap size={13} />
+                      <span>Both</span>
+                    </button>
+                  </div>
+
                   {order.status !== "preparing" ? (
                     <button
                       type="button"
@@ -583,6 +795,22 @@ export default function KitchenDisplay({
           })}
         </div>
       )}
+
+      {/* ─── THERMAL DUAL PRINT MODAL (COUNTER BILL + KITCHEN KOT) ───── */}
+      {printingOrder && (
+        <ThermalDualPrintModal
+          order={printingOrder}
+          shopInfo={{
+            name: shopName,
+            address: shopInfo?.address,
+            phone: shopInfo?.phone,
+            currencySymbol: shopInfo?.currencySymbol || "Rs.",
+          }}
+          defaultTab={printTab}
+          onClose={() => setPrintingOrder(null)}
+        />
+      )}
     </div>
   );
 }
+

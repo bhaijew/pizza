@@ -48,9 +48,14 @@ export default async function AdminOrdersPage() {
     <div>
       <OrdersLiveBoard
         initialOrders={(orders as Order[]) || []}
-        currencySymbol={settings.currency_symbol || "$"}
+        currencySymbol={settings.currency_symbol || "Rs."}
         shopId={activeShop.shopId ? Number(activeShop.shopId) : null}
+        shopSlug={activeShop.shopSlug}
+        shopName={activeShop.shopName || settings.shop_name}
+        shopAddress={(settings as any).shop_address || "Main Boulevard, Food Street"}
+        shopPhone={(settings as any).shop_phone || "0300-1234567"}
         availableProducts={formattedProducts}
+
         userRole={activeShop.role}
         canCancelOrders={activeShop.canCancelOrders}
         openingTime={settings.opening_time || "11:00"}
@@ -59,3 +64,4 @@ export default async function AdminOrdersPage() {
     </div>
   );
 }
+

@@ -6,7 +6,9 @@ import Link from "next/link";
 import DemoNav from "@/components/demo/DemoNav";
 import { createClient } from "@/utils/supabase/client";
 import OrderRecreateModal from "@/components/admin/OrderRecreateModal";
+import ThermalDualPrintModal from "@/components/admin/ThermalDualPrintModal";
 import type { Order } from "@/types/menu";
+
 
 interface POSOrder {
   id: string;
@@ -1042,7 +1044,7 @@ function POSContent() {
                           cursor: "pointer",
                         }}
                       >
-                        🖨️ Thermal Receipt
+                        🖨️ Print Slips (KOT & Bill)
                       </button>
 
                       <button
@@ -1087,88 +1089,21 @@ function POSContent() {
         )}
       </div>
 
-      {/* ─── THERMAL RECEIPT MODAL ──────────────────────────────────── */}
+      {/* ─── THERMAL DUAL-SLIP RECEIPT & KOT MODAL ──────────────────── */}
       {viewingReceiptOrder && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.8)",
-            zIndex: 300,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
+        <ThermalDualPrintModal
+          order={viewingReceiptOrder}
+          shopInfo={{
+            name: activeShop?.name,
+            address: activeShop?.address,
+            phone: activeShop?.phone,
+            currencySymbol: "Rs.",
           }}
-        >
-          <div
-            style={{
-              background: "#ffffff",
-              color: "#000000",
-              fontFamily: "monospace",
-              borderRadius: 6,
-              maxWidth: 340,
-              width: "100%",
-              padding: "24px 20px",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
-            }}
-          >
-            <div style={{ textAlign: "center", borderBottom: "1px dashed #000", paddingBottom: 10, marginBottom: 10 }}>
-              <div style={{ fontSize: 16, fontWeight: 900 }}>{activeShop?.name?.toUpperCase() || "PIZZA SHOP"}</div>
-              <div style={{ fontSize: 11 }}>{activeShop?.address || "Main Branch, Pakistan"}</div>
-              <div style={{ fontSize: 11 }}>Tel: {activeShop?.phone || "0300-1234567"}</div>
-              <div style={{ fontSize: 12, fontWeight: 900, marginTop: 6 }}>
-                ORDER #{viewingReceiptOrder.orderNumber}
-              </div>
-            </div>
-
-            <div style={{ fontSize: 11, marginBottom: 10, lineHeight: 1.4 }}>
-              <div>Branch: {activeShop?.name} (ID: #{activeShop?.id})</div>
-              <div>Customer: {viewingReceiptOrder.customerName}</div>
-              <div>Phone: {viewingReceiptOrder.customerPhone}</div>
-              <div>Type: {viewingReceiptOrder.orderType.toUpperCase()}</div>
-              {viewingReceiptOrder.tableNumber && <div>Table: {viewingReceiptOrder.tableNumber}</div>}
-              <div>Date: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</div>
-            </div>
-
-            <div style={{ borderTop: "1px dashed #000", borderBottom: "1px dashed #000", padding: "8px 0", marginBottom: 10 }}>
-              {viewingReceiptOrder.items.map((item, idx) => (
-                <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
-                  <span>{item.qty}x {item.name}</span>
-                  <span>Rs. {item.price.toLocaleString()}</span>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ fontSize: 13, fontWeight: 900, display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
-              <span>NET TOTAL:</span>
-              <span>Rs. {viewingReceiptOrder.total.toLocaleString()}</span>
-            </div>
-
-            <div style={{ textAlign: "center", fontSize: 10, borderTop: "1px dashed #000", paddingTop: 8, marginBottom: 16 }}>
-              <div>*** THANK YOU FOR YOUR ORDER ***</div>
-              <div>Powered by Pizza Management POS</div>
-            </div>
-
-            <button
-              onClick={() => setViewingReceiptOrder(null)}
-              style={{
-                width: "100%",
-                background: "#09090b",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: 4,
-                padding: "8px",
-                fontSize: 12,
-                fontWeight: 900,
-                cursor: "pointer",
-              }}
-            >
-              Close Receipt
-            </button>
-          </div>
-        </div>
+          defaultTab="dual"
+          onClose={() => setViewingReceiptOrder(null)}
+        />
       )}
+
 
       {/* ─── WHATSAPP ALERT PREVIEW MODAL ──────────────────────────── */}
       {whatsappModalOrder && (
