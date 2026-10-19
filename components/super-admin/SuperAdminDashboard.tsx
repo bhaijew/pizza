@@ -229,6 +229,10 @@ export default function SuperAdminDashboard({
     if (editingId) {
       const res = await updateShop(editingId, formData);
       if (!res.error) {
+        const nextStatus = (formData.get("status") as "active" | "suspended" | "pending") || "active";
+        const newPosPin = (formData.get("pos_pin") as string)?.trim();
+        const newPassword = (formData.get("password") as string)?.trim();
+
         setShops((prev) =>
           prev.map((s) => {
             if (s.id === editingId) {
@@ -239,10 +243,10 @@ export default function SuperAdminDashboard({
                 owner_phone: (formData.get("owner_phone") as string) || null,
                 owner_email: (formData.get("owner_email") as string) || null,
                 branch_address: (formData.get("branch_address") as string) || null,
-                password: (formData.get("password") as string) || s.password,
+                password: newPassword || s.password,
                 currency_symbol: formData.get("currency_symbol") as string,
                 plan: formData.get("plan") as "starter" | "pro" | "enterprise",
-                status: formData.get("status") as "active" | "suspended" | "pending",
+                status: nextStatus,
                 notes: (formData.get("notes") as string) || null,
                 whatsapp_session_id: (formData.get("whatsapp_session_id") as string) || null,
                 whatsapp_api_key: (formData.get("whatsapp_api_key") as string) || null,
@@ -251,6 +255,35 @@ export default function SuperAdminDashboard({
             return s;
           })
         );
+
+        if (newPosPin) {
+          setStaffList((prev) =>
+            prev.map((st) =>
+              (st.shop_id === editingId || String(st.shop_id) === String(editingId)) && st.role === "owner"
+                ? { ...st, pin: newPosPin, is_active: nextStatus === "active" }
+                : st
+            )
+          );
+        }
+
+        const targetShop = shops.find((s) => s.id === editingId);
+        if (targetShop && targetShop.status !== nextStatus) {
+          setMetrics((prev) => ({
+            ...prev,
+            activeShops:
+              targetShop.status === "active"
+                ? Math.max(0, prev.activeShops - 1)
+                : nextStatus === "active"
+                ? prev.activeShops + 1
+                : prev.activeShops,
+            suspendedShops:
+              targetShop.status === "suspended"
+                ? Math.max(0, prev.suspendedShops - 1)
+                : nextStatus === "suspended"
+                ? prev.suspendedShops + 1
+                : prev.suspendedShops,
+          }));
+        }
       }
       return res;
     } else {
@@ -3149,21 +3182,42 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
 
       {/* ─── MODALS ───────────────────────────────────────────────────────────── */}
       {/* Branch Modal */}
-      <ShopModal
-        isOpen={isBranchModalOpen}
-        onClose={() => setIsBranchModalOpen(false)}
-        onSubmit={handleBranchModalSubmit}
-        editingShop={editingShop}
-      />
+      {isBranchModalOpen && (
+        <ShopModal
+          key={editingShop ? `edit-shop-${editingShop.id}` : "create-branch"}
+          isOpen={isBranchModalOpen}
+          onClose={() => {
+            setIsBranchModalOpen(false);
+            setEditingShop(null);
+          }}
+          onSubmit={handleBranchModalSubmit}
+          editingShop={editingShop}
+          ownerPin={
+            editingShop
+              ? staffList.find(
+                  (st) =>
+                    (st.shop_id === editingShop.id || String(st.shop_id) === String(editingShop.id)) &&
+                    st.role === "owner"
+                )?.pin || (editingShop as any)?.pos_pin
+              : undefined
+          }
+        />
+      )}
 
       {/* Staff Modal */}
-      <StaffModal
-        isOpen={isStaffModalOpen}
-        onClose={() => setIsStaffModalOpen(false)}
-        onSubmit={handleStaffModalSubmit}
-        editingStaff={editingStaff}
-        shops={shops}
-      />
+      {isStaffModalOpen && (
+        <StaffModal
+          key={editingStaff ? `edit-staff-${editingStaff.id}` : "create-staff"}
+          isOpen={isStaffModalOpen}
+          onClose={() => {
+            setIsStaffModalOpen(false);
+            setEditingStaff(null);
+          }}
+          onSubmit={handleStaffModalSubmit}
+          editingStaff={editingStaff}
+          shops={shops}
+        />
+      )}
 
       {/* Download POS Modal instance */}
       <DownloadPosModal

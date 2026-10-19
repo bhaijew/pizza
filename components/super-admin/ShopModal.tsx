@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Shop } from "@/types/menu";
 import {
   Building2,
@@ -27,6 +27,7 @@ interface ShopModalProps {
   onClose: () => void;
   onSubmit: (formData: FormData, editingId?: number | string) => Promise<{ error: string | null }>;
   editingShop?: Shop | null;
+  ownerPin?: string | null;
 }
 
 export default function ShopModal({
@@ -34,6 +35,7 @@ export default function ShopModal({
   onClose,
   onSubmit,
   editingShop,
+  ownerPin,
 }: ShopModalProps) {
   const isEditing = !!editingShop;
 
@@ -43,7 +45,7 @@ export default function ShopModal({
   const [ownerEmail, setOwnerEmail] = useState(editingShop?.owner_email || "");
   const [branchAddress, setBranchAddress] = useState(editingShop?.branch_address || "");
   const [password, setPassword] = useState(editingShop?.password || "shop123");
-  const [posPin, setPosPin] = useState("1234");
+  const [posPin, setPosPin] = useState(ownerPin || (editingShop as any)?.pos_pin || "1234");
   const [currencySymbol, setCurrencySymbol] = useState(editingShop?.currency_symbol || "Rs.");
   const [plan, setPlan] = useState<"starter" | "pro" | "enterprise">(editingShop?.plan || "pro");
   const [status, setStatus] = useState<"active" | "suspended" | "pending">(editingShop?.status || "active");
@@ -53,6 +55,39 @@ export default function ShopModal({
 
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (editingShop) {
+      setName(editingShop.name || "");
+      setOwnerName(editingShop.owner_name || "");
+      setOwnerPhone(editingShop.owner_phone || "");
+      setOwnerEmail(editingShop.owner_email || "");
+      setBranchAddress(editingShop.branch_address || "");
+      setPassword(editingShop.password || "shop123");
+      setPosPin(ownerPin || (editingShop as any)?.pos_pin || (editingShop as any)?.posPin || "1234");
+      setCurrencySymbol(editingShop.currency_symbol || "Rs.");
+      setPlan(editingShop.plan || "pro");
+      setStatus(editingShop.status || "active");
+      setNotes(editingShop.notes || "");
+      setWhatsappSessionId(editingShop.whatsapp_session_id || "");
+      setWhatsappApiKey(editingShop.whatsapp_api_key || "");
+    } else {
+      setName("");
+      setOwnerName("");
+      setOwnerPhone("");
+      setOwnerEmail("");
+      setBranchAddress("");
+      setPassword("shop123");
+      setPosPin("1234");
+      setCurrencySymbol("Rs.");
+      setPlan("pro");
+      setStatus("active");
+      setNotes("");
+      setWhatsappSessionId("");
+      setWhatsappApiKey("");
+    }
+    setError(null);
+  }, [editingShop, ownerPin, isOpen]);
 
   if (!isOpen) return null;
 
@@ -109,6 +144,11 @@ export default function ShopModal({
 
   return (
     <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
       style={{
         position: "fixed",
         inset: 0,
@@ -168,7 +208,9 @@ export default function ShopModal({
                 {isEditing ? `Edit Branch: ${editingShop.name}` : "Register New Shop Branch"}
               </h2>
               <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                Configure multi-tenant branch parameters and terminal access credentials.
+                {isEditing
+                  ? `ID #${editingShop.id} • Slug: /${editingShop.slug}`
+                  : "Configure multi-tenant branch parameters and terminal access credentials."}
               </p>
             </div>
           </div>
