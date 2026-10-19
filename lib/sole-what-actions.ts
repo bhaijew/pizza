@@ -21,7 +21,7 @@ export interface SoleWhatStatus {
 export async function getSoleWhatStatus(): Promise<SoleWhatStatus> {
   const activeShop = await getActiveShopContext();
   const defaultGatewayUrl = process.env.WHATSAPP_GATEWAY_URL || "https://solewhat-production-33f6.up.railway.app";
-  const defaultApiKey = process.env.DEFAULT_WHATSAPP_API_KEY || "wag_qF0HVpcLGTxuqGZvBLO1I2057gJUwiV8";
+  const defaultApiKey = process.env.DEFAULT_WHATSAPP_API_KEY || "wag_8iBNQyfmDmSpZEvF0SsL7rtM2UzNzJ8M";
 
   let sessionId: string | null = null;
   let apiKey: string | null = defaultApiKey;
@@ -170,7 +170,7 @@ export async function sendSoleWhatTestMessage(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": status.apiKey || "wag_qF0HVpcLGTxuqGZvBLO1I2057gJUwiV8",
+        "x-api-key": status.apiKey || "wag_8iBNQyfmDmSpZEvF0SsL7rtM2UzNzJ8M",
       },
       body: JSON.stringify({
         to: formattedPhone,

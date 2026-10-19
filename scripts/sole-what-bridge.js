@@ -23,7 +23,7 @@ const CONFIG = {
   SESSION_ID: process.env.WHATSAPP_SESSION_ID || "rhs5o",
   
   // API Key for Sole-What
-  API_KEY: process.env.WHATSAPP_API_KEY || "wag_qF0HVpcLGTxuqGZvBLO1I2057gJUwiV8",
+  API_KEY: process.env.WHATSAPP_API_KEY || "wag_8iBNQyfmDmSpZEvF0SsL7rtM2UzNzJ8M",
   
   // Pizza App URL
   PIZZA_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",

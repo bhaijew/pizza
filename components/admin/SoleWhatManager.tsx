@@ -122,7 +122,7 @@ const http = require('http');
 const CONFIG = {
   GATEWAY_URL: '${gatewayUrl}',
   SESSION_ID: '${sessionId || "rhs5o"}',
-  API_KEY: '${apiKey || "wag_qF0HVpcLGTxuqGZvBLO1I2057gJUwiV8"}',
+  API_KEY: '${apiKey || "wag_8iBNQyfmDmSpZEvF0SsL7rtM2UzNzJ8M"}',
 };
 
 console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);

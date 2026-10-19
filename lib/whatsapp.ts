@@ -51,7 +51,7 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
   shopName: string;
   currencySymbol: string;
 }> {
-  const defaultApiKey = process.env.DEFAULT_WHATSAPP_API_KEY || "wag_qF0HVpcLGTxuqGZvBLO1I2057gJUwiV8";
+  const defaultApiKey = process.env.DEFAULT_WHATSAPP_API_KEY || "wag_8iBNQyfmDmSpZEvF0SsL7rtM2UzNzJ8M";
 
   let sessionId: string | null = null;
   let apiKey = defaultApiKey;
