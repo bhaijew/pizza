@@ -62,6 +62,22 @@ const SLIDER_SIZE_PRESETS = [
   { label: "Hero Banner", height: 260, desc: "Full visual impact on mobile" },
 ];
 
+const HERO_GRADIENT_PRESETS = [
+  { label: "Theme Match", gradient: "", desc: "Auto-syncs with primary theme color" },
+  { label: "Fire Ember", gradient: "linear-gradient(135deg, #7f1d1d 0%, #b91c1c 35%, #ea580c 75%, #f59e0b 100%)", desc: "Warm fiery pizza oven glow" },
+  { label: "Midnight Sourdough", gradient: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #311042 75%, #451a03 100%)", desc: "Sleek dark violet & amber" },
+  { label: "Tuscan Brick", gradient: "linear-gradient(135deg, #431407 0%, #7c2d12 40%, #9a3412 80%, #c2410c 100%)", desc: "Rustic artisanal clay brick" },
+  { label: "Emerald Herb", gradient: "linear-gradient(135deg, #022c22 0%, #064e3b 45%, #047857 85%, #10b981 100%)", desc: "Fresh basil & olive garden" },
+  { label: "Dark Obsidian", gradient: "linear-gradient(135deg, #09090b 0%, #18181b 50%, #27272a 100%)", desc: "Minimalist stealth charcoal" },
+];
+
+const HERO_BG_IMAGE_PRESETS = [
+  { label: "Stone Baked Pizza", url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200&auto=format&fit=crop&q=80" },
+  { label: "Artisan Oven", url: "https://images.unsplash.com/photo-1579751626657-72bc17010498?w=1200&auto=format&fit=crop&q=80" },
+  { label: "Chef Prep Kitchen", url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80" },
+  { label: "Gourmet Table", url: "https://images.unsplash.com/photo-1544025162-d76694265947?w=1200&auto=format&fit=crop&q=80" },
+];
+
 export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [state, formAction, isPending] = useActionState(updateSettings, {
     error: null,
@@ -84,6 +100,55 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   // ─── Mobile Slider State ───────────────────────────
   const [sliderEnabled, setSliderEnabled] = useState(initialSettings.slider_enabled !== false);
   const [sliderHeight, setSliderHeight] = useState(initialSettings.slider_height_mobile || 180);
+
+  // ─── Hero Customization State ──────────────────────
+  const [heroBadgeText, setHeroBadgeText] = useState(
+    initialSettings.hero_badge_text !== undefined ? initialSettings.hero_badge_text : "Artisan Kitchen • Stone Baked Daily"
+  );
+  const [heroTitle, setHeroTitle] = useState(
+    initialSettings.hero_title !== undefined ? initialSettings.hero_title : "Handcrafted Pizzas."
+  );
+  const [heroTitleHighlight, setHeroTitleHighlight] = useState(
+    initialSettings.hero_title_highlight !== undefined ? initialSettings.hero_title_highlight : "Fresh Every Order."
+  );
+  const [heroSubtitle, setHeroSubtitle] = useState(
+    initialSettings.hero_subtitle !== undefined
+      ? initialSettings.hero_subtitle
+      : "Fresh stone-baked pizzas, burgers & drinks prepared to order."
+  );
+  const [heroBtnPrimaryText, setHeroBtnPrimaryText] = useState(
+    initialSettings.hero_btn_primary_text !== undefined ? initialSettings.hero_btn_primary_text : "Explore Menu"
+  );
+  const [heroBtnPrimaryLink, setHeroBtnPrimaryLink] = useState(
+    initialSettings.hero_btn_primary_link || "#menu"
+  );
+  const [heroBtnSecondaryText, setHeroBtnSecondaryText] = useState(
+    initialSettings.hero_btn_secondary_text !== undefined ? initialSettings.hero_btn_secondary_text : ""
+  );
+  const [heroBtnSecondaryLink, setHeroBtnSecondaryLink] = useState(
+    initialSettings.hero_btn_secondary_link || "#specials"
+  );
+  const [heroChip1Text, setHeroChip1Text] = useState(
+    initialSettings.hero_chip1_text !== undefined ? initialSettings.hero_chip1_text : "10-15 Min Stone Bake"
+  );
+  const [heroChip2Text, setHeroChip2Text] = useState(
+    initialSettings.hero_chip2_text !== undefined ? initialSettings.hero_chip2_text : "100% Real Whole Cheese"
+  );
+  const [heroChip3Text, setHeroChip3Text] = useState(
+    initialSettings.hero_chip3_text !== undefined ? initialSettings.hero_chip3_text : ""
+  );
+  const [heroShowChips, setHeroShowChips] = useState(
+    initialSettings.hero_show_chips !== undefined ? initialSettings.hero_show_chips : true
+  );
+  const [heroBgType, setHeroBgType] = useState<"gradient" | "solid" | "image">(
+    initialSettings.hero_bg_type || "gradient"
+  );
+  const [heroBgColor, setHeroBgColor] = useState(initialSettings.hero_bg_color || "#7f1d1d");
+  const [heroBgGradient, setHeroBgGradient] = useState(initialSettings.hero_bg_gradient || "");
+  const [heroBgImage, setHeroBgImage] = useState(initialSettings.hero_bg_image || "");
+  const [heroShowPattern, setHeroShowPattern] = useState(
+    initialSettings.hero_show_pattern !== undefined ? initialSettings.hero_show_pattern : true
+  );
 
   const initialSlides: PromoSlide[] = useMemo(() => {
     if (Array.isArray(initialSettings.slider_images) && initialSettings.slider_images.length > 0) {
@@ -136,6 +201,15 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   };
 
   const activeSlide = slides[previewSlideIdx] || slides[0] || DEFAULT_PROMO_SLIDES[0];
+
+  let previewHeroBg = `linear-gradient(135deg, ${themeColor} 0%, #b91c1c 30%, #c2410c 70%, #d97706 100%)`;
+  if (heroBgType === "image" && heroBgImage?.trim()) {
+    previewHeroBg = `linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.82)), url("${heroBgImage.trim()}") center/cover no-repeat`;
+  } else if (heroBgType === "solid" && heroBgColor?.trim()) {
+    previewHeroBg = heroBgColor.trim();
+  } else if (heroBgGradient?.trim()) {
+    previewHeroBg = heroBgGradient.trim();
+  }
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 460px), 1fr))", gap: "28px", alignItems: "start" }}>
@@ -203,6 +277,23 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
           <input type="hidden" name="slider_enabled" value={sliderEnabled ? "true" : "false"} />
           <input type="hidden" name="slider_height_mobile" value={sliderHeight} />
           <input type="hidden" name="slider_images" value={JSON.stringify(slides)} />
+          <input type="hidden" name="hero_badge_text" value={heroBadgeText} />
+          <input type="hidden" name="hero_title" value={heroTitle} />
+          <input type="hidden" name="hero_title_highlight" value={heroTitleHighlight} />
+          <input type="hidden" name="hero_subtitle" value={heroSubtitle} />
+          <input type="hidden" name="hero_btn_primary_text" value={heroBtnPrimaryText} />
+          <input type="hidden" name="hero_btn_primary_link" value={heroBtnPrimaryLink} />
+          <input type="hidden" name="hero_btn_secondary_text" value={heroBtnSecondaryText} />
+          <input type="hidden" name="hero_btn_secondary_link" value={heroBtnSecondaryLink} />
+          <input type="hidden" name="hero_chip1_text" value={heroChip1Text} />
+          <input type="hidden" name="hero_chip2_text" value={heroChip2Text} />
+          <input type="hidden" name="hero_chip3_text" value={heroChip3Text} />
+          <input type="hidden" name="hero_show_chips" value={heroShowChips ? "true" : "false"} />
+          <input type="hidden" name="hero_bg_type" value={heroBgType} />
+          <input type="hidden" name="hero_bg_color" value={heroBgColor} />
+          <input type="hidden" name="hero_bg_gradient" value={heroBgGradient} />
+          <input type="hidden" name="hero_bg_image" value={heroBgImage} />
+          <input type="hidden" name="hero_show_pattern" value={heroShowPattern ? "true" : "false"} />
 
           {/* ═══════════════════════════════════════════════════
               SECTION 1: MENU THEME COLOR CUSTOMIZER
@@ -506,7 +597,518 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
           </div>
 
           {/* ═══════════════════════════════════════════════════
-              SECTION 3: SHOP NAME & BRANDING
+              SECTION 3: HERO BANNER, TEXT & BACKGROUND CUSTOMIZER
+          ═══════════════════════════════════════════════════ */}
+          <div
+            style={{
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: "10px",
+              padding: "16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <Sparkles size={16} style={{ color: themeColor }} />
+              <span style={{ fontSize: "13px", fontWeight: 800, color: "#0f172a" }}>
+                Menu Hero Banner, Text &amp; Background
+              </span>
+            </div>
+            <p style={{ margin: "0 0 16px", fontSize: "11px", color: "#64748b", lineHeight: 1.4 }}>
+              Customize or remove any text from the top restaurant banner. <strong>Leave any field empty to hide that element completely</strong>.
+            </p>
+
+            {/* Sub-section A: Headline & Texts */}
+            <div
+              style={{
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+                padding: "14px",
+                marginBottom: "14px",
+              }}
+            >
+              <div style={{ fontSize: "12px", fontWeight: 800, color: "#0f172a", marginBottom: "12px" }}>
+                1. Banner Headlines &amp; Description
+              </div>
+
+              {/* Badge Text */}
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569" }}>
+                    Top Badge Text
+                  </label>
+                  {heroBadgeText && (
+                    <button
+                      type="button"
+                      onClick={() => setHeroBadgeText("")}
+                      style={{ fontSize: "10px", color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}
+                    >
+                      Clear / Remove
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={heroBadgeText}
+                  onChange={(e) => setHeroBadgeText(e.target.value)}
+                  placeholder="e.g. Artisan Kitchen • Stone Baked Daily (Leave empty to remove)"
+                  style={{
+                    width: "100%",
+                    padding: "7px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "12px",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <span style={{ fontSize: "10px", color: "#94a3b8" }}>
+                  Shown at top in golden badge. If blank, badge will not render.
+                </span>
+              </div>
+
+              {/* Main Title & Highlight Accent Title Grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                    Hero Main Title
+                  </label>
+                  <input
+                    type="text"
+                    value={heroTitle}
+                    onChange={(e) => setHeroTitle(e.target.value)}
+                    placeholder="e.g. Handcrafted Pizzas."
+                    style={{
+                      width: "100%",
+                      padding: "7px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "12px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                    Accent Highlight Title (Golden)
+                  </label>
+                  <input
+                    type="text"
+                    value={heroTitleHighlight}
+                    onChange={(e) => setHeroTitleHighlight(e.target.value)}
+                    placeholder="e.g. Fresh Every Order."
+                    style={{
+                      width: "100%",
+                      padding: "7px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "12px",
+                      boxSizing: "border-box",
+                      color: "#b45309",
+                      fontWeight: 700,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Subtitle */}
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569" }}>
+                    Hero Subtitle / Description
+                  </label>
+                  {heroSubtitle && (
+                    <button
+                      type="button"
+                      onClick={() => setHeroSubtitle("")}
+                      style={{ fontSize: "10px", color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}
+                    >
+                      Clear / Remove
+                    </button>
+                  )}
+                </div>
+                <textarea
+                  rows={2}
+                  value={heroSubtitle}
+                  onChange={(e) => setHeroSubtitle(e.target.value)}
+                  placeholder="e.g. Fresh stone-baked pizzas, burgers & drinks prepared to order."
+                  style={{
+                    width: "100%",
+                    padding: "7px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "12px",
+                    boxSizing: "border-box",
+                    resize: "vertical",
+                  }}
+                />
+                <span style={{ fontSize: "10px", color: "#16a34a", fontWeight: 600 }}>
+                  ✓ Unused &quot;live tracking&quot; wording removed. Leave empty to hide description completely.
+                </span>
+              </div>
+            </div>
+
+            {/* Sub-section B: Action Buttons */}
+            <div
+              style={{
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+                padding: "14px",
+                marginBottom: "14px",
+              }}
+            >
+              <div style={{ fontSize: "12px", fontWeight: 800, color: "#0f172a", marginBottom: "12px" }}>
+                2. Action Buttons
+              </div>
+
+              {/* Primary Button */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                    Primary Button Text
+                  </label>
+                  <input
+                    type="text"
+                    value={heroBtnPrimaryText}
+                    onChange={(e) => setHeroBtnPrimaryText(e.target.value)}
+                    placeholder="e.g. Explore Menu"
+                    style={{
+                      width: "100%",
+                      padding: "7px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "12px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                    Primary Button Link
+                  </label>
+                  <input
+                    type="text"
+                    value={heroBtnPrimaryLink}
+                    onChange={(e) => setHeroBtnPrimaryLink(e.target.value)}
+                    placeholder="#menu"
+                    style={{
+                      width: "100%",
+                      padding: "7px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "12px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Secondary Button ("Kitchen Standards") */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "4px" }}>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                    Secondary Button Text (Kitchen Standards)
+                  </label>
+                  <input
+                    type="text"
+                    value={heroBtnSecondaryText}
+                    onChange={(e) => setHeroBtnSecondaryText(e.target.value)}
+                    placeholder="(Removed by default — leave blank to keep hidden)"
+                    style={{
+                      width: "100%",
+                      padding: "7px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "12px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                    Secondary Button Link
+                  </label>
+                  <input
+                    type="text"
+                    value={heroBtnSecondaryLink}
+                    onChange={(e) => setHeroBtnSecondaryLink(e.target.value)}
+                    placeholder="#specials"
+                    style={{
+                      width: "100%",
+                      padding: "7px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "12px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+              <span style={{ fontSize: "10px", color: heroBtnSecondaryText ? "#ea580c" : "#16a34a", fontWeight: 600 }}>
+                {heroBtnSecondaryText
+                  ? `Active: Secondary button "${heroBtnSecondaryText}" will appear.`
+                  : "✓ Kitchen Standards button is removed/hidden. Type text above if you want to re-enable it."}
+              </span>
+            </div>
+
+            {/* Sub-section C: Feature Highlight Chips */}
+            <div
+              style={{
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+                padding: "14px",
+                marginBottom: "14px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <div style={{ fontSize: "12px", fontWeight: 800, color: "#0f172a" }}>
+                  3. Feature Highlight Chips
+                </div>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={heroShowChips}
+                    onChange={(e) => setHeroShowChips(e.target.checked)}
+                    style={{ cursor: "pointer" }}
+                  />
+                  <span>Show Chips</span>
+                </label>
+              </div>
+
+              {heroShowChips && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div>
+                    <label style={{ fontSize: "10px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "3px" }}>
+                      Chip 1 (Clock Icon)
+                    </label>
+                    <input
+                      type="text"
+                      value={heroChip1Text}
+                      onChange={(e) => setHeroChip1Text(e.target.value)}
+                      placeholder="e.g. 10-15 Min Stone Bake (Leave blank to remove)"
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        borderRadius: "5px",
+                        border: "1px solid #cbd5e1",
+                        fontSize: "12px",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: "10px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "3px" }}>
+                      Chip 2 (Shield Icon)
+                    </label>
+                    <input
+                      type="text"
+                      value={heroChip2Text}
+                      onChange={(e) => setHeroChip2Text(e.target.value)}
+                      placeholder="e.g. 100% Real Whole Cheese (Leave blank to remove)"
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        borderRadius: "5px",
+                        border: "1px solid #cbd5e1",
+                        fontSize: "12px",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: "10px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "3px" }}>
+                      Chip 3 (Live Kitchen Tracking)
+                    </label>
+                    <input
+                      type="text"
+                      value={heroChip3Text}
+                      onChange={(e) => setHeroChip3Text(e.target.value)}
+                      placeholder="(Live Kitchen Tracking text removed — leave blank to keep hidden)"
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        borderRadius: "5px",
+                        border: "1px solid #cbd5e1",
+                        fontSize: "12px",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                    <span style={{ fontSize: "10px", color: heroChip3Text ? "#ea580c" : "#16a34a", fontWeight: 600 }}>
+                      {heroChip3Text
+                        ? `Active: Chip "${heroChip3Text}" is showing.`
+                        : "✓ \"Live Kitchen Tracking\" chip text is removed/hidden."}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sub-section D: Hero Background Customizer */}
+            <div
+              style={{
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+                padding: "14px",
+              }}
+            >
+              <div style={{ fontSize: "12px", fontWeight: 800, color: "#0f172a", marginBottom: "12px" }}>
+                4. Hero Banner Background
+              </div>
+
+              {/* Background Type Switcher */}
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
+                {[
+                  { id: "gradient", label: "Gradient Presets" },
+                  { id: "solid", label: "Solid Color" },
+                  { id: "image", label: "Background Image" },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setHeroBgType(t.id as any)}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      border: heroBgType === t.id ? `2px solid ${themeColor}` : "1px solid #cbd5e1",
+                      background: heroBgType === t.id ? `${themeColor}15` : "#ffffff",
+                      color: heroBgType === t.id ? themeColor : "#475569",
+                    }}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Gradient Presets */}
+              {heroBgType === "gradient" && (
+                <div>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "6px" }}>
+                    Select Gradient Preset:
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "6px", marginBottom: "10px" }}>
+                    {HERO_GRADIENT_PRESETS.map((gp) => {
+                      const isSel = (heroBgGradient === gp.gradient);
+                      const bg = gp.gradient || `linear-gradient(135deg, ${themeColor} 0%, #b91c1c 30%, #c2410c 70%, #d97706 100%)`;
+                      return (
+                        <button
+                          key={gp.label}
+                          type="button"
+                          onClick={() => setHeroBgGradient(gp.gradient)}
+                          style={{
+                            padding: "8px",
+                            borderRadius: "6px",
+                            border: isSel ? `2px solid #0f172a` : "1px solid #cbd5e1",
+                            background: bg,
+                            color: "#ffffff",
+                            textAlign: "left",
+                            cursor: "pointer",
+                            boxShadow: isSel ? "0 2px 8px rgba(0,0,0,0.25)" : "none",
+                          }}
+                        >
+                          <div style={{ fontSize: "11px", fontWeight: 800, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
+                            {gp.label}
+                          </div>
+                          <div style={{ fontSize: "9px", opacity: 0.85, textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}>
+                            {gp.desc}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Solid Color */}
+              {heroBgType === "solid" && (
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                    Pick Custom Solid Background Color:
+                  </label>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <input
+                      type="color"
+                      value={heroBgColor || "#7f1d1d"}
+                      onChange={(e) => setHeroBgColor(e.target.value)}
+                      style={{ width: "36px", height: "36px", borderRadius: "6px", border: "1px solid #cbd5e1", cursor: "pointer", padding: "2px" }}
+                    />
+                    <input
+                      type="text"
+                      value={heroBgColor}
+                      onChange={(e) => setHeroBgColor(e.target.value)}
+                      placeholder="#7f1d1d"
+                      style={{ width: "120px", padding: "8px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px", fontFamily: "monospace" }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Background Image */}
+              {heroBgType === "image" && (
+                <div>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "6px" }}>
+                    Pick Preset Food / Kitchen Photo:
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "10px" }}>
+                    {HERO_BG_IMAGE_PRESETS.map((img) => (
+                      <button
+                        key={img.label}
+                        type="button"
+                        onClick={() => setHeroBgImage(img.url)}
+                        style={{
+                          height: "54px",
+                          borderRadius: "6px",
+                          position: "relative",
+                          overflow: "hidden",
+                          border: heroBgImage === img.url ? `2px solid ${themeColor}` : "1px solid #cbd5e1",
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
+                      >
+                        <img src={img.url} alt={img.label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <span style={{ position: "absolute", bottom: 0, insetInline: 0, background: "rgba(0,0,0,0.65)", color: "#fff", fontSize: "8px", fontWeight: 700, padding: "2px" }}>
+                          {img.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>
+                    Or Custom Background Image URL:
+                  </label>
+                  <input
+                    type="url"
+                    value={heroBgImage}
+                    onChange={(e) => setHeroBgImage(e.target.value)}
+                    placeholder="https://images.unsplash.com/photo-..."
+                    style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "12px", boxSizing: "border-box" }}
+                  />
+                </div>
+              )}
+
+              {/* Grid Pattern Toggle */}
+              <div style={{ marginTop: "12px", paddingTop: "10px", borderTop: "1px solid #f1f5f9" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", fontWeight: 600, color: "#475569", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={heroShowPattern}
+                    onChange={(e) => setHeroShowPattern(e.target.checked)}
+                    style={{ cursor: "pointer" }}
+                  />
+                  <span>Show subtle modern square grid overlay pattern</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════
+              SECTION 4: SHOP NAME & BRANDING
           ═══════════════════════════════════════════════════ */}
           <div>
             <label htmlFor="shop_name" style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "5px" }}>
@@ -861,6 +1463,128 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
                   }}
                 >
                   Cart ({currencySymbol}0)
+                </div>
+              </div>
+
+              {/* Live Mini Hero Preview in Mobile Phone Mockup */}
+              <div
+                style={{
+                  position: "relative",
+                  overflow: "hidden",
+                  background: previewHeroBg,
+                  color: "#ffffff",
+                  padding: "12px 10px 10px",
+                  borderBottom: `2px solid ${themeColor}`,
+                  transition: "background 0.25s ease",
+                }}
+              >
+                {/* Pattern overlay */}
+                {heroShowPattern && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      backgroundImage:
+                        "linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px)",
+                      backgroundSize: "20px 20px",
+                      pointerEvents: "none",
+                    }}
+                  />
+                )}
+
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  {/* Badge */}
+                  {heroBadgeText.trim() && (
+                    <div
+                      style={{
+                        display: "inline-block",
+                        background: "rgba(254, 240, 138, 0.2)",
+                        border: "1px solid rgba(254, 240, 138, 0.4)",
+                        borderRadius: "3px",
+                        padding: "1px 5px",
+                        marginBottom: "4px",
+                        fontSize: "8px",
+                        fontWeight: 800,
+                        color: "#fef08a",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {heroBadgeText.trim()}
+                    </div>
+                  )}
+
+                  {/* Title */}
+                  {(heroTitle.trim() || heroTitleHighlight.trim()) && (
+                    <div style={{ fontSize: "13px", fontWeight: 900, lineHeight: 1.2, marginBottom: "3px" }}>
+                      {heroTitle.trim() && <span>{heroTitle.trim()} </span>}
+                      {heroTitleHighlight.trim() && (
+                        <span style={{ color: "#fde047" }}>{heroTitleHighlight.trim()}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Subtitle */}
+                  {heroSubtitle.trim() && (
+                    <div style={{ fontSize: "9px", color: "#fef2f2", lineHeight: 1.3, marginBottom: "8px", opacity: 0.9 }}>
+                      {heroSubtitle.trim()}
+                    </div>
+                  )}
+
+                  {/* Buttons */}
+                  {(heroBtnPrimaryText.trim() || heroBtnSecondaryText.trim()) && (
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "8px", flexWrap: "wrap" }}>
+                      {heroBtnPrimaryText.trim() && (
+                        <span
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: "3px",
+                            background: "#fbbf24",
+                            color: "#7c2d12",
+                            fontSize: "9px",
+                            fontWeight: 800,
+                          }}
+                        >
+                          {heroBtnPrimaryText.trim()} ↓
+                        </span>
+                      )}
+                      {heroBtnSecondaryText.trim() && (
+                        <span
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: "3px",
+                            background: "rgba(255, 255, 255, 0.15)",
+                            color: "#ffffff",
+                            border: "1px solid rgba(255, 255, 255, 0.4)",
+                            fontSize: "9px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {heroBtnSecondaryText.trim()}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Highlight Chips */}
+                  {heroShowChips && (heroChip1Text.trim() || heroChip2Text.trim() || heroChip3Text.trim()) && (
+                    <div style={{ display: "flex", gap: "4px", overflowX: "hidden", paddingTop: "5px", borderTop: "1px solid rgba(255, 255, 255, 0.2)" }}>
+                      {heroChip1Text.trim() && (
+                        <span style={{ fontSize: "8px", fontWeight: 700, background: "rgba(0,0,0,0.25)", padding: "2px 5px", borderRadius: "3px" }}>
+                          ⏱ {heroChip1Text.trim()}
+                        </span>
+                      )}
+                      {heroChip2Text.trim() && (
+                        <span style={{ fontSize: "8px", fontWeight: 700, background: "rgba(0,0,0,0.25)", padding: "2px 5px", borderRadius: "3px" }}>
+                          🛡 {heroChip2Text.trim()}
+                        </span>
+                      )}
+                      {heroChip3Text.trim() && (
+                        <span style={{ fontSize: "8px", fontWeight: 700, background: "rgba(0,0,0,0.25)", padding: "2px 5px", borderRadius: "3px" }}>
+                          🚚 {heroChip3Text.trim()}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

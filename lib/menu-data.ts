@@ -119,6 +119,25 @@ export interface ShopSettings {
   slider_enabled?: boolean;
   slider_height_mobile?: number;
   slider_images?: PromoSlide[] | string | null;
+
+  // Hero Section Customization
+  hero_badge_text?: string;
+  hero_title?: string;
+  hero_title_highlight?: string;
+  hero_subtitle?: string;
+  hero_btn_primary_text?: string;
+  hero_btn_primary_link?: string;
+  hero_btn_secondary_text?: string;
+  hero_btn_secondary_link?: string;
+  hero_chip1_text?: string;
+  hero_chip2_text?: string;
+  hero_chip3_text?: string;
+  hero_show_chips?: boolean;
+  hero_bg_type?: "gradient" | "solid" | "image";
+  hero_bg_color?: string;
+  hero_bg_gradient?: string;
+  hero_bg_image?: string;
+  hero_show_pattern?: boolean;
 }
 
 const DEFAULT_SETTINGS: ShopSettings = {
@@ -136,6 +155,25 @@ const DEFAULT_SETTINGS: ShopSettings = {
   slider_enabled: true,
   slider_height_mobile: 180,
   slider_images: DEFAULT_PROMO_SLIDES,
+
+  // Default Hero Section settings
+  hero_badge_text: "Artisan Kitchen • Stone Baked Daily",
+  hero_title: "Handcrafted Pizzas.",
+  hero_title_highlight: "Fresh Every Order.",
+  hero_subtitle: "Fresh stone-baked pizzas, burgers & drinks prepared to order.",
+  hero_btn_primary_text: "Explore Menu",
+  hero_btn_primary_link: "#menu",
+  hero_btn_secondary_text: "",
+  hero_btn_secondary_link: "#specials",
+  hero_chip1_text: "10-15 Min Stone Bake",
+  hero_chip2_text: "100% Real Whole Cheese",
+  hero_chip3_text: "",
+  hero_show_chips: true,
+  hero_bg_type: "gradient",
+  hero_bg_color: "",
+  hero_bg_gradient: "",
+  hero_bg_image: "",
+  hero_show_pattern: true,
 };
 
 export async function fetchShopBySlugOrId(identifier: string | number): Promise<any | null> {
@@ -171,7 +209,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
     try {
       const { data: branchData } = await supabase
         .from("shops")
-        .select("id, name, currency_symbol, status, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images")
+        .select("id, name, currency_symbol, status, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern")
         .eq("id", targetShopId)
         .maybeSingle();
 
@@ -185,6 +223,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
           }
         }
         return {
+          ...DEFAULT_SETTINGS,
           shop_name: branchData.name,
           menu_title: `${branchData.name} Menu`,
           meta_title: `${branchData.name} — Order Online`,
@@ -199,6 +238,23 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
           slider_enabled: (branchData as any).slider_enabled !== false,
           slider_height_mobile: Number((branchData as any).slider_height_mobile) || 180,
           slider_images: Array.isArray(parsedSlides) && parsedSlides.length > 0 ? parsedSlides : DEFAULT_PROMO_SLIDES,
+          hero_badge_text: (branchData as any).hero_badge_text ?? DEFAULT_SETTINGS.hero_badge_text,
+          hero_title: (branchData as any).hero_title ?? DEFAULT_SETTINGS.hero_title,
+          hero_title_highlight: (branchData as any).hero_title_highlight ?? DEFAULT_SETTINGS.hero_title_highlight,
+          hero_subtitle: (branchData as any).hero_subtitle ?? DEFAULT_SETTINGS.hero_subtitle,
+          hero_btn_primary_text: (branchData as any).hero_btn_primary_text ?? DEFAULT_SETTINGS.hero_btn_primary_text,
+          hero_btn_primary_link: (branchData as any).hero_btn_primary_link || DEFAULT_SETTINGS.hero_btn_primary_link,
+          hero_btn_secondary_text: (branchData as any).hero_btn_secondary_text ?? DEFAULT_SETTINGS.hero_btn_secondary_text,
+          hero_btn_secondary_link: (branchData as any).hero_btn_secondary_link || DEFAULT_SETTINGS.hero_btn_secondary_link,
+          hero_chip1_text: (branchData as any).hero_chip1_text ?? DEFAULT_SETTINGS.hero_chip1_text,
+          hero_chip2_text: (branchData as any).hero_chip2_text ?? DEFAULT_SETTINGS.hero_chip2_text,
+          hero_chip3_text: (branchData as any).hero_chip3_text ?? DEFAULT_SETTINGS.hero_chip3_text,
+          hero_show_chips: (branchData as any).hero_show_chips !== undefined ? (branchData as any).hero_show_chips : DEFAULT_SETTINGS.hero_show_chips,
+          hero_bg_type: (branchData as any).hero_bg_type || DEFAULT_SETTINGS.hero_bg_type,
+          hero_bg_color: (branchData as any).hero_bg_color || "",
+          hero_bg_gradient: (branchData as any).hero_bg_gradient || "",
+          hero_bg_image: (branchData as any).hero_bg_image || "",
+          hero_show_pattern: (branchData as any).hero_show_pattern !== undefined ? (branchData as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
         };
       }
     } catch {
@@ -209,7 +265,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
   try {
     const { data, error } = await supabase
       .from("shop_settings")
-      .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images")
+      .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern")
       .eq("id", "main")
       .single();
 
@@ -223,6 +279,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
         }
       }
       return {
+        ...DEFAULT_SETTINGS,
         ...data,
         currency_symbol: data.currency_symbol || "$",
         shop_id: null,
@@ -232,6 +289,23 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
         slider_enabled: (data as any).slider_enabled !== false,
         slider_height_mobile: Number((data as any).slider_height_mobile) || 180,
         slider_images: Array.isArray(parsedSlides) && parsedSlides.length > 0 ? parsedSlides : DEFAULT_PROMO_SLIDES,
+        hero_badge_text: (data as any).hero_badge_text ?? DEFAULT_SETTINGS.hero_badge_text,
+        hero_title: (data as any).hero_title ?? DEFAULT_SETTINGS.hero_title,
+        hero_title_highlight: (data as any).hero_title_highlight ?? DEFAULT_SETTINGS.hero_title_highlight,
+        hero_subtitle: (data as any).hero_subtitle ?? DEFAULT_SETTINGS.hero_subtitle,
+        hero_btn_primary_text: (data as any).hero_btn_primary_text ?? DEFAULT_SETTINGS.hero_btn_primary_text,
+        hero_btn_primary_link: (data as any).hero_btn_primary_link || DEFAULT_SETTINGS.hero_btn_primary_link,
+        hero_btn_secondary_text: (data as any).hero_btn_secondary_text ?? DEFAULT_SETTINGS.hero_btn_secondary_text,
+        hero_btn_secondary_link: (data as any).hero_btn_secondary_link || DEFAULT_SETTINGS.hero_btn_secondary_link,
+        hero_chip1_text: (data as any).hero_chip1_text ?? DEFAULT_SETTINGS.hero_chip1_text,
+        hero_chip2_text: (data as any).hero_chip2_text ?? DEFAULT_SETTINGS.hero_chip2_text,
+        hero_chip3_text: (data as any).hero_chip3_text ?? DEFAULT_SETTINGS.hero_chip3_text,
+        hero_show_chips: (data as any).hero_show_chips !== undefined ? (data as any).hero_show_chips : DEFAULT_SETTINGS.hero_show_chips,
+        hero_bg_type: (data as any).hero_bg_type || DEFAULT_SETTINGS.hero_bg_type,
+        hero_bg_color: (data as any).hero_bg_color || "",
+        hero_bg_gradient: (data as any).hero_bg_gradient || "",
+        hero_bg_image: (data as any).hero_bg_image || "",
+        hero_show_pattern: (data as any).hero_show_pattern !== undefined ? (data as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
       } as ShopSettings;
     }
   } catch {
@@ -246,6 +320,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
 
   if (fallbackData) {
     return {
+      ...DEFAULT_SETTINGS,
       ...fallbackData,
       currency_symbol: fallbackData.currency_symbol || "$",
       shop_id: null,

@@ -757,6 +757,25 @@ export async function updateSettings(
   const theme_color = (formData.get("theme_color") as string)?.trim() || "#ea580c";
   const slider_enabled = formData.get("slider_enabled") !== "false";
   const slider_height_mobile = parseInt(formData.get("slider_height_mobile") as string, 10) || 180;
+
+  // Hero Section fields
+  const hero_badge_text = (formData.get("hero_badge_text") as string) !== null ? (formData.get("hero_badge_text") as string).trim() : "";
+  const hero_title = (formData.get("hero_title") as string) !== null ? (formData.get("hero_title") as string).trim() : "";
+  const hero_title_highlight = (formData.get("hero_title_highlight") as string) !== null ? (formData.get("hero_title_highlight") as string).trim() : "";
+  const hero_subtitle = (formData.get("hero_subtitle") as string) !== null ? (formData.get("hero_subtitle") as string).trim() : "";
+  const hero_btn_primary_text = (formData.get("hero_btn_primary_text") as string) !== null ? (formData.get("hero_btn_primary_text") as string).trim() : "";
+  const hero_btn_primary_link = (formData.get("hero_btn_primary_link") as string)?.trim() || "#menu";
+  const hero_btn_secondary_text = (formData.get("hero_btn_secondary_text") as string) !== null ? (formData.get("hero_btn_secondary_text") as string).trim() : "";
+  const hero_btn_secondary_link = (formData.get("hero_btn_secondary_link") as string)?.trim() || "#specials";
+  const hero_chip1_text = (formData.get("hero_chip1_text") as string) !== null ? (formData.get("hero_chip1_text") as string).trim() : "";
+  const hero_chip2_text = (formData.get("hero_chip2_text") as string) !== null ? (formData.get("hero_chip2_text") as string).trim() : "";
+  const hero_chip3_text = (formData.get("hero_chip3_text") as string) !== null ? (formData.get("hero_chip3_text") as string).trim() : "";
+  const hero_show_chips = formData.get("hero_show_chips") === "true";
+  const hero_bg_type = (formData.get("hero_bg_type") as string)?.trim() || "gradient";
+  const hero_bg_color = (formData.get("hero_bg_color") as string)?.trim() || "";
+  const hero_bg_gradient = (formData.get("hero_bg_gradient") as string)?.trim() || "";
+  const hero_bg_image = (formData.get("hero_bg_image") as string)?.trim() || "";
+  const hero_show_pattern = formData.get("hero_show_pattern") !== "false";
   
   let slider_images: any = null;
   const rawSliderImages = formData.get("slider_images") as string;
@@ -772,6 +791,26 @@ export async function updateSettings(
     return { error: "Shop name, menu title, and meta title are required.", success: false };
   }
 
+  const heroPayload = {
+    hero_badge_text,
+    hero_title,
+    hero_title_highlight,
+    hero_subtitle,
+    hero_btn_primary_text,
+    hero_btn_primary_link,
+    hero_btn_secondary_text,
+    hero_btn_secondary_link,
+    hero_chip1_text,
+    hero_chip2_text,
+    hero_chip3_text,
+    hero_show_chips,
+    hero_bg_type,
+    hero_bg_color,
+    hero_bg_gradient,
+    hero_bg_image,
+    hero_show_pattern,
+  };
+
   if (activeShop.shopId) {
     // Update branch in public.shops table
     const updatePayload: Record<string, any> = {
@@ -784,6 +823,7 @@ export async function updateSettings(
       theme_color,
       slider_enabled,
       slider_height_mobile,
+      ...heroPayload,
     };
     if (slider_images !== null) {
       updatePayload.slider_images = slider_images;
@@ -796,20 +836,26 @@ export async function updateSettings(
 
     // Fallback if columns pending migration
     if (shopError) {
-      delete updatePayload.theme_color;
-      delete updatePayload.slider_enabled;
-      delete updatePayload.slider_height_mobile;
-      delete updatePayload.slider_images;
-      delete updatePayload.whatsapp_session_id;
-      delete updatePayload.whatsapp_api_key;
-      delete updatePayload.opening_time;
-      delete updatePayload.closing_time;
+      const basicPayload: Record<string, any> = {
+        name: shop_name,
+        currency_symbol,
+        whatsapp_session_id,
+        whatsapp_api_key,
+        opening_time,
+        closing_time,
+        theme_color,
+        slider_enabled,
+        slider_height_mobile,
+      };
+      if (slider_images !== null) basicPayload.slider_images = slider_images;
 
-      const retry = await db
-        .from("shops")
-        .update({ name: shop_name, currency_symbol })
-        .eq("id", activeShop.shopId);
-      shopError = retry.error;
+      const retry1 = await db.from("shops").update(basicPayload).eq("id", activeShop.shopId);
+      if (retry1.error) {
+        const retry2 = await db.from("shops").update({ name: shop_name, currency_symbol }).eq("id", activeShop.shopId);
+        shopError = retry2.error;
+      } else {
+        shopError = null;
+      }
     }
 
     if (shopError) return { error: shopError.message, success: false };
@@ -839,6 +885,7 @@ export async function updateSettings(
       theme_color,
       slider_enabled,
       slider_height_mobile,
+      ...heroPayload,
     };
     if (slider_images !== null) {
       upsertPayload.slider_images = slider_images;
@@ -850,19 +897,30 @@ export async function updateSettings(
 
     // Fallback if columns pending migration
     if (error) {
-      delete upsertPayload.theme_color;
-      delete upsertPayload.slider_enabled;
-      delete upsertPayload.slider_height_mobile;
-      delete upsertPayload.slider_images;
-      delete upsertPayload.whatsapp_session_id;
-      delete upsertPayload.whatsapp_api_key;
-      delete upsertPayload.opening_time;
-      delete upsertPayload.closing_time;
+      const basicPayload: Record<string, any> = {
+        id: "main",
+        shop_name,
+        menu_title,
+        meta_title,
+        meta_description,
+        currency_symbol,
+        whatsapp_session_id,
+        whatsapp_api_key,
+        opening_time,
+        closing_time,
+        theme_color,
+        slider_enabled,
+        slider_height_mobile,
+      };
+      if (slider_images !== null) basicPayload.slider_images = slider_images;
 
-      const retry = await db
-        .from("shop_settings")
-        .upsert({ id: "main", shop_name, menu_title, meta_title, meta_description, currency_symbol });
-      error = retry.error;
+      const retry1 = await db.from("shop_settings").upsert(basicPayload);
+      if (retry1.error) {
+        const retry2 = await db.from("shop_settings").upsert({ id: "main", shop_name, menu_title, meta_title, meta_description, currency_symbol });
+        error = retry2.error;
+      } else {
+        error = null;
+      }
     }
 
     if (error) return { error: error.message, success: false };

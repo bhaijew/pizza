@@ -103,6 +103,7 @@ function MenuInner({
         <HeroSection
           verifiedTable={currentVerifiedTable}
           themeColor={settings?.theme_color || "#991b1b"}
+          settings={settings}
         />
 
         {/* Featured Deals & Promo Banner Slider */}
