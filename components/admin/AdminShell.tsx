@@ -635,174 +635,60 @@ export default function AdminShell({
             background: isLight ? "#f8fafc" : "rgba(0, 0, 0, 0.22)",
           }}
         >
-          {/* Theme Toggle Pill */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "6px 10px",
-              borderRadius: "8px",
-              background: isLight ? "#ffffff" : "rgba(255, 255, 255, 0.05)",
-              border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.08)",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: isLight ? "#64748b" : "#94a3b8",
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-              }}
-            >
-              {isLight ? <Sun size={13} /> : <Moon size={13} />}
-              Sidebar Theme
-            </span>
+          {/* Dark Mode Toggle & Download POS in ONE single row */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
             <button
               type="button"
               onClick={toggleSidebarTheme}
               style={{
-                display: "inline-flex",
+                display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: "5px",
-                padding: "4px 10px",
-                borderRadius: "5px",
-                background: isLight ? "#0f172a" : "#ffffff",
-                color: isLight ? "#ffffff" : "#0f172a",
+                padding: "6px 8px",
+                borderRadius: "6px",
+                background: isLight ? "#ffffff" : "rgba(255, 255, 255, 0.06)",
+                border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
+                color: isLight ? "#0f172a" : "#f8fafc",
                 fontSize: "11px",
-                fontWeight: 800,
-                border: "none",
+                fontWeight: 700,
                 cursor: "pointer",
                 transition: "all 0.15s ease",
               }}
+              title="Toggle Dark / Light Theme"
             >
-              {isLight ? <Moon size={11} /> : <Sun size={11} />}
+              {isLight ? <Moon size={12} className="text-amber-500" /> : <Sun size={12} className="text-amber-400" />}
               <span>{isLight ? "Dark" : "Light"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setDownloadPosOpen(true)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "5px",
+                padding: "6px 8px",
+                borderRadius: "6px",
+                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
+                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
+                color: isLight ? "#16a34a" : "#34d399",
+                fontSize: "11px",
+                fontWeight: 800,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              className="hover:scale-[1.02]"
+              title="Download FloDesktop Windows POS Launcher or Install PWA"
+            >
+              <Download size={12} />
+              <span>POS App</span>
             </button>
           </div>
 
-          {/* Customer Menu Link Card */}
-          <div
-            style={{
-              padding: "10px 12px",
-              background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.08)",
-              borderRadius: "8px",
-              border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.25)",
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 800,
-                  color: isLight ? "#16a34a" : "#34d399",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <Store size={12} />
-                Live Customer Menu
-              </span>
-              <button
-                type="button"
-                onClick={handleCopyMenu}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: copiedLink
-                    ? isLight
-                      ? "#16a34a"
-                      : "#34d399"
-                    : isLight
-                    ? "#15803d"
-                    : "#6ee7b7",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "3px",
-                  padding: 0,
-                  transition: "color 0.15s ease",
-                }}
-                title="Copy live customer menu link"
-              >
-                {copiedLink ? <Check size={12} /> : <Copy size={12} />}
-                <span>{copiedLink ? "Copied!" : "Copy"}</span>
-              </button>
-            </div>
-
-            <Link
-              href={customerMenuUrl}
-              target="_blank"
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                color: isLight ? "#15803d" : "#a7f3d0",
-                textDecoration: "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "4px",
-                fontFamily: "monospace",
-              }}
-              title="Open shop customer menu in new tab"
-            >
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {customerMenuUrl}
-              </span>
-              <ExternalLink size={11} style={{ flexShrink: 0 }} />
-            </Link>
-          </div>
-
-          {/* Download POS Terminal Option */}
-          <button
-            type="button"
-            onClick={() => setDownloadPosOpen(true)}
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "10px 12px",
-              borderRadius: "8px",
-              background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
-              border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
-              color: isLight ? "#16a34a" : "#34d399",
-              cursor: "pointer",
-              transition: "all 0.18s ease",
-            }}
-            className="hover:scale-[1.02]"
-            title="Download FloDesktop Windows POS Launcher or Install PWA"
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Download size={15} />
-              <span style={{ fontSize: "12px", fontWeight: 800 }}>Download POS</span>
-            </div>
-            <span
-              style={{
-                fontSize: "9px",
-                fontWeight: 900,
-                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                color: "#ffffff",
-                padding: "2px 6px",
-                borderRadius: "4px",
-                letterSpacing: "0.04em",
-              }}
-            >
-              APP
-            </span>
-          </button>
-
-          <form action={adminLogout}>
+          {/* Small Logout Button */}
+          <form action={adminLogout} style={{ width: "100%" }}>
             <button
               type="submit"
               style={{
@@ -810,20 +696,21 @@ export default function AdminShell({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "8px",
-                padding: "9px 12px",
-                borderRadius: "8px",
-                background: isLight ? "#fef2f2" : "rgba(239, 68, 68, 0.12)",
+                gap: "6px",
+                padding: "6px 10px",
+                borderRadius: "6px",
+                background: isLight ? "#fef2f2" : "rgba(239, 68, 68, 0.1)",
                 color: "#dc2626",
-                fontSize: "12px",
+                fontSize: "11px",
                 fontWeight: 700,
-                border: isLight ? "1px solid #fecaca" : "1px solid rgba(239, 68, 68, 0.3)",
+                border: isLight ? "1px solid #fecaca" : "1px solid rgba(239, 68, 68, 0.25)",
                 cursor: "pointer",
                 transition: "all 0.15s ease",
               }}
               className="hover:opacity-90"
+              title="Sign Out Terminal"
             >
-              <LogOut size={14} />
+              <LogOut size={12} />
               <span>Sign Out Terminal</span>
             </button>
           </form>
@@ -951,12 +838,12 @@ export default function AdminShell({
               />
               <Clock size={13} className="text-emerald-500" style={{ flexShrink: 0 }} />
               <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", whiteSpace: "nowrap" }}>
-                <span style={{ fontFamily: "monospace", fontSize: "12.5px", fontWeight: 800, letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
+                <span style={{ fontFamily: "monospace", fontSize: "12px", fontWeight: 800, letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
                   {pakistanTime || "Loading..."}
                 </span>
                 <span
                   style={{
-                    fontSize: "9.5px",
+                    fontSize: "9px",
                     fontWeight: 800,
                     background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
                     color: "#ffffff",
@@ -968,11 +855,6 @@ export default function AdminShell({
                 >
                   PKT
                 </span>
-                {pakistanDate && (
-                  <span style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8", fontWeight: 600, whiteSpace: "nowrap" }}>
-                    ({pakistanDate})
-                  </span>
-                )}
               </div>
             </div>
 
@@ -1555,119 +1437,62 @@ export default function AdminShell({
               background: isLight ? "#f8fafc" : "rgba(0, 0, 0, 0.25)",
             }}
           >
-            {/* Theme Toggle */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "6px 10px",
-                borderRadius: "8px",
-                background: isLight ? "#ffffff" : "rgba(255, 255, 255, 0.05)",
-                border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.08)",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: isLight ? "#64748b" : "#94a3b8",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "5px",
-                }}
-              >
-                {isLight ? <Sun size={13} /> : <Moon size={13} />}
-                Sidebar Theme
-              </span>
+            {/* Dark Mode Toggle & Download POS in ONE single row */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
               <button
                 type="button"
                 onClick={toggleSidebarTheme}
                 style={{
-                  display: "inline-flex",
+                  display: "flex",
                   alignItems: "center",
-                  gap: "4px",
-                  padding: "3px 8px",
-                  borderRadius: "5px",
-                  background: isLight ? "#0f172a" : "#ffffff",
-                  color: isLight ? "#ffffff" : "#0f172a",
+                  justifyContent: "center",
+                  gap: "5px",
+                  padding: "6px 8px",
+                  borderRadius: "6px",
+                  background: isLight ? "#ffffff" : "rgba(255, 255, 255, 0.06)",
+                  border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
+                  color: isLight ? "#0f172a" : "#f8fafc",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+                title="Toggle Dark / Light Theme"
+              >
+                {isLight ? <Moon size={12} className="text-amber-500" /> : <Sun size={12} className="text-amber-400" />}
+                <span>{isLight ? "Dark" : "Light"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setDownloadPosOpen(true);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "5px",
+                  padding: "6px 8px",
+                  borderRadius: "6px",
+                  background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
+                  border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
+                  color: isLight ? "#16a34a" : "#34d399",
                   fontSize: "11px",
                   fontWeight: 800,
-                  border: "none",
                   cursor: "pointer",
+                  transition: "all 0.15s ease",
                 }}
+                title="Download POS Terminal"
               >
-                {isLight ? <Moon size={11} /> : <Sun size={11} />}
-                <span>{isLight ? "Dark" : "Light"}</span>
+                <Download size={12} />
+                <span>POS App</span>
               </button>
             </div>
 
-            {/* Download POS Terminal Button */}
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setDownloadPosOpen(true);
-              }}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "9px 12px",
-                borderRadius: "8px",
-                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                color: "#ffffff",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: 800,
-                fontSize: "12px",
-                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Download size={15} />
-                <span>Download POS Terminal</span>
-              </div>
-              <span
-                style={{
-                  fontSize: "9px",
-                  background: "rgba(255, 255, 255, 0.25)",
-                  padding: "2px 5px",
-                  borderRadius: "3px",
-                }}
-              >
-                APP
-              </span>
-            </button>
-
-            {/* Customer Live Menu Link */}
-            <Link
-              href={customerMenuUrl}
-              target="_blank"
-              onClick={() => setMobileMenuOpen(false)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                padding: "8px 12px",
-                borderRadius: "8px",
-                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
-                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.25)",
-                color: isLight ? "#16a34a" : "#34d399",
-                fontSize: "12px",
-                fontWeight: 700,
-                textDecoration: "none",
-              }}
-            >
-              <Store size={14} />
-              <span>Open Customer Menu</span>
-              <ExternalLink size={12} />
-            </Link>
-
-            {/* Sign Out */}
-            <form action={adminLogout}>
+            {/* Small Logout Button */}
+            <form action={adminLogout} style={{ width: "100%" }}>
               <button
                 type="submit"
                 style={{
@@ -1675,18 +1500,20 @@ export default function AdminShell({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "7px",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  background: isLight ? "#fef2f2" : "rgba(239, 68, 68, 0.12)",
+                  gap: "6px",
+                  padding: "6px 10px",
+                  borderRadius: "6px",
+                  background: isLight ? "#fef2f2" : "rgba(239, 68, 68, 0.1)",
                   color: "#dc2626",
-                  fontSize: "12px",
+                  fontSize: "11px",
                   fontWeight: 700,
-                  border: isLight ? "1px solid #fecaca" : "1px solid rgba(239, 68, 68, 0.3)",
+                  border: isLight ? "1px solid #fecaca" : "1px solid rgba(239, 68, 68, 0.25)",
                   cursor: "pointer",
+                  transition: "all 0.15s ease",
                 }}
+                title="Sign Out Terminal"
               >
-                <LogOut size={13} />
+                <LogOut size={12} />
                 <span>Sign Out Terminal</span>
               </button>
             </form>
