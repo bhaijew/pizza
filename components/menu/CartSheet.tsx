@@ -1220,47 +1220,7 @@ export default function CartSheet({
                   </p>
                 )}
 
-                {/* Quick suggestions pills */}
-                {!appliedPromo && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: "#b45309" }}>Quick:</span>
-                    {[
-                      { code: "WELCOME20", label: "WELCOME20 (20% OFF)" },
-                      { code: "FLAT100", label: "FLAT100 (Rs. 100 OFF)" },
-                      { code: "PIZZA500", label: "PIZZA500 (Rs. 500 OFF)" },
-                    ].map((promo) => (
-                      <button
-                        key={promo.code}
-                        type="button"
-                        onClick={async () => {
-                          setPromoInput(promo.code);
-                          setPromoLoading(true);
-                          setPromoMsg(null);
-                          const res = await validatePromoCode(promo.code, totalPrice, shopId);
-                          setPromoLoading(false);
-                          if (res.valid) {
-                            setAppliedPromo(res);
-                            setPromoMsg({ type: "success", text: res.message });
-                          } else {
-                            setPromoMsg({ type: "error", text: res.message });
-                          }
-                        }}
-                        style={{
-                          padding: "3px 8px",
-                          borderRadius: 3,
-                          border: "1px solid #fde68a",
-                          background: "#ffffff",
-                          color: "#92400e",
-                          fontSize: 10,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                        }}
-                      >
-                        {promo.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+
               </div>
 
               {/* Feature 5: Customer Loyalty Points Banner */}

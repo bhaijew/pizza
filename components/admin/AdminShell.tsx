@@ -635,7 +635,7 @@ export default function AdminShell({
         <div
           style={{
             marginTop: "auto",
-            padding: "8px 10px 8px",
+            padding: "8px 10px 0",
             borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
             display: "flex",
             flexDirection: "column",
@@ -1438,7 +1438,7 @@ export default function AdminShell({
           <div
             style={{
               marginTop: "auto",
-              padding: "8px 10px 8px",
+              padding: "8px 10px 0",
               borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
               display: "flex",
               flexDirection: "column",
