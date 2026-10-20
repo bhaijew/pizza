@@ -339,10 +339,8 @@ export default function AdminShell({
           .admin-desktop-sidebar {
             display: grid !important;
             grid-template-rows: auto 1fr auto !important;
-            height: 100vh !important;
-            height: 100dvh !important;
-            max-height: 100vh !important;
-            max-height: 100dvh !important;
+            height: 125vh !important;
+            max-height: 125vh !important;
             position: sticky !important;
             top: 0 !important;
             overflow: hidden !important;
@@ -449,8 +447,8 @@ export default function AdminShell({
           flexShrink: 0,
           position: "sticky",
           top: 0,
-          height: "100vh",
-          maxHeight: "100vh",
+          height: "125vh",
+          maxHeight: "125vh",
           overflow: "hidden",
           zIndex: 40,
           boxShadow: isLight ? "2px 0 16px rgba(0, 0, 0, 0.03)" : "4px 0 28px rgba(0, 0, 0, 0.45)",
