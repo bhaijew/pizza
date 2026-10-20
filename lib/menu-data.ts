@@ -138,6 +138,9 @@ export interface ShopSettings {
   hero_bg_gradient?: string;
   hero_bg_image?: string;
   hero_show_pattern?: boolean;
+
+  // Google Maps Review Link
+  google_review_url?: string;
 }
 
 const DEFAULT_SETTINGS: ShopSettings = {
@@ -174,6 +177,7 @@ const DEFAULT_SETTINGS: ShopSettings = {
   hero_bg_gradient: "",
   hero_bg_image: "",
   hero_show_pattern: true,
+  google_review_url: "",
 };
 
 export async function fetchShopBySlugOrId(identifier: string | number): Promise<any | null> {
@@ -209,7 +213,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
     try {
       const { data: branchData } = await supabase
         .from("shops")
-        .select("id, name, currency_symbol, status, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern")
+        .select("id, name, currency_symbol, status, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url")
         .eq("id", targetShopId)
         .maybeSingle();
 
@@ -255,6 +259,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
           hero_bg_gradient: (branchData as any).hero_bg_gradient || "",
           hero_bg_image: (branchData as any).hero_bg_image || "",
           hero_show_pattern: (branchData as any).hero_show_pattern !== undefined ? (branchData as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
+          google_review_url: (branchData as any).google_review_url || "",
         };
       }
     } catch {
@@ -265,7 +270,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
   try {
     const { data, error } = await supabase
       .from("shop_settings")
-      .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern")
+      .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url")
       .eq("id", "main")
       .single();
 
@@ -306,6 +311,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
         hero_bg_gradient: (data as any).hero_bg_gradient || "",
         hero_bg_image: (data as any).hero_bg_image || "",
         hero_show_pattern: (data as any).hero_show_pattern !== undefined ? (data as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
+        google_review_url: (data as any).google_review_url || "",
       } as ShopSettings;
     }
   } catch {

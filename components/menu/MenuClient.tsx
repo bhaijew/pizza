@@ -297,6 +297,7 @@ function MenuInner({
         setOrderType={setOrderType}
         isDedicatedTableRoute={isDedicatedTableRoute}
         shopId={settings.shop_id}
+        googleReviewUrl={settings.google_review_url || ""}
       />
     </>
   );

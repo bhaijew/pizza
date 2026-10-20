@@ -93,6 +93,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [whatsappApiKey, setWhatsappApiKey] = useState(initialSettings.whatsapp_api_key || "");
   const [openingTime, setOpeningTime] = useState(initialSettings.opening_time || "11:00");
   const [closingTime, setClosingTime] = useState(initialSettings.closing_time || "01:00");
+  const [googleReviewUrl, setGoogleReviewUrl] = useState(initialSettings.google_review_url || "");
 
   // ─── Theme Color State ─────────────────────────────
   const [themeColor, setThemeColor] = useState(initialSettings.theme_color || "#ea580c");
@@ -294,6 +295,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
           <input type="hidden" name="hero_bg_gradient" value={heroBgGradient} />
           <input type="hidden" name="hero_bg_image" value={heroBgImage} />
           <input type="hidden" name="hero_show_pattern" value={heroShowPattern ? "true" : "false"} />
+          <input type="hidden" name="google_review_url" value={googleReviewUrl} />
 
           {/* ═══════════════════════════════════════════════════
               SECTION 1: MENU THEME COLOR CUSTOMIZER
@@ -1306,6 +1308,47 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
                 boxSizing: "border-box",
               }}
             />
+          </div>
+
+          {/* Google Maps Review URL */}
+          <div
+            style={{
+              background: "#f0fdf4",
+              border: "1px solid #bbf7d0",
+              borderRadius: "10px",
+              padding: "16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <Globe size={16} style={{ color: "#16a34a" }} />
+              <span style={{ fontSize: "13px", fontWeight: 800, color: "#0f172a" }}>
+                Google Maps Review Link
+              </span>
+            </div>
+            <p style={{ margin: "0 0 10px", fontSize: "11px", color: "#64748b" }}>
+              Paste your Google Maps review URL. Customers will see a ⭐ &quot;Leave a Review&quot; button after placing an order.
+            </p>
+            <input
+              type="url"
+              id="google_review_url"
+              placeholder="https://g.page/r/YOUR_PLACE_ID/review"
+              value={googleReviewUrl}
+              onChange={(e) => setGoogleReviewUrl(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "9px 12px",
+                borderRadius: "6px",
+                border: "1px solid #86efac",
+                background: "#ffffff",
+                color: "#0f172a",
+                fontSize: "13px",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+            <p style={{ margin: "6px 0 0", fontSize: "10px", color: "#059669", fontWeight: 600 }}>
+              Tip: Go to Google Maps → Your business → Share → Copy link to review
+            </p>
           </div>
 
           {/* Submit Button */}

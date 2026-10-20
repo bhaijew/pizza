@@ -776,6 +776,7 @@ export async function updateSettings(
   const hero_bg_gradient = (formData.get("hero_bg_gradient") as string)?.trim() || "";
   const hero_bg_image = (formData.get("hero_bg_image") as string)?.trim() || "";
   const hero_show_pattern = formData.get("hero_show_pattern") !== "false";
+  const google_review_url = (formData.get("google_review_url") as string)?.trim() || "";
   
   let slider_images: any = null;
   const rawSliderImages = formData.get("slider_images") as string;
@@ -809,6 +810,7 @@ export async function updateSettings(
     hero_bg_gradient,
     hero_bg_image,
     hero_show_pattern,
+    google_review_url,
   };
 
   if (activeShop.shopId) {

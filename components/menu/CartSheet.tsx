@@ -25,6 +25,7 @@ interface CartSheetProps {
   setOrderType?: (val: "dine_in" | "takeaway" | "delivery") => void;
   isDedicatedTableRoute?: boolean;
   shopId?: number | null;
+  googleReviewUrl?: string;
 }
 
 export default function CartSheet({
@@ -36,6 +37,7 @@ export default function CartSheet({
   setOrderType: propSetOrderType,
   isDedicatedTableRoute = false,
   shopId,
+  googleReviewUrl,
 }: CartSheetProps) {
   const { items, totalItems, totalPrice, setQty, removeItem, clearCart, formatPrice, getItemKey, getUnitPrice } = useCart();
 
@@ -1802,6 +1804,36 @@ export default function CartSheet({
                 />
                 <span>Track Live Order Status &rarr;</span>
               </Link>
+            )}
+
+            {/* Google Maps Review Button */}
+            {googleReviewUrl && (
+              <a
+                href={googleReviewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  width: "100%",
+                  maxWidth: 340,
+                  padding: "12px 18px",
+                  borderRadius: 4,
+                  background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                  color: "#7c2d12",
+                  fontSize: 13,
+                  fontWeight: 800,
+                  textDecoration: "none",
+                  boxShadow: "0 3px 10px rgba(245,158,11,0.3)",
+                  marginBottom: 10,
+                  border: "1px solid #d97706",
+                }}
+              >
+                <span style={{ fontSize: 16 }}>⭐</span>
+                <span>Leave a Google Review</span>
+              </a>
             )}
 
             <button
