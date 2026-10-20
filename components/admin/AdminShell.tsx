@@ -339,7 +339,7 @@ export default function AdminShell({
           .admin-desktop-sidebar {
             display: flex !important;
             flex-direction: column !important;
-            justify-content: space-between !important;
+            justify-content: flex-start !important;
             height: 100vh !important;
             height: 100dvh !important;
             max-height: 100vh !important;
@@ -447,7 +447,7 @@ export default function AdminShell({
           borderRight: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
+          justifyContent: "flex-start",
           flexShrink: 0,
           position: "sticky",
           top: 0,
