@@ -338,10 +338,15 @@ export default function AdminShell({
         @media (min-width: 768px) {
           .admin-desktop-sidebar {
             display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
             height: 100vh !important;
+            height: 100dvh !important;
             max-height: 100vh !important;
+            max-height: 100dvh !important;
             position: sticky !important;
             top: 0 !important;
+            overflow: hidden !important;
           }
           .admin-desktop-header {
             display: flex !important;
@@ -440,12 +445,15 @@ export default function AdminShell({
             ? "#ffffff"
             : "linear-gradient(180deg, #0e1526 0%, #090d18 100%)",
           borderRight: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
+          display: "flex",
           flexDirection: "column",
+          justifyContent: "space-between",
           flexShrink: 0,
           position: "sticky",
           top: 0,
           height: "100vh",
           maxHeight: "100vh",
+          overflow: "hidden",
           zIndex: 40,
           boxShadow: isLight ? "2px 0 16px rgba(0, 0, 0, 0.03)" : "4px 0 28px rgba(0, 0, 0, 0.45)",
           transition: "background 0.25s ease, border-color 0.25s ease",
@@ -627,12 +635,13 @@ export default function AdminShell({
         <div
           style={{
             marginTop: "auto",
-            padding: "14px 14px 18px",
+            padding: "8px 10px 8px",
             borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
             display: "flex",
             flexDirection: "column",
-            gap: "10px",
+            gap: "6px",
             background: isLight ? "#f8fafc" : "rgba(0, 0, 0, 0.22)",
+            flexShrink: 0,
           }}
         >
           {/* Dark Mode Toggle & Download POS in ONE single row */}
@@ -688,7 +697,7 @@ export default function AdminShell({
           </div>
 
           {/* Small Logout Button */}
-          <form action={adminLogout} style={{ width: "100%" }}>
+          <form action={adminLogout} style={{ width: "100%", margin: 0, padding: 0 }}>
             <button
               type="submit"
               style={{
@@ -1429,12 +1438,13 @@ export default function AdminShell({
           <div
             style={{
               marginTop: "auto",
-              padding: "12px",
+              padding: "8px 10px 8px",
               borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
               display: "flex",
               flexDirection: "column",
-              gap: "8px",
+              gap: "6px",
               background: isLight ? "#f8fafc" : "rgba(0, 0, 0, 0.25)",
+              flexShrink: 0,
             }}
           >
             {/* Dark Mode Toggle & Download POS in ONE single row */}
@@ -1492,7 +1502,7 @@ export default function AdminShell({
             </div>
 
             {/* Small Logout Button */}
-            <form action={adminLogout} style={{ width: "100%" }}>
+            <form action={adminLogout} style={{ width: "100%", margin: 0, padding: 0 }}>
               <button
                 type="submit"
                 style={{
