@@ -337,9 +337,8 @@ export default function AdminShell({
         }
         @media (min-width: 768px) {
           .admin-desktop-sidebar {
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: flex-start !important;
+            display: grid !important;
+            grid-template-rows: auto 1fr auto !important;
             height: 100vh !important;
             height: 100dvh !important;
             max-height: 100vh !important;
@@ -445,9 +444,8 @@ export default function AdminShell({
             ? "#ffffff"
             : "linear-gradient(180deg, #0e1526 0%, #090d18 100%)",
           borderRight: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-start",
+          display: "grid",
+          gridTemplateRows: "auto 1fr auto",
           flexShrink: 0,
           position: "sticky",
           top: 0,
@@ -534,7 +532,6 @@ export default function AdminShell({
         <nav
           style={{
             padding: "16px 12px",
-            flex: "1 1 auto",
             minHeight: 0,
             overflowY: "auto",
             display: "flex",
@@ -634,14 +631,12 @@ export default function AdminShell({
         {/* Bottom Actions Widget */}
         <div
           style={{
-            marginTop: "auto",
             padding: "8px 10px 0",
             borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
             display: "flex",
             flexDirection: "column",
             gap: "6px",
             background: isLight ? "#f8fafc" : "rgba(0, 0, 0, 0.22)",
-            flexShrink: 0,
           }}
         >
           {/* Dark Mode Toggle & Download POS in ONE single row */}
