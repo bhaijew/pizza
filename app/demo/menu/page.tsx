@@ -593,6 +593,48 @@ export default function DemoMenuPage() {
             );
           })}
         </div>
+
+        {/* Powered by Sole-What Brand Footer */}
+        <footer
+          style={{
+            marginTop: 48,
+            padding: "24px 16px 40px",
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            borderTop: "1px dashed rgba(148, 163, 184, 0.3)",
+          }}
+        >
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#64748b",
+              letterSpacing: "0.02em",
+            }}
+          >
+            <span>Powered by</span>
+            <span
+              style={{
+                color: "#ea580c",
+                fontWeight: 900,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+              }}
+            >
+              Sole-What
+            </span>
+          </div>
+          <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>
+            Smart Restaurant POS &amp; Cloud Digital Menu
+          </div>
+        </footer>
       </div>
 
       {/* ─── CUSTOMIZATION MODAL ───────────────────────────────────── */}

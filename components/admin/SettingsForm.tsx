@@ -1649,7 +1649,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
                       )}
                       <div
                         style={{
-                          fontSize: sliderHeight > 160 ? "13px" : "11px",
+                          fontSize: sliderHeight > 160 ? "12px" : "10.5px",
                           fontWeight: 900,
                           lineHeight: 1.2,
                           marginBottom: "2px",

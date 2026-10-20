@@ -209,12 +209,12 @@ export default function MenuPromoSlider({
 
                   <h3
                     style={{
-                      fontSize: "clamp(15px, 3vw, 24px)",
+                      fontSize: "clamp(13px, 2.5vw, 18px)",
                       fontWeight: 900,
-                      lineHeight: 1.2,
-                      margin: "0 0 4px",
+                      lineHeight: 1.25,
+                      margin: "0 0 3px",
                       textShadow: "0 2px 8px rgba(0, 0, 0, 0.6)",
-                      letterSpacing: "-0.02em",
+                      letterSpacing: "-0.015em",
                       display: "-webkit-box",
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: "vertical",

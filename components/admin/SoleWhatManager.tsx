@@ -120,18 +120,32 @@ const https = require('https');
 const http = require('http');
 
 const CONFIG = {
-  GATEWAY_URL: '${gatewayUrl}',
-  SESSION_ID: '${sessionId || "rhs5o"}',
-  API_KEY: '${apiKey || "wag_8iBNQyfmDmSpZEvF0SsL7rtM2UzNzJ8M"}',
+  shopSlug: "${shopSlug}",
+  sessionId: "${sessionId || 'rhs5o'}",
+  apiKey: "${apiKey || 'wag_...'}",
+  gatewayUrl: "${gatewayUrl}",
+  port: 8089,
 };
 
-console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
+console.log("⚡ [Sole-What Bridge] Starting local WhatsApp connector on port", CONFIG.port);
+console.log("⚡ [Sole-What Bridge] Target Gateway:", CONFIG.gatewayUrl);
+console.log("⚡ [Sole-What Bridge] Active Session:", CONFIG.sessionId);
+
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ status: "online", branch: CONFIG.shopSlug, session: CONFIG.sessionId }));
+});
+
+server.listen(CONFIG.port, () => {
+  console.log(\`✅ Sole-What connector bridge running at http://localhost:\${CONFIG.port}\`);
+});
 `;
+
     const blob = new Blob([bridgeCode], { type: "text/javascript" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `sole-what-bridge-${shopSlug}.js`;
+    a.download = `sole-what-connector-${shopSlug}.js`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -139,16 +153,16 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      {/* ─── Hero Banner ─── */}
+    <div style={{ display: "flex", flexDirection: "column", gap: "22px" }}>
+      {/* ─── Hero Banner (White / Light Emerald UI) ─── */}
       <div
         style={{
-          background: "linear-gradient(135deg, #064e3b 0%, #065f46 50%, #0f172a 100%)",
-          borderRadius: "16px",
+          background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 45%, #ffffff 100%)",
+          borderRadius: "14px",
           padding: "24px 28px",
-          color: "#ffffff",
-          boxShadow: "0 10px 30px rgba(6, 78, 59, 0.25)",
-          border: "1px solid rgba(16, 185, 129, 0.3)",
+          color: "#0f172a",
+          boxShadow: "0 4px 20px rgba(16, 185, 129, 0.08)",
+          border: "1px solid #bbf7d0",
           position: "relative",
           overflow: "hidden",
         }}
@@ -160,7 +174,7 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
             top: "-20px",
             width: "180px",
             height: "180px",
-            background: "radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%)",
             pointerEvents: "none",
           }}
         />
@@ -174,14 +188,14 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                   height: "8px",
                   borderRadius: "50%",
                   background: status.isOnline ? "#10b981" : "#f59e0b",
-                  boxShadow: status.isOnline ? "0 0 10px #10b981" : "none",
+                  boxShadow: status.isOnline ? "0 0 8px #10b981" : "none",
                 }}
               />
               <span
                 style={{
                   fontSize: "11px",
                   fontWeight: 800,
-                  color: "#34d399",
+                  color: "#059669",
                   textTransform: "uppercase",
                   letterSpacing: "0.08em",
                 }}
@@ -190,15 +204,15 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
               </span>
             </div>
 
-            <h1 style={{ fontSize: "24px", fontWeight: 900, margin: "0 0 6px", letterSpacing: "-0.02em" }}>
+            <h1 style={{ fontSize: "22px", fontWeight: 900, margin: "0 0 6px", color: "#0f172a", letterSpacing: "-0.02em" }}>
               Sole-What WhatsApp Automation
             </h1>
-            <p style={{ margin: 0, fontSize: "13px", color: "#a7f3d0", maxWidth: "600px", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: "13px", color: "#475569", maxWidth: "620px", lineHeight: 1.5 }}>
               Dispatch automatic order confirmations, live delivery tracking links, and marketing broadcasts directly to customer WhatsApp numbers using your dedicated Sole-What instance.
             </p>
           </div>
 
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
             <button
               type="button"
               onClick={handleDownloadBridge}
@@ -206,19 +220,20 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "7px",
-                padding: "9px 16px",
+                padding: "8px 15px",
                 borderRadius: "8px",
-                background: "rgba(255, 255, 255, 0.12)",
-                color: "#ffffff",
+                background: "#ffffff",
+                color: "#1e293b",
                 fontSize: "12px",
                 fontWeight: 800,
-                border: "1px solid rgba(255, 255, 255, 0.2)",
+                border: "1px solid #cbd5e1",
                 cursor: "pointer",
+                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
                 transition: "all 0.15s ease",
               }}
-              className="hover:bg-white/20"
+              className="hover:bg-slate-50 hover:border-slate-400"
             >
-              <Download size={14} />
+              <Download size={14} className="text-emerald-600" />
               <span>Download Sole-What Bridge (.JS)</span>
             </button>
 
@@ -230,15 +245,16 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "7px",
-                padding: "9px 16px",
+                padding: "8px 16px",
                 borderRadius: "8px",
                 background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                 color: "#ffffff",
                 fontSize: "12px",
                 fontWeight: 800,
                 textDecoration: "none",
-                boxShadow: "0 4px 14px rgba(16, 185, 129, 0.4)",
+                boxShadow: "0 2px 10px rgba(16, 185, 129, 0.35)",
               }}
+              className="hover:opacity-95"
             >
               <ExternalLink size={14} />
               <span>Open Sole-What Dashboard</span>
@@ -247,18 +263,19 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
         </div>
       </div>
 
-      {/* ─── Gateway Connection Status Row ─── */}
+      {/* ─── Gateway Connection Status Row (White Cards) ─── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: "16px" }}>
         {/* Status Card 1 */}
         <div
           style={{
-            background: "rgba(15, 23, 42, 0.6)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
             borderRadius: "12px",
-            padding: "18px",
+            padding: "16px 18px",
             display: "flex",
             alignItems: "center",
             gap: "14px",
+            boxShadow: "0 1px 4px rgba(0, 0, 0, 0.04)",
           }}
         >
           <div
@@ -266,21 +283,22 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
               width: "44px",
               height: "44px",
               borderRadius: "10px",
-              background: status.isOnline ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
-              color: status.isOnline ? "#10b981" : "#f59e0b",
+              background: status.isOnline ? "#ecfdf5" : "#fffbeb",
+              color: status.isOnline ? "#059669" : "#d97706",
+              border: status.isOnline ? "1px solid #a7f3d0" : "1px solid #fde68a",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
             }}
           >
-            <Radio size={22} className={status.isOnline ? "animate-pulse" : ""} />
+            <Radio size={20} className={status.isOnline ? "animate-pulse" : ""} />
           </div>
           <div>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
               Gateway Server
             </div>
-            <div style={{ fontSize: "15px", fontWeight: 800, color: status.isOnline ? "#34d399" : "#fbbf24" }}>
+            <div style={{ fontSize: "14px", fontWeight: 800, color: status.isOnline ? "#059669" : "#d97706" }}>
               {status.isOnline ? "Connected & Active" : "Standby / Reachable"}
             </div>
             <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
@@ -292,13 +310,14 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
         {/* Status Card 2 */}
         <div
           style={{
-            background: "rgba(15, 23, 42, 0.6)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
             borderRadius: "12px",
-            padding: "18px",
+            padding: "16px 18px",
             display: "flex",
             alignItems: "center",
             gap: "14px",
+            boxShadow: "0 1px 4px rgba(0, 0, 0, 0.04)",
           }}
         >
           <div
@@ -306,21 +325,22 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
               width: "44px",
               height: "44px",
               borderRadius: "10px",
-              background: sessionId ? "rgba(59, 130, 246, 0.15)" : "rgba(239, 68, 68, 0.15)",
-              color: sessionId ? "#3b82f6" : "#ef4444",
+              background: sessionId ? "#eff6ff" : "#fef2f2",
+              color: sessionId ? "#2563eb" : "#dc2626",
+              border: sessionId ? "1px solid #bfdbfe" : "1px solid #fecaca",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
             }}
           >
-            <Smartphone size={22} />
+            <Smartphone size={20} />
           </div>
           <div>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
               Branch WhatsApp Session
             </div>
-            <div style={{ fontSize: "15px", fontWeight: 800, color: sessionId ? "#60a5fa" : "#f87171" }}>
+            <div style={{ fontSize: "14px", fontWeight: 800, color: sessionId ? "#1d4ed8" : "#dc2626" }}>
               {sessionId ? `Session: ${sessionId}` : "Not Configured"}
             </div>
             <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
@@ -332,13 +352,14 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
         {/* Status Card 3 */}
         <div
           style={{
-            background: "rgba(15, 23, 42, 0.6)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
             borderRadius: "12px",
-            padding: "18px",
+            padding: "16px 18px",
             display: "flex",
             alignItems: "center",
             gap: "14px",
+            boxShadow: "0 1px 4px rgba(0, 0, 0, 0.04)",
           }}
         >
           <div
@@ -346,21 +367,22 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
               width: "44px",
               height: "44px",
               borderRadius: "10px",
-              background: "rgba(139, 92, 246, 0.15)",
-              color: "#a78bfa",
+              background: "#f5f3ff",
+              color: "#7c3aed",
+              border: "1px solid #ddd6fe",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
             }}
           >
-            <ShieldCheck size={22} />
+            <ShieldCheck size={20} />
           </div>
           <div>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
               Desktop Folder Linked
             </div>
-            <div style={{ fontSize: "15px", fontWeight: 800, color: "#c4b5fd" }}>
+            <div style={{ fontSize: "14px", fontWeight: 800, color: "#6d28d9" }}>
               sole_what-main
             </div>
             <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
@@ -370,40 +392,42 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
         </div>
       </div>
 
-      {/* ─── Main Content Grid: Configuration & Live Test ─── */}
+      {/* ─── Main Content Grid: Configuration & Live Test (White Cards) ─── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: "20px" }}>
         {/* Left Column: Credentials & Settings */}
         <div
           style={{
-            background: "rgba(15, 23, 42, 0.6)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
             borderRadius: "14px",
             padding: "22px",
             display: "flex",
             flexDirection: "column",
             gap: "18px",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div
               style={{
-                width: "32px",
-                height: "32px",
+                width: "34px",
+                height: "34px",
                 borderRadius: "8px",
-                background: "rgba(16, 185, 129, 0.15)",
-                color: "#10b981",
+                background: "#ecfdf5",
+                color: "#059669",
+                border: "1px solid #bbf7d0",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Settings size={17} />
+              <Settings size={18} />
             </div>
             <div>
-              <h2 style={{ fontSize: "16px", fontWeight: 800, margin: 0, color: "#ffffff" }}>
+              <h2 style={{ fontSize: "15px", fontWeight: 800, margin: 0, color: "#0f172a" }}>
                 Sole-What Session Setup
               </h2>
-              <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>
+              <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
                 Link your WhatsApp session from Sole-What to this pizza branch.
               </p>
             </div>
@@ -411,7 +435,7 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
 
           <form onSubmit={handleSaveCredentials} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#cbd5e1", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                 WhatsApp Session ID (e.g. rhs5o or branch slug)
               </label>
               <input
@@ -423,13 +447,14 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                   width: "100%",
                   padding: "10px 14px",
                   borderRadius: "8px",
-                  background: "rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  color: "#ffffff",
+                  background: "#f8fafc",
+                  border: "1px solid #cbd5e1",
+                  color: "#0f172a",
                   fontSize: "13px",
                   boxSizing: "border-box",
                   outline: "none",
                 }}
+                className="focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
               />
               <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", display: "block" }}>
                 Each branch must use its own session ID to ensure no shared or wrong numbers.
@@ -437,7 +462,7 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#cbd5e1", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                 Sole-What Gateway API Key
               </label>
               <input
@@ -449,18 +474,19 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                   width: "100%",
                   padding: "10px 14px",
                   borderRadius: "8px",
-                  background: "rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  color: "#ffffff",
+                  background: "#f8fafc",
+                  border: "1px solid #cbd5e1",
+                  color: "#0f172a",
                   fontSize: "13px",
                   boxSizing: "border-box",
                   outline: "none",
                 }}
+                className="focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
               />
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#cbd5e1", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                 Gateway Endpoint URL
               </label>
               <input
@@ -471,9 +497,9 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                   width: "100%",
                   padding: "10px 14px",
                   borderRadius: "8px",
-                  background: "rgba(0, 0, 0, 0.15)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  color: "#94a3b8",
+                  background: "#f1f5f9",
+                  border: "1px solid #e2e8f0",
+                  color: "#64748b",
                   fontSize: "12px",
                   boxSizing: "border-box",
                 }}
@@ -485,9 +511,9 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                 style={{
                   padding: "10px 14px",
                   borderRadius: "8px",
-                  background: saveFeedback.startsWith("Error") ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.15)",
-                  border: saveFeedback.startsWith("Error") ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid rgba(16, 185, 129, 0.3)",
-                  color: saveFeedback.startsWith("Error") ? "#f87171" : "#34d399",
+                  background: saveFeedback.startsWith("Error") ? "#fef2f2" : "#f0fdf4",
+                  border: saveFeedback.startsWith("Error") ? "1px solid #fecaca" : "1px solid #bbf7d0",
+                  color: saveFeedback.startsWith("Error") ? "#dc2626" : "#15803d",
                   fontSize: "12px",
                   fontWeight: 700,
                 }}
@@ -512,10 +538,10 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                 fontWeight: 800,
                 border: "none",
                 cursor: "pointer",
-                boxShadow: "0 4px 14px rgba(16, 185, 129, 0.4)",
+                boxShadow: "0 2px 10px rgba(16, 185, 129, 0.3)",
                 transition: "transform 0.15s ease",
               }}
-              className="hover:scale-102"
+              className="hover:scale-[1.01]"
             >
               <CheckCircle2 size={16} />
               <span>{isPending ? "Saving..." : "Save WhatsApp Credentials"}</span>
@@ -523,26 +549,28 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
           </form>
         </div>
 
-        {/* Right Column: Interactive Test Message Sender */}
+        {/* Right Column: Interactive Test Message Sender (White Card) */}
         <div
           style={{
-            background: "rgba(15, 23, 42, 0.6)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
             borderRadius: "14px",
             padding: "22px",
             display: "flex",
             flexDirection: "column",
             gap: "18px",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div
               style={{
-                width: "32px",
-                height: "32px",
+                width: "34px",
+                height: "34px",
                 borderRadius: "8px",
-                background: "rgba(59, 130, 246, 0.15)",
-                color: "#3b82f6",
+                background: "#eff6ff",
+                color: "#2563eb",
+                border: "1px solid #bfdbfe",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -551,10 +579,10 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
               <Send size={16} />
             </div>
             <div>
-              <h2 style={{ fontSize: "16px", fontWeight: 800, margin: 0, color: "#ffffff" }}>
+              <h2 style={{ fontSize: "15px", fontWeight: 800, margin: 0, color: "#0f172a" }}>
                 Send Live Test WhatsApp Message
               </h2>
-              <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>
+              <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
                 Instantly verify your WhatsApp gateway delivers to mobile devices.
               </p>
             </div>
@@ -562,7 +590,7 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
 
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#cbd5e1", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                 Recipient Phone Number (Pakistani / International)
               </label>
               <input
@@ -574,18 +602,19 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                   width: "100%",
                   padding: "10px 14px",
                   borderRadius: "8px",
-                  background: "rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  color: "#ffffff",
+                  background: "#f8fafc",
+                  border: "1px solid #cbd5e1",
+                  color: "#0f172a",
                   fontSize: "13px",
                   boxSizing: "border-box",
                   outline: "none",
                 }}
+                className="focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#cbd5e1", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                 Test Message Text
               </label>
               <textarea
@@ -596,15 +625,16 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                   width: "100%",
                   padding: "10px 14px",
                   borderRadius: "8px",
-                  background: "rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  color: "#ffffff",
+                  background: "#f8fafc",
+                  border: "1px solid #cbd5e1",
+                  color: "#0f172a",
                   fontSize: "12px",
                   boxSizing: "border-box",
                   outline: "none",
                   resize: "vertical",
                   lineHeight: 1.5,
                 }}
+                className="focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
 
@@ -613,9 +643,9 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                 style={{
                   padding: "12px 14px",
                   borderRadius: "8px",
-                  background: testResult.success ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
-                  border: testResult.success ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(239, 68, 68, 0.3)",
-                  color: testResult.success ? "#34d399" : "#f87171",
+                  background: testResult.success ? "#f0fdf4" : "#fef2f2",
+                  border: testResult.success ? "1px solid #bbf7d0" : "1px solid #fecaca",
+                  color: testResult.success ? "#15803d" : "#b91c1c",
                   fontSize: "12px",
                   fontWeight: 700,
                   display: "flex",
@@ -623,7 +653,7 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                   gap: "8px",
                 }}
               >
-                {testResult.success ? <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" /> : <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />}
+                {testResult.success ? <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5 text-emerald-600" /> : <AlertTriangle size={16} className="flex-shrink-0 mt-0.5 text-red-600" />}
                 <span>{testResult.message}</span>
               </div>
             )}
@@ -645,10 +675,10 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                 fontWeight: 800,
                 border: "none",
                 cursor: "pointer",
-                boxShadow: "0 4px 14px rgba(59, 130, 246, 0.4)",
+                boxShadow: "0 2px 10px rgba(59, 130, 246, 0.3)",
                 transition: "transform 0.15s ease",
               }}
-              className="hover:scale-102"
+              className="hover:scale-[1.01]"
             >
               <Send size={15} />
               <span>{isSendingTest ? "Dispatching WhatsApp..." : "Dispatch Test WhatsApp"}</span>
@@ -657,24 +687,25 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
         </div>
       </div>
 
-      {/* ─── Automated WhatsApp Triggers Showcase ─── */}
+      {/* ─── Automated WhatsApp Triggers Showcase (White Card) ─── */}
       <div
         style={{
-          background: "rgba(15, 23, 42, 0.6)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
+          background: "#ffffff",
+          border: "1px solid #e2e8f0",
           borderRadius: "14px",
           padding: "22px",
           display: "flex",
           flexDirection: "column",
           gap: "16px",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
           <div>
-            <h2 style={{ fontSize: "16px", fontWeight: 800, margin: "0 0 4px", color: "#ffffff" }}>
+            <h2 style={{ fontSize: "15px", fontWeight: 800, margin: "0 0 4px", color: "#0f172a" }}>
               Active WhatsApp Event Triggers
             </h2>
-            <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>
+            <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
               These messages trigger automatically during live orders without cashier intervention.
             </p>
           </div>
@@ -684,9 +715,9 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
               fontWeight: 800,
               padding: "4px 10px",
               borderRadius: "6px",
-              background: "rgba(16, 185, 129, 0.15)",
-              color: "#34d399",
-              border: "1px solid rgba(16, 185, 129, 0.3)",
+              background: "#ecfdf5",
+              color: "#059669",
+              border: "1px solid #bbf7d0",
             }}
           >
             4 AUTOMATED WORKFLOWS
@@ -697,8 +728,8 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
           {/* Trigger 1 */}
           <div
             style={{
-              background: "rgba(0, 0, 0, 0.3)",
-              border: "1px solid rgba(255, 255, 255, 0.06)",
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
               borderRadius: "10px",
               padding: "16px",
               display: "flex",
@@ -706,11 +737,11 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
               gap: "8px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#60a5fa", fontWeight: 800, fontSize: "13px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#2563eb", fontWeight: 800, fontSize: "13px" }}>
               <Bell size={16} />
               <span>1. Order Placed Alert</span>
             </div>
-            <p style={{ margin: 0, fontSize: "12px", color: "#cbd5e1", lineHeight: 1.4 }}>
+            <p style={{ margin: 0, fontSize: "12px", color: "#475569", lineHeight: 1.45 }}>
               Sent to customer instantly upon checkout with order items summary, total amount, and live tracker URL.
             </p>
           </div>
@@ -718,8 +749,8 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
           {/* Trigger 2 */}
           <div
             style={{
-              background: "rgba(0, 0, 0, 0.3)",
-              border: "1px solid rgba(255, 255, 255, 0.06)",
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
               borderRadius: "10px",
               padding: "16px",
               display: "flex",
@@ -727,11 +758,11 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
               gap: "8px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#f97316", fontWeight: 800, fontSize: "13px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ea580c", fontWeight: 800, fontSize: "13px" }}>
               <ChefHat size={16} />
               <span>2. Kitchen Baking (KDS)</span>
             </div>
-            <p style={{ margin: 0, fontSize: "12px", color: "#cbd5e1", lineHeight: 1.4 }}>
+            <p style={{ margin: 0, fontSize: "12px", color: "#475569", lineHeight: 1.45 }}>
               Alerts customer when pizza is placed in the oven, updating live progress bar to "Preparing".
             </p>
           </div>
@@ -739,8 +770,8 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
           {/* Trigger 3 */}
           <div
             style={{
-              background: "rgba(0, 0, 0, 0.3)",
-              border: "1px solid rgba(255, 255, 255, 0.06)",
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
               borderRadius: "10px",
               padding: "16px",
               display: "flex",
@@ -748,11 +779,11 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
               gap: "8px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#a855f7", fontWeight: 800, fontSize: "13px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#7c3aed", fontWeight: 800, fontSize: "13px" }}>
               <Bike size={16} />
               <span>3. Rider Dispatched Alert</span>
             </div>
-            <p style={{ margin: 0, fontSize: "12px", color: "#cbd5e1", lineHeight: 1.4 }}>
+            <p style={{ margin: 0, fontSize: "12px", color: "#475569", lineHeight: 1.45 }}>
               Sends WhatsApp to Rider (delivery location &amp; cash to collect) AND to Customer (with rider name &amp; phone).
             </p>
           </div>
@@ -760,8 +791,8 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
           {/* Trigger 4 */}
           <div
             style={{
-              background: "rgba(0, 0, 0, 0.3)",
-              border: "1px solid rgba(255, 255, 255, 0.06)",
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
               borderRadius: "10px",
               padding: "16px",
               display: "flex",
@@ -769,38 +800,39 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
               gap: "8px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#10b981", fontWeight: 800, fontSize: "13px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#059669", fontWeight: 800, fontSize: "13px" }}>
               <CheckCircle2 size={16} />
               <span>4. Order Delivered / Review</span>
             </div>
-            <p style={{ margin: 0, fontSize: "12px", color: "#cbd5e1", lineHeight: 1.4 }}>
+            <p style={{ margin: 0, fontSize: "12px", color: "#475569", lineHeight: 1.45 }}>
               Thanks the customer for their business and offers loyalty coupon code for their next pizza order.
             </p>
           </div>
         </div>
       </div>
 
-      {/* ─── Recent Customer Contacts Section ─── */}
+      {/* ─── Recent Customer Contacts Section (White Card) ─── */}
       {recentCustomers.length > 0 && (
         <div
           style={{
-            background: "rgba(15, 23, 42, 0.6)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
             borderRadius: "14px",
             padding: "22px",
             display: "flex",
             flexDirection: "column",
             gap: "14px",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Users size={18} className="text-emerald-400" />
-              <h2 style={{ fontSize: "15px", fontWeight: 800, margin: 0, color: "#ffffff" }}>
+              <Users size={18} className="text-emerald-600" />
+              <h2 style={{ fontSize: "15px", fontWeight: 800, margin: 0, color: "#0f172a" }}>
                 Recent Customer Contacts ({recentCustomers.length})
               </h2>
             </div>
-            <span style={{ fontSize: "11px", color: "#94a3b8" }}>
+            <span style={{ fontSize: "11px", color: "#64748b" }}>
               Click any contact to auto-fill recipient phone
             </span>
           </div>
@@ -812,25 +844,25 @@ console.log('Connecting Pizza POS to Sole-What session:', CONFIG.SESSION_ID);
                 type="button"
                 onClick={() => setTestPhone(c.phone)}
                 style={{
-                  background: "rgba(0, 0, 0, 0.25)",
-                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  background: "#f8fafc",
+                  border: "1px solid #e2e8f0",
                   borderRadius: "8px",
                   padding: "10px 12px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  color: "#f8fafc",
+                  color: "#0f172a",
                   cursor: "pointer",
                   textAlign: "left",
                   transition: "all 0.15s ease",
                 }}
-                className="hover:border-emerald-500/50 hover:bg-emerald-500/10"
+                className="hover:border-emerald-500 hover:bg-emerald-50"
               >
                 <div>
-                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff" }}>{c.name}</div>
-                  <div style={{ fontSize: "11px", color: "#34d399", fontFamily: "monospace" }}>{c.phone}</div>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>{c.name}</div>
+                  <div style={{ fontSize: "11px", color: "#059669", fontFamily: "monospace", fontWeight: 600 }}>{c.phone}</div>
                 </div>
-                <span style={{ fontSize: "10px", background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: "4px", color: "#94a3b8" }}>
+                <span style={{ fontSize: "10px", background: "#e2e8f0", padding: "2px 6px", borderRadius: "4px", color: "#475569", fontWeight: 600 }}>
                   {c.orderCount} ord
                 </span>
               </button>

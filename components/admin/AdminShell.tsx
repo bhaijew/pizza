@@ -301,7 +301,7 @@ export default function AdminShell({
     <div
       className="admin-shell-root min-h-screen w-full flex flex-col md:flex-row"
       style={{
-        minHeight: "125vh",
+        minHeight: "100vh",
         background: isLight
           ? isAdmin
             ? "#fffdf8"
@@ -338,8 +338,8 @@ export default function AdminShell({
         @media (min-width: 768px) {
           .admin-desktop-sidebar {
             display: flex !important;
-            height: 125vh !important;
-            max-height: 125vh !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
             position: sticky !important;
             top: 0 !important;
           }
@@ -350,10 +350,10 @@ export default function AdminShell({
             display: none !important;
           }
           .admin-shell-root {
-            min-height: 125vh !important;
+            min-height: 100vh !important;
           }
           .admin-main-wrapper {
-            min-height: 125vh !important;
+            min-height: 100vh !important;
           }
         }
 
@@ -444,8 +444,8 @@ export default function AdminShell({
           flexShrink: 0,
           position: "sticky",
           top: 0,
-          height: "125vh",
-          maxHeight: "125vh",
+          height: "100vh",
+          maxHeight: "100vh",
           zIndex: 40,
           boxShadow: isLight ? "2px 0 16px rgba(0, 0, 0, 0.03)" : "4px 0 28px rgba(0, 0, 0, 0.45)",
           transition: "background 0.25s ease, border-color 0.25s ease",
@@ -455,20 +455,20 @@ export default function AdminShell({
         {/* Brand Header */}
         <div
           style={{
-            padding: "20px 18px",
+            padding: "16px 16px",
             borderBottom: isLight ? "1px solid #f1f5f9" : "1px solid rgba(255, 255, 255, 0.07)",
             display: "flex",
             alignItems: "center",
-            gap: "12px",
+            gap: "10px",
           }}
         >
-          <BrandLogo size={42} variant="iconOnly" />
+          <BrandLogo size={36} variant="iconOnly" />
 
           <div style={{ minWidth: 0, flex: 1 }}>
             <div
               style={{
-                fontWeight: 900,
-                fontSize: "15px",
+                fontWeight: 800,
+                fontSize: "13px",
                 color: isLight ? "#0f172a" : "#ffffff",
                 letterSpacing: "-0.01em",
                 whiteSpace: "nowrap",
@@ -744,21 +744,22 @@ export default function AdminShell({
               href={customerMenuUrl}
               target="_blank"
               style={{
-                fontSize: "12px",
-                fontWeight: 700,
+                fontSize: "11px",
+                fontWeight: 600,
                 color: isLight ? "#15803d" : "#a7f3d0",
                 textDecoration: "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: "4px",
+                fontFamily: "monospace",
               }}
               title="Open shop customer menu in new tab"
             >
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {customerMenuUrl}
               </span>
-              <ExternalLink size={12} />
+              <ExternalLink size={11} style={{ flexShrink: 0 }} />
             </Link>
           </div>
 
@@ -830,19 +831,20 @@ export default function AdminShell({
       </aside>
 
       {/* ─── MAIN CONTENT AREA ────────────────────────────── */}
-      <div className="admin-main-wrapper w-full min-w-0 flex-1 flex flex-col" style={{ minWidth: 0, minHeight: "125vh" }}>
+      <div className="admin-main-wrapper w-full min-w-0 flex-1 flex flex-col" style={{ minWidth: 0, minHeight: "100vh" }}>
         {/* Desktop Top Header Bar */}
         <header
           style={{
-            height: "64px",
-            background: isLight ? "rgba(255, 255, 255, 0.88)" : "rgba(14, 21, 38, 0.85)",
+            height: "54px",
+            minHeight: "54px",
+            background: isLight ? "rgba(255, 255, 255, 0.92)" : "rgba(14, 21, 38, 0.88)",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
             borderBottom: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
             display: "none",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "0 28px",
+            padding: "0 20px",
             position: "sticky",
             top: 0,
             zIndex: 30,
@@ -852,26 +854,30 @@ export default function AdminShell({
           className="admin-desktop-header md:flex"
         >
           {/* Breadcrumb & Section Name */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "nowrap", overflow: "hidden", minWidth: 0 }}>
             <span
               style={{
-                fontSize: "13px",
+                fontSize: "12.5px",
                 color: isLight ? "#64748b" : "#94a3b8",
                 fontWeight: 500,
                 display: "flex",
                 alignItems: "center",
                 gap: "5px",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
-              <Store size={14} />
+              <Store size={13} />
               Admin Portal
             </span>
-            <ChevronRight size={14} style={{ color: isLight ? "#cbd5e1" : "#475569" }} />
+            <ChevronRight size={13} style={{ color: isLight ? "#cbd5e1" : "#475569", flexShrink: 0 }} />
             <span
               style={{
-                fontSize: "14px",
+                fontSize: "13.5px",
                 fontWeight: 800,
                 color: isLight ? "#0f172a" : "#ffffff",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
               {currentPageTitle}
@@ -880,21 +886,28 @@ export default function AdminShell({
             {shopName && (
               <span
                 style={{
-                  fontSize: "12px",
+                  fontSize: "11px",
                   fontWeight: 700,
                   color: isLight ? "#1d4ed8" : "#93c5fd",
                   background: isLight ? "#eff6ff" : "rgba(59, 130, 246, 0.15)",
                   border: isLight ? "1px solid #bfdbfe" : "1px solid rgba(59, 130, 246, 0.35)",
                   borderRadius: "6px",
-                  padding: "3px 9px",
-                  marginLeft: "8px",
+                  padding: "2px 7px",
+                  marginLeft: "6px",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "5px",
+                  gap: "4px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "160px",
+                  flexShrink: 0,
                 }}
               >
-                <Store size={12} />
-                {shopName}
+                <Store size={11} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {shopName}
+                </span>
               </span>
             )}
           </div>

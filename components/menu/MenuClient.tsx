@@ -237,6 +237,48 @@ function MenuInner({
             </>
           )}
         </section>
+
+        {/* Powered by Sole-What Brand Footer */}
+        <footer
+          style={{
+            marginTop: "40px",
+            padding: "24px 16px 40px",
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+            borderTop: "1px dashed rgba(148, 163, 184, 0.3)",
+          }}
+        >
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "12px",
+              fontWeight: 700,
+              color: "#64748b",
+              letterSpacing: "0.02em",
+            }}
+          >
+            <span>Powered by</span>
+            <span
+              style={{
+                color: settings?.theme_color || "#10b981",
+                fontWeight: 900,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+              }}
+            >
+              Sole-What
+            </span>
+          </div>
+          <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 500 }}>
+            Smart Restaurant POS &amp; Cloud Digital Menu
+          </div>
+        </footer>
       </main>
 
       {/* Product Detail Modal (Opens at Bottom) */}
