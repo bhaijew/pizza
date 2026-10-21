@@ -52,6 +52,10 @@ export interface Product {
   shop_id?: number | null;
   /** joined category object when fetched with select */
   category?: Category | null;
+  items_included?: string[] | null;
+  badge?: string | null;
+  original_price?: number | null;
+  is_deal?: boolean;
 }
 
 export interface ProductOption {

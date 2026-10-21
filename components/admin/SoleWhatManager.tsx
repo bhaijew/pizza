@@ -44,9 +44,14 @@ export default function SoleWhatManager({
   shopSlug = "main",
   recentCustomers = [],
 }: SoleWhatManagerProps) {
+  const defaultMasterKey = "wag_8iBNQyfmDmSpZEvF0SsL7rtM2UzNzJ8M";
   const [status, setStatus] = useState<SoleWhatStatus>(initialStatus);
   const [sessionId, setSessionId] = useState(initialStatus.sessionId || "");
-  const [apiKey, setApiKey] = useState(initialStatus.apiKey || "");
+  const [apiKey, setApiKey] = useState(
+    initialStatus.apiKey && initialStatus.apiKey !== "wag_qF0HVpcLGTxuqGZvBLO1I2057gJUwiV8"
+      ? initialStatus.apiKey
+      : defaultMasterKey
+  );
   const [gatewayUrl, setGatewayUrl] = useState(initialStatus.gatewayUrl);
 
   const [testPhone, setTestPhone] = useState("");
@@ -99,7 +104,7 @@ export default function SoleWhatManager({
       if (res.success) {
         setTestResult({
           success: true,
-          message: `WhatsApp message dispatched successfully! Message ID: ${res.messageId}`,
+          message: `✓ WhatsApp message delivered successfully to ${testPhone}! (ID: ${res.messageId})`,
         });
       } else {
         setTestResult({
@@ -158,7 +163,7 @@ server.listen(CONFIG.port, () => {
       <div
         style={{
           background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 45%, #ffffff 100%)",
-          borderRadius: "14px",
+          borderRadius: "5px",
           padding: "24px 28px",
           color: "#0f172a",
           boxShadow: "0 4px 20px rgba(16, 185, 129, 0.08)",
@@ -221,7 +226,7 @@ server.listen(CONFIG.port, () => {
                 alignItems: "center",
                 gap: "7px",
                 padding: "8px 15px",
-                borderRadius: "8px",
+                borderRadius: "5px",
                 background: "#ffffff",
                 color: "#1e293b",
                 fontSize: "12px",
@@ -246,7 +251,7 @@ server.listen(CONFIG.port, () => {
                 alignItems: "center",
                 gap: "7px",
                 padding: "8px 16px",
-                borderRadius: "8px",
+                borderRadius: "5px",
                 background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                 color: "#ffffff",
                 fontSize: "12px",
@@ -270,7 +275,7 @@ server.listen(CONFIG.port, () => {
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "12px",
+            borderRadius: "5px",
             padding: "16px 18px",
             display: "flex",
             alignItems: "center",
@@ -282,7 +287,7 @@ server.listen(CONFIG.port, () => {
             style={{
               width: "44px",
               height: "44px",
-              borderRadius: "10px",
+              borderRadius: "5px",
               background: status.isOnline ? "#ecfdf5" : "#fffbeb",
               color: status.isOnline ? "#059669" : "#d97706",
               border: status.isOnline ? "1px solid #a7f3d0" : "1px solid #fde68a",
@@ -312,7 +317,7 @@ server.listen(CONFIG.port, () => {
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "12px",
+            borderRadius: "5px",
             padding: "16px 18px",
             display: "flex",
             alignItems: "center",
@@ -324,7 +329,7 @@ server.listen(CONFIG.port, () => {
             style={{
               width: "44px",
               height: "44px",
-              borderRadius: "10px",
+              borderRadius: "5px",
               background: sessionId ? "#eff6ff" : "#fef2f2",
               color: sessionId ? "#2563eb" : "#dc2626",
               border: sessionId ? "1px solid #bfdbfe" : "1px solid #fecaca",
@@ -354,7 +359,7 @@ server.listen(CONFIG.port, () => {
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "12px",
+            borderRadius: "5px",
             padding: "16px 18px",
             display: "flex",
             alignItems: "center",
@@ -366,7 +371,7 @@ server.listen(CONFIG.port, () => {
             style={{
               width: "44px",
               height: "44px",
-              borderRadius: "10px",
+              borderRadius: "5px",
               background: "#f5f3ff",
               color: "#7c3aed",
               border: "1px solid #ddd6fe",
@@ -399,7 +404,7 @@ server.listen(CONFIG.port, () => {
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "14px",
+            borderRadius: "5px",
             padding: "22px",
             display: "flex",
             flexDirection: "column",
@@ -412,7 +417,7 @@ server.listen(CONFIG.port, () => {
               style={{
                 width: "34px",
                 height: "34px",
-                borderRadius: "8px",
+                borderRadius: "5px",
                 background: "#ecfdf5",
                 color: "#059669",
                 border: "1px solid #bbf7d0",
@@ -446,7 +451,7 @@ server.listen(CONFIG.port, () => {
                 style={{
                   width: "100%",
                   padding: "10px 14px",
-                  borderRadius: "8px",
+                  borderRadius: "5px",
                   background: "#f8fafc",
                   border: "1px solid #cbd5e1",
                   color: "#0f172a",
@@ -473,7 +478,7 @@ server.listen(CONFIG.port, () => {
                 style={{
                   width: "100%",
                   padding: "10px 14px",
-                  borderRadius: "8px",
+                  borderRadius: "5px",
                   background: "#f8fafc",
                   border: "1px solid #cbd5e1",
                   color: "#0f172a",
@@ -496,7 +501,7 @@ server.listen(CONFIG.port, () => {
                 style={{
                   width: "100%",
                   padding: "10px 14px",
-                  borderRadius: "8px",
+                  borderRadius: "5px",
                   background: "#f1f5f9",
                   border: "1px solid #e2e8f0",
                   color: "#64748b",
@@ -510,7 +515,7 @@ server.listen(CONFIG.port, () => {
               <div
                 style={{
                   padding: "10px 14px",
-                  borderRadius: "8px",
+                  borderRadius: "5px",
                   background: saveFeedback.startsWith("Error") ? "#fef2f2" : "#f0fdf4",
                   border: saveFeedback.startsWith("Error") ? "1px solid #fecaca" : "1px solid #bbf7d0",
                   color: saveFeedback.startsWith("Error") ? "#dc2626" : "#15803d",
@@ -531,7 +536,7 @@ server.listen(CONFIG.port, () => {
                 justifyContent: "center",
                 gap: "8px",
                 padding: "11px 18px",
-                borderRadius: "8px",
+                borderRadius: "5px",
                 background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                 color: "#ffffff",
                 fontSize: "13px",
@@ -554,7 +559,7 @@ server.listen(CONFIG.port, () => {
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "14px",
+            borderRadius: "5px",
             padding: "22px",
             display: "flex",
             flexDirection: "column",
@@ -567,7 +572,7 @@ server.listen(CONFIG.port, () => {
               style={{
                 width: "34px",
                 height: "34px",
-                borderRadius: "8px",
+                borderRadius: "5px",
                 background: "#eff6ff",
                 color: "#2563eb",
                 border: "1px solid #bfdbfe",
@@ -601,7 +606,7 @@ server.listen(CONFIG.port, () => {
                 style={{
                   width: "100%",
                   padding: "10px 14px",
-                  borderRadius: "8px",
+                  borderRadius: "5px",
                   background: "#f8fafc",
                   border: "1px solid #cbd5e1",
                   color: "#0f172a",
@@ -624,7 +629,7 @@ server.listen(CONFIG.port, () => {
                 style={{
                   width: "100%",
                   padding: "10px 14px",
-                  borderRadius: "8px",
+                  borderRadius: "5px",
                   background: "#f8fafc",
                   border: "1px solid #cbd5e1",
                   color: "#0f172a",
@@ -642,7 +647,7 @@ server.listen(CONFIG.port, () => {
               <div
                 style={{
                   padding: "12px 14px",
-                  borderRadius: "8px",
+                  borderRadius: "5px",
                   background: testResult.success ? "#f0fdf4" : "#fef2f2",
                   border: testResult.success ? "1px solid #bbf7d0" : "1px solid #fecaca",
                   color: testResult.success ? "#15803d" : "#b91c1c",
@@ -668,7 +673,7 @@ server.listen(CONFIG.port, () => {
                 justifyContent: "center",
                 gap: "8px",
                 padding: "11px 18px",
-                borderRadius: "8px",
+                borderRadius: "5px",
                 background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
                 color: "#ffffff",
                 fontSize: "13px",
@@ -692,7 +697,7 @@ server.listen(CONFIG.port, () => {
         style={{
           background: "#ffffff",
           border: "1px solid #e2e8f0",
-          borderRadius: "14px",
+          borderRadius: "5px",
           padding: "22px",
           display: "flex",
           flexDirection: "column",
@@ -714,7 +719,7 @@ server.listen(CONFIG.port, () => {
               fontSize: "11px",
               fontWeight: 800,
               padding: "4px 10px",
-              borderRadius: "6px",
+              borderRadius: "5px",
               background: "#ecfdf5",
               color: "#059669",
               border: "1px solid #bbf7d0",
@@ -730,7 +735,7 @@ server.listen(CONFIG.port, () => {
             style={{
               background: "#f8fafc",
               border: "1px solid #e2e8f0",
-              borderRadius: "10px",
+              borderRadius: "5px",
               padding: "16px",
               display: "flex",
               flexDirection: "column",
@@ -751,7 +756,7 @@ server.listen(CONFIG.port, () => {
             style={{
               background: "#f8fafc",
               border: "1px solid #e2e8f0",
-              borderRadius: "10px",
+              borderRadius: "5px",
               padding: "16px",
               display: "flex",
               flexDirection: "column",
@@ -772,7 +777,7 @@ server.listen(CONFIG.port, () => {
             style={{
               background: "#f8fafc",
               border: "1px solid #e2e8f0",
-              borderRadius: "10px",
+              borderRadius: "5px",
               padding: "16px",
               display: "flex",
               flexDirection: "column",
@@ -793,7 +798,7 @@ server.listen(CONFIG.port, () => {
             style={{
               background: "#f8fafc",
               border: "1px solid #e2e8f0",
-              borderRadius: "10px",
+              borderRadius: "5px",
               padding: "16px",
               display: "flex",
               flexDirection: "column",
@@ -817,7 +822,7 @@ server.listen(CONFIG.port, () => {
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "14px",
+            borderRadius: "5px",
             padding: "22px",
             display: "flex",
             flexDirection: "column",
@@ -846,7 +851,7 @@ server.listen(CONFIG.port, () => {
                 style={{
                   background: "#f8fafc",
                   border: "1px solid #e2e8f0",
-                  borderRadius: "8px",
+                  borderRadius: "5px",
                   padding: "10px 12px",
                   display: "flex",
                   alignItems: "center",
@@ -862,7 +867,7 @@ server.listen(CONFIG.port, () => {
                   <div style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>{c.name}</div>
                   <div style={{ fontSize: "11px", color: "#059669", fontFamily: "monospace", fontWeight: 600 }}>{c.phone}</div>
                 </div>
-                <span style={{ fontSize: "10px", background: "#e2e8f0", padding: "2px 6px", borderRadius: "4px", color: "#475569", fontWeight: 600 }}>
+                <span style={{ fontSize: "10px", background: "#e2e8f0", padding: "2px 6px", borderRadius: "5px", color: "#475569", fontWeight: 600 }}>
                   {c.orderCount} ord
                 </span>
               </button>

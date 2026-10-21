@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function SoleWhatAdminPage() {
   const activeShop = await getActiveShopContext();
   const [settings, status, recentCustomers] = await Promise.all([
-    fetchSettings(),
+    fetchSettings(activeShop.shopId),
     getSoleWhatStatus(),
     getRecentCustomerContacts(),
   ]);

@@ -96,7 +96,65 @@ export async function fetchProducts(
     return { data: null, error: error.message, tableMissing };
   }
 
-  return { data: data as Product[], error: null, tableMissing: false };
+  const productsList = ((data || []) as Product[]).map((p) => ({ ...p }));
+
+  // Enrich products with deal data (items_included, original_price, badge)
+  try {
+    let dealQuery = supabase
+      .from("deals")
+      .select("id, product_id, title, slug, items_included, badge, deal_price, original_price, description")
+      .eq("is_active", true);
+
+    if (shopId !== undefined) {
+      if (shopId !== null) {
+        dealQuery = dealQuery.eq("shop_id", shopId);
+      } else {
+        dealQuery = dealQuery.is("shop_id", null);
+      }
+    }
+
+    const { data: dealsData } = await dealQuery;
+
+    if (dealsData && dealsData.length > 0) {
+      const dealByProdId = new Map<string, any>();
+      const dealByTitle = new Map<string, any>();
+      const dealBySlug = new Map<string, any>();
+
+      for (const d of dealsData) {
+        if (d.product_id != null) dealByProdId.set(String(d.product_id), d);
+        if (d.title) dealByTitle.set(d.title.trim().toLowerCase(), d);
+        if (d.slug) dealBySlug.set(d.slug.trim().toLowerCase(), d);
+      }
+
+      for (const p of productsList) {
+        const matchedDeal =
+          dealByProdId.get(String(p.id)) ||
+          dealByTitle.get(p.name?.trim().toLowerCase()) ||
+          (p.slug ? dealBySlug.get(p.slug.trim().toLowerCase()) : null);
+
+        if (matchedDeal) {
+          let items = matchedDeal.items_included;
+          if (typeof items === "string") {
+            try {
+              items = JSON.parse(items);
+            } catch {
+              items = items.split(",").map((s: string) => s.trim()).filter(Boolean);
+            }
+          }
+          if (Array.isArray(items) && items.length > 0) {
+            p.items_included = items;
+          }
+          if (matchedDeal.badge) p.badge = matchedDeal.badge;
+          if (matchedDeal.original_price != null) p.original_price = matchedDeal.original_price;
+          p.is_deal = true;
+        }
+      }
+    }
+  } catch (dealErr) {
+    console.warn("[fetchProducts] Deals enrichment skipped:", dealErr);
+  }
+
+  return { data: productsList, error: null, tableMissing: false };
 }
 
 // ─── Shop Settings & Mobile Promo Slider ──────────────────────────
@@ -193,7 +251,20 @@ export async function fetchShopBySlugOrId(identifier: string | number): Promise<
     }
 
     const { data } = await query.maybeSingle();
-    return data || null;
+    if (data) return data;
+
+    if (!isNumeric) {
+      const cleanId = String(identifier).trim();
+      const { data: prefixMatch } = await supabase
+        .from("shops")
+        .select("*")
+        .or(`slug.ilike.${cleanId}%,name.ilike.${cleanId}%`)
+        .limit(1)
+        .maybeSingle();
+      return prefixMatch || null;
+    }
+
+    return null;
   } catch {
     return null;
   }

@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Product, ProductVariation, ExtraTopping } from "@/types/menu";
 import { useCart } from "./CartContext";
 import ImagePlaceholder from "./ImagePlaceholder";
+import { getDealItems } from "@/lib/deal-helper";
 
 interface ProductDetailSheetProps {
   product: Product | null;
@@ -23,6 +24,13 @@ function SheetContent({
   onClose: () => void;
 }) {
   const { addItem, formatPrice } = useCart();
+  const dealItems = getDealItems(product);
+  const isDeal =
+    dealItems.length > 0 ||
+    product.is_deal === true ||
+    product.category?.name?.toLowerCase().includes("deal") ||
+    product.name?.toLowerCase().includes("deal") ||
+    product.name?.toLowerCase().includes("combo");
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -250,17 +258,33 @@ function SheetContent({
                   {product.name}
                 </h2>
                 {product.price != null && (
-                  <span
-                    style={{
-                      fontFamily: "var(--font-display)",
-                      fontWeight: 900,
-                      fontSize: 20,
-                      color: "#dc2626",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {formatPrice(unitPrice)}
-                  </span>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    {product.original_price && product.original_price > unitPrice && (
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "#94a3b8",
+                          textDecoration: "line-through",
+                          fontWeight: 600,
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {formatPrice(product.original_price)}
+                      </div>
+                    )}
+                    <span
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 900,
+                        fontSize: 22,
+                        color: "#dc2626",
+                        whiteSpace: "nowrap",
+                        lineHeight: 1.1,
+                      }}
+                    >
+                      {formatPrice(unitPrice)}
+                    </span>
+                  </div>
                 )}
               </div>
 
@@ -316,6 +340,131 @@ function SheetContent({
                 >
                   {product.description}
                 </p>
+              )}
+
+              {/* ─── DEAL INCLUDED ITEMS SECTION ──────────────────────── */}
+              {dealItems.length > 0 && (
+                <div
+                  style={{
+                    marginBottom: 18,
+                    padding: "14px 16px",
+                    borderRadius: 6,
+                    background: "linear-gradient(180deg, #fffbeb 0%, #fff7ed 100%)",
+                    border: "1.5px solid #fed7aa",
+                    boxShadow: "0 2px 8px rgba(234, 88, 12, 0.08)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 10,
+                      borderBottom: "1px dashed #fed7aa",
+                      paddingBottom: 8,
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                      <span style={{ fontSize: 16 }}>🎁</span>
+                      <h3
+                        style={{
+                          margin: 0,
+                          fontSize: 14,
+                          fontWeight: 800,
+                          color: "#9a3412",
+                          letterSpacing: "-0.01em",
+                        }}
+                      >
+                        Items Included in this Deal
+                      </h3>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        background: "#dc2626",
+                        color: "#ffffff",
+                        padding: "2px 8px",
+                        borderRadius: 12,
+                        letterSpacing: "0.02em",
+                      }}
+                    >
+                      {dealItems.length} Items
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {dealItems.map((item, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "8px 12px",
+                          background: "#ffffff",
+                          borderRadius: 4,
+                          border: "1px solid #fde68a",
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: "50%",
+                            background: "#dcfce7",
+                            color: "#16a34a",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 13,
+                            fontWeight: 900,
+                            flexShrink: 0,
+                          }}
+                        >
+                          ✓
+                        </div>
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: "#1e293b",
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {item}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {product.original_price && product.original_price > (product.price || 0) && (
+                    <div
+                      style={{
+                        marginTop: 10,
+                        paddingTop: 8,
+                        borderTop: "1px dashed #fed7aa",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        fontSize: 12,
+                        color: "#16a34a",
+                        fontWeight: 700,
+                      }}
+                    >
+                      <span>
+                        Original Value:{" "}
+                        <span style={{ textDecoration: "line-through", color: "#64748b" }}>
+                          {formatPrice(product.original_price)}
+                        </span>
+                      </span>
+                      <span>
+                        Save {formatPrice(Number(product.original_price) - Number(product.price || 0))}!
+                      </span>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* ─── SIZE / VARIATION SELECTOR ──────────────────────── */}
@@ -534,7 +683,7 @@ function SheetContent({
                       <path d="M16 10a4 4 0 0 1-8 0" />
                     </svg>
                     <span>
-                      Add {qty > 1 ? `${qty} items` : "to Cart"} {totalPrice != null ? `— ${formatPrice(totalPrice)}` : ""}
+                      Add {isDeal ? "Deal " : ""}{qty > 1 ? `(${qty}) ` : "to Cart"} {totalPrice != null ? `— ${formatPrice(totalPrice)}` : ""}
                     </span>
                   </>
                 )}

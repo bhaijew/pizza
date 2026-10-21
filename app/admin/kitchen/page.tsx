@@ -13,7 +13,7 @@ export default async function AdminKitchenPage() {
   let ordersQuery = db
     .from("orders")
     .select("*")
-    .in("status", ["pending", "confirmed", "preparing"])
+    .in("status", ["confirmed", "preparing"])
     .order("created_at", { ascending: true });
 
   if (activeShop.shopId) {
@@ -28,7 +28,7 @@ export default async function AdminKitchenPage() {
   ]);
 
   const kdsUrl = activeShop.shopSlug
-    ? `/kitchen?shop=${activeShop.shopSlug}`
+    ? `/${activeShop.shopSlug}/kitchen`
     : activeShop.shopId
     ? `/kitchen?shop=${activeShop.shopId}`
     : "/kitchen";
@@ -49,7 +49,7 @@ export default async function AdminKitchenPage() {
             href={kdsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 rounded shadow-sm"
+            className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 rounded-[5px] shadow-sm"
           >
             <span>🖥️ Open Tablet KDS Screen</span>
             <span>↗</span>

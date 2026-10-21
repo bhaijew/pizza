@@ -5,8 +5,6 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import type { Order } from "@/types/menu";
 import {
-  Volume2,
-  VolumeX,
   Bell,
   UtensilsCrossed,
   Bike,
@@ -200,72 +198,7 @@ export default function LiveOrderNotifier({
 
   return (
     <>
-      {/* ── Fixed Realtime Status & Sound Toggle Control (Bottom Right) ── */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: "16px",
-          right: "20px",
-          zIndex: 9998,
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          background: "rgba(15, 23, 42, 0.88)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          padding: "6px 14px",
-          borderRadius: "30px",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.3)",
-          color: "#ffffff",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span
-            style={{
-              width: "8px",
-              height: "8px",
-              borderRadius: "50%",
-              background: isConnected ? "#10b981" : "#f59e0b",
-              display: "inline-block",
-            }}
-            className={isConnected ? "admin-pulse-green" : ""}
-          />
-          <span
-            style={{
-              fontSize: "11px",
-              fontWeight: 800,
-              color: isConnected ? "#34d399" : "#fbbf24",
-              letterSpacing: "0.05em",
-            }}
-          >
-            {isConnected ? "LIVE RADAR" : "CONNECTING..."}
-          </span>
-        </div>
 
-        <button
-          onClick={toggleSound}
-          type="button"
-          title={soundEnabled ? "Sound Alerts: ON (Click to Mute)" : "Sound Alerts: MUTED (Click to Enable)"}
-          style={{
-            background: soundEnabled ? "rgba(234, 88, 12, 0.25)" : "rgba(255, 255, 255, 0.08)",
-            border: soundEnabled ? "1px solid rgba(249, 115, 22, 0.5)" : "1px solid rgba(255, 255, 255, 0.15)",
-            borderRadius: "20px",
-            padding: "4px 10px",
-            fontSize: "11px",
-            fontWeight: 800,
-            color: soundEnabled ? "#fdba74" : "#94a3b8",
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            transition: "all 0.15s ease",
-          }}
-        >
-          {soundEnabled ? <Volume2 size={13} className="text-orange-400" /> : <VolumeX size={13} />}
-          <span>{soundEnabled ? "Chime ON" : "Muted"}</span>
-        </button>
-      </div>
 
       {/* ── Floating Real-time Order Alert Toasts Container ── */}
       <div

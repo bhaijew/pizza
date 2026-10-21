@@ -17,6 +17,47 @@ export default async function EditDealPage({ params }: EditDealPageProps) {
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
 
+  // Strict RBAC: Only Admin can access deal editing
+  if (activeShop.role !== "admin") {
+    return (
+      <div style={{ maxWidth: 640, margin: "40px auto", padding: 24, textAlign: "center" }}>
+        <div
+          style={{
+            background: "#fff1f2",
+            border: "1.5px solid #fecdd3",
+            borderRadius: 5,
+            padding: 32,
+            boxShadow: "0 4px 16px rgba(225, 29, 72, 0.08)",
+          }}
+        >
+          <div style={{ fontSize: 44, marginBottom: 12 }}>🔒</div>
+          <h2 style={{ fontSize: 20, fontWeight: 900, color: "#9f1239", margin: "0 0 8px" }}>
+            Admin Access Required
+          </h2>
+          <p style={{ fontSize: 14, color: "#be123c", lineHeight: 1.6, margin: "0 0 20px" }}>
+            Special Deals can only be edited by <strong>Store Admin</strong>.
+            Your current logged-in role is <strong>Staff ({activeShop.staffName})</strong>.
+          </p>
+          <a
+            href="/admin/deals"
+            style={{
+              display: "inline-block",
+              background: "#e11d48",
+              color: "#ffffff",
+              padding: "10px 20px",
+              borderRadius: 5,
+              fontWeight: 800,
+              fontSize: 13,
+              textDecoration: "none",
+            }}
+          >
+            ← Back to Deals Catalog
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   // Fetch deal
   const { data: deal } = await fetchDealById(id, activeShop.isMasterAdmin ? undefined : activeShop.shopId);
   if (!deal) {

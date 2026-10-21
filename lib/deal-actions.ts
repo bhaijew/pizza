@@ -59,6 +59,14 @@ export async function createDeal(
     return { error: "Database write permission denied: Service role not configured", success: false };
   }
 
+  // Strict RBAC: Only Admin can create special deals
+  if (activeShop.role !== "admin") {
+    return {
+      error: "Permission Denied: Only Store Admin can create Special Deals. Staff accounts have view-only access.",
+      success: false,
+    };
+  }
+
   const title = (formData.get("title") as string)?.trim();
   let slug = (formData.get("slug") as string)?.trim() || slugify(title || "deal");
   const description = (formData.get("description") as string)?.trim() || null;
@@ -188,6 +196,14 @@ export async function updateDeal(
     return { error: "Service role not configured", success: false };
   }
 
+  // Strict RBAC: Only Admin can edit special deals
+  if (activeShop.role !== "admin") {
+    return {
+      error: "Permission Denied: Only Store Admin can edit Special Deals.",
+      success: false,
+    };
+  }
+
   const title = (formData.get("title") as string)?.trim();
   let slug = (formData.get("slug") as string)?.trim() || slugify(title || "deal");
   const description = (formData.get("description") as string)?.trim() || null;
@@ -273,6 +289,13 @@ export async function deleteDeal(id: number | string): Promise<{ error: string |
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
 
+  // Strict RBAC: Only Admin can delete special deals
+  if (activeShop.role !== "admin") {
+    return {
+      error: "Permission Denied: Only Store Admin can delete Special Deals.",
+    };
+  }
+
   try {
     const { data: existing } = await db.from("deals").select("product_id, shop_id").eq("id", id).maybeSingle();
 
@@ -302,6 +325,13 @@ export async function toggleDealAvailability(id: number | string, isAvailable: b
   await requireAdmin();
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
+
+  // Strict RBAC: Only Admin can toggle special deals availability
+  if (activeShop.role !== "admin") {
+    return {
+      error: "Permission Denied: Only Store Admin can change Special Deals availability.",
+    };
+  }
 
   try {
     const { data: existing } = await db.from("deals").select("product_id").eq("id", id).maybeSingle();

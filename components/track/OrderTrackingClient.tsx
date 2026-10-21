@@ -19,8 +19,13 @@ export default function OrderTrackingClient({
   const [loading, setLoading] = useState(!initialOrder);
   const [error, setError] = useState<string | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const [isMounted, setIsMounted] = useState(false);
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
   const prevStatusRef = useRef<OrderStatus | null>(initialOrder?.status || null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Play subtle web audio notification chime when status progresses
   const playStatusChime = useCallback(() => {
@@ -53,12 +58,15 @@ export default function OrderTrackingClient({
       prevStatusRef.current = res.order.status;
       setOrder(res.order);
       setError(null);
-    } else if (!order) {
-      setError(res.error || "Order not found");
+    } else {
+      setOrder((prev) => {
+        if (!prev) setError(res.error || "Order not found");
+        return prev;
+      });
     }
     setLastRefreshed(new Date());
     setLoading(false);
-  }, [initialOrderNumber, order, playStatusChime]);
+  }, [initialOrderNumber, playStatusChime]);
 
   // Enterprise-Grade 100% Live WebSocket Realtime Subscription
   useEffect(() => {
@@ -302,6 +310,7 @@ export default function OrderTrackingClient({
               }}
             />
             <span
+              suppressHydrationWarning
               style={{
                 fontSize: 11,
                 color: isRealtimeConnected ? "#059669" : "#d97706",
@@ -309,7 +318,10 @@ export default function OrderTrackingClient({
                 letterSpacing: "0.01em",
               }}
             >
-              {isRealtimeConnected ? "⚡ 100% Live Radar (WebSocket)" : "Connecting Radar..."} &bull; Synced {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              {isRealtimeConnected ? "⚡ 100% Live Radar (WebSocket)" : "Connecting Radar..."}
+              {isMounted && (
+                <> &bull; Synced {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</>
+              )}
             </span>
           </div>
         </div>

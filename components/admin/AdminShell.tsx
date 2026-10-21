@@ -36,11 +36,20 @@ import {
   Clock,
   Download,
   MessageSquare,
-  Laptop,
   Users,
   Lock,
 } from "lucide-react";
 import DownloadPosModal from "@/components/admin/DownloadPosModal";
+
+const Palette = ({ className, size = 16 }: { className?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+    <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+    <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+    <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+  </svg>
+);
 
 interface AdminShellProps {
   children: React.ReactNode;
@@ -132,6 +141,13 @@ const NAV_GROUPS: NavGroup[] = [
         badgeColor: "#10b981",
         icon: TicketPercent,
       },
+      {
+        label: "Menu UI & Theme",
+        href: "/admin/menu-ui",
+        badge: "UI",
+        badgeColor: "#7c3aed",
+        icon: Palette,
+      },
     ],
   },
   {
@@ -208,6 +224,7 @@ export default function AdminShell({
   };
 
   const customerMenuUrl = shopSlug ? `/${shopSlug}` : "/";
+  const kdsUrl = shopSlug ? `/${shopSlug}/kitchen` : "/kitchen";
 
   const [pakistanTime, setPakistanTime] = useState<string>("");
   const [pakistanDate, setPakistanDate] = useState<string>("");
@@ -365,7 +382,7 @@ export default function AdminShell({
           align-items: center;
           justify-content: space-between;
           padding: 9px 12px;
-          border-radius: 8px;
+          border-radius: 5px;
           font-size: 13px;
           text-decoration: none;
           transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
@@ -513,7 +530,7 @@ export default function AdminShell({
                   fontSize: "9px",
                   fontWeight: 900,
                   padding: "1px 6px",
-                  borderRadius: "4px",
+                  borderRadius: "5px",
                   background: isAdmin ? "rgba(245, 158, 11, 0.2)" : "rgba(16, 185, 129, 0.2)",
                   color: isAdmin ? "#fde047" : "#6ee7b7",
                   border: `1px solid ${isAdmin ? "rgba(245, 158, 11, 0.4)" : "rgba(16, 185, 129, 0.4)"}`,
@@ -599,7 +616,7 @@ export default function AdminShell({
                             fontSize: "9px",
                             fontWeight: 800,
                             padding: "2px 6px",
-                            borderRadius: "4px",
+                            borderRadius: "5px",
                             background: item.badgeColor
                               ? isLight
                                 ? `${item.badgeColor}18`
@@ -867,7 +884,7 @@ export default function AdminShell({
                 alignItems: "center",
                 gap: "5px",
                 padding: "5px 10px",
-                borderRadius: "20px",
+                borderRadius: "5px",
                 background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
                 border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
                 fontSize: "11.5px",
@@ -891,7 +908,7 @@ export default function AdminShell({
                 alignItems: "center",
                 gap: "5px",
                 padding: "5px 11px",
-                borderRadius: "6px",
+                borderRadius: "5px",
                 background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
                 border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.35)",
                 fontSize: "11.5px",
@@ -911,13 +928,15 @@ export default function AdminShell({
 
             {/* Quick Kitchen Display button */}
             <Link
-              href="/admin/kitchen"
+              href={kdsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "5px",
                 padding: "5px 11px",
-                borderRadius: "6px",
+                borderRadius: "5px",
                 background: isLight ? "#fff7ed" : "rgba(249, 115, 22, 0.15)",
                 border: isLight ? "1px solid #fed7aa" : "1px solid rgba(249, 115, 22, 0.3)",
                 fontSize: "11.5px",
@@ -928,9 +947,12 @@ export default function AdminShell({
                 flexShrink: 0,
                 whiteSpace: "nowrap",
               }}
+              className="hover:scale-105"
+              title="Open Live Kitchen Display Screen (KDS) in New Tab"
             >
               <ChefHat size={13} style={{ flexShrink: 0 }} />
               <span>Kitchen KDS</span>
+              <ExternalLink size={10} style={{ opacity: 0.7 }} />
             </Link>
 
             {/* Preview Live Menu button */}
@@ -942,7 +964,7 @@ export default function AdminShell({
                 alignItems: "center",
                 gap: "5px",
                 padding: "5px 12px",
-                borderRadius: "6px",
+                borderRadius: "5px",
                 background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
                 color: "#ffffff",
                 fontSize: "11.5px",
@@ -1401,7 +1423,7 @@ export default function AdminShell({
                               fontSize: "9px",
                               fontWeight: 800,
                               padding: "2px 6px",
-                              borderRadius: "4px",
+                              borderRadius: "5px",
                               background: item.badgeColor
                                 ? isLight
                                   ? `${item.badgeColor}18`

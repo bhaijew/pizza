@@ -132,7 +132,7 @@ export default async function AdminDashboardPage() {
       <div
         style={{
           background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-          borderRadius: 14,
+          borderRadius: 5,
           color: "#ffffff",
           marginBottom: 24,
           display: "flex",
@@ -209,7 +209,7 @@ export default async function AdminDashboardPage() {
               alignItems: "center",
               gap: 8,
               padding: "10px 18px",
-              borderRadius: 8,
+              borderRadius: 5,
               background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
               color: "#ffffff",
               fontWeight: 800,
@@ -229,7 +229,7 @@ export default async function AdminDashboardPage() {
                   background: "#ffffff",
                   color: "#ea580c",
                   padding: "1px 7px",
-                  borderRadius: 10,
+                  borderRadius: 5,
                   fontSize: 11,
                   fontWeight: 900,
                 }}
@@ -246,7 +246,7 @@ export default async function AdminDashboardPage() {
               alignItems: "center",
               gap: 8,
               padding: "10px 18px",
-              borderRadius: 8,
+              borderRadius: 5,
               background: "rgba(255, 255, 255, 0.08)",
               color: "#ffffff",
               fontWeight: 700,
@@ -269,7 +269,7 @@ export default async function AdminDashboardPage() {
               alignItems: "center",
               gap: 8,
               padding: "10px 16px",
-              borderRadius: 8,
+              borderRadius: 5,
               background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
               color: "#ffffff",
               fontWeight: 800,
@@ -289,7 +289,7 @@ export default async function AdminDashboardPage() {
                 background: "#ffffff",
                 color: "#059669",
                 padding: "1px 6px",
-                borderRadius: 4,
+                borderRadius: 5,
                 fontSize: 10,
                 fontWeight: 900,
               }}
@@ -312,7 +312,7 @@ export default async function AdminDashboardPage() {
               alignItems: "center",
               gap: 8,
               padding: "10px 16px",
-              borderRadius: 8,
+              borderRadius: 5,
               background: "rgba(255, 255, 255, 0.08)",
               color: "#34d399",
               fontWeight: 700,
@@ -336,7 +336,7 @@ export default async function AdminDashboardPage() {
               alignItems: "center",
               gap: 6,
               padding: "10px 16px",
-              borderRadius: 8,
+              borderRadius: 5,
               background: "rgba(255, 255, 255, 0.05)",
               color: "#cbd5e1",
               fontWeight: 600,
@@ -364,7 +364,7 @@ export default async function AdminDashboardPage() {
               ? "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)"
               : "#ffffff",
             border: pendingOrders > 0 ? "1.5px solid #fdba74" : "1px solid #e2e8f0",
-            borderRadius: 12,
+            borderRadius: 5,
             padding: 22,
             display: "flex",
             flexDirection: "column",
@@ -391,7 +391,7 @@ export default async function AdminDashboardPage() {
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 10,
+                borderRadius: 5,
                 background: pendingOrders > 0 ? "#ea580c" : "#f1f5f9",
                 color: pendingOrders > 0 ? "#ffffff" : "#64748b",
                 display: "flex",
@@ -440,7 +440,7 @@ export default async function AdminDashboardPage() {
             textDecoration: "none",
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: 12,
+            borderRadius: 5,
             padding: 22,
             display: "flex",
             flexDirection: "column",
@@ -465,7 +465,7 @@ export default async function AdminDashboardPage() {
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 10,
+                borderRadius: 5,
                 background: "#fef2f2",
                 color: "#dc2626",
                 display: "flex",
@@ -506,7 +506,7 @@ export default async function AdminDashboardPage() {
             textDecoration: "none",
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: 12,
+            borderRadius: 5,
             padding: 22,
             display: "flex",
             flexDirection: "column",
@@ -531,7 +531,7 @@ export default async function AdminDashboardPage() {
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 10,
+                borderRadius: 5,
                 background: "#eff6ff",
                 color: "#2563eb",
                 display: "flex",
@@ -582,7 +582,7 @@ export default async function AdminDashboardPage() {
             textDecoration: "none",
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: 12,
+            borderRadius: 5,
             padding: 22,
             display: "flex",
             flexDirection: "column",
@@ -607,7 +607,7 @@ export default async function AdminDashboardPage() {
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 10,
+                borderRadius: 5,
                 background: "#ecfdf5",
                 color: "#059669",
                 display: "flex",
@@ -649,7 +649,7 @@ export default async function AdminDashboardPage() {
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: 12,
+            borderRadius: 5,
             padding: 24,
             boxShadow: "0 2px 10px rgba(0, 0, 0, 0.03)",
           }}
@@ -707,7 +707,7 @@ export default async function AdminDashboardPage() {
                 style={{
                   width: "56px",
                   height: "56px",
-                  borderRadius: "16px",
+                  borderRadius: 5,
                   background: "#fff7ed",
                   color: "#ea580c",
                   display: "inline-flex",
@@ -749,7 +749,7 @@ export default async function AdminDashboardPage() {
                       padding: "12px 14px",
                       background: "#f8fafc",
                       border: "1px solid #f1f5f9",
-                      borderRadius: 10,
+                      borderRadius: 5,
                       gap: 12,
                       transition: "background 0.15s ease",
                     }}
@@ -817,7 +817,7 @@ export default async function AdminDashboardPage() {
                           alignItems: "center",
                           gap: 5,
                           padding: "4px 8px",
-                          borderRadius: 6,
+                          borderRadius: 5,
                           fontSize: 11,
                           fontWeight: 700,
                           background: s.bg,
@@ -834,7 +834,7 @@ export default async function AdminDashboardPage() {
                         target="_blank"
                         style={{
                           padding: "5px 9px",
-                          borderRadius: 6,
+                          borderRadius: 5,
                           background: "#ffffff",
                           border: "1px solid #cbd5e1",
                           color: "#334155",
@@ -865,7 +865,7 @@ export default async function AdminDashboardPage() {
             style={{
               background: "#ffffff",
               border: "1px solid #e2e8f0",
-              borderRadius: 12,
+              borderRadius: 5,
               padding: 24,
               boxShadow: "0 2px 10px rgba(0, 0, 0, 0.03)",
             }}
@@ -919,7 +919,7 @@ export default async function AdminDashboardPage() {
                     href={item.href}
                     style={{
                       padding: "16px 14px",
-                      borderRadius: 10,
+                      borderRadius: 5,
                       background: "#f8fafc",
                       border: "1px solid #e2e8f0",
                       textDecoration: "none",
@@ -933,7 +933,7 @@ export default async function AdminDashboardPage() {
                       style={{
                         width: 36,
                         height: 36,
-                        borderRadius: 8,
+                        borderRadius: 5,
                         background: item.bg,
                         color: item.color,
                         display: "flex",
@@ -958,7 +958,7 @@ export default async function AdminDashboardPage() {
             style={{
               background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)",
               border: "1px solid #a7f3d0",
-              borderRadius: 12,
+              borderRadius: 5,
               padding: 20,
               boxShadow: "0 2px 8px rgba(16, 185, 129, 0.05)",
             }}
@@ -968,7 +968,7 @@ export default async function AdminDashboardPage() {
                 style={{
                   width: 34,
                   height: 34,
-                  borderRadius: 8,
+                  borderRadius: 5,
                   background: "#dcfce7",
                   color: "#059669",
                   display: "flex",

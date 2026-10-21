@@ -24,6 +24,7 @@ interface DealManagerProps {
   isMasterAdmin?: boolean;
   availableShops?: { id: number; name: string; slug: string }[];
   currencySymbol?: string;
+  userRole?: string;
 }
 
 export default function DealManager({
@@ -33,7 +34,9 @@ export default function DealManager({
   isMasterAdmin = false,
   availableShops = [],
   currencySymbol = "Rs.",
+  userRole = "admin",
 }: DealManagerProps) {
+  const isAdmin = userRole === "admin";
   const [deals, setDeals] = useState<Deal[]>(initialDeals);
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -152,30 +155,76 @@ export default function DealManager({
           </div>
         </div>
 
-        {/* Dedicated Full-Page Link: + Create New Deal */}
-        <Link
-          href="/admin/deals/new"
+        {/* Dedicated Full-Page Link: + Create New Deal (Admin only) */}
+        {isAdmin ? (
+          <Link
+            href="/admin/deals/new"
+            style={{
+              background: "#ea580c",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "5px",
+              padding: "10px 18px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              boxShadow: "0 2px 8px rgba(234, 88, 12, 0.25)",
+              textDecoration: "none",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <Plus size={16} />
+            <span>+ Create New Deal (Full Page)</span>
+          </Link>
+        ) : (
+          <div
+            style={{
+              background: "#f1f5f9",
+              color: "#64748b",
+              border: "1px solid #cbd5e1",
+              borderRadius: "5px",
+              padding: "9px 16px",
+              fontSize: "13px",
+              fontWeight: 700,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              cursor: "not-allowed",
+            }}
+            title="Special Deals can only be created by Store Admin"
+          >
+            <span>🔒</span>
+            <span>Create Deal (Admin Only)</span>
+          </div>
+        )}
+      </div>
+
+      {/* Staff View Notice */}
+      {!isAdmin && (
+        <div
           style={{
-            background: "#ea580c",
-            color: "#ffffff",
-            border: "none",
+            marginBottom: "16px",
+            padding: "12px 16px",
             borderRadius: "5px",
-            padding: "10px 18px",
+            background: "#fffbeb",
+            border: "1.5px solid #fde68a",
+            color: "#92400e",
             fontSize: "13px",
-            fontWeight: 700,
-            cursor: "pointer",
-            display: "inline-flex",
+            display: "flex",
             alignItems: "center",
-            gap: "8px",
-            boxShadow: "0 2px 8px rgba(234, 88, 12, 0.25)",
-            textDecoration: "none",
-            transition: "all 0.15s ease",
+            gap: "10px",
+            lineHeight: 1.4,
           }}
         >
-          <Plus size={16} />
-          <span>+ Create New Deal (Full Page)</span>
-        </Link>
-      </div>
+          <span style={{ fontSize: "16px" }}>🔒</span>
+          <div>
+            <strong>Staff Read-Only View:</strong> Special deals and bundle configurations can only be added, edited, or deleted by <strong>Store Admin</strong>.
+          </div>
+        </div>
+      )}
 
       {/* Error alert */}
       {errorMessage && (
@@ -198,7 +247,7 @@ export default function DealManager({
             onClick={() => setErrorMessage(null)}
             style={{ background: "none", border: "none", color: "#b91c1c", cursor: "pointer", fontWeight: 700 }}
           >
-            ×
+            ✕
           </button>
         </div>
       )}
@@ -323,26 +372,46 @@ export default function DealManager({
           <p style={{ margin: "0 0 20px", fontSize: "13px", color: "#64748b", maxWidth: "420px", marginLeft: "auto", marginRight: "auto" }}>
             Create combo deals, family feasts, or midnight specials by grouping your menu products together with promotional pricing.
           </p>
-          <Link
-            href="/admin/deals/new"
-            style={{
-              background: "#ea580c",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "5px",
-              padding: "10px 20px",
-              fontSize: "13px",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              textDecoration: "none",
-            }}
-          >
-            <Plus size={16} />
-            <span>Create First Deal on Full Page</span>
-          </Link>
+          {isAdmin ? (
+            <Link
+              href="/admin/deals/new"
+              style={{
+                background: "#ea580c",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "5px",
+                padding: "10px 20px",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                textDecoration: "none",
+              }}
+            >
+              <Plus size={16} />
+              <span>Create First Deal on Full Page</span>
+            </Link>
+          ) : (
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 16px",
+                borderRadius: "5px",
+                background: "#f1f5f9",
+                border: "1px solid #cbd5e1",
+                color: "#64748b",
+                fontSize: "12px",
+                fontWeight: 700,
+              }}
+            >
+              <span>🔒</span>
+              <span>Deals can only be configured by Store Admin</span>
+            </div>
+          )}
         </div>
       ) : (
         <div
@@ -371,7 +440,7 @@ export default function DealManager({
                 style={{
                   background: "#ffffff",
                   border: "1px solid #e2e8f0",
-                  borderRadius: "6px",
+                  borderRadius: "5px",
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
@@ -516,56 +585,77 @@ export default function DealManager({
                 >
                   {/* Availability toggle */}
                   <button
-                    onClick={() => handleToggle(deal)}
+                    onClick={() => isAdmin && handleToggle(deal)}
+                    disabled={!isAdmin || isPending}
                     style={{
                       background: deal.is_available ? "#dcfce7" : "#fee2e2",
                       color: deal.is_available ? "#15803d" : "#b91c1c",
                       border: "none",
                       padding: "4px 10px",
-                      borderRadius: "4px",
+                      borderRadius: "5px",
                       fontSize: "11px",
                       fontWeight: 700,
-                      cursor: "pointer",
+                      cursor: isAdmin ? "pointer" : "not-allowed",
+                      opacity: isAdmin ? 1 : 0.75,
                     }}
+                    title={isAdmin ? "Toggle deal menu availability" : "Only Admin can toggle deal availability"}
                   >
                     {deal.is_available ? "● Available on Menu" : "○ Sold Out / Hidden"}
                   </button>
 
-                  <div style={{ display: "flex", gap: "6px" }}>
-                    {/* Link to Full Page Edit */}
-                    <Link
-                      href={`/admin/deals/${deal.id}/edit`}
-                      style={{
-                        background: "#ffffff",
-                        border: "1px solid #cbd5e1",
-                        borderRadius: "5px",
-                        padding: "5px 8px",
-                        cursor: "pointer",
-                        color: "#475569",
-                        display: "flex",
-                        alignItems: "center",
-                        textDecoration: "none",
-                      }}
-                      title="Edit Deal on Full Page"
-                    >
-                      <Edit2 size={13} />
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(deal.id, deal.title)}
-                      style={{
-                        background: "#fff1f2",
-                        border: "1px solid #fecdd3",
-                        borderRadius: "5px",
-                        padding: "5px 8px",
-                        cursor: "pointer",
-                        color: "#e11d48",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                      title="Delete Deal"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                  <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                    {isAdmin ? (
+                      <>
+                        {/* Link to Full Page Edit */}
+                        <Link
+                          href={`/admin/deals/${deal.id}/edit`}
+                          style={{
+                            background: "#ffffff",
+                            border: "1px solid #cbd5e1",
+                            borderRadius: "5px",
+                            padding: "5px 8px",
+                            cursor: "pointer",
+                            color: "#475569",
+                            display: "flex",
+                            alignItems: "center",
+                            textDecoration: "none",
+                          }}
+                          title="Edit Deal on Full Page"
+                        >
+                          <Edit2 size={13} />
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(deal.id, deal.title)}
+                          disabled={isPending}
+                          style={{
+                            background: "#fff1f2",
+                            border: "1px solid #fecdd3",
+                            borderRadius: "5px",
+                            padding: "5px 8px",
+                            cursor: "pointer",
+                            color: "#e11d48",
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                          title="Delete Deal"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          color: "#94a3b8",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px",
+                        }}
+                      >
+                        <span>🔒</span> View Only
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

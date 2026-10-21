@@ -84,6 +84,7 @@ export default async function AdminDealsPage({ searchParams }: AdminDealsPagePro
         isMasterAdmin={activeShop.isMasterAdmin}
         availableShops={(allShops as { id: number; name: string; slug: string }[]) || []}
         currencySymbol={settings?.currency_symbol || "Rs."}
+        userRole={activeShop.role}
       />
     </div>
   );

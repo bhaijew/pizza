@@ -175,8 +175,9 @@ export default function OrdersLiveBoard({
 
   const handleCopyKdsLink = () => {
     if (typeof window !== "undefined") {
-      const param = shopSlug ? `?shop=${shopSlug}` : shopId ? `?shop=${shopId}` : "";
-      const kdsUrl = `${window.location.origin}/kitchen${param}`;
+      const kdsUrl = shopSlug
+        ? `${window.location.origin}/${shopSlug}/kitchen`
+        : `${window.location.origin}/kitchen${shopId ? `?shop=${shopId}` : ""}`;
       navigator.clipboard.writeText(kdsUrl);
       setCopiedKdsLink(true);
       setTimeout(() => setCopiedKdsLink(false), 2500);
@@ -681,7 +682,7 @@ export default function OrdersLiveBoard({
             </button>
 
             <a
-              href={`/kitchen${shopSlug ? `?shop=${shopSlug}` : shopId ? `?shop=${shopId}` : ""}`}
+              href={shopSlug ? `/${shopSlug}/kitchen` : `/kitchen${shopId ? `?shop=${shopId}` : ""}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -689,7 +690,7 @@ export default function OrdersLiveBoard({
                 alignItems: "center",
                 gap: "5px",
                 padding: "8px 12px",
-                borderRadius: "6px",
+                borderRadius: "5px",
                 background: "#dc2626",
                 color: "#ffffff",
                 fontSize: "12px",
@@ -1468,62 +1469,110 @@ export default function OrdersLiveBoard({
                     </span>
                   </div>
 
-                  {/* Action buttons */}
+                  {/* Action buttons: 1. Confirm Order, 2. Mark Delivered */}
                   <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                    {cfg.nextStatus && (() => {
-                      const info = getOrderServiceInfo(order);
-                      const isReadyForDelivery = order.status === "ready";
-                      const buttonLabel = isReadyForDelivery
-                        ? (info.tableNumber
-                          ? `Verify & Deliver Table #${info.tableNumber} ✓`
-                          : `Verify & Deliver Token ${info.tokenNumber || ""} ✓`)
-                        : cfg.nextLabel;
+                    {/* BUTTON 1: Confirm Order */}
+                    {order.status === "pending" ? (
+                      <button
+                        type="button"
+                        onClick={() => handleStatusChange(order.id, "confirmed")}
+                        style={{
+                          flex: 1,
+                          minWidth: "125px",
+                          padding: "8px 12px",
+                          borderRadius: "5px",
+                          background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                          color: "#ffffff",
+                          fontSize: "12px",
+                          fontWeight: 800,
+                          border: "none",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 4px rgba(37, 99, 235, 0.25)",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "5px",
+                        }}
+                        title="Confirm order & auto-send to Kitchen Screen (KDS)"
+                      >
+                        <Check size={14} />
+                        <span>Confirm Order →</span>
+                      </button>
+                    ) : order.status === "cancelled" ? null : (
+                      <div
+                        style={{
+                          flex: 1,
+                          minWidth: "125px",
+                          padding: "8px 10px",
+                          borderRadius: "5px",
+                          background: "#eff6ff",
+                          border: "1px solid #bfdbfe",
+                          color: "#1d4ed8",
+                          fontSize: "11px",
+                          fontWeight: 800,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <CheckCircle2 size={13} />
+                        <span>In Kitchen (Confirmed)</span>
+                      </div>
+                    )}
 
-                      return (
-                        <button
-                          onClick={() => handleStatusChange(order.id, cfg.nextStatus!)}
-                          style={{
-                            flex: 1,
-                            padding: "8px 12px",
-                            borderRadius: "5px",
-                            background: isReadyForDelivery ? "#16a34a" : "#ef4444",
-                            color: "#ffffff",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            border: "none",
-                            cursor: "pointer",
-                            boxShadow: isReadyForDelivery ? "0 2px 4px rgba(22, 163, 74, 0.25)" : "0 2px 4px rgba(239, 68, 68, 0.2)",
-                          }}
-                        >
-                          {buttonLabel}
-                        </button>
-                      );
-                    })()}
-
-                    {order.status === "delivered" && (
+                    {/* BUTTON 2: Mark Delivered */}
+                    {order.status !== "delivered" && order.status !== "cancelled" ? (
+                      <button
+                        type="button"
+                        onClick={() => handleStatusChange(order.id, "delivered")}
+                        style={{
+                          flex: 1,
+                          minWidth: "125px",
+                          padding: "8px 12px",
+                          borderRadius: "5px",
+                          background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                          color: "#ffffff",
+                          fontSize: "12px",
+                          fontWeight: 800,
+                          border: "none",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 4px rgba(22, 163, 74, 0.25)",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "5px",
+                        }}
+                        title="Mark order as delivered & completed"
+                      >
+                        <Check size={14} />
+                        <span>Mark Delivered ✓</span>
+                      </button>
+                    ) : order.status === "delivered" ? (
                       <div
                         style={{
                           width: "100%",
-                          padding: "6px 10px",
-                          borderRadius: "4px",
+                          padding: "8px 10px",
+                          borderRadius: "5px",
                           background: "#f0fdf4",
                           border: "1px solid #bbf7d0",
                           color: "#166534",
-                          fontSize: "11px",
-                          fontWeight: 700,
+                          fontSize: "12px",
+                          fontWeight: 800,
                           display: "flex",
                           alignItems: "center",
+                          justifyContent: "center",
                           gap: "6px",
                         }}
                       >
-                        <span>✓</span>
+                        <CheckCircle2 size={14} />
                         <span>
                           {getOrderServiceInfo(order).tableNumber
-                            ? `Delivered & Verified at Table #${getOrderServiceInfo(order).tableNumber}`
-                            : "Delivered & Verified with Customer"}
+                            ? `Delivered & Verified at Table #${getOrderServiceInfo(order).tableNumber} ✓`
+                            : "Delivered & Verified ✓"}
                         </span>
                       </div>
-                    )}
+                    ) : null}
 
                     {/* Dual Thermal Print Button (Counter Bill & Kitchen KOT) */}
                     <button

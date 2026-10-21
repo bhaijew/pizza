@@ -21,7 +21,11 @@ import {
   generateSessionToken,
   verifySessionToken,
 } from "@/lib/admin-auth";
-import { sendWhatsAppRiderAlert, sendWhatsAppCustomerDispatchedAlert } from "@/lib/whatsapp";
+import {
+  sendWhatsAppRiderAlert,
+  sendWhatsAppCustomerDispatchedAlert,
+  sendWhatsAppDailyClosingAlert,
+} from "@/lib/whatsapp";
 import { getCurrentBusinessDate, getBusinessShiftUtcRange } from "@/lib/business-hours";
 
 // ─── Auth helper ─────────────────────────────────────────────────
@@ -929,8 +933,89 @@ export async function updateSettings(
   }
 
   revalidatePath("/admin/settings");
+  revalidatePath("/admin/menu-ui");
   revalidatePath("/");
   return { error: null, success: true };
+}
+
+/**
+ * Dedicated server action to update Menu UI, Theme colors, slider banners, and layout settings
+ */
+export async function updateMenuUiSettings(input: {
+  themeColor: string;
+  sliderEnabled: boolean;
+  sliderHeightMobile: number;
+  sliderImages: any[];
+  heroBadgeText?: string;
+  heroTitle?: string;
+  heroTitleHighlight?: string;
+  heroSubtitle?: string;
+  heroBtnPrimaryText?: string;
+  heroBtnPrimaryLink?: string;
+  heroBtnSecondaryText?: string;
+  heroBtnSecondaryLink?: string;
+  heroBgType?: string;
+  heroBgGradient?: string;
+  heroBgImage?: string;
+}): Promise<{ error: string | null; success: boolean }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, success: false };
+  }
+
+  const payload: Record<string, any> = {
+    theme_color: input.themeColor,
+    slider_enabled: input.sliderEnabled,
+    slider_height_mobile: input.sliderHeightMobile,
+    slider_images: input.sliderImages,
+  };
+
+  if (input.heroBadgeText !== undefined) payload.hero_badge_text = input.heroBadgeText;
+  if (input.heroTitle !== undefined) payload.hero_title = input.heroTitle;
+  if (input.heroTitleHighlight !== undefined) payload.hero_title_highlight = input.heroTitleHighlight;
+  if (input.heroSubtitle !== undefined) payload.hero_subtitle = input.heroSubtitle;
+  if (input.heroBtnPrimaryText !== undefined) payload.hero_btn_primary_text = input.heroBtnPrimaryText;
+  if (input.heroBtnPrimaryLink !== undefined) payload.hero_btn_primary_link = input.heroBtnPrimaryLink;
+  if (input.heroBtnSecondaryText !== undefined) payload.hero_btn_secondary_text = input.heroBtnSecondaryText;
+  if (input.heroBtnSecondaryLink !== undefined) payload.hero_btn_secondary_link = input.heroBtnSecondaryLink;
+  if (input.heroBgType !== undefined) payload.hero_bg_type = input.heroBgType;
+  if (input.heroBgGradient !== undefined) payload.hero_bg_gradient = input.heroBgGradient;
+  if (input.heroBgImage !== undefined) payload.hero_bg_image = input.heroBgImage;
+
+  try {
+    if (activeShop.shopId) {
+      const { error } = await db.from("shops").update(payload).eq("id", activeShop.shopId);
+      if (error) {
+        await db.from("shops").update({
+          theme_color: input.themeColor,
+          slider_enabled: input.sliderEnabled,
+          slider_height_mobile: input.sliderHeightMobile,
+          slider_images: input.sliderImages,
+        }).eq("id", activeShop.shopId);
+      }
+    } else {
+      const { error } = await db.from("shop_settings").update(payload).eq("id", "main");
+      if (error) {
+        await db.from("shop_settings").update({
+          theme_color: input.themeColor,
+          slider_enabled: input.sliderEnabled,
+          slider_height_mobile: input.sliderHeightMobile,
+          slider_images: input.sliderImages,
+        }).eq("id", "main");
+      }
+    }
+
+    revalidatePath("/admin/menu-ui");
+    revalidatePath("/admin/settings");
+    revalidatePath("/");
+    revalidatePath("/demo/menu");
+    return { error: null, success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to save UI & Theme settings", success: false };
+  }
 }
 
 // ─── ORDER ACTIONS ────────────────────────────────────────────────
@@ -1801,6 +1886,70 @@ export async function recordDailyClosing(
   return { error: null, success: true };
 }
 
+export async function sendDailyClosingWhatsAppAction(input: {
+  date: string;
+  closedBy: string;
+  notes?: string;
+  recipientPhone?: string;
+}): Promise<{
+  success: boolean;
+  messageId?: string;
+  error?: string;
+  whatsappUrl?: string;
+}> {
+  await requireAdmin();
+  const activeShop = await getActiveShopContext();
+  const db = createAdminClient();
+
+  const closingData = await fetchDailyClosingData(input.date);
+
+  let shopName = activeShop.shopName;
+  let currencySymbol = "Rs.";
+  let resolvedPhone = input.recipientPhone?.trim() || "";
+
+  if (activeShop.shopId) {
+    const { data: sData } = await db
+      .from("shops")
+      .select("name, currency_symbol, owner_phone")
+      .eq("id", activeShop.shopId)
+      .maybeSingle();
+    if (sData) {
+      if (sData.name) shopName = sData.name;
+      if (sData.currency_symbol) currencySymbol = sData.currency_symbol;
+      if (!resolvedPhone && sData.owner_phone) resolvedPhone = sData.owner_phone;
+    }
+  } else {
+    const { data: stData } = await db
+      .from("shop_settings")
+      .select("shop_name, currency_symbol")
+      .eq("id", "main")
+      .maybeSingle();
+    if (stData) {
+      if (stData.shop_name) shopName = stData.shop_name;
+      if (stData.currency_symbol) currencySymbol = stData.currency_symbol;
+    }
+  }
+
+  return sendWhatsAppDailyClosingAlert({
+    recipientPhone: resolvedPhone,
+    date: input.date,
+    closedBy: input.closedBy,
+    totalOrders: closingData.totalOrders,
+    totalSales: closingData.totalSales,
+    dineInSales: closingData.dineInSales,
+    takeawaySales: closingData.takeawaySales,
+    dineInOrdersCount: closingData.dineInOrdersCount,
+    takeawayOrdersCount: closingData.takeawayOrdersCount,
+    totalExpenses: closingData.totalExpenses,
+    netProfit: closingData.netProfit,
+    notes: input.notes,
+    shiftWindow: closingData.shiftWindow,
+    shopId: activeShop.shopId,
+    currencySymbol,
+    shopName,
+  });
+}
+
 // ─── STAFF & SUB-ADMIN MANAGEMENT ACTIONS ────────────────────────
 
 export interface ShopStaffMember {
@@ -2026,4 +2175,140 @@ export async function toggleShopStaffStatus(
 
   revalidatePath("/admin/staff");
   return { error: null, success: true };
+}
+
+export async function unlockBranchKitchen(
+  shopId: number,
+  passcode: string
+): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const trimmed = passcode.trim();
+    if (!trimmed) {
+      return { success: false, error: "Please enter your kitchen passcode or staff PIN." };
+    }
+
+    const db = createAdminClient();
+    const adminPassword = process.env.ADMIN_PASSWORD ?? "changeme";
+
+    // 1. Fetch shop credentials
+    const { data: shop } = await db
+      .from("shops")
+      .select("id, name, slug, password, pos_pin, status")
+      .eq("id", shopId)
+      .maybeSingle();
+
+    if (!shop) {
+      return { success: false, error: "Branch not found." };
+    }
+
+    if (shop.status === "suspended") {
+      return { success: false, error: "Branch is currently suspended." };
+    }
+
+    let isMatch = false;
+    let staffName = `${shop.name} Kitchen`;
+    let userRole: "admin" | "sub_admin" | "staff" = "staff";
+
+    // Match shop password or master password
+    if (trimmed === shop.password || trimmed === adminPassword) {
+      isMatch = true;
+      userRole = "admin";
+      staffName = `${shop.name} Kitchen Admin`;
+    } else if (shop.pos_pin && trimmed === shop.pos_pin) {
+      isMatch = true;
+      userRole = "staff";
+      staffName = `${shop.name} Kitchen Station`;
+    } else {
+      // Check staff PINs for THIS shop only
+      const { data: staffList } = await db
+        .from("pos_staff")
+        .select("id, name, role, pin, is_active")
+        .eq("shop_id", shopId)
+        .eq("pin", trimmed)
+        .eq("is_active", true);
+
+      if (staffList && staffList.length > 0) {
+        isMatch = true;
+        const staff = staffList[0];
+        staffName = `${staff.name} (Kitchen)`;
+        userRole = staff.role === "admin" ? "admin" : "staff";
+      }
+    }
+
+    if (!isMatch) {
+      return {
+        success: false,
+        error: `Incorrect passcode. You can only unlock with ${shop.name}'s branch password or kitchen staff PIN.`,
+      };
+    }
+
+    // Set session cookies
+    const token = await generateSessionToken();
+    const cookieStore = await cookies();
+
+    cookieStore.set(ADMIN_COOKIE, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: COOKIE_MAX_AGE,
+      path: "/",
+    });
+
+    cookieStore.set(ADMIN_SHOP_COOKIE, String(shop.id), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: COOKIE_MAX_AGE,
+      path: "/",
+    });
+
+    cookieStore.set(ADMIN_SHOP_NAME_COOKIE, shop.name, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: COOKIE_MAX_AGE,
+      path: "/",
+    });
+
+    if (shop.slug) {
+      cookieStore.set(ADMIN_SHOP_SLUG_COOKIE, shop.slug, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: COOKIE_MAX_AGE,
+        path: "/",
+      });
+    }
+
+    cookieStore.set(ADMIN_ROLE_COOKIE, userRole, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: COOKIE_MAX_AGE,
+      path: "/",
+    });
+
+    cookieStore.set(ADMIN_STAFF_NAME_COOKIE, staffName, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: COOKIE_MAX_AGE,
+      path: "/",
+    });
+
+    return { success: true, error: null };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to verify passcode." };
+  }
+}
+
+export async function lockBranchKitchen(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(ADMIN_COOKIE);
+  cookieStore.delete(ADMIN_SHOP_COOKIE);
+  cookieStore.delete(ADMIN_SHOP_NAME_COOKIE);
+  cookieStore.delete(ADMIN_SHOP_SLUG_COOKIE);
+  cookieStore.delete(ADMIN_ROLE_COOKIE);
+  cookieStore.delete(ADMIN_STAFF_NAME_COOKIE);
+  cookieStore.delete(ADMIN_STAFF_ID_COOKIE);
 }

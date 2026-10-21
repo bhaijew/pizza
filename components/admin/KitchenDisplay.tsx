@@ -5,9 +5,9 @@
  * Real-time order tickets for chefs & cooks with bold table numbers,
  * item checklist, elapsed time tracker, and 1-click status advancement.
  */
-import { useState, useEffect, useMemo, useTransition } from "react";
+import { useState, useEffect, useMemo, useTransition, useRef, useCallback } from "react";
 import type { Order } from "@/types/menu";
-import { updateOrderStatus } from "@/lib/admin-actions";
+import { updateOrderStatus, lockBranchKitchen } from "@/lib/admin-actions";
 import { createClient } from "@/utils/supabase/client";
 import {
   ChefHat,
@@ -26,6 +26,7 @@ import {
   Check,
   ExternalLink,
   Zap,
+  Lock,
 } from "lucide-react";
 import ThermalDualPrintModal from "@/components/admin/ThermalDualPrintModal";
 
@@ -65,6 +66,30 @@ export default function KitchenDisplay({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [liveClock, setLiveClock] = useState<string>("");
 
+  const soundEnabledRef = useRef(soundEnabled);
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
+
+  const playKitchenChime = useCallback(() => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1174.66, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.35);
+    } catch {}
+  }, []);
+
   // Live second clock for kitchen chefs
   useEffect(() => {
     const updateTime = () => {
@@ -82,11 +107,17 @@ export default function KitchenDisplay({
 
   const handleCopyKdsLink = () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const param = shopSlug ? `?shop=${shopSlug}` : shopId ? `?shop=${shopId}` : "";
-    const kdsUrl = `${origin}/kitchen${param}`;
+    const kdsUrl = shopSlug
+      ? `${origin}/${shopSlug}/kitchen`
+      : `${origin}/kitchen${shopId ? `?shop=${shopId}` : ""}`;
     navigator.clipboard.writeText(kdsUrl);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);
+  };
+
+  const handleLockScreen = async () => {
+    await lockBranchKitchen();
+    window.location.reload();
   };
 
   const handleToggleFullscreen = () => {
@@ -107,10 +138,10 @@ export default function KitchenDisplay({
     return () => clearInterval(timer);
   }, []);
 
-  // Realtime Supabase subscription
+  // Realtime Supabase subscription + High-reliability sync heartbeat
   useEffect(() => {
     const supabase = createClient();
-    const channelName = `kitchen-orders-${shopId || "all"}-${Math.random().toString(36).substring(2, 7)}`;
+    const channelName = `kitchen-orders-live-${shopId || "all"}-${Math.random().toString(36).substring(2, 7)}`;
 
     const channel = supabase
       .channel(channelName)
@@ -120,62 +151,95 @@ export default function KitchenDisplay({
           event: "*",
           schema: "public",
           table: "orders",
-          ...(shopId ? { filter: `shop_id=eq.${shopId}` } : {}),
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newOrder = payload.new as Order;
-            if (shopId) {
-              if (!newOrder.shop_id || Number(newOrder.shop_id) !== Number(shopId)) {
-                return;
-              }
-            } else {
-              if (newOrder.shop_id != null) {
-                return;
-              }
+            if (shopId && newOrder.shop_id != null && Number(newOrder.shop_id) !== Number(shopId)) {
+              return;
             }
-            setOrders((prev) => [newOrder, ...prev]);
+            if (!shopId && newOrder.shop_id != null) {
+              return;
+            }
 
-            // Audio beep for new kitchen ticket
-            if (soundEnabled) {
-              try {
-                const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = "sine";
-                osc.frequency.setValueAtTime(880, ctx.currentTime);
-                gain.gain.setValueAtTime(0.18, ctx.currentTime);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.3);
-              } catch {}
+            if (newOrder.status === "confirmed" || newOrder.status === "preparing") {
+              setOrders((prev) => {
+                if (prev.some((o) => o.id === newOrder.id)) return prev;
+                if (soundEnabledRef.current) playKitchenChime();
+                return [newOrder, ...prev];
+              });
             }
           } else if (payload.eventType === "UPDATE") {
             const updated = payload.new as Order;
-            if (shopId) {
-              if (!updated.shop_id || Number(updated.shop_id) !== Number(shopId)) {
-                setOrders((prev) => prev.filter((o) => o.id !== updated.id));
-                return;
-              }
-            } else {
-              if (updated.shop_id != null) {
-                setOrders((prev) => prev.filter((o) => o.id !== updated.id));
-                return;
-              }
+            if (shopId && updated.shop_id != null && Number(updated.shop_id) !== Number(shopId)) {
+              setOrders((prev) => prev.filter((o) => o.id !== updated.id));
+              return;
             }
-            setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+            if (!shopId && updated.shop_id != null) {
+              setOrders((prev) => prev.filter((o) => o.id !== updated.id));
+              return;
+            }
+
+            setOrders((prev) => {
+              const existing = prev.find((o) => o.id === updated.id);
+              if (existing) {
+                return prev.map((o) => (o.id === updated.id ? { ...existing, ...updated } : o));
+              }
+
+              // If order was just confirmed (new to kitchen queue), add it immediately!
+              if (updated.status === "confirmed" || updated.status === "preparing") {
+                if (soundEnabledRef.current) playKitchenChime();
+                return [updated, ...prev];
+              }
+
+              return prev;
+            });
           } else if (payload.eventType === "DELETE") {
-            setOrders((prev) => prev.filter((o) => o.id !== (payload.old as any).id));
+            const deletedId = (payload.old as any)?.id;
+            if (deletedId) {
+              setOrders((prev) => prev.filter((o) => o.id !== deletedId));
+            }
           }
         }
       )
       .subscribe();
 
+    // 8-second sync heartbeat: ensures zero dropped tickets even through WiFi blinks
+    const syncInterval = setInterval(async () => {
+      try {
+        let q = supabase
+          .from("orders")
+          .select("*")
+          .in("status", ["confirmed", "preparing"])
+          .order("created_at", { ascending: true });
+
+        if (shopId) {
+          q = q.eq("shop_id", shopId);
+        } else {
+          q = q.is("shop_id", null);
+        }
+
+        const { data } = await q;
+        if (data) {
+          setOrders((prev) => {
+            const prevSign = prev.map((o) => `${o.id}-${o.status}`).join(",");
+            const newSign = data.map((o: any) => `${o.id}-${o.status}`).join(",");
+            if (prevSign !== newSign) {
+              return data as Order[];
+            }
+            return prev;
+          });
+        }
+      } catch {
+        // silent
+      }
+    }, 8000);
+
     return () => {
+      clearInterval(syncInterval);
       supabase.removeChannel(channel);
     };
-  }, [shopId, soundEnabled]);
+  }, [shopId, playKitchenChime]);
 
   const handleUpdateStatus = (orderId: number, nextStatus: string) => {
     setOrders((prev) =>
@@ -187,10 +251,10 @@ export default function KitchenDisplay({
     });
   };
 
-  // Active kitchen tickets: pending, confirmed, preparing
+  // Active kitchen tickets: only confirmed or preparing (unconfirmed pending orders wait for confirmation)
   const activeKitchenOrders = useMemo(() => {
     return orders.filter((o) => {
-      const isKitchenStatus = o.status === "pending" || o.status === "confirmed" || o.status === "preparing";
+      const isKitchenStatus = o.status === "confirmed" || o.status === "preparing";
       if (!isKitchenStatus) return false;
 
       const isDineIn = o.order_type === "dine_in" || !!o.table_number || o.notes?.includes("[DINE-IN:");
@@ -364,7 +428,7 @@ export default function KitchenDisplay({
             onClick={handleCopyKdsLink}
             style={{
               padding: "7px 12px",
-              borderRadius: 6,
+              borderRadius: 5,
               border: copiedLink ? "1px solid #86efac" : "1px solid #cbd5e1",
               background: copiedLink ? "#f0fdf4" : "#ffffff",
               color: copiedLink ? "#15803d" : "#334155",
@@ -388,7 +452,7 @@ export default function KitchenDisplay({
             onClick={handleToggleFullscreen}
             style={{
               padding: "7px 12px",
-              borderRadius: 6,
+              borderRadius: 5,
               border: "1px solid #cbd5e1",
               background: "#ffffff",
               color: "#334155",
@@ -411,7 +475,7 @@ export default function KitchenDisplay({
             onClick={() => setSoundEnabled((prev) => !prev)}
             style={{
               padding: "7px 12px",
-              borderRadius: 6,
+              borderRadius: 5,
               border: soundEnabled ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
               background: soundEnabled ? "#f0fdf4" : "#ffffff",
               color: soundEnabled ? "#16a34a" : "#64748b",
@@ -427,6 +491,32 @@ export default function KitchenDisplay({
             {soundEnabled ? <Volume2 size={14} className="text-emerald-500" /> : <VolumeX size={14} />}
             <span>{soundEnabled ? "Chime ON" : "Chime OFF"}</span>
           </button>
+
+          {/* Standalone Lock KDS Screen Button */}
+          {isStandalone && (
+            <button
+              type="button"
+              onClick={handleLockScreen}
+              style={{
+                padding: "7px 12px",
+                borderRadius: 5,
+                border: "1px solid #fecaca",
+                background: "#fef2f2",
+                color: "#dc2626",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                transition: "all 0.15s ease",
+              }}
+              title="Lock this Kitchen Display Station"
+            >
+              <Lock size={13} />
+              <span>Lock KDS</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -481,7 +571,17 @@ export default function KitchenDisplay({
             const isLate = elapsedMins >= 15;
             const isWarning = elapsedMins >= 8 && !isLate;
 
-            const items = Array.isArray(order.items) ? order.items : [];
+            const items = Array.isArray(order.items)
+              ? order.items
+              : typeof order.items === "string"
+              ? (() => {
+                  try {
+                    return JSON.parse(order.items);
+                  } catch {
+                    return [];
+                  }
+                })()
+              : [];
 
             return (
               <div

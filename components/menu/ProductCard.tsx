@@ -4,9 +4,11 @@
  * ProductCard — displays a single real product from Supabase.
  * Professional square UI layout, crisp borders, and SVG icons.
  */
+import { useState } from "react";
 import type { Product } from "@/types/menu";
 import ImagePlaceholder from "./ImagePlaceholder";
 import { useCart } from "./CartContext";
+import { getDealItems } from "@/lib/deal-helper";
 
 interface ProductCardProps {
   product: Product;
@@ -20,8 +22,17 @@ export default function ProductCard({
   index = 0,
 }: ProductCardProps) {
   const { formatPrice, addItem } = useCart();
+  const [showItems, setShowItems] = useState(false);
   const variations = product.variations || [];
   const hasVariations = variations.length > 0;
+
+  const dealItems = getDealItems(product);
+  const isDeal =
+    dealItems.length > 0 ||
+    product.is_deal === true ||
+    product.category?.name?.toLowerCase().includes("deal") ||
+    product.name?.toLowerCase().includes("deal") ||
+    product.name?.toLowerCase().includes("combo");
 
   const isOutOfStock = product.track_inventory && (product.stock_quantity ?? 0) <= 0;
   const isLowStock = product.track_inventory && (product.stock_quantity ?? 0) > 0 && (product.stock_quantity ?? 0) <= (product.low_stock_threshold ?? 5);
@@ -36,7 +47,7 @@ export default function ProductCard({
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!available) return;
-    if (hasVariations || (product.extra_toppings && product.extra_toppings.length > 0)) {
+    if (hasVariations || (product.extra_toppings && product.extra_toppings.length > 0) || isDeal) {
       onSelect(product);
       return;
     }
@@ -127,6 +138,32 @@ export default function ProductCard({
           </div>
         )}
 
+        {/* Deal Tag (Overlayed cleanly on top-right of image) */}
+        {isDeal && (
+          <div
+            style={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              background: "linear-gradient(135deg, #ea580c 0%, #dc2626 100%)",
+              color: "#ffffff",
+              fontSize: 10,
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              padding: "2px 7px",
+              borderRadius: 3,
+              boxShadow: "0 2px 5px rgba(220, 38, 38, 0.3)",
+              display: "flex",
+              alignItems: "center",
+              gap: 3,
+            }}
+          >
+            <span>🔥</span>
+            <span>{product.badge || (dealItems.length > 0 ? `${dealItems.length} Items Deal` : "Deal")}</span>
+          </div>
+        )}
+
         {/* Unavailable overlay */}
         {!available && (
           <div
@@ -182,7 +219,7 @@ export default function ProductCard({
             style={{
               fontSize: "clamp(11px, 1.1vw, 13px)",
               color: "#64748b",
-              margin: "0 0 12px",
+              margin: "0 0 8px",
               lineHeight: 1.45,
               flex: 1,
               display: "-webkit-box",
@@ -195,37 +232,85 @@ export default function ProductCard({
           </p>
         )}
 
-        {/* Card Footer: Price & Square Action Button */}
+        {/* Deal Items Preview Toggle */}
+        {dealItems.length > 0 && (
+          <div style={{ marginTop: 2, marginBottom: 8 }}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowItems((prev) => !prev);
+              }}
+              aria-label="Toggle deal items"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                background: showItems ? "#ffedd5" : "#fff7ed",
+                border: "1px solid #fed7aa",
+                borderRadius: 4,
+                padding: "3px 8px",
+                fontSize: "clamp(10px, 1.1vw, 11px)",
+                color: "#c2410c",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <span>🎁 Deal Items ({dealItems.length})</span>
+              <span style={{ fontSize: 9 }}>{showItems ? "▲" : "▼"}</span>
+            </button>
+
+            {showItems && (
+              <div
+                style={{
+                  marginTop: 6,
+                  padding: "6px 8px",
+                  background: "#fefce8",
+                  border: "1px solid #fef08a",
+                  borderRadius: 4,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 3,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {dealItems.map((item, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      fontSize: "clamp(10px, 1.05vw, 11px)",
+                      color: "#713f12",
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
+                  >
+                    <span style={{ color: "#16a34a", fontWeight: 900, fontSize: 11 }}>✓</span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Card Footer: Action Button on LEFT & Price on RIGHT */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 6,
+            gap: 8,
             marginTop: "auto",
             paddingTop: 10,
             borderTop: "1px solid #f1f5f9",
           }}
         >
-          <div>
-            <span style={{ fontSize: 9, color: "#9a3412", display: "block", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
-              {hasVariations ? "Starting from" : "Price"}
-            </span>
-            <span
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 900,
-                fontSize: "clamp(13px, 1.5vw, 18px)",
-                color: "#dc2626",
-                lineHeight: 1.1,
-              }}
-            >
-              {formatPrice(displayPrice)}
-            </span>
-          </div>
-
+          {/* Action Button on LEFT */}
           {available ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
               <button
                 type="button"
                 onClick={handleQuickAdd}
@@ -234,17 +319,17 @@ export default function ProductCard({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 4,
-                  padding: "5px clamp(8px, 1.2vw, 12px)",
+                  padding: "6px clamp(9px, 1.3vw, 14px)",
                   borderRadius: 4,
-                  background: hasVariations ? "#fff7ed" : "linear-gradient(135deg, #dc2626 0%, #ea580c 100%)",
-                  color: hasVariations ? "#c2410c" : "#ffffff",
-                  border: hasVariations ? "1px solid #fed7aa" : "1px solid #b91c1c",
-                  fontSize: 12,
+                  background: (hasVariations || isDeal) ? "#fff7ed" : "linear-gradient(135deg, #dc2626 0%, #ea580c 100%)",
+                  color: (hasVariations || isDeal) ? "#c2410c" : "#ffffff",
+                  border: (hasVariations || isDeal) ? "1px solid #fed7aa" : "1px solid #b91c1c",
+                  fontSize: "clamp(12px, 1.1vw, 13px)",
                   fontWeight: 700,
                   cursor: "pointer",
                   transition: "all 0.15s ease",
                   whiteSpace: "nowrap",
-                  boxShadow: hasVariations ? "none" : "0 2px 4px rgba(220, 38, 38, 0.2)",
+                  boxShadow: (hasVariations || isDeal) ? "none" : "0 2px 4px rgba(220, 38, 38, 0.2)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.filter = "brightness(1.08)";
@@ -253,7 +338,7 @@ export default function ProductCard({
                   e.currentTarget.style.filter = "none";
                 }}
               >
-                {hasVariations ? (
+                {(hasVariations || isDeal) ? (
                   <>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10" />
@@ -284,6 +369,50 @@ export default function ProductCard({
               Unavailable
             </span>
           )}
+
+          {/* Price on RIGHT (Larger size in both mobile & desktop) */}
+          <div style={{ textAlign: "right", minWidth: 0, flexShrink: 1 }}>
+            <span
+              style={{
+                fontSize: "clamp(9px, 1vw, 10px)",
+                color: "#9a3412",
+                display: "block",
+                textTransform: "uppercase",
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                textAlign: "right",
+              }}
+            >
+              {isDeal ? "Deal Price" : hasVariations ? "Starting from" : "Price"}
+            </span>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 5, flexWrap: "wrap" }}>
+              {product.original_price && product.original_price > displayPrice && (
+                <span
+                  style={{
+                    fontSize: "clamp(10px, 1.1vw, 13px)",
+                    color: "#94a3b8",
+                    textDecoration: "line-through",
+                    fontWeight: 600,
+                  }}
+                >
+                  {formatPrice(product.original_price)}
+                </span>
+              )}
+              <span
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 900,
+                  fontSize: "clamp(16px, 2.2vw, 22px)",
+                  color: "#dc2626",
+                  lineHeight: 1.1,
+                  display: "inline-block",
+                  textAlign: "right",
+                }}
+              >
+                {formatPrice(displayPrice)}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </article>

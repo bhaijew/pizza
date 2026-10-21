@@ -559,17 +559,9 @@ export default function DemoMenuPage() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
+                    gap: 8,
                   }}
                 >
-                  <div>
-                    <span style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase", fontWeight: 800 }}>
-                      Starting From
-                    </span>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: "#ea580c" }}>
-                      Rs. {startingPrice.toLocaleString()}
-                    </div>
-                  </div>
-
                   <button
                     onClick={() => openCustomizer(p)}
                     style={{
@@ -588,6 +580,15 @@ export default function DemoMenuPage() {
                   >
                     Customize +
                   </button>
+
+                  <div style={{ textAlign: "right" }}>
+                    <span style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase", fontWeight: 800, display: "block" }}>
+                      Starting From
+                    </span>
+                    <div style={{ fontSize: "clamp(16px, 2.2vw, 22px)", fontWeight: 900, color: "#ea580c", lineHeight: 1.1 }}>
+                      Rs. {startingPrice.toLocaleString()}
+                    </div>
+                  </div>
                 </div>
               </div>
             );
