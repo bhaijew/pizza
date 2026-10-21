@@ -68,6 +68,7 @@ import {
   FileText,
   Activity,
   CheckCircle,
+  Download,
 } from "lucide-react";
 
 
@@ -1338,6 +1339,33 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
               <span className="hidden sm:inline">Add POS Staff</span>
               <span className="sm:hidden">Staff</span>
             </button>
+
+            {/* Direct POS Download (No Popup) */}
+            <a
+              href="/release/Sole%20What%20Setup%201.5.9.exe"
+              download="Sole What Setup 1.5.9.exe"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
+                border: "none",
+                color: "#ffffff",
+                fontSize: "12px",
+                fontWeight: 800,
+                cursor: "pointer",
+                boxShadow: "0 3px 10px rgba(16, 185, 129, 0.25)",
+                textDecoration: "none",
+              }}
+              className="hover:scale-105 transition-transform"
+              title="Download FloDesktop POS Setup 1.5.9.exe (Direct Download)"
+            >
+              <Download size={14} />
+              <span className="hidden sm:inline">Download POS (1.5.9)</span>
+              <span className="sm:hidden">POS</span>
+            </a>
           </div>
         </header>
 
@@ -3059,6 +3087,30 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                     <RefreshCw size={15} className={isSyncingFloDesktop ? "animate-spin" : ""} />
                     <span>Verify Supabase Cloud Live Sync</span>
                   </button>
+
+                  <a
+                    href="/release/Sole%20What%20Setup%201.5.9.exe"
+                    download="Sole What Setup 1.5.9.exe"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "7px",
+                      padding: "10px 18px",
+                      borderRadius: "8px",
+                      background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                      border: "none",
+                      color: "#ffffff",
+                      fontSize: "13px",
+                      fontWeight: 800,
+                      textDecoration: "none",
+                      boxShadow: "0 3px 12px rgba(16, 185, 129, 0.3)",
+                    }}
+                    className="hover:scale-105 transition-transform"
+                    title="Download FloDesktop POS Setup 1.5.9.exe"
+                  >
+                    <Download size={15} />
+                    <span>Download POS Setup (1.5.9.exe)</span>
+                  </a>
 
                   <a
                     href="/admin/products"

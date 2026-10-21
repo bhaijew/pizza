@@ -38,6 +38,7 @@ import {
   Users,
   Lock,
   Search,
+  Download,
 } from "lucide-react";
 import NavigationProgressBar from "@/components/admin/NavigationProgressBar";
 
@@ -679,6 +680,33 @@ export default function AdminShell({
             background: isLight ? "#f8fafc" : "rgba(0, 0, 0, 0.22)",
           }}
         >
+          {/* Direct POS App Download (No Popup) */}
+          <a
+            href="/release/Sole%20What%20Setup%201.5.9.exe"
+            download="Sole What Setup 1.5.9.exe"
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              padding: "7px 10px",
+              borderRadius: "6px",
+              background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
+              border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.35)",
+              color: isLight ? "#16a34a" : "#34d399",
+              fontSize: "11px",
+              fontWeight: 800,
+              textDecoration: "none",
+              transition: "all 0.15s ease",
+            }}
+            className="hover:opacity-90"
+            title="Download FloDesktop POS Setup 1.5.9.exe (Direct Download)"
+          >
+            <Download size={13} />
+            <span>Download POS App (1.5.9)</span>
+          </a>
+
           {/* Dark Mode Toggle */}
           <button
             type="button"
@@ -897,6 +925,33 @@ export default function AdminShell({
               <Volume2 size={13} className="text-emerald-500" style={{ flexShrink: 0 }} />
               <span>Audio Active</span>
             </div>
+
+            {/* Direct Download FloDesktop POS Setup Button (No Popup) */}
+            <a
+              href="/release/Sole%20What%20Setup%201.5.9.exe"
+              download="Sole What Setup 1.5.9.exe"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "5px 11px",
+                borderRadius: "5px",
+                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
+                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.35)",
+                fontSize: "11.5px",
+                fontWeight: 800,
+                color: isLight ? "#16a34a" : "#34d399",
+                textDecoration: "none",
+                transition: "all 0.15s ease",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
+              }}
+              className="hover:scale-105"
+              title="Download FloDesktop POS Setup 1.5.9.exe (Direct Download)"
+            >
+              <Download size={13} style={{ flexShrink: 0 }} />
+              <span>Download POS</span>
+            </a>
 
             {/* Quick Kitchen Display button */}
             <Link
@@ -1181,6 +1236,29 @@ export default function AdminShell({
               </span>
             </div>
 
+            {/* Mobile Direct POS Download Button */}
+            <a
+              href="/release/Sole%20What%20Setup%201.5.9.exe"
+              download="Sole What Setup 1.5.9.exe"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "5px 9px",
+                borderRadius: "6px",
+                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
+                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.35)",
+                color: isLight ? "#16a34a" : "#34d399",
+                fontSize: "11px",
+                fontWeight: 800,
+                textDecoration: "none",
+              }}
+              title="Download FloDesktop POS Setup 1.5.9.exe"
+            >
+              <Download size={13} />
+              <span>POS</span>
+            </a>
+
             {/* Mobile Slider / Menu Open Button */}
             <button
               type="button"
@@ -1426,6 +1504,33 @@ export default function AdminShell({
               flexShrink: 0,
             }}
           >
+            {/* Direct POS App Download (No Popup) */}
+            <a
+              href="/release/Sole%20What%20Setup%201.5.9.exe"
+              download="Sole What Setup 1.5.9.exe"
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                padding: "7px 10px",
+                borderRadius: "6px",
+                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
+                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.35)",
+                color: isLight ? "#16a34a" : "#34d399",
+                fontSize: "11px",
+                fontWeight: 800,
+                textDecoration: "none",
+                transition: "all 0.15s ease",
+              }}
+              className="hover:opacity-90"
+              title="Download FloDesktop POS Setup 1.5.9.exe"
+            >
+              <Download size={13} />
+              <span>Download POS App (1.5.9)</span>
+            </a>
+
             {/* Dark Mode Toggle */}
             <button
               type="button"
