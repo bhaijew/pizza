@@ -106,6 +106,31 @@ export default function OrderSearchLookup({
     return [];
   };
 
+  // Helper to safely extract string variation label even if stored as object { id, name, price }
+  const getVariationLabel = (item: any): string | null => {
+    const raw = item?.selectedVariation || item?.selected_variation;
+    if (!raw) return null;
+    if (typeof raw === "string") return raw;
+    if (typeof raw === "object") {
+      return raw.name || raw.label || raw.title || null;
+    }
+    return String(raw);
+  };
+
+  // Helper to safely extract toppings names even if stored as objects
+  const getToppingsList = (item: any): string[] => {
+    const raw = item?.selectedToppings;
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((t: any) => {
+        if (!t) return "";
+        if (typeof t === "string") return t;
+        if (typeof t === "object") return t.name || t.label || "";
+        return String(t);
+      })
+      .filter(Boolean);
+  };
+
   const formatPKDate = (dateStr: string) => {
     try {
       const d = new Date(dateStr);
@@ -154,10 +179,12 @@ export default function OrderSearchLookup({
       order.delivery_address ? `Address: ${order.delivery_address}` : null,
       `-----------------------------`,
       `*Items:*`,
-      ...items.map(
-        (it: any) =>
-          `- ${it.quantity || it.qty || 1}x ${it.name} ${it.selectedVariation ? `(${it.selectedVariation})` : ""}: ${currencySymbol} ${Number(it.price) * Number(it.quantity || it.qty || 1)}`
-      ),
+      ...items.map((it: any) => {
+        const v = getVariationLabel(it);
+        const qty = it.quantity || it.qty || 1;
+        const lineTotal = Number(it.price || 0) * Number(qty);
+        return `- ${qty}x ${it.name} ${v ? `(${v})` : ""}: ${currencySymbol} ${lineTotal.toLocaleString()}`;
+      }),
       `-----------------------------`,
       `*Total: ${currencySymbol} ${Number(order.total).toLocaleString()}*`,
       `Payment: ${order.payment_method?.toUpperCase() || "CASH"} (${order.payment_status?.toUpperCase() || "PAID"})`,
@@ -568,18 +595,16 @@ export default function OrderSearchLookup({
                         const qty = Number(item.quantity || item.qty || 1);
                         const price = Number(item.price || 0);
                         const lineTotal = qty * price;
-                        const variation = item.selectedVariation || item.selected_variation;
-                        const toppings = Array.isArray(item.selectedToppings)
-                          ? item.selectedToppings
-                          : [];
+                        const variationName = getVariationLabel(item);
+                        const toppings = getToppingsList(item);
 
                         return (
                           <tr key={idx} className="hover:bg-gray-50/50">
                             <td className="py-2 px-3">
                               <div className="font-bold text-gray-900">{item.name}</div>
-                              {variation && (
+                              {variationName && (
                                 <div className="text-[11px] text-amber-800 font-medium">
-                                  Size/Crust: {variation}
+                                  Size/Crust: {variationName}
                                 </div>
                               )}
                               {toppings.length > 0 && (
