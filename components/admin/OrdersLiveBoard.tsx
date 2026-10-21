@@ -1487,205 +1487,277 @@ export default function OrdersLiveBoard({
                     </span>
                   </div>
 
-                  {/* Action buttons: 1. Confirm Order, 2. Mark Delivered */}
-                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                    {/* BUTTON 1: Confirm Order */}
-                    {order.status === "pending" ? (
-                      <button
-                        type="button"
-                        onClick={() => handleStatusChange(order.id, "confirmed")}
-                        style={{
-                          flex: 1,
-                          minWidth: "125px",
-                          padding: "8px 12px",
-                          borderRadius: "5px",
-                          background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-                          color: "#ffffff",
-                          fontSize: "12px",
-                          fontWeight: 800,
-                          border: "none",
-                          cursor: "pointer",
-                          boxShadow: "0 2px 4px rgba(37, 99, 235, 0.25)",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "5px",
-                        }}
-                        title="Confirm order & auto-send to Kitchen Screen (KDS)"
-                      >
-                        <Check size={14} />
-                        <span>Confirm Order →</span>
-                      </button>
-                    ) : order.status === "cancelled" ? null : (
-                      <div
-                        style={{
-                          flex: 1,
-                          minWidth: "125px",
-                          padding: "8px 10px",
-                          borderRadius: "5px",
-                          background: "#eff6ff",
-                          border: "1px solid #bfdbfe",
-                          color: "#1d4ed8",
-                          fontSize: "11px",
-                          fontWeight: 800,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        <CheckCircle2 size={13} />
-                        <span>In Kitchen (Confirmed)</span>
-                      </div>
-                    )}
-
-                    {/* BUTTON 2: Mark Delivered */}
-                    {order.status !== "delivered" && order.status !== "cancelled" ? (
-                      <button
-                        type="button"
-                        onClick={() => handleStatusChange(order.id, "delivered")}
-                        style={{
-                          flex: 1,
-                          minWidth: "125px",
-                          padding: "8px 12px",
-                          borderRadius: "5px",
-                          background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                          color: "#ffffff",
-                          fontSize: "12px",
-                          fontWeight: 800,
-                          border: "none",
-                          cursor: "pointer",
-                          boxShadow: "0 2px 4px rgba(22, 163, 74, 0.25)",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "5px",
-                        }}
-                        title="Mark order as delivered & completed"
-                      >
-                        <Check size={14} />
-                        <span>Mark Delivered ✓</span>
-                      </button>
-                    ) : order.status === "delivered" ? (
-                      <div
-                        style={{
-                          width: "100%",
-                          padding: "8px 10px",
-                          borderRadius: "5px",
-                          background: "#f0fdf4",
-                          border: "1px solid #bbf7d0",
-                          color: "#166534",
-                          fontSize: "12px",
-                          fontWeight: 800,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <CheckCircle2 size={14} />
-                        <span>
-                          {getOrderServiceInfo(order).tableNumber
-                            ? `Delivered & Verified at Table #${getOrderServiceInfo(order).tableNumber} ✓`
-                            : "Delivered & Verified ✓"}
-                        </span>
-                      </div>
-                    ) : null}
-
-                    {/* Dual Thermal Print Button (Counter Bill & Kitchen KOT) */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPrintingOrder(order);
-                        setPrintTab("dual");
-                      }}
-                      style={{
-                        padding: "8px 12px",
-                        borderRadius: "5px",
-                        background: "#f0f9ff",
-                        color: "#0369a1",
-                        fontSize: "12px",
-                        fontWeight: 800,
-                        border: "1px solid #bae6fd",
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                      }}
-                      title="Print Counter Receipt & Kitchen KOT (Dual Slips)"
-                    >
-                      <Printer size={13} />
-                      <span>🖨️ Print Slips</span>
-                    </button>
-
-                    {/* Recreate / Modify Order Button */}
-                    <button
-                      type="button"
-                      onClick={() => setRecreatingOrder(order)}
-                      style={{
-                        padding: "8px 12px",
-                        borderRadius: "5px",
-                        background: "#fff7ed",
-                        color: "#ea580c",
-                        fontSize: "12px",
-                        fontWeight: 700,
-                        border: "1px solid #fed7aa",
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                      }}
-                      title="Recreate order (keep same Order ID, add burger/pizza, refresh time to now)"
-                    >
-                      <RefreshCw size={13} />
-                      <span>Recreate</span>
-                    </button>
-
-                    {order.status !== "cancelled" && order.status !== "delivered" && (
-                      canCancelOrders ? (
-                        <button
-                          onClick={() => {
-                            if (confirm(`Cancel order ${order.order_number}?`)) {
-                              handleStatusChange(order.id, "cancelled");
-                            }
-                          }}
+                  {/* Action Buttons: 2-Row Modern Grid Layout */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {/* ROW 1: Primary Order Status Workflow */}
+                    <div style={{ display: "flex", gap: "6px", width: "100%" }}>
+                      {order.status === "delivered" ? (
+                        <div
                           style={{
-                            padding: "8px 10px",
-                            borderRadius: "5px",
-                            background: "#ffffff",
+                            width: "100%",
+                            height: "36px",
+                            padding: "0 10px",
+                            borderRadius: "7px",
+                            background: "#f0fdf4",
+                            border: "1px solid #bbf7d0",
+                            color: "#166534",
+                            fontSize: "12px",
+                            fontWeight: 800,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                          <span>
+                            {getOrderServiceInfo(order).tableNumber
+                              ? `Delivered & Verified at Table #${getOrderServiceInfo(order).tableNumber} ✓`
+                              : "Delivered & Verified ✓"}
+                          </span>
+                        </div>
+                      ) : order.status === "cancelled" ? (
+                        <div
+                          style={{
+                            width: "100%",
+                            height: "34px",
+                            padding: "0 10px",
+                            borderRadius: "7px",
+                            background: "#fef2f2",
+                            border: "1px solid #fecaca",
                             color: "#dc2626",
                             fontSize: "12px",
-                            fontWeight: 600,
-                            border: "1px solid #fecaca",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled
-                          style={{
-                            padding: "8px 10px",
-                            borderRadius: "5px",
-                            background: "#f8fafc",
-                            color: "#94a3b8",
-                            fontSize: "11px",
-                            fontWeight: 600,
-                            border: "1px solid #e2e8f0",
-                            cursor: "not-allowed",
-                            display: "inline-flex",
+                            fontWeight: 700,
+                            display: "flex",
                             alignItems: "center",
-                            gap: "4px",
+                            justifyContent: "center",
+                            gap: "6px",
                           }}
-                          title="Cancellation restricted: Only Shop Admin can cancel orders"
                         >
-                          <span>🔒</span>
-                          <span>Cancel (Admin Only)</span>
-                        </button>
-                      )
-                    )}
+                          <X size={14} className="text-red-500 shrink-0" />
+                          <span>Order Cancelled</span>
+                        </div>
+                      ) : (
+                        <>
+                          {/* BUTTON 1: Confirm Order / In Kitchen */}
+                          {order.status === "pending" ? (
+                            <button
+                              type="button"
+                              onClick={() => handleStatusChange(order.id, "confirmed")}
+                              style={{
+                                flex: 1,
+                                height: "36px",
+                                borderRadius: "7px",
+                                background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                                color: "#ffffff",
+                                fontSize: "12px",
+                                fontWeight: 800,
+                                border: "none",
+                                cursor: "pointer",
+                                boxShadow: "0 2px 5px rgba(37, 99, 235, 0.25)",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "5px",
+                                whiteSpace: "nowrap",
+                                padding: "0 8px",
+                                transition: "all 0.15s ease",
+                              }}
+                              className="hover:brightness-110 active:scale-[0.98]"
+                              title="Confirm order & auto-send to Kitchen Screen (KDS)"
+                            >
+                              <Check size={14} style={{ flexShrink: 0 }} />
+                              <span>Confirm Order</span>
+                              <ArrowRight size={13} style={{ flexShrink: 0, opacity: 0.8 }} />
+                            </button>
+                          ) : (
+                            <div
+                              style={{
+                                flex: 1,
+                                height: "36px",
+                                borderRadius: "7px",
+                                background: "#eff6ff",
+                                border: "1px solid #bfdbfe",
+                                color: "#1d4ed8",
+                                fontSize: "11.5px",
+                                fontWeight: 800,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "5px",
+                                whiteSpace: "nowrap",
+                                padding: "0 8px",
+                              }}
+                            >
+                              <CheckCircle2 size={13} className="text-blue-600 shrink-0" />
+                              <span>In Kitchen</span>
+                            </div>
+                          )}
+
+                          {/* BUTTON 2: Mark Delivered */}
+                          <button
+                            type="button"
+                            onClick={() => handleStatusChange(order.id, "delivered")}
+                            style={{
+                              flex: 1,
+                              height: "36px",
+                              borderRadius: "7px",
+                              background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                              color: "#ffffff",
+                              fontSize: "12px",
+                              fontWeight: 800,
+                              border: "none",
+                              cursor: "pointer",
+                              boxShadow: "0 2px 5px rgba(16, 185, 129, 0.25)",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "5px",
+                              whiteSpace: "nowrap",
+                              padding: "0 8px",
+                              transition: "all 0.15s ease",
+                            }}
+                            className="hover:brightness-110 active:scale-[0.98]"
+                            title="Mark order as delivered & completed"
+                          >
+                            <CheckCircle2 size={14} style={{ flexShrink: 0 }} />
+                            <span>Mark Delivered</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* ROW 2: Utility Toolbelt (Print Slips, Recreate, Cancel) */}
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          order.status !== "cancelled" && order.status !== "delivered"
+                            ? "repeat(3, 1fr)"
+                            : "repeat(2, 1fr)",
+                        gap: "6px",
+                        width: "100%",
+                      }}
+                    >
+                      {/* Dual Thermal Print Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPrintingOrder(order);
+                          setPrintTab("dual");
+                        }}
+                        style={{
+                          height: "32px",
+                          borderRadius: "6px",
+                          background: "#f0f9ff",
+                          color: "#0369a1",
+                          fontSize: "11.5px",
+                          fontWeight: 700,
+                          border: "1px solid #bae6fd",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "5px",
+                          whiteSpace: "nowrap",
+                          padding: "0 6px",
+                          transition: "all 0.15s ease",
+                        }}
+                        className="hover:bg-sky-100 hover:border-sky-300"
+                        title="Print Counter Receipt & Kitchen KOT (Dual Slips)"
+                      >
+                        <Printer size={13} style={{ flexShrink: 0 }} />
+                        <span>Print Slips</span>
+                      </button>
+
+                      {/* Recreate / Modify Order Button */}
+                      <button
+                        type="button"
+                        onClick={() => setRecreatingOrder(order)}
+                        style={{
+                          height: "32px",
+                          borderRadius: "6px",
+                          background: "#fff7ed",
+                          color: "#ea580c",
+                          fontSize: "11.5px",
+                          fontWeight: 700,
+                          border: "1px solid #fed7aa",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "5px",
+                          whiteSpace: "nowrap",
+                          padding: "0 6px",
+                          transition: "all 0.15s ease",
+                        }}
+                        className="hover:bg-orange-100 hover:border-orange-300"
+                        title="Recreate order (keep same Order ID, add burger/pizza, refresh time to now)"
+                      >
+                        <RefreshCw size={13} style={{ flexShrink: 0 }} />
+                        <span>Recreate</span>
+                      </button>
+
+                      {/* Cancel Order Button */}
+                      {order.status !== "cancelled" && order.status !== "delivered" && (
+                        canCancelOrders ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm(`Cancel order ${order.order_number}?`)) {
+                                handleStatusChange(order.id, "cancelled");
+                              }
+                            }}
+                            style={{
+                              height: "32px",
+                              borderRadius: "6px",
+                              background: "#fef2f2",
+                              color: "#dc2626",
+                              fontSize: "11.5px",
+                              fontWeight: 700,
+                              border: "1px solid #fecaca",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "4px",
+                              whiteSpace: "nowrap",
+                              padding: "0 6px",
+                              transition: "all 0.15s ease",
+                            }}
+                            className="hover:bg-red-100 hover:border-red-300"
+                            title="Cancel this order"
+                          >
+                            <X size={13} style={{ flexShrink: 0 }} />
+                            <span>Cancel</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled
+                            style={{
+                              height: "32px",
+                              borderRadius: "6px",
+                              background: "#f8fafc",
+                              color: "#94a3b8",
+                              fontSize: "11px",
+                              fontWeight: 600,
+                              border: "1px solid #e2e8f0",
+                              cursor: "not-allowed",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "4px",
+                              whiteSpace: "nowrap",
+                              padding: "0 4px",
+                            }}
+                            title="Cancellation restricted: Only Shop Admin can cancel orders"
+                          >
+                            <span>🔒 Cancel</span>
+                          </button>
+                        )
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
