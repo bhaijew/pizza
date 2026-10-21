@@ -34,13 +34,11 @@ import {
   ChevronRight,
   Sparkles,
   Clock,
-  Download,
   MessageSquare,
   Users,
   Lock,
   Search,
 } from "lucide-react";
-import DownloadPosModal from "@/components/admin/DownloadPosModal";
 import NavigationProgressBar from "@/components/admin/NavigationProgressBar";
 
 const Palette = ({ className, size = 16 }: { className?: string; size?: number }) => (
@@ -214,7 +212,6 @@ export default function AdminShell({
 }: AdminShellProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [downloadPosOpen, setDownloadPosOpen] = useState(false);
   const [activeBranch, setActiveBranch] = useState<string>(shopName || "Pizza Admin");
   const [copiedLink, setCopiedLink] = useState(false);
   const [sidebarTheme, setSidebarTheme] = useState<"dark" | "light">("dark");
@@ -225,18 +222,6 @@ export default function AdminShell({
   useEffect(() => {
     setNavigatingHref(null);
   }, [pathname]);
-
-  const handleTriggerPosDownload = () => {
-    // Automatically trigger direct download of Sole What Setup 1.5.9.exe
-    const a = document.createElement("a");
-    a.href = "/api/download-pos";
-    a.download = "Sole What Setup 1.5.9.exe";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    setDownloadPosOpen(true);
-  };
 
   const isAdmin = userRole === "admin";
 
@@ -694,57 +679,31 @@ export default function AdminShell({
             background: isLight ? "#f8fafc" : "rgba(0, 0, 0, 0.22)",
           }}
         >
-          {/* Dark Mode Toggle & Download POS in ONE single row */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
-            <button
-              type="button"
-              onClick={toggleSidebarTheme}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "5px",
-                padding: "6px 8px",
-                borderRadius: "6px",
-                background: isLight ? "#ffffff" : "rgba(255, 255, 255, 0.06)",
-                border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
-                color: isLight ? "#0f172a" : "#f8fafc",
-                fontSize: "11px",
-                fontWeight: 700,
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
-              title="Toggle Dark / Light Theme"
-            >
-              {isLight ? <Moon size={12} className="text-amber-500" /> : <Sun size={12} className="text-amber-400" />}
-              <span>{isLight ? "Dark" : "Light"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleTriggerPosDownload}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "5px",
-                padding: "6px 8px",
-                borderRadius: "6px",
-                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
-                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
-                color: isLight ? "#16a34a" : "#34d399",
-                fontSize: "11px",
-                fontWeight: 800,
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
-              className="hover:scale-[1.02]"
-              title="Download FloDesktop Windows POS Launcher or Install PWA"
-            >
-              <Download size={12} />
-              <span>POS App</span>
-            </button>
-          </div>
+          {/* Dark Mode Toggle */}
+          <button
+            type="button"
+            onClick={toggleSidebarTheme}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              padding: "7px 10px",
+              borderRadius: "6px",
+              background: isLight ? "#ffffff" : "rgba(255, 255, 255, 0.06)",
+              border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
+              color: isLight ? "#0f172a" : "#f8fafc",
+              fontSize: "11px",
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+            title="Toggle Dark / Light Theme"
+          >
+            {isLight ? <Moon size={13} className="text-amber-500" /> : <Sun size={13} className="text-amber-400" />}
+            <span>{isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}</span>
+          </button>
 
           {/* Small Logout Button */}
           <form action={adminLogout} style={{ width: "100%", margin: 0, padding: 0 }}>
@@ -938,33 +897,6 @@ export default function AdminShell({
               <Volume2 size={13} className="text-emerald-500" style={{ flexShrink: 0 }} />
               <span>Audio Active</span>
             </div>
-
-            {/* Download POS Terminal Quick Button */}
-            <button
-              type="button"
-              onClick={handleTriggerPosDownload}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "5px 11px",
-                borderRadius: "5px",
-                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
-                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.35)",
-                fontSize: "11.5px",
-                fontWeight: 800,
-                color: isLight ? "#16a34a" : "#34d399",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-              }}
-              className="hover:scale-105"
-              title="Download FloDesktop POS Launcher (.BAT) or Web App"
-            >
-              <Download size={13} style={{ flexShrink: 0 }} />
-              <span>Download POS</span>
-            </button>
 
             {/* Quick Kitchen Display button */}
             <Link
@@ -1249,26 +1181,6 @@ export default function AdminShell({
               </span>
             </div>
 
-            {/* Mobile Download POS quick button */}
-            <button
-              type="button"
-              onClick={handleTriggerPosDownload}
-              style={{
-                background: "rgba(16, 185, 129, 0.18)",
-                border: "1px solid rgba(16, 185, 129, 0.35)",
-                color: "#10b981",
-                padding: "6px 8px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              title="Download POS Terminal"
-            >
-              <Download size={15} />
-            </button>
-
             {/* Mobile Slider / Menu Open Button */}
             <button
               type="button"
@@ -1514,59 +1426,31 @@ export default function AdminShell({
               flexShrink: 0,
             }}
           >
-            {/* Dark Mode Toggle & Download POS in ONE single row */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
-              <button
-                type="button"
-                onClick={toggleSidebarTheme}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "5px",
-                  padding: "6px 8px",
-                  borderRadius: "6px",
-                  background: isLight ? "#ffffff" : "rgba(255, 255, 255, 0.06)",
-                  border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
-                  color: isLight ? "#0f172a" : "#f8fafc",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
-                title="Toggle Dark / Light Theme"
-              >
-                {isLight ? <Moon size={12} className="text-amber-500" /> : <Sun size={12} className="text-amber-400" />}
-                <span>{isLight ? "Dark" : "Light"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  handleTriggerPosDownload();
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "5px",
-                  padding: "6px 8px",
-                  borderRadius: "6px",
-                  background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
-                  border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
-                  color: isLight ? "#16a34a" : "#34d399",
-                  fontSize: "11px",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
-                title="Download POS Terminal"
-              >
-                <Download size={12} />
-                <span>POS App</span>
-              </button>
-            </div>
+            {/* Dark Mode Toggle */}
+            <button
+              type="button"
+              onClick={toggleSidebarTheme}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                padding: "7px 10px",
+                borderRadius: "6px",
+                background: isLight ? "#ffffff" : "rgba(255, 255, 255, 0.06)",
+                border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
+                color: isLight ? "#0f172a" : "#f8fafc",
+                fontSize: "11px",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              title="Toggle Dark / Light Theme"
+            >
+              {isLight ? <Moon size={13} className="text-amber-500" /> : <Sun size={13} className="text-amber-400" />}
+              <span>{isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}</span>
+            </button>
 
             {/* Small Logout Button */}
             <form action={adminLogout} style={{ width: "100%", margin: 0, padding: 0 }}>
@@ -1617,15 +1501,6 @@ export default function AdminShell({
             {children}
           </div>
         </main>
-
-        {/* Download POS Modal instance */}
-        <DownloadPosModal
-          isOpen={downloadPosOpen}
-          onClose={() => setDownloadPosOpen(false)}
-          shopName={activeBranch}
-          shopSlug={shopSlug}
-          shopId={shopId}
-        />
       </div>
     </div>
     </>
