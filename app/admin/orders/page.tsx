@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/utils/supabase/admin";
 import { fetchSettings } from "@/lib/menu-data";
-import { getActiveShopContext } from "@/lib/admin-actions";
+import { getActiveShopContext, fetchDeliveryRiders } from "@/lib/admin-actions";
 import OrdersLiveBoard from "@/components/admin/OrdersLiveBoard";
 import type { Order } from "@/types/menu";
 
@@ -30,10 +30,11 @@ export default async function AdminOrdersPage() {
     productsQuery = productsQuery.is("shop_id", null);
   }
 
-  const [{ data: orders }, settings, { data: products }] = await Promise.all([
+  const [{ data: orders }, settings, { data: products }, riders] = await Promise.all([
     ordersQuery,
     fetchSettings(),
     productsQuery,
+    fetchDeliveryRiders(activeShop.shopId),
   ]);
 
   const formattedProducts = (products || []).map((p: any) => ({
@@ -48,6 +49,7 @@ export default async function AdminOrdersPage() {
     <div>
       <OrdersLiveBoard
         initialOrders={(orders as Order[]) || []}
+        initialRiders={riders}
         currencySymbol={settings.currency_symbol || "Rs."}
         shopId={activeShop.shopId ? Number(activeShop.shopId) : null}
         shopSlug={activeShop.shopSlug}

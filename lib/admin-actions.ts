@@ -26,6 +26,8 @@ import {
   sendWhatsAppCustomerDispatchedAlert,
   sendWhatsAppDailyClosingAlert,
 } from "@/lib/whatsapp";
+import fs from "fs";
+import path from "path";
 import { getCurrentBusinessDate, getBusinessShiftUtcRange } from "@/lib/business-hours";
 
 // ─── Auth helper ─────────────────────────────────────────────────
@@ -1144,7 +1146,30 @@ export async function assignOrderRider(
     console.warn("[assignOrderRider WhatsApp non-blocking error]", waErr);
   }
 
+  // Auto-save to delivery riders directory if not existing yet
+  if (riderName?.trim() && riderPhone?.trim()) {
+    try {
+      const existingRiders = await fetchDeliveryRiders(activeShop.shopId);
+      const cleanPhone = riderPhone.replace(/\D/g, "");
+      const alreadySaved = existingRiders.some(
+        (r) => r.phone.replace(/\D/g, "") === cleanPhone
+      );
+      if (!alreadySaved) {
+        await createDeliveryRider({
+          name: riderName.trim(),
+          phone: riderPhone.trim(),
+          vehicle: "Bike",
+          is_active: true,
+          notes: "Auto-saved from Live Orders dispatch",
+        });
+      }
+    } catch (saveErr) {
+      console.warn("[Auto-save rider directory non-blocking]", saveErr);
+    }
+  }
+
   revalidatePath("/admin/orders");
+  revalidatePath("/admin/riders");
   revalidatePath("/admin");
   return { error: null };
 }
@@ -2355,3 +2380,198 @@ export async function searchAdminOrders(
     return { success: false, orders: [], error: err.message || "Failed to search orders" };
   }
 }
+
+// ─── Delivery Riders Directory Management ────────────────────────
+export interface DeliveryRider {
+  id: number;
+  shop_id?: number | null;
+  name: string;
+  phone: string;
+  vehicle?: string | null;
+  is_active: boolean;
+  notes?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+const RIDERS_FILE = path.join(process.cwd(), "data", "delivery_riders.json");
+
+function readFallbackRiders(): DeliveryRider[] {
+  try {
+    if (fs.existsSync(RIDERS_FILE)) {
+      const raw = fs.readFileSync(RIDERS_FILE, "utf-8");
+      return JSON.parse(raw) || [];
+    }
+  } catch (err) {
+    console.error("Error reading fallback riders file:", err);
+  }
+  return [];
+}
+
+function writeFallbackRiders(riders: DeliveryRider[]): boolean {
+  try {
+    const dir = path.dirname(RIDERS_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(RIDERS_FILE, JSON.stringify(riders, null, 2), "utf-8");
+    return true;
+  } catch (err) {
+    console.error("Error writing fallback riders file:", err);
+    return false;
+  }
+}
+
+export async function fetchDeliveryRiders(shopId?: number | null): Promise<DeliveryRider[]> {
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+  const effectiveShopId = shopId !== undefined ? shopId : activeShop.shopId;
+
+  try {
+    let query = db.from("delivery_riders").select("*").order("created_at", { ascending: false });
+    if (effectiveShopId) {
+      query = query.eq("shop_id", effectiveShopId);
+    }
+    const { data, error } = await query;
+    if (!error && Array.isArray(data)) {
+      return data as DeliveryRider[];
+    }
+  } catch (err) {
+    // fallback
+  }
+
+  // Graceful fallback to data/delivery_riders.json
+  const fileRiders = readFallbackRiders();
+  if (effectiveShopId) {
+    return fileRiders.filter((r) => !r.shop_id || r.shop_id === effectiveShopId);
+  }
+  return fileRiders;
+}
+
+export async function createDeliveryRider(payload: {
+  name: string;
+  phone: string;
+  vehicle?: string;
+  is_active?: boolean;
+  notes?: string;
+}): Promise<{ success: boolean; data?: DeliveryRider; error?: string | null }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  const name = payload.name?.trim();
+  const phone = payload.phone?.trim();
+  const vehicle = payload.vehicle?.trim() || "Bike";
+  const is_active = payload.is_active !== false;
+  const notes = payload.notes?.trim() || null;
+
+  if (!name) return { success: false, error: "Rider name is required." };
+  if (!phone) return { success: false, error: "Rider WhatsApp phone number is required." };
+
+  const riderPayload = {
+    name,
+    phone,
+    vehicle,
+    is_active,
+    notes,
+    shop_id: activeShop.shopId || null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    const { data, error } = await db.from("delivery_riders").insert(riderPayload).select().single();
+    if (!error && data) {
+      revalidatePath("/admin/riders");
+      revalidatePath("/admin/orders");
+      return { success: true, data: data as DeliveryRider };
+    }
+  } catch (e) {
+    // fallback
+  }
+
+  // Fallback to file persistence
+  const fileRiders = readFallbackRiders();
+  const newId = fileRiders.length > 0 ? Math.max(...fileRiders.map((r) => Number(r.id) || 0)) + 1 : 1;
+  const newRider: DeliveryRider = {
+    id: newId,
+    ...riderPayload,
+  };
+  fileRiders.unshift(newRider);
+  writeFallbackRiders(fileRiders);
+
+  revalidatePath("/admin/riders");
+  revalidatePath("/admin/orders");
+  return { success: true, data: newRider };
+}
+
+export async function updateDeliveryRider(
+  id: number,
+  payload: Partial<DeliveryRider>
+): Promise<{ success: boolean; data?: DeliveryRider; error?: string | null }> {
+  await requireAdmin();
+  const db = createAdminClient();
+
+  const updates: any = {
+    ...payload,
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    const { data, error } = await db.from("delivery_riders").update(updates).eq("id", id).select().single();
+    if (!error && data) {
+      revalidatePath("/admin/riders");
+      revalidatePath("/admin/orders");
+      return { success: true, data: data as DeliveryRider };
+    }
+  } catch (e) {
+    // fallback
+  }
+
+  // Fallback to file
+  const fileRiders = readFallbackRiders();
+  const idx = fileRiders.findIndex((r) => Number(r.id) === Number(id));
+  if (idx !== -1) {
+    fileRiders[idx] = { ...fileRiders[idx], ...updates };
+    writeFallbackRiders(fileRiders);
+    revalidatePath("/admin/riders");
+    revalidatePath("/admin/orders");
+    return { success: true, data: fileRiders[idx] };
+  }
+
+  return { success: false, error: "Rider not found." };
+}
+
+export async function deleteDeliveryRider(
+  id: number
+): Promise<{ success: boolean; error?: string | null }> {
+  await requireAdmin();
+  const db = createAdminClient();
+
+  try {
+    const { error } = await db.from("delivery_riders").delete().eq("id", id);
+    if (!error) {
+      revalidatePath("/admin/riders");
+      revalidatePath("/admin/orders");
+      return { success: true };
+    }
+  } catch (e) {
+    // fallback
+  }
+
+  const fileRiders = readFallbackRiders();
+  const filtered = fileRiders.filter((r) => Number(r.id) !== Number(id));
+  writeFallbackRiders(filtered);
+
+  revalidatePath("/admin/riders");
+  revalidatePath("/admin/orders");
+  return { success: true };
+}
+
+export async function toggleDeliveryRiderStatus(
+  id: number,
+  is_active: boolean
+): Promise<{ success: boolean; error?: string | null }> {
+  return updateDeliveryRider(id, { is_active });
+}
+

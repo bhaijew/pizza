@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "name": "Tariq Mehmood",
+    "phone": "03001234567",
+    "vehicle": "Honda 125 (Bike)",
+    "is_active": true,
+    "notes": "Fast delivery, covers north zone",
+    "created_at": "2026-10-21T18:00:00.000Z",
+    "updated_at": "2026-10-21T18:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "Hamza Ali",
+    "phone": "03334867615",
+    "vehicle": "CD 70 (Bike)",
+    "is_active": true,
+    "notes": "Available night shift",
+    "created_at": "2026-10-21T18:00:00.000Z",
+    "updated_at": "2026-10-21T18:00:00.000Z"
+  }
+]

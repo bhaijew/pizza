@@ -39,6 +39,7 @@ import {
   Lock,
   Search,
   Download,
+  Bike,
 } from "lucide-react";
 import NavigationProgressBar from "@/components/admin/NavigationProgressBar";
 
@@ -107,6 +108,13 @@ const NAV_GROUPS: NavGroup[] = [
         badge: "WA BOT",
         badgeColor: "#10b981",
         icon: MessageSquare,
+      },
+      {
+        label: "Delivery Riders",
+        href: "/admin/riders",
+        badge: "RIDERS",
+        badgeColor: "#059669",
+        icon: Bike,
       },
     ],
   },

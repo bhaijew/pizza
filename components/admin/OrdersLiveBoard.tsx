@@ -31,9 +31,11 @@ import {
 } from "lucide-react";
 import OrderRecreateModal from "@/components/admin/OrderRecreateModal";
 import ThermalDualPrintModal from "@/components/admin/ThermalDualPrintModal";
+import type { DeliveryRider } from "@/lib/admin-actions";
 
 interface OrdersLiveBoardProps {
   initialOrders: Order[];
+  initialRiders?: DeliveryRider[];
   currencySymbol?: string;
   shopId?: number | null;
   shopSlug?: string | null;
@@ -163,6 +165,7 @@ const STATUS_CONFIG: Record<
 
 export default function OrdersLiveBoard({
   initialOrders,
+  initialRiders = [],
   currencySymbol = "$",
   shopId,
   shopSlug,
@@ -176,12 +179,25 @@ export default function OrdersLiveBoard({
   closingTime = "01:00",
 }: OrdersLiveBoardProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [savedRiders, setSavedRiders] = useState<DeliveryRider[]>(initialRiders);
   const [activeTab, setActiveTab] = useState<FilterTab>("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
   const [realtimeActive, setRealtimeActive] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [recreatingOrder, setRecreatingOrder] = useState<Order | null>(null);
+
+  // Keep saved delivery riders fresh
+  useEffect(() => {
+    fetch(`/api/riders${shopId ? `?shopId=${shopId}` : ""}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.riders)) {
+          setSavedRiders(data.riders);
+        }
+      })
+      .catch(() => {});
+  }, [shopId]);
 
   // Thermal Printing state
   const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
@@ -1409,10 +1425,65 @@ export default function OrdersLiveBoard({
 
                         {/* Modal/Inline Form to Assign Rider */}
                         {assigningRiderOrderId === order.id && (
-                          <div style={{ marginTop: 6, padding: 8, background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: 4 }}>
-                            <p style={{ margin: "0 0 5px", fontSize: "10.5px", fontWeight: 800, color: "#0f172a" }}>
-                              Assign Delivery Rider
-                            </p>
+                          <div style={{ marginTop: 6, padding: 8, background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: 6, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                              <p style={{ margin: 0, fontSize: "10.5px", fontWeight: 800, color: "#0f172a", display: "flex", alignItems: "center", gap: 3 }}>
+                                <span>🛵</span>
+                                <span>Assign Delivery Rider</span>
+                              </p>
+                              <a
+                                href="/admin/riders"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ fontSize: "10px", color: "#0284c7", fontWeight: 700, textDecoration: "none" }}
+                                title="Open Rider Directory in new tab"
+                              >
+                                Manage Riders ↗
+                              </a>
+                            </div>
+
+                            {/* Quick Select from Saved Active Riders */}
+                            {savedRiders && savedRiders.filter((r) => r.is_active).length > 0 && (
+                              <div style={{ marginBottom: 6 }}>
+                                <span style={{ fontSize: "9px", fontWeight: 700, color: "#64748b", display: "block", marginBottom: 3 }}>
+                                  ⚡ Quick Pick Saved Rider:
+                                </span>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+                                  {savedRiders
+                                    .filter((r) => r.is_active)
+                                    .map((r) => {
+                                      const isSelected = riderNameInput === r.name;
+                                      return (
+                                        <button
+                                          key={r.id}
+                                          type="button"
+                                          onClick={() => {
+                                            setRiderNameInput(r.name);
+                                            setRiderPhoneInput(r.phone);
+                                          }}
+                                          style={{
+                                            padding: "2px 6px",
+                                            borderRadius: "3px",
+                                            background: isSelected ? "#059669" : "#f1f5f9",
+                                            color: isSelected ? "#ffffff" : "#0f172a",
+                                            border: "1px solid " + (isSelected ? "#047857" : "#cbd5e1"),
+                                            fontSize: "9.5px",
+                                            fontWeight: 700,
+                                            cursor: "pointer",
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: 2,
+                                          }}
+                                        >
+                                          <span>{isSelected ? "✓" : "🛵"}</span>
+                                          <span>{r.name}</span>
+                                        </button>
+                                      );
+                                    })}
+                                </div>
+                              </div>
+                            )}
+
                             <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 6 }}>
                               <input
                                 type="text"
@@ -1423,10 +1494,10 @@ export default function OrdersLiveBoard({
                               />
                               <input
                                 type="tel"
-                                placeholder="Rider Phone (e.g. 03001234567)"
+                                placeholder="Rider WhatsApp (e.g. 03001234567)"
                                 value={riderPhoneInput}
                                 onChange={(e) => setRiderPhoneInput(e.target.value)}
-                                style={{ height: 26, padding: "0 6px", fontSize: 11, border: "1px solid #cbd5e1", borderRadius: 3 }}
+                                style={{ height: 26, padding: "0 6px", fontSize: 11, border: "1px solid #cbd5e1", borderRadius: 3, fontFamily: "monospace" }}
                               />
                             </div>
                             <div style={{ display: "flex", gap: 5 }}>
@@ -1436,7 +1507,7 @@ export default function OrdersLiveBoard({
                                 onClick={() => handleAssignRiderSubmit(order.id)}
                                 style={{ padding: "3px 8px", background: "#059669", color: "#fff", border: "none", borderRadius: 3, fontSize: 10.5, fontWeight: 800, cursor: "pointer" }}
                               >
-                                Save Rider
+                                Save & Dispatch
                               </button>
                               <button
                                 type="button"
