@@ -60,12 +60,15 @@ function getOrderServiceInfo(order: Order) {
   let tableNumber = order.table_number || null;
   let tokenNumber = order.token_number || null;
   let deliveryAddress = order.delivery_address || null;
+  let deliveryFee: number | null = null;
   let riderName = order.delivery_rider_name || null;
   let riderPhone = order.delivery_rider_phone || null;
 
   if (order.notes?.includes("[DELIVERY:")) {
     const match = order.notes.match(/\[DELIVERY:\s*Address:\s*([^|]+)/i);
     if (match) deliveryAddress = match[1].trim();
+    const feeMatch = order.notes.match(/Fee:\s*([0-9.]+)/i);
+    if (feeMatch) deliveryFee = parseFloat(feeMatch[1]);
   }
   if (!riderName && order.notes?.includes("[RIDER:")) {
     const rMatch = order.notes.match(/\[RIDER:\s*([^|]+)/i);
@@ -90,10 +93,22 @@ function getOrderServiceInfo(order: Order) {
     tableNumber,
     tokenNumber,
     deliveryAddress,
+    deliveryFee,
     riderName,
     riderPhone,
     label: isDelivery ? "Delivery" : isDineIn ? (tableNumber ? `Table #${tableNumber}` : "Dine-In") : (tokenNumber ? `Token ${tokenNumber}` : "Takeaway"),
   };
+}
+
+function getCleanCustomerNote(notes?: string | null) {
+  if (!notes) return "";
+  return notes
+    .replace(/\[DELIVERY:[^\]]*\]/gi, "")
+    .replace(/\[RIDER:[^\]]*\]/gi, "")
+    .replace(/\[RECREATED:[^\]]*\]/gi, "")
+    .replace(/\[DINE-IN:[^\]]*\]/gi, "")
+    .replace(/TOKEN:\s*[A-Za-z0-9-]+/gi, "")
+    .trim();
 }
 
 const STATUS_CONFIG: Record<
@@ -1069,8 +1084,8 @@ export default function OrdersLiveBoard({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
-            gap: "16px",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))",
+            gap: "12px",
           }}
         >
           {filteredOrders.map((order) => {
@@ -1083,12 +1098,12 @@ export default function OrdersLiveBoard({
                 style={{
                   background: "#ffffff",
                   border: `1px solid ${cfg.border}`,
-                  borderRadius: "10px",
-                  padding: "18px",
+                  borderRadius: "8px",
+                  padding: "12px 14px",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                  boxShadow: "0 1px 4px rgba(0, 0, 0, 0.05)",
                 }}
                 className="admin-card-hover"
               >
@@ -1102,20 +1117,20 @@ export default function OrdersLiveBoard({
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          marginBottom: "10px",
+                          marginBottom: "6px",
                           flexWrap: "wrap",
-                          gap: "6px",
+                          gap: "5px",
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
                           <span
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: "6px",
-                              padding: "4px 9px",
-                              borderRadius: "6px",
-                              fontSize: "12px",
+                              gap: "4px",
+                              padding: "2px 7px",
+                              borderRadius: "4px",
+                              fontSize: "11px",
                               fontWeight: 800,
                               background: info.type === "delivery" ? "#ecfdf5" : info.type === "dine_in" ? "#fef3c7" : "#fff7ed",
                               color: info.type === "delivery" ? "#065f46" : info.type === "dine_in" ? "#92400e" : "#c2410c",
@@ -1123,11 +1138,11 @@ export default function OrdersLiveBoard({
                             }}
                           >
                             {info.type === "delivery" ? (
-                              <Bike size={13} />
+                              <Bike size={12} />
                             ) : info.type === "dine_in" ? (
-                              <UtensilsCrossed size={13} />
+                              <UtensilsCrossed size={12} />
                             ) : (
-                              <ShoppingBag size={13} />
+                              <ShoppingBag size={12} />
                             )}
                             <span>{info.label}</span>
                           </span>
@@ -1137,17 +1152,17 @@ export default function OrdersLiveBoard({
                               style={{
                                 display: "inline-flex",
                                 alignItems: "center",
-                                gap: "4px",
-                                padding: "3px 8px",
+                                gap: "3px",
+                                padding: "2px 6px",
                                 borderRadius: "4px",
-                                fontSize: "11px",
+                                fontSize: "10px",
                                 fontWeight: 800,
                                 background: "#eff6ff",
                                 color: "#1d4ed8",
                                 border: "1px solid #bfdbfe",
                               }}
                             >
-                              <span>🔑 Token:</span>
+                              <span>🔑</span>
                               <span style={{ fontFamily: "monospace" }}>{info.tokenNumber}</span>
                             </span>
                           )}
@@ -1155,9 +1170,9 @@ export default function OrdersLiveBoard({
 
                         <span
                           style={{
-                            padding: "3px 8px",
-                            borderRadius: "5px",
-                            fontSize: "11px",
+                            padding: "2px 7px",
+                            borderRadius: "4px",
+                            fontSize: "10.5px",
                             fontWeight: 700,
                             background: cfg.bg,
                             color: cfg.color,
@@ -1176,16 +1191,17 @@ export default function OrdersLiveBoard({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      marginBottom: "12px",
+                      marginBottom: "6px",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                       <span
                         style={{
                           fontFamily: "monospace",
-                          fontSize: "15px",
+                          fontSize: "13.5px",
                           fontWeight: 800,
                           color: "#0f172a",
+                          letterSpacing: "-0.2px",
                         }}
                       >
                         {order.order_number}
@@ -1193,9 +1209,9 @@ export default function OrdersLiveBoard({
                       {order.notes?.includes("[RECREATED") && (
                         <span
                           style={{
-                            padding: "2px 6px",
-                            borderRadius: "4px",
-                            fontSize: "10px",
+                            padding: "1px 5px",
+                            borderRadius: "3px",
+                            fontSize: "9.5px",
                             fontWeight: 800,
                             background: "#fff7ed",
                             color: "#ea580c",
@@ -1206,38 +1222,43 @@ export default function OrdersLiveBoard({
                           }}
                           title="This order was recreated/modified while keeping the exact same Order ID"
                         >
-                          <RefreshCw size={10} />
+                          <RefreshCw size={9} />
                           <span>RECREATED</span>
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: "11px", color: "#64748b" }}>
+                    <div style={{ fontSize: "10.5px", color: "#64748b" }}>
                       {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(order.created_at).toLocaleDateString()}
                     </div>
                   </div>
 
-                  {/* Customer Info */}
+                  {/* Customer Info (Compact single row) */}
                   {(order.customer_name || order.customer_phone) && (
                     <div
                       style={{
                         background: "#f8fafc",
-                        padding: "8px 10px",
+                        padding: "4px 8px",
                         borderRadius: "5px",
-                        fontSize: "12px",
-                        marginBottom: "10px",
+                        fontSize: "11px",
+                        marginBottom: "6px",
                         border: "1px solid #e2e8f0",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: "4px",
                       }}
                     >
-                      <div style={{ fontWeight: 600, color: "#1e293b", display: "flex", alignItems: "center", gap: "6px" }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <div style={{ fontWeight: 700, color: "#1e293b", display: "flex", alignItems: "center", gap: "5px" }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#64748b", flexShrink: 0 }}>
                           <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
                           <circle cx="12" cy="7" r="4"></circle>
                         </svg>
                         <span>{order.customer_name || "Guest Customer"}</span>
                       </div>
                       {order.customer_phone && (
-                        <div style={{ color: "#64748b", fontSize: "11px", marginTop: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <div style={{ color: "#64748b", fontSize: "10.5px", display: "flex", alignItems: "center", gap: "4px", fontFamily: "monospace", fontWeight: 600 }}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#94a3b8", flexShrink: 0 }}>
                             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                           </svg>
                           <span>{order.customer_phone}</span>
@@ -1246,35 +1267,63 @@ export default function OrdersLiveBoard({
                     </div>
                   )}
 
-                  {/* Feature 8: Delivery Destination & Rider Info */}
+                  {/* Delivery Destination & Rider Info (Unified Compact Box) */}
                   {(() => {
                     const info = getOrderServiceInfo(order);
                     if (info.type !== "delivery") return null;
 
                     return (
-                      <div style={{ marginBottom: "12px" }}>
+                      <div
+                        style={{
+                          marginBottom: "6px",
+                          background: "#f8fafc",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "5px",
+                          padding: "5px 8px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "5px",
+                        }}
+                      >
                         {info.deliveryAddress && (
-                          <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: "5px", padding: "8px 10px", marginBottom: "8px" }}>
-                            <span style={{ fontSize: "10px", fontWeight: 800, color: "#065f46", textTransform: "uppercase" }}>
-                              📍 Delivery Address:
-                            </span>
-                            <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#0f172a", fontWeight: 700 }}>
-                              {info.deliveryAddress}
-                            </p>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px", minWidth: 0 }}>
+                              <span style={{ fontSize: "9px", fontWeight: 800, color: "#065f46", background: "#d1fae5", border: "1px solid #a7f3d0", padding: "1px 5px", borderRadius: "3px", textTransform: "uppercase", flexShrink: 0 }}>
+                                📍 Delivery
+                              </span>
+                              <span style={{ fontSize: "11px", color: "#0f172a", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {info.deliveryAddress}
+                              </span>
+                            </div>
+                            {info.deliveryFee !== null && (
+                              <span style={{ fontSize: "10px", color: "#047857", fontWeight: 700, flexShrink: 0, background: "#ecfdf5", padding: "1px 5px", borderRadius: "3px" }}>
+                                Fee: {currencySymbol}{info.deliveryFee}
+                              </span>
+                            )}
                           </div>
                         )}
 
-                        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "5px", padding: "8px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
-                          <div>
-                            <span style={{ fontSize: "10px", fontWeight: 800, color: "#64748b", textTransform: "uppercase" }}>
-                              Dispatch Rider:
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            flexWrap: "wrap",
+                            gap: "4px",
+                            borderTop: info.deliveryAddress ? "1px dashed #e2e8f0" : "none",
+                            paddingTop: info.deliveryAddress ? "4px" : "0",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                            <span style={{ fontSize: "9.5px", fontWeight: 800, color: "#64748b", textTransform: "uppercase" }}>
+                              Rider:
                             </span>
-                            <p style={{ margin: "2px 0 0", fontSize: "12px", fontWeight: 800, color: info.riderName ? "#0f172a" : "#dc2626" }}>
-                              {info.riderName ? `${info.riderName} (${info.riderPhone || "No phone"})` : "Rider Not Assigned"}
-                            </p>
+                            <span style={{ fontSize: "11px", fontWeight: 700, color: info.riderName ? "#0f172a" : "#dc2626" }}>
+                              {info.riderName ? `${info.riderName} (${info.riderPhone || "No phone"})` : "Not Assigned"}
+                            </span>
                           </div>
 
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                             <button
                               type="button"
                               onClick={() => {
@@ -1283,17 +1332,17 @@ export default function OrdersLiveBoard({
                                 setRiderPhoneInput(info.riderPhone || "");
                               }}
                               style={{
-                                padding: "4px 8px",
-                                borderRadius: "4px",
+                                padding: "2px 6px",
+                                borderRadius: "3px",
                                 background: "#ffffff",
                                 border: "1px solid #cbd5e1",
                                 color: "#334155",
-                                fontSize: "11px",
-                                fontWeight: 800,
+                                fontSize: "10px",
+                                fontWeight: 700,
                                 cursor: "pointer",
                               }}
                             >
-                              {info.riderName ? "Change" : "Assign Rider"}
+                              {info.riderName ? "Change" : "Assign"}
                             </button>
 
                             {info.riderPhone && (
@@ -1306,16 +1355,15 @@ export default function OrdersLiveBoard({
                                   style={{
                                     display: "inline-flex",
                                     alignItems: "center",
-                                    gap: 4,
-                                    padding: "4px 8px",
-                                    borderRadius: "4px",
+                                    gap: 3,
+                                    padding: "2px 6px",
+                                    borderRadius: "3px",
                                     background: riderWaSentId === order.id ? "#15803d" : "#25d366",
                                     color: "#ffffff",
-                                    fontSize: "11px",
-                                    fontWeight: 800,
+                                    fontSize: "10px",
+                                    fontWeight: 700,
                                     border: "none",
                                     cursor: sendingRiderWaId === order.id ? "not-allowed" : "pointer",
-                                    boxShadow: "0 1px 3px rgba(37, 211, 102, 0.3)",
                                   }}
                                 >
                                   <span>
@@ -1323,7 +1371,7 @@ export default function OrdersLiveBoard({
                                       ? "Sending..."
                                       : riderWaSentId === order.id
                                       ? "Sent ✓"
-                                      : "💬 Auto WhatsApp"}
+                                      : "💬 Auto WA"}
                                   </span>
                                 </button>
 
@@ -1341,13 +1389,13 @@ export default function OrdersLiveBoard({
                                   style={{
                                     display: "inline-flex",
                                     alignItems: "center",
-                                    gap: 4,
-                                    padding: "4px 8px",
-                                    borderRadius: "4px",
+                                    gap: 3,
+                                    padding: "2px 5px",
+                                    borderRadius: "3px",
                                     background: "#f0fdf4",
                                     border: "1px solid #bbf7d0",
                                     color: "#166534",
-                                    fontSize: "11px",
+                                    fontSize: "10px",
                                     fontWeight: 700,
                                     textDecoration: "none",
                                   }}
@@ -1361,39 +1409,39 @@ export default function OrdersLiveBoard({
 
                         {/* Modal/Inline Form to Assign Rider */}
                         {assigningRiderOrderId === order.id && (
-                          <div style={{ marginTop: 8, padding: 10, background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: 4 }}>
-                            <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 800, color: "#0f172a" }}>
+                          <div style={{ marginTop: 6, padding: 8, background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: 4 }}>
+                            <p style={{ margin: "0 0 5px", fontSize: "10.5px", fontWeight: 800, color: "#0f172a" }}>
                               Assign Delivery Rider
                             </p>
-                            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 6 }}>
                               <input
                                 type="text"
                                 placeholder="Rider Name (e.g. Tariq)"
                                 value={riderNameInput}
                                 onChange={(e) => setRiderNameInput(e.target.value)}
-                                style={{ height: 30, padding: "0 8px", fontSize: 12, border: "1px solid #cbd5e1", borderRadius: 3 }}
+                                style={{ height: 26, padding: "0 6px", fontSize: 11, border: "1px solid #cbd5e1", borderRadius: 3 }}
                               />
                               <input
                                 type="tel"
                                 placeholder="Rider Phone (e.g. 03001234567)"
                                 value={riderPhoneInput}
                                 onChange={(e) => setRiderPhoneInput(e.target.value)}
-                                style={{ height: 30, padding: "0 8px", fontSize: 12, border: "1px solid #cbd5e1", borderRadius: 3 }}
+                                style={{ height: 26, padding: "0 6px", fontSize: 11, border: "1px solid #cbd5e1", borderRadius: 3 }}
                               />
                             </div>
-                            <div style={{ display: "flex", gap: 6 }}>
+                            <div style={{ display: "flex", gap: 5 }}>
                               <button
                                 type="button"
                                 disabled={isPending}
                                 onClick={() => handleAssignRiderSubmit(order.id)}
-                                style={{ padding: "4px 10px", background: "#059669", color: "#fff", border: "none", borderRadius: 3, fontSize: 11, fontWeight: 800, cursor: "pointer" }}
+                                style={{ padding: "3px 8px", background: "#059669", color: "#fff", border: "none", borderRadius: 3, fontSize: 10.5, fontWeight: 800, cursor: "pointer" }}
                               >
                                 Save Rider
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setAssigningRiderOrderId(null)}
-                                style={{ padding: "4px 10px", background: "#f1f5f9", color: "#64748b", border: "1px solid #cbd5e1", borderRadius: 3, fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                                style={{ padding: "3px 8px", background: "#f1f5f9", color: "#64748b", border: "1px solid #cbd5e1", borderRadius: 3, fontSize: 10.5, fontWeight: 700, cursor: "pointer" }}
                               >
                                 Cancel
                               </button>
@@ -1409,15 +1457,15 @@ export default function OrdersLiveBoard({
                     style={{
                       borderTop: "1px solid #f1f5f9",
                       borderBottom: "1px solid #f1f5f9",
-                      padding: "10px 0",
-                      marginBottom: "12px",
+                      padding: "6px 0",
+                      marginBottom: "6px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "6px",
+                      gap: "3px",
                     }}
                   >
                     {items.length === 0 ? (
-                      <span style={{ fontSize: "12px", color: "#64748b" }}>Order items details</span>
+                      <span style={{ fontSize: "11px", color: "#64748b" }}>Order items details</span>
                     ) : (
                       items.map((item: any, idx: number) => (
                         <div
@@ -1425,27 +1473,27 @@ export default function OrdersLiveBoard({
                           style={{
                             display: "flex",
                             justifyContent: "space-between",
-                            fontSize: "12px",
+                            fontSize: "11.5px",
                             color: "#334155",
                           }}
                         >
                           <div>
-                            <strong style={{ color: "#dc2626", marginRight: "6px" }}>
+                            <strong style={{ color: "#dc2626", marginRight: "5px" }}>
                               {item.quantity || item.qty || 1}x
                             </strong>
                             <span>{item.name || item.product?.name || "Pizza"}</span>
                             {item.selected_variation && (
-                              <span style={{ marginLeft: 4, fontSize: 10, background: "#fee2e2", color: "#dc2626", padding: "1px 5px", borderRadius: 3, fontWeight: 700 }}>
+                              <span style={{ marginLeft: 3, fontSize: 9.5, background: "#fee2e2", color: "#dc2626", padding: "1px 4px", borderRadius: 3, fontWeight: 700 }}>
                                 {item.selected_variation.name}
                               </span>
                             )}
                             {item.selected_toppings && item.selected_toppings.length > 0 && (
-                              <div style={{ fontSize: 10, color: "#64748b", marginLeft: 16 }}>
+                              <div style={{ fontSize: 9.5, color: "#64748b", marginLeft: 14 }}>
                                 + {item.selected_toppings.map((t: any) => t.name).join(", ")}
                               </div>
                             )}
                           </div>
-                          <span style={{ color: "#64748b" }}>
+                          <span style={{ color: "#64748b", fontWeight: 600 }}>
                             {currencySymbol}{((item.price || item.product?.price || 0) * (item.quantity || item.qty || 1)).toFixed(2)}
                           </span>
                         </div>
@@ -1453,22 +1501,27 @@ export default function OrdersLiveBoard({
                     )}
                   </div>
 
-                  {/* Notes if any */}
-                  {order.notes && (
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: "#92400e",
-                        background: "#fefce8",
-                        border: "1px solid #fef08a",
-                        padding: "6px 8px",
-                        borderRadius: "5px",
-                        marginBottom: "12px",
-                      }}
-                    >
-                      <strong>Note:</strong> {order.notes}
-                    </div>
-                  )}
+                  {/* Real Customer Notes if any */}
+                  {(() => {
+                    const cleanNote = getCleanCustomerNote(order.notes);
+                    if (!cleanNote) return null;
+                    return (
+                      <div
+                        style={{
+                          fontSize: "10.5px",
+                          color: "#92400e",
+                          background: "#fefce8",
+                          border: "1px solid #fef08a",
+                          padding: "3px 7px",
+                          borderRadius: "4px",
+                          marginBottom: "6px",
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        <strong>Note:</strong> {cleanNote}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Bottom Total & Status Progress Buttons */}
@@ -1478,38 +1531,38 @@ export default function OrdersLiveBoard({
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      marginBottom: "12px",
+                      marginBottom: "6px",
                     }}
                   >
-                    <span style={{ fontSize: "12px", color: "#64748b" }}>Total Amount</span>
-                    <span style={{ fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
+                    <span style={{ fontSize: "11.5px", color: "#64748b", fontWeight: 600 }}>Total Amount</span>
+                    <span style={{ fontSize: "16px", fontWeight: 800, color: "#0f172a" }}>
                       {currencySymbol}{Number(order.total).toFixed(2)}
                     </span>
                   </div>
 
                   {/* Action Buttons: 2-Row Modern Grid Layout */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                     {/* ROW 1: Primary Order Status Workflow */}
-                    <div style={{ display: "flex", gap: "6px", width: "100%" }}>
+                    <div style={{ display: "flex", gap: "5px", width: "100%" }}>
                       {order.status === "delivered" ? (
                         <div
                           style={{
                             width: "100%",
-                            height: "36px",
-                            padding: "0 10px",
-                            borderRadius: "7px",
+                            height: "32px",
+                            padding: "0 8px",
+                            borderRadius: "6px",
                             background: "#f0fdf4",
                             border: "1px solid #bbf7d0",
                             color: "#166534",
-                            fontSize: "12px",
+                            fontSize: "11.5px",
                             fontWeight: 800,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            gap: "6px",
+                            gap: "5px",
                           }}
                         >
-                          <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                          <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
                           <span>
                             {getOrderServiceInfo(order).tableNumber
                               ? `Delivered & Verified at Table #${getOrderServiceInfo(order).tableNumber} ✓`
@@ -1520,21 +1573,21 @@ export default function OrdersLiveBoard({
                         <div
                           style={{
                             width: "100%",
-                            height: "34px",
-                            padding: "0 10px",
-                            borderRadius: "7px",
+                            height: "30px",
+                            padding: "0 8px",
+                            borderRadius: "6px",
                             background: "#fef2f2",
                             border: "1px solid #fecaca",
                             color: "#dc2626",
-                            fontSize: "12px",
+                            fontSize: "11.5px",
                             fontWeight: 700,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            gap: "6px",
+                            gap: "5px",
                           }}
                         >
-                          <X size={14} className="text-red-500 shrink-0" />
+                          <X size={13} className="text-red-500 shrink-0" />
                           <span>Order Cancelled</span>
                         </div>
                       ) : (
@@ -1546,50 +1599,50 @@ export default function OrdersLiveBoard({
                               onClick={() => handleStatusChange(order.id, "confirmed")}
                               style={{
                                 flex: 1,
-                                height: "36px",
-                                borderRadius: "7px",
+                                height: "32px",
+                                borderRadius: "6px",
                                 background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
                                 color: "#ffffff",
-                                fontSize: "12px",
+                                fontSize: "11.5px",
                                 fontWeight: 800,
                                 border: "none",
                                 cursor: "pointer",
-                                boxShadow: "0 2px 5px rgba(37, 99, 235, 0.25)",
+                                boxShadow: "0 2px 4px rgba(37, 99, 235, 0.2)",
                                 display: "inline-flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                gap: "5px",
+                                gap: "4px",
                                 whiteSpace: "nowrap",
-                                padding: "0 8px",
+                                padding: "0 6px",
                                 transition: "all 0.15s ease",
                               }}
                               className="hover:brightness-110 active:scale-[0.98]"
                               title="Confirm order & auto-send to Kitchen Screen (KDS)"
                             >
-                              <Check size={14} style={{ flexShrink: 0 }} />
+                              <Check size={13} style={{ flexShrink: 0 }} />
                               <span>Confirm Order</span>
-                              <ArrowRight size={13} style={{ flexShrink: 0, opacity: 0.8 }} />
+                              <ArrowRight size={12} style={{ flexShrink: 0, opacity: 0.8 }} />
                             </button>
                           ) : (
                             <div
                               style={{
                                 flex: 1,
-                                height: "36px",
-                                borderRadius: "7px",
+                                height: "32px",
+                                borderRadius: "6px",
                                 background: "#eff6ff",
                                 border: "1px solid #bfdbfe",
                                 color: "#1d4ed8",
-                                fontSize: "11.5px",
+                                fontSize: "11px",
                                 fontWeight: 800,
                                 display: "inline-flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                gap: "5px",
+                                gap: "4px",
                                 whiteSpace: "nowrap",
-                                padding: "0 8px",
+                                padding: "0 6px",
                               }}
                             >
-                              <CheckCircle2 size={13} className="text-blue-600 shrink-0" />
+                              <CheckCircle2 size={12} className="text-blue-600 shrink-0" />
                               <span>In Kitchen</span>
                             </div>
                           )}
@@ -1600,27 +1653,27 @@ export default function OrdersLiveBoard({
                             onClick={() => handleStatusChange(order.id, "delivered")}
                             style={{
                               flex: 1,
-                              height: "36px",
-                              borderRadius: "7px",
+                              height: "32px",
+                              borderRadius: "6px",
                               background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                               color: "#ffffff",
-                              fontSize: "12px",
+                              fontSize: "11.5px",
                               fontWeight: 800,
                               border: "none",
                               cursor: "pointer",
-                              boxShadow: "0 2px 5px rgba(16, 185, 129, 0.25)",
+                              boxShadow: "0 2px 4px rgba(16, 185, 129, 0.2)",
                               display: "inline-flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              gap: "5px",
+                              gap: "4px",
                               whiteSpace: "nowrap",
-                              padding: "0 8px",
+                              padding: "0 6px",
                               transition: "all 0.15s ease",
                             }}
                             className="hover:brightness-110 active:scale-[0.98]"
                             title="Mark order as delivered & completed"
                           >
-                            <CheckCircle2 size={14} style={{ flexShrink: 0 }} />
+                            <CheckCircle2 size={13} style={{ flexShrink: 0 }} />
                             <span>Mark Delivered</span>
                           </button>
                         </>
@@ -1635,7 +1688,7 @@ export default function OrdersLiveBoard({
                           order.status !== "cancelled" && order.status !== "delivered"
                             ? "repeat(3, 1fr)"
                             : "repeat(2, 1fr)",
-                        gap: "6px",
+                        gap: "5px",
                         width: "100%",
                       }}
                     >
@@ -1647,26 +1700,26 @@ export default function OrdersLiveBoard({
                           setPrintTab("dual");
                         }}
                         style={{
-                          height: "32px",
-                          borderRadius: "6px",
+                          height: "28px",
+                          borderRadius: "5px",
                           background: "#f0f9ff",
                           color: "#0369a1",
-                          fontSize: "11.5px",
+                          fontSize: "11px",
                           fontWeight: 700,
                           border: "1px solid #bae6fd",
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          gap: "5px",
+                          gap: "4px",
                           whiteSpace: "nowrap",
-                          padding: "0 6px",
+                          padding: "0 4px",
                           transition: "all 0.15s ease",
                         }}
                         className="hover:bg-sky-100 hover:border-sky-300"
                         title="Print Counter Receipt & Kitchen KOT (Dual Slips)"
                       >
-                        <Printer size={13} style={{ flexShrink: 0 }} />
+                        <Printer size={12} style={{ flexShrink: 0 }} />
                         <span>Print Slips</span>
                       </button>
 
@@ -1675,26 +1728,26 @@ export default function OrdersLiveBoard({
                         type="button"
                         onClick={() => setRecreatingOrder(order)}
                         style={{
-                          height: "32px",
-                          borderRadius: "6px",
+                          height: "28px",
+                          borderRadius: "5px",
                           background: "#fff7ed",
                           color: "#ea580c",
-                          fontSize: "11.5px",
+                          fontSize: "11px",
                           fontWeight: 700,
                           border: "1px solid #fed7aa",
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          gap: "5px",
+                          gap: "4px",
                           whiteSpace: "nowrap",
-                          padding: "0 6px",
+                          padding: "0 4px",
                           transition: "all 0.15s ease",
                         }}
                         className="hover:bg-orange-100 hover:border-orange-300"
                         title="Recreate order (keep same Order ID, add burger/pizza, refresh time to now)"
                       >
-                        <RefreshCw size={13} style={{ flexShrink: 0 }} />
+                        <RefreshCw size={12} style={{ flexShrink: 0 }} />
                         <span>Recreate</span>
                       </button>
 
@@ -1709,26 +1762,26 @@ export default function OrdersLiveBoard({
                               }
                             }}
                             style={{
-                              height: "32px",
-                              borderRadius: "6px",
+                              height: "28px",
+                              borderRadius: "5px",
                               background: "#fef2f2",
                               color: "#dc2626",
-                              fontSize: "11.5px",
+                              fontSize: "11px",
                               fontWeight: 700,
                               border: "1px solid #fecaca",
                               cursor: "pointer",
                               display: "inline-flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              gap: "4px",
+                              gap: "3px",
                               whiteSpace: "nowrap",
-                              padding: "0 6px",
+                              padding: "0 4px",
                               transition: "all 0.15s ease",
                             }}
                             className="hover:bg-red-100 hover:border-red-300"
                             title="Cancel this order"
                           >
-                            <X size={13} style={{ flexShrink: 0 }} />
+                            <X size={12} style={{ flexShrink: 0 }} />
                             <span>Cancel</span>
                           </button>
                         ) : (
@@ -1736,20 +1789,20 @@ export default function OrdersLiveBoard({
                             type="button"
                             disabled
                             style={{
-                              height: "32px",
-                              borderRadius: "6px",
+                              height: "28px",
+                              borderRadius: "5px",
                               background: "#f8fafc",
                               color: "#94a3b8",
-                              fontSize: "11px",
+                              fontSize: "10.5px",
                               fontWeight: 600,
                               border: "1px solid #e2e8f0",
                               cursor: "not-allowed",
                               display: "inline-flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              gap: "4px",
+                              gap: "3px",
                               whiteSpace: "nowrap",
-                              padding: "0 4px",
+                              padding: "0 3px",
                             }}
                             title="Cancellation restricted: Only Shop Admin can cancel orders"
                           >
