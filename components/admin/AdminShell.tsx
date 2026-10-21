@@ -38,6 +38,7 @@ import {
   MessageSquare,
   Users,
   Lock,
+  Search,
 } from "lucide-react";
 import DownloadPosModal from "@/components/admin/DownloadPosModal";
 
@@ -157,6 +158,13 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Daily Closing",
         href: "/admin/closing",
         icon: FileText,
+      },
+      {
+        label: "Order Lookup",
+        href: "/admin/order-lookup",
+        badge: "ORD-",
+        badgeColor: "#0284c7",
+        icon: Search,
       },
       {
         label: "Expenses",

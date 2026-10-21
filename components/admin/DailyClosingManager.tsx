@@ -7,6 +7,7 @@
  * exports professional PDF Z-Reports, and dispatches automated WhatsApp closing summaries.
  */
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import {
   recordDailyClosing,
   fetchDailyClosingData,
@@ -262,6 +263,16 @@ export default function DailyClosingManager({
           >
             <span>🖨️</span> Print Slip
           </button>
+
+          {/* Quick Search Order (ORD-) Link */}
+          <Link
+            href="/admin/order-lookup"
+            style={{ borderRadius: "5px" }}
+            className="bg-sky-50 hover:bg-sky-100 text-sky-800 font-bold text-xs uppercase px-3 py-2 border border-sky-200 transition-colors shadow-sm flex items-center gap-1.5 no-underline"
+            title="Search order by ORD- number and view complete financial details"
+          >
+            <span>🔍</span> Search Order (ORD-)
+          </Link>
 
           {!data.isClosed ? (
             <button

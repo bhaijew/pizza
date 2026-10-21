@@ -2312,3 +2312,46 @@ export async function lockBranchKitchen(): Promise<void> {
   cookieStore.delete(ADMIN_STAFF_NAME_COOKIE);
   cookieStore.delete(ADMIN_STAFF_ID_COOKIE);
 }
+
+export async function searchAdminOrders(
+  searchTerm: string
+): Promise<{ success: boolean; orders: any[]; error: string | null }> {
+  try {
+    await requireAdmin();
+    const db = createAdminClient();
+    const activeShop = await getActiveShopContext();
+
+    const clean = searchTerm.trim();
+    let query = db.from("orders").select("*").order("created_at", { ascending: false });
+
+    // Branch isolation: limit to shop if not master admin
+    if (activeShop.shopId) {
+      query = query.eq("shop_id", activeShop.shopId);
+    }
+
+    if (clean) {
+      const isNum = /^\d+$/.test(clean);
+      if (isNum) {
+        query = query.or(
+          `id.eq.${Number(clean)},order_number.ilike.%${clean}%,customer_phone.ilike.%${clean}%,token_number.ilike.%${clean}%,table_number.ilike.%${clean}%`
+        );
+      } else {
+        query = query.or(
+          `order_number.ilike.%${clean}%,customer_name.ilike.%${clean}%,customer_phone.ilike.%${clean}%,token_number.ilike.%${clean}%,table_number.ilike.%${clean}%`
+        );
+      }
+      query = query.limit(50);
+    } else {
+      query = query.limit(30);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      return { success: false, orders: [], error: error.message };
+    }
+
+    return { success: true, orders: data || [], error: null };
+  } catch (err: any) {
+    return { success: false, orders: [], error: err.message || "Failed to search orders" };
+  }
+}

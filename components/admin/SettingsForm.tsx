@@ -204,6 +204,28 @@ export default function SettingsForm({
             <ArrowRight size={13} style={{ opacity: 0.6 }} />
           </a>
 
+          <a
+            href="/admin/order-lookup"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 14px",
+              borderRadius: "5px",
+              background: "#f0f9ff",
+              color: "#0369a1",
+              fontSize: "12px",
+              fontWeight: 700,
+              textDecoration: "none",
+              border: "1px solid #bae6fd",
+              transition: "all 0.15s ease",
+            }}
+            className="hover:bg-sky-100 hover:text-sky-800"
+          >
+            <span>🔍</span>
+            <span>Order Lookup (ORD-)</span>
+          </a>
+
           <button
             type="submit"
             form="settings-form"

@@ -102,6 +102,10 @@ export interface Order {
   created_at: string;
   updated_at: string;
   shop_id?: number | null;
+  payment_method?: string | null;
+  payment_status?: string | null;
+  subtotal?: number | null;
+  discount?: number | null;
 }
 
 export interface RestaurantTable {
