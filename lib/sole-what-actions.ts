@@ -20,7 +20,11 @@ export interface SoleWhatStatus {
  */
 export async function getSoleWhatStatus(): Promise<SoleWhatStatus> {
   const activeShop = await getActiveShopContext();
-  const defaultGatewayUrl = process.env.WHATSAPP_GATEWAY_URL || "https://solewhat-production-33f6.up.railway.app";
+  const rawGatewayUrl = (process.env.WHATSAPP_GATEWAY_URL || "").trim();
+  const defaultGatewayUrl =
+    rawGatewayUrl && !rawGatewayUrl.includes("solewhat-production.up.railway.app")
+      ? rawGatewayUrl
+      : "https://solewhat-production-33f6.up.railway.app";
   const defaultApiKey = process.env.DEFAULT_WHATSAPP_API_KEY || "wag_8iBNQyfmDmSpZEvF0SsL7rtM2UzNzJ8M";
 
   let sessionId: string | null = null;

@@ -52,7 +52,12 @@ export default function SoleWhatManager({
       ? initialStatus.apiKey
       : defaultMasterKey
   );
-  const [gatewayUrl, setGatewayUrl] = useState(initialStatus.gatewayUrl);
+  const normalizedGatewayUrl = (
+    initialStatus.gatewayUrl && !initialStatus.gatewayUrl.includes("solewhat-production.up.railway.app")
+      ? initialStatus.gatewayUrl
+      : "https://solewhat-production-33f6.up.railway.app"
+  );
+  const [gatewayUrl, setGatewayUrl] = useState(normalizedGatewayUrl);
 
   const [testPhone, setTestPhone] = useState("");
   const [testMessage, setTestMessage] = useState(
@@ -491,9 +496,24 @@ server.listen(CONFIG.port, () => {
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
-                Gateway Endpoint URL
-              </label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155" }}>
+                  Gateway Endpoint URL
+                </label>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 800,
+                    color: "#16a34a",
+                    background: "#dcfce7",
+                    border: "1px solid #bbf7d0",
+                    padding: "2px 7px",
+                    borderRadius: "4px",
+                  }}
+                >
+                  ⚡ LIVE AUTOMATION CLOUD
+                </span>
+              </div>
               <input
                 type="text"
                 value={gatewayUrl}
@@ -502,13 +522,17 @@ server.listen(CONFIG.port, () => {
                   width: "100%",
                   padding: "10px 14px",
                   borderRadius: "5px",
-                  background: "#f1f5f9",
-                  border: "1px solid #e2e8f0",
-                  color: "#64748b",
-                  fontSize: "12px",
+                  background: "#f8fafc",
+                  border: "1px solid #cbd5e1",
+                  color: "#0f172a",
+                  fontSize: "13px",
+                  fontWeight: 700,
                   boxSizing: "border-box",
                 }}
               />
+              <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px" }}>
+                Active Railway Gateway: <code style={{ color: "#059669", fontWeight: 700 }}>{gatewayUrl}</code>
+              </div>
             </div>
 
             {saveFeedback && (
