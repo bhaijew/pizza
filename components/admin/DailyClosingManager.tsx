@@ -193,7 +193,7 @@ export default function DailyClosingManager({
   return (
     <div className="space-y-6" style={{ borderRadius: "5px" }}>
       {/* Top Header Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-200">
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 pb-4 border-b border-gray-200">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
@@ -229,18 +229,19 @@ export default function DailyClosingManager({
           )}
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Action Buttons Toolbar in ONE Single Horizontal Row */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap overflow-x-auto max-w-full py-1 shrink-0">
           {/* Date Picker */}
           <div
             style={{ borderRadius: "5px" }}
-            className="flex items-center gap-2 bg-white border border-gray-300 px-3 py-1.5 shadow-sm"
+            className="flex items-center gap-1.5 bg-white border border-gray-300 px-2.5 py-1.5 shadow-sm shrink-0 whitespace-nowrap"
           >
             <span className="text-xs text-gray-500 uppercase font-bold">Date:</span>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => handleDateChange(e.target.value)}
-              className="bg-transparent text-xs text-gray-900 font-mono focus:outline-none"
+              className="bg-transparent text-xs text-gray-900 font-mono focus:outline-none cursor-pointer"
             />
           </div>
 
@@ -248,18 +249,18 @@ export default function DailyClosingManager({
           <button
             onClick={handleExportPDF}
             style={{ borderRadius: "5px" }}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase px-3.5 py-2 transition-colors shadow-sm flex items-center gap-1.5 border-none cursor-pointer"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase px-3 py-1.5 transition-colors shadow-sm flex items-center gap-1.5 border-none cursor-pointer shrink-0 whitespace-nowrap"
             title="Instantly download complete executive PDF with all orders, timestamps & financial breakdown"
           >
             <span>📥</span>
-            <span>Download PDF (All Orders)</span>
+            <span>Download PDF</span>
           </button>
 
           {/* Print Z-Report */}
           <button
             onClick={handlePrint}
             style={{ borderRadius: "5px" }}
-            className="bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs uppercase px-3 py-2 border border-gray-300 transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
+            className="bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs uppercase px-3 py-1.5 border border-gray-300 transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap"
           >
             <span>🖨️</span> Print Slip
           </button>
@@ -268,7 +269,7 @@ export default function DailyClosingManager({
           <Link
             href="/admin/order-lookup"
             style={{ borderRadius: "5px" }}
-            className="bg-sky-50 hover:bg-sky-100 text-sky-800 font-bold text-xs uppercase px-3 py-2 border border-sky-200 transition-colors shadow-sm flex items-center gap-1.5 no-underline"
+            className="bg-sky-50 hover:bg-sky-100 text-sky-800 font-bold text-xs uppercase px-3 py-1.5 border border-sky-200 transition-colors shadow-sm flex items-center gap-1.5 no-underline shrink-0 whitespace-nowrap"
             title="Search order by ORD- number and view complete financial details"
           >
             <span>🔍</span> Search Order (ORD-)
@@ -278,14 +279,14 @@ export default function DailyClosingManager({
             <button
               onClick={() => setShowCloseModal(true)}
               style={{ borderRadius: "5px" }}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2 transition-colors shadow-sm flex items-center gap-1.5 border-none cursor-pointer"
+              className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider px-3.5 py-1.5 transition-colors shadow-sm flex items-center gap-1.5 border-none cursor-pointer shrink-0 whitespace-nowrap"
             >
               <span>🔒</span> Close Register
             </button>
           ) : (
             <div
               style={{ borderRadius: "5px" }}
-              className="bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-xs uppercase px-3 py-1.5 flex items-center gap-1.5"
+              className="bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-xs uppercase px-3 py-1.5 flex items-center gap-1.5 shrink-0 whitespace-nowrap"
             >
               <span>✓</span> Register Closed
             </div>

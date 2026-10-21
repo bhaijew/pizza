@@ -41,6 +41,7 @@ import {
   Search,
 } from "lucide-react";
 import DownloadPosModal from "@/components/admin/DownloadPosModal";
+import NavigationProgressBar from "@/components/admin/NavigationProgressBar";
 
 const Palette = ({ className, size = 16 }: { className?: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -218,6 +219,12 @@ export default function AdminShell({
   const [copiedLink, setCopiedLink] = useState(false);
   const [sidebarTheme, setSidebarTheme] = useState<"dark" | "light">("dark");
   const [roleSwitching, setRoleSwitching] = useState(false);
+  const [navigatingHref, setNavigatingHref] = useState<string | null>(null);
+
+  // Clear link loading state when route transition completes
+  useEffect(() => {
+    setNavigatingHref(null);
+  }, [pathname]);
 
   const isAdmin = userRole === "admin";
 
@@ -323,7 +330,9 @@ export default function AdminShell({
   const isLight = sidebarTheme === "light";
 
   return (
-    <div
+    <>
+      <NavigationProgressBar />
+      <div
       className="admin-shell-root min-h-screen w-full flex flex-col md:flex-row"
       style={{
         minHeight: "100vh",
@@ -583,12 +592,18 @@ export default function AdminShell({
                   const isActive =
                     pathname === item.href ||
                     (item.href !== "/admin" && pathname.startsWith(item.href));
+                  const isNavigating = navigatingHref === item.href;
                   const IconComponent = item.icon;
 
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
+                      onClick={() => {
+                        if (item.href !== pathname) {
+                          setNavigatingHref(item.href);
+                        }
+                      }}
                       className={`admin-nav-link ${
                         isActive
                           ? isLight
@@ -597,7 +612,7 @@ export default function AdminShell({
                           : isLight
                           ? "admin-nav-light-default"
                           : "admin-nav-dark-default"
-                      }`}
+                      } ${isNavigating ? "opacity-80 scale-[0.98]" : ""}`}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                         <span
@@ -618,31 +633,36 @@ export default function AdminShell({
                         <span>{item.label}</span>
                       </div>
 
-                      {item.badge && (
-                        <span
-                          style={{
-                            fontSize: "9px",
-                            fontWeight: 800,
-                            padding: "2px 6px",
-                            borderRadius: "5px",
-                            background: item.badgeColor
-                              ? isLight
-                                ? `${item.badgeColor}18`
-                                : `${item.badgeColor}22`
-                              : isLight
-                              ? "#f1f5f9"
-                              : "rgba(255, 255, 255, 0.1)",
-                            color: item.badgeColor || (isLight ? "#475569" : "#ffffff"),
-                            border: `1px solid ${
-                              item.badgeColor || (isLight ? "#cbd5e1" : "rgba(255,255,255,0.2)")
-                            }`,
-                            letterSpacing: "0.04em",
-                          }}
-                          className={item.badge === "LIVE" ? "admin-badge-live" : ""}
-                        >
-                          {item.badge}
-                        </span>
-                      )}
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        {isNavigating && (
+                          <span className="nav-link-spinner shrink-0" title="Loading..." />
+                        )}
+                        {item.badge && !isNavigating && (
+                          <span
+                            style={{
+                              fontSize: "9px",
+                              fontWeight: 800,
+                              padding: "2px 6px",
+                              borderRadius: "5px",
+                              background: item.badgeColor
+                                ? isLight
+                                  ? `${item.badgeColor}18`
+                                  : `${item.badgeColor}22`
+                                : isLight
+                                ? "#f1f5f9"
+                                : "rgba(255, 255, 255, 0.1)",
+                              color: item.badgeColor || (isLight ? "#475569" : "#ffffff"),
+                              border: `1px solid ${
+                                item.badgeColor || (isLight ? "#cbd5e1" : "rgba(255,255,255,0.2)")
+                              }`,
+                              letterSpacing: "0.04em",
+                            }}
+                            className={item.badge === "LIVE" ? "admin-badge-live" : ""}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
                     </Link>
                   );
                 })}
@@ -1389,13 +1409,19 @@ export default function AdminShell({
                     const isActive =
                       pathname === item.href ||
                       (item.href !== "/admin" && pathname.startsWith(item.href));
+                    const isNavigating = navigatingHref === item.href;
                     const IconComponent = item.icon;
 
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          if (item.href !== pathname) {
+                            setNavigatingHref(item.href);
+                          }
+                        }}
                         className={`admin-nav-link ${
                           isActive
                             ? isLight
@@ -1404,7 +1430,7 @@ export default function AdminShell({
                             : isLight
                             ? "admin-nav-light-default"
                             : "admin-nav-dark-default"
-                        }`}
+                        } ${isNavigating ? "opacity-80 scale-[0.98]" : ""}`}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <span
@@ -1425,30 +1451,36 @@ export default function AdminShell({
                           <span>{item.label}</span>
                         </div>
 
-                        {item.badge && (
-                          <span
-                            style={{
-                              fontSize: "9px",
-                              fontWeight: 800,
-                              padding: "2px 6px",
-                              borderRadius: "5px",
-                              background: item.badgeColor
-                                ? isLight
-                                  ? `${item.badgeColor}18`
-                                  : `${item.badgeColor}22`
-                                : isLight
-                                ? "#f1f5f9"
-                                : "rgba(255, 255, 255, 0.1)",
-                              color: item.badgeColor || (isLight ? "#475569" : "#ffffff"),
-                              border: `1px solid ${
-                                item.badgeColor || (isLight ? "#cbd5e1" : "rgba(255,255,255,0.2)")
-                              }`,
-                              letterSpacing: "0.04em",
-                            }}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
+                                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          {isNavigating && (
+                            <span className="nav-link-spinner shrink-0" title="Loading..." />
+                          )}
+                          {item.badge && !isNavigating && (
+                            <span
+                              style={{
+                                fontSize: "9px",
+                                fontWeight: 800,
+                                padding: "2px 6px",
+                                borderRadius: "5px",
+                                background: item.badgeColor
+                                  ? isLight
+                                    ? `${item.badgeColor}18`
+                                    : `${item.badgeColor}22`
+                                  : isLight
+                                  ? "#f1f5f9"
+                                  : "rgba(255, 255, 255, 0.1)",
+                                color: item.badgeColor || (isLight ? "#475569" : "#ffffff"),
+                                border: `1px solid ${
+                                  item.badgeColor || (isLight ? "#cbd5e1" : "rgba(255,255,255,0.2)")
+                                }`,
+                                letterSpacing: "0.04em",
+                              }}
+                              className={item.badge === "LIVE" ? "admin-badge-live" : ""}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                        </div>
                       </Link>
                     );
                   })}
@@ -1569,7 +1601,9 @@ export default function AdminShell({
           }}
           className="p-3.5 sm:p-5 md:p-7 max-w-[1440px] w-full mx-auto box-border"
         >
-          {children}
+          <div key={pathname} className="admin-page-transition w-full">
+            {children}
+          </div>
         </main>
 
         {/* Download POS Modal instance */}
@@ -1582,5 +1616,6 @@ export default function AdminShell({
         />
       </div>
     </div>
+    </>
   );
 }

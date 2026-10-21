@@ -479,4 +479,44 @@ button, input, select, textarea, optgroup { font-family: inherit; }
   }
 }
 
+/* ─── Page Transition & Link Click Loading Effects ───────────────── */
+@keyframes adminPageTransitionFade {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-page-transition {
+  animation: adminPageTransitionFade 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes navLinkSpinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.nav-link-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  border-top-color: #ef4444;
+  border-radius: 50%;
+  animation: navLinkSpinner 0.6s linear infinite;
+}
+
+.admin-nav-link:active {
+  transform: scale(0.97) !important;
+  transition: transform 0.08s ease;
+}
+
 
