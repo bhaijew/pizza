@@ -1396,7 +1396,9 @@ export default function OrdersLiveBoard({
                                     `Salam ${info.riderName || "Rider"}, New Delivery Order [${order.order_number}]!\n` +
                                     `Destination: ${info.deliveryAddress || "Address provided"}\n` +
                                     `Customer: ${order.customer_name} (${order.customer_phone || "N/A"})\n` +
-                                    `Total to Collect: ${currencySymbol}${Number(order.total).toFixed(2)}\n` +
+                                    `Total to Collect: ${currencySymbol}${Number(order.total).toFixed(2)}\n\n` +
+                                    `Tap to View Map & Confirm Delivered:\n` +
+                                    `${typeof window !== "undefined" ? window.location.origin : ""}/delivery/${order.order_number}\n\n` +
                                     `Please pick up from restaurant now.`
                                   )}`}
                                   target="_blank"
@@ -1417,6 +1419,28 @@ export default function OrdersLiveBoard({
                                   }}
                                 >
                                   <span>Web ↗</span>
+                                </a>
+
+                                <a
+                                  href={`/delivery/${order.order_number}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Open Rider Delivery Portal for this order"
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 2,
+                                    padding: "2px 5px",
+                                    borderRadius: "3px",
+                                    background: "#eff6ff",
+                                    border: "1px solid #bfdbfe",
+                                    color: "#1d4ed8",
+                                    fontSize: "10px",
+                                    fontWeight: 700,
+                                    textDecoration: "none",
+                                  }}
+                                >
+                                  <span>Portal ↗</span>
                                 </a>
                               </>
                             )}

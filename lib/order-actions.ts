@@ -6,6 +6,7 @@
  * Supports Table QR Dine-In and Counter Takeaway Token systems.
  */
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { getTableScanSession } from "@/lib/table-session";
@@ -451,3 +452,117 @@ export async function findRecentOrdersByPhone(phone: string): Promise<{
     return { success: false, error: err?.message || "Failed to look up orders." };
   }
 }
+
+/**
+ * Rider Delivery Confirmation Action
+ * Confirms order delivery directly from the rider's mobile portal.
+ */
+export async function confirmDeliveryByRider(
+  orderNumber: string,
+  riderName?: string,
+  deliveryNote?: string
+): Promise<{ success: boolean; order?: any; error?: string; alreadyDelivered?: boolean }> {
+  try {
+    const cleanNumber = orderNumber.trim();
+    if (!cleanNumber) {
+      return { success: false, error: "Invalid order number." };
+    }
+
+    let supabase;
+    if (isServiceRoleConfigured()) {
+      supabase = createAdminClient();
+    } else {
+      const cookieStore = await cookies();
+      supabase = createClient(cookieStore);
+    }
+
+    // 1. Fetch current order
+    const { data: order, error: fetchErr } = await supabase
+      .from("orders")
+      .select("*")
+      .ilike("order_number", cleanNumber)
+      .maybeSingle();
+
+    if (fetchErr || !order) {
+      return { success: false, error: fetchErr?.message || "Order not found." };
+    }
+
+    if (order.status === "delivered") {
+      return { success: true, order, alreadyDelivered: true };
+    }
+
+    const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const riderTag = riderName ? ` by ${riderName}` : "";
+    const noteEntry = `[DELIVERED & CONFIRMED${riderTag} at ${nowStr}${deliveryNote ? ` | ${deliveryNote.trim()}` : ""}]`;
+    const updatedNotes = order.notes ? `${order.notes} ${noteEntry}` : noteEntry;
+
+    const { data: updated, error: updateErr } = await supabase
+      .from("orders")
+      .update({
+        status: "delivered",
+        notes: updatedNotes,
+      })
+      .eq("id", order.id)
+      .select()
+      .single();
+
+    if (updateErr) {
+      return { success: false, error: updateErr.message };
+    }
+
+    // Revalidate live feeds
+    revalidatePath(`/delivery/${cleanNumber}`);
+    revalidatePath(`/delivery`);
+    revalidatePath(`/track/${cleanNumber}`);
+    revalidatePath("/admin/orders");
+    revalidatePath("/admin");
+    revalidatePath("/admin/kitchen");
+
+    return { success: true, order: updated };
+  } catch (err: any) {
+    console.error("[confirmDeliveryByRider error]", err);
+    return { success: false, error: err?.message || "Failed to confirm delivery." };
+  }
+}
+
+/**
+ * Rider Picked-Up Action
+ * Marks order as in-transit / picked up by rider.
+ */
+export async function markDeliveryPickedUpByRider(
+  orderNumber: string
+): Promise<{ success: boolean; order?: any; error?: string }> {
+  try {
+    const cleanNumber = orderNumber.trim();
+    if (!cleanNumber) return { success: false, error: "Invalid order number." };
+
+    let supabase = isServiceRoleConfigured()
+      ? createAdminClient()
+      : createClient(await cookies());
+
+    const { data: order, error: fetchErr } = await supabase
+      .from("orders")
+      .select("*")
+      .ilike("order_number", cleanNumber)
+      .maybeSingle();
+
+    if (fetchErr || !order) return { success: false, error: "Order not found." };
+
+    const { data: updated, error: updateErr } = await supabase
+      .from("orders")
+      .update({ status: "ready" })
+      .eq("id", order.id)
+      .select()
+      .single();
+
+    if (updateErr) return { success: false, error: updateErr.message };
+
+    revalidatePath(`/delivery/${cleanNumber}`);
+    revalidatePath(`/track/${cleanNumber}`);
+    revalidatePath("/admin/orders");
+    return { success: true, order: updated };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Failed to update pickup status." };
+  }
+}
+

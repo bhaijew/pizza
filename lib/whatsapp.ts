@@ -281,6 +281,8 @@ export async function sendWhatsAppRiderAlert({
 }> {
   const curr = currencySymbol || "Rs.";
   const formattedTotal = String(total).includes(curr) ? String(total) : `${curr} ${total}`;
+  const appBaseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+  const deliveryPortalLink = `${appBaseUrl}/delivery/${orderNumber}`;
 
   const message = `Salam ${riderName || "Rider"}! 🛵
 New Delivery Order Assigned: #${orderNumber}
@@ -288,6 +290,9 @@ New Delivery Order Assigned: #${orderNumber}
 📍 Destination: ${deliveryAddress || "Address provided"}
 👤 Customer: ${customerName || "Customer"} (${customerPhone || "N/A"})
 💵 Cash to Collect: ${formattedTotal}
+
+📲 Tap to View Map & Confirm Delivered:
+${deliveryPortalLink}
 
 Please pick up hot order from the kitchen counter now!`;
 
