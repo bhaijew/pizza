@@ -1017,7 +1017,7 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                   <span className="nav-icon" style={{ display: "flex", color: "#10b981" }}>
                     <MessageSquare size={18} />
                   </span>
-                  <span>Sole-What Gateway</span>
+                  <span>Sole-What</span>
                 </div>
                 <ArrowUpRight size={13} style={{ opacity: 0.5 }} />
               </a>

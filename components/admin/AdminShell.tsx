@@ -102,7 +102,7 @@ const NAV_GROUPS: NavGroup[] = [
         icon: ChefHat,
       },
       {
-        label: "Sole-What Gateway",
+        label: "Sole-What",
         href: "/admin/sole-what",
         badge: "WA BOT",
         badgeColor: "#10b981",
