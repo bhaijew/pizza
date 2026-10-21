@@ -226,6 +226,18 @@ export default function AdminShell({
     setNavigatingHref(null);
   }, [pathname]);
 
+  const handleTriggerPosDownload = () => {
+    // Automatically trigger direct download of Sole What Setup 1.5.9.exe
+    const a = document.createElement("a");
+    a.href = "/api/download-pos";
+    a.download = "Sole What Setup 1.5.9.exe";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    setDownloadPosOpen(true);
+  };
+
   const isAdmin = userRole === "admin";
 
   const handleRoleSwitch = async (targetRole: "admin" | "sub_admin" | "staff") => {
@@ -710,7 +722,7 @@ export default function AdminShell({
 
             <button
               type="button"
-              onClick={() => setDownloadPosOpen(true)}
+              onClick={handleTriggerPosDownload}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -930,7 +942,7 @@ export default function AdminShell({
             {/* Download POS Terminal Quick Button */}
             <button
               type="button"
-              onClick={() => setDownloadPosOpen(true)}
+              onClick={handleTriggerPosDownload}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -1240,7 +1252,7 @@ export default function AdminShell({
             {/* Mobile Download POS quick button */}
             <button
               type="button"
-              onClick={() => setDownloadPosOpen(true)}
+              onClick={handleTriggerPosDownload}
               style={{
                 background: "rgba(16, 185, 129, 0.18)",
                 border: "1px solid rgba(16, 185, 129, 0.35)",
@@ -1532,7 +1544,7 @@ export default function AdminShell({
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  setDownloadPosOpen(true);
+                  handleTriggerPosDownload();
                 }}
                 style={{
                   display: "flex",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Download,
   Laptop,
@@ -37,6 +37,33 @@ export default function DownloadPosModal({
   const [downloadTab, setDownloadTab] = useState<"desktop" | "pwa" | "printer" | "offline">("desktop");
   const [copiedScript, setCopiedScript] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadStarted, setDownloadStarted] = useState(false);
+
+  // Auto-trigger installer download on modal open
+  useEffect(() => {
+    if (isOpen) {
+      setDownloadStarted(true);
+      const a = document.createElement("a");
+      a.href = "/api/download-pos";
+      a.download = "Sole What Setup 1.5.9.exe";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      setDownloadStarted(false);
+    }
+  }, [isOpen]);
+
+  const handleDownloadInstallerExe = () => {
+    setIsDownloading(true);
+    const a = document.createElement("a");
+    a.href = "/api/download-pos";
+    a.download = "Sole What Setup 1.5.9.exe";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => setIsDownloading(false), 800);
+  };
 
   if (!isOpen) return null;
 
@@ -234,6 +261,58 @@ exit
           </button>
         </div>
 
+        {/* Live Auto-Download Banner */}
+        {downloadStarted && (
+          <div
+            style={{
+              padding: "10px 20px",
+              background: "linear-gradient(90deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.12) 100%)",
+              borderBottom: "1px solid rgba(16, 185, 129, 0.35)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "18px" }}>⚡</span>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "12.5px", fontWeight: 800, color: "#34d399" }}>
+                    Download automatically started:
+                  </span>
+                  <span style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", background: "rgba(0,0,0,0.3)", padding: "1px 6px", borderRadius: "4px" }}>
+                    Sole What Setup 1.5.9.exe (~1.13 GB)
+                  </span>
+                </div>
+                <span style={{ fontSize: "11px", color: "#94a3b8" }}>
+                  Check your browser downloads bar. If it didn&apos;t start, click &quot;Download Installer (.EXE)&quot; below.
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleDownloadInstallerExe}
+              style={{
+                background: "#10b981",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "5px",
+                padding: "6px 14px",
+                fontSize: "12px",
+                fontWeight: 800,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)",
+              }}
+            >
+              📥 Download Again
+            </button>
+          </div>
+        )}
+
         {/* Option Tabs */}
         <div
           style={{
@@ -258,14 +337,14 @@ exit
               fontWeight: 800,
               border: "none",
               cursor: "pointer",
-              background: downloadTab === "desktop" ? "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)" : "transparent",
+              background: downloadTab === "desktop" ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "transparent",
               color: downloadTab === "desktop" ? "#ffffff" : "#94a3b8",
               transition: "all 0.15s ease",
               whiteSpace: "nowrap",
             }}
           >
             <Laptop size={14} />
-            <span>Windows Desktop POS</span>
+            <span>Windows Desktop POS (.EXE)</span>
           </button>
 
           <button
@@ -343,6 +422,112 @@ exit
           {/* TAB 1: WINDOWS DESKTOP POS */}
           {downloadTab === "desktop" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* PRIMARY PROMINENT CARD: OFFICIAL WINDOWS SETUP INSTALLER (.EXE) */}
+              <div
+                style={{
+                  background: "linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(5, 150, 105, 0.06) 100%)",
+                  border: "1.5px solid rgba(16, 185, 129, 0.4)",
+                  borderRadius: "12px",
+                  padding: "18px 20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "14px",
+                  boxShadow: "0 8px 24px rgba(16, 185, 129, 0.12)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div
+                      style={{
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "10px",
+                        background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#ffffff",
+                        boxShadow: "0 4px 14px rgba(16, 185, 129, 0.4)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Download size={24} />
+                    </div>
+                    <div>
+                      <h3 style={{ margin: "0 0 3px", fontSize: "16px", fontWeight: 900, color: "#ffffff" }}>
+                        Sole What POS Setup 1.5.9 (.EXE)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: "12.5px", color: "#94a3b8" }}>
+                        Official FloDesktop Desktop Application with Direct ESC/POS USB Thermal Printing, Cash Drawer &amp; Offline Cache
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      background: "rgba(16, 185, 129, 0.25)",
+                      color: "#34d399",
+                      border: "1px solid rgba(16, 185, 129, 0.5)",
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      fontWeight: 900,
+                      letterSpacing: "0.04em",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    WINDOWS 64-BIT
+                  </span>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px" }}>
+                  <div style={{ background: "rgba(0,0,0,0.35)", padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>Source File</div>
+                    <div style={{ fontSize: "12px", color: "#f8fafc", fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      Sole What Setup 1.5.9.exe
+                    </div>
+                  </div>
+                  <div style={{ background: "rgba(0,0,0,0.35)", padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>Package Size</div>
+                    <div style={{ fontSize: "12px", color: "#34d399", fontWeight: 800 }}>
+                      ~1.13 GB (Windows Native)
+                    </div>
+                  </div>
+                  <div style={{ background: "rgba(0,0,0,0.35)", padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>Thermal Printer</div>
+                    <div style={{ fontSize: "12px", color: "#60a5fa", fontWeight: 800 }}>
+                      Direct USB Raw Print Ready ✓
+                    </div>
+                  </div>
+                </div>
+
+                {/* Direct Action Button */}
+                <div style={{ display: "flex", gap: "10px", marginTop: "4px", flexWrap: "wrap" }}>
+                  <a
+                    href="/api/download-pos"
+                    download="Sole What Setup 1.5.9.exe"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "9px",
+                      padding: "11px 22px",
+                      borderRadius: "8px",
+                      background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                      color: "#ffffff",
+                      fontSize: "13.5px",
+                      fontWeight: 900,
+                      textDecoration: "none",
+                      boxShadow: "0 4px 16px rgba(16, 185, 129, 0.4)",
+                      transition: "transform 0.15s ease",
+                      cursor: "pointer",
+                    }}
+                    className="hover:scale-105"
+                  >
+                    <Download size={17} />
+                    <span>Download Windows Installer (1.5.9.exe)</span>
+                  </a>
+                </div>
+              </div>
+
               <div
                 style={{
                   background: "rgba(255, 255, 255, 0.03)",
