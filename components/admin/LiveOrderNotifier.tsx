@@ -135,9 +135,39 @@ export default function LiveOrderNotifier({
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
+  const seenOrderIdsRef = useRef<Set<number>>(new Set());
+  const isInitialLoadRef = useRef(true);
+
+  const triggerOrderToast = (newOrder: Order) => {
+    if (shopId && newOrder.shop_id && Number(newOrder.shop_id) !== Number(shopId)) {
+      return;
+    }
+
+    if (soundEnabled) {
+      playOrderAlertChime();
+    }
+
+    const notifItem: NotificationItem = {
+      id: `${newOrder.id}-${Date.now()}`,
+      orderNumber: newOrder.order_number || `#${newOrder.id}`,
+      customerName: newOrder.customer_name || "Valued Customer",
+      customerPhone: newOrder.customer_phone || null,
+      total: Number(newOrder.total) || 0,
+      orderType: newOrder.order_type || "takeaway",
+      tableNumber: newOrder.table_number || null,
+      tokenNumber: newOrder.token_number || null,
+      createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+    };
+
+    setNotifications((prev) => [notifItem, ...prev.slice(0, 4)]);
+
+    setTimeout(() => {
+      removeNotification(notifItem.id);
+    }, 10000);
+  };
+
   useEffect(() => {
     const supabase = createClient();
-
     const channelName = `realtime-orders-${shopId || "master"}-${Math.random().toString(36).substring(2, 7)}`;
 
     const channel = supabase
@@ -151,36 +181,10 @@ export default function LiveOrderNotifier({
         },
         (payload) => {
           const newOrder = payload.new as Order;
-
-          // Filter by shop_id if this admin is isolated to a specific branch shop
-          if (shopId && newOrder.shop_id && Number(newOrder.shop_id) !== Number(shopId)) {
-            return;
+          if (newOrder.id && !seenOrderIdsRef.current.has(newOrder.id)) {
+            seenOrderIdsRef.current.add(newOrder.id);
+            triggerOrderToast(newOrder);
           }
-
-          // Play audio notification chime if enabled
-          if (soundEnabled) {
-            playOrderAlertChime();
-          }
-
-          const notifItem: NotificationItem = {
-            id: `${newOrder.id}-${Date.now()}`,
-            orderNumber: newOrder.order_number || `#${newOrder.id}`,
-            customerName: newOrder.customer_name || "Valued Customer",
-            customerPhone: newOrder.customer_phone || null,
-            total: Number(newOrder.total) || 0,
-            orderType: newOrder.order_type || "takeaway",
-            tableNumber: newOrder.table_number || null,
-            tokenNumber: newOrder.token_number || null,
-            createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-          };
-
-          // Add to active toast stack
-          setNotifications((prev) => [notifItem, ...prev.slice(0, 4)]);
-
-          // Auto dismiss after 10 seconds
-          setTimeout(() => {
-            removeNotification(notifItem.id);
-          }, 10000);
         }
       )
       .subscribe((status) => {
@@ -191,7 +195,42 @@ export default function LiveOrderNotifier({
         }
       });
 
+    // 3-second live sync engine via server API (guarantees alerts without manual page refresh)
+    const syncInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/orders/live?shopId=${shopId || ""}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.orders && Array.isArray(json.orders)) {
+            const data = json.orders as Order[];
+
+            if (isInitialLoadRef.current) {
+              // Populate seen IDs on first load so historical orders don't chime
+              data.forEach((o) => {
+                if (o.id) seenOrderIdsRef.current.add(o.id);
+              });
+              isInitialLoadRef.current = false;
+            } else {
+              // Check for brand new orders
+              for (const o of data) {
+                if (o.id && !seenOrderIdsRef.current.has(o.id)) {
+                  seenOrderIdsRef.current.add(o.id);
+                  triggerOrderToast(o);
+                }
+              }
+            }
+            setIsConnected(true);
+          }
+        }
+      } catch {
+        // network blink safe
+      }
+    }, 3000);
+
     return () => {
+      clearInterval(syncInterval);
       supabase.removeChannel(channel);
     };
   }, [shopId, soundEnabled]);

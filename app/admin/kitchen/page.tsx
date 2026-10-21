@@ -13,7 +13,7 @@ export default async function AdminKitchenPage() {
   let ordersQuery = db
     .from("orders")
     .select("*")
-    .in("status", ["confirmed", "preparing"])
+    .in("status", ["pending", "confirmed", "preparing"])
     .order("created_at", { ascending: true });
 
   if (activeShop.shopId) {

@@ -138,7 +138,7 @@ export default function KitchenDisplay({
     return () => clearInterval(timer);
   }, []);
 
-  // Realtime Supabase subscription + High-reliability sync heartbeat
+  // Realtime Supabase subscription + 3-Second High-Reliability Sync Engine (Zero Manual Reloads)
   useEffect(() => {
     const supabase = createClient();
     const channelName = `kitchen-orders-live-${shopId || "all"}-${Math.random().toString(36).substring(2, 7)}`;
@@ -158,11 +158,8 @@ export default function KitchenDisplay({
             if (shopId && newOrder.shop_id != null && Number(newOrder.shop_id) !== Number(shopId)) {
               return;
             }
-            if (!shopId && newOrder.shop_id != null) {
-              return;
-            }
 
-            if (newOrder.status === "confirmed" || newOrder.status === "preparing") {
+            if (["pending", "confirmed", "preparing"].includes(newOrder.status)) {
               setOrders((prev) => {
                 if (prev.some((o) => o.id === newOrder.id)) return prev;
                 if (soundEnabledRef.current) playKitchenChime();
@@ -175,10 +172,6 @@ export default function KitchenDisplay({
               setOrders((prev) => prev.filter((o) => o.id !== updated.id));
               return;
             }
-            if (!shopId && updated.shop_id != null) {
-              setOrders((prev) => prev.filter((o) => o.id !== updated.id));
-              return;
-            }
 
             setOrders((prev) => {
               const existing = prev.find((o) => o.id === updated.id);
@@ -186,8 +179,7 @@ export default function KitchenDisplay({
                 return prev.map((o) => (o.id === updated.id ? { ...existing, ...updated } : o));
               }
 
-              // If order was just confirmed (new to kitchen queue), add it immediately!
-              if (updated.status === "confirmed" || updated.status === "preparing") {
+              if (["pending", "confirmed", "preparing"].includes(updated.status)) {
                 if (soundEnabledRef.current) playKitchenChime();
                 return [updated, ...prev];
               }
@@ -204,36 +196,37 @@ export default function KitchenDisplay({
       )
       .subscribe();
 
-    // 8-second sync heartbeat: ensures zero dropped tickets even through WiFi blinks
+    // 3-second high-speed sync heartbeat via server API (bypasses RLS, zero screen reloads needed)
     const syncInterval = setInterval(async () => {
       try {
-        let q = supabase
-          .from("orders")
-          .select("*")
-          .in("status", ["confirmed", "preparing"])
-          .order("created_at", { ascending: true });
+        const res = await fetch(`/api/orders/live?kitchen=true&shopId=${shopId || ""}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.orders && Array.isArray(json.orders)) {
+            const data = json.orders as Order[];
+            setOrders((prev) => {
+              // Trigger chime if brand new order detected
+              const prevIds = new Set(prev.map((o) => o.id));
+              const hasBrandNew = data.some((o) => !prevIds.has(o.id));
+              if (hasBrandNew && soundEnabledRef.current) {
+                playKitchenChime();
+              }
 
-        if (shopId) {
-          q = q.eq("shop_id", shopId);
-        } else {
-          q = q.is("shop_id", null);
-        }
-
-        const { data } = await q;
-        if (data) {
-          setOrders((prev) => {
-            const prevSign = prev.map((o) => `${o.id}-${o.status}`).join(",");
-            const newSign = data.map((o: any) => `${o.id}-${o.status}`).join(",");
-            if (prevSign !== newSign) {
-              return data as Order[];
-            }
-            return prev;
-          });
+              const prevSign = prev.map((o) => `${o.id}-${o.status}`).join(",");
+              const newSign = data.map((o) => `${o.id}-${o.status}`).join(",");
+              if (prevSign !== newSign) {
+                return data;
+              }
+              return prev;
+            });
+          }
         }
       } catch {
-        // silent
+        // network blink safe
       }
-    }, 8000);
+    }, 3000);
 
     return () => {
       clearInterval(syncInterval);
@@ -251,10 +244,10 @@ export default function KitchenDisplay({
     });
   };
 
-  // Active kitchen tickets: only confirmed or preparing (unconfirmed pending orders wait for confirmation)
+  // Active kitchen tickets: pending, confirmed or preparing
   const activeKitchenOrders = useMemo(() => {
     return orders.filter((o) => {
-      const isKitchenStatus = o.status === "confirmed" || o.status === "preparing";
+      const isKitchenStatus = ["pending", "confirmed", "preparing"].includes(o.status);
       if (!isKitchenStatus) return false;
 
       const isDineIn = o.order_type === "dine_in" || !!o.table_number || o.notes?.includes("[DINE-IN:");

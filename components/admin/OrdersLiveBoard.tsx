@@ -301,7 +301,7 @@ export default function OrdersLiveBoard({
     }
   };
 
-  // Enterprise Multi-Tenant Realtime WebSocket Subscription
+  // Enterprise Multi-Tenant Realtime WebSocket Subscription + 3s Auto-Sync Engine
   useEffect(() => {
     const supabase = createClient();
     const channelName = `pos-live-orders-${shopId || "all"}-${Math.random().toString(36).substring(2, 7)}`;
@@ -314,20 +314,12 @@ export default function OrdersLiveBoard({
           event: "*",
           schema: "public",
           table: "orders",
-          ...(shopId ? { filter: `shop_id=eq.${shopId}` } : {}),
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newOrder = payload.new as Order;
-            // Strict branch isolation guard
-            if (shopId) {
-              if (!newOrder.shop_id || Number(newOrder.shop_id) !== Number(shopId)) {
-                return;
-              }
-            } else {
-              if (newOrder.shop_id != null) {
-                return;
-              }
+            if (shopId && newOrder.shop_id != null && Number(newOrder.shop_id) !== Number(shopId)) {
+              return;
             }
             setOrders((prev) =>
               [newOrder, ...prev.filter((o) => o.id !== newOrder.id)].sort(
@@ -339,16 +331,9 @@ export default function OrdersLiveBoard({
             }
           } else if (payload.eventType === "UPDATE") {
             const updated = payload.new as Order;
-            if (shopId) {
-              if (!updated.shop_id || Number(updated.shop_id) !== Number(shopId)) {
-                setOrders((prev) => prev.filter((o) => o.id !== updated.id));
-                return;
-              }
-            } else {
-              if (updated.shop_id != null) {
-                setOrders((prev) => prev.filter((o) => o.id !== updated.id));
-                return;
-              }
+            if (shopId && updated.shop_id != null && Number(updated.shop_id) !== Number(shopId)) {
+              setOrders((prev) => prev.filter((o) => o.id !== updated.id));
+              return;
             }
             setOrders((prev) => {
               const updatedList = prev.map((o) => (o.id === updated.id ? updated : o));
@@ -369,7 +354,40 @@ export default function OrdersLiveBoard({
         }
       });
 
+    // 3-second live sync engine via server API (bypasses RLS, zero screen reloads needed)
+    const syncInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/orders/live?shopId=${shopId || ""}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.orders && Array.isArray(json.orders)) {
+            const data = json.orders as Order[];
+            setOrders((prev) => {
+              const prevIds = new Set(prev.map((o) => o.id));
+              const hasBrandNew = data.some((o) => !prevIds.has(o.id));
+              if (hasBrandNew && soundEnabled) {
+                playPosOrderChime();
+              }
+
+              const prevSign = prev.map((o) => `${o.id}-${o.status}`).join(",");
+              const newSign = data.map((o) => `${o.id}-${o.status}`).join(",");
+              if (prevSign !== newSign) {
+                return data;
+              }
+              return prev;
+            });
+            setRealtimeActive(true);
+          }
+        }
+      } catch {
+        // network blink safe
+      }
+    }, 3000);
+
     return () => {
+      clearInterval(syncInterval);
       supabase.removeChannel(channel);
     };
   }, [shopId, soundEnabled, playPosOrderChime]);
