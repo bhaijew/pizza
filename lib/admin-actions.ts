@@ -2430,11 +2430,14 @@ export async function fetchDeliveryRiders(shopId?: number | null): Promise<Deliv
   try {
     let query = db.from("delivery_riders").select("*").order("created_at", { ascending: false });
     if (effectiveShopId) {
-      query = query.eq("shop_id", effectiveShopId);
+      query = query.or(`shop_id.eq.${effectiveShopId},shop_id.is.null`);
     }
     const { data, error } = await query;
     if (!error && Array.isArray(data)) {
       return data as DeliveryRider[];
+    }
+    if (error) {
+      console.warn("[fetchDeliveryRiders db warning]", error.message);
     }
   } catch (err) {
     // fallback
@@ -2482,9 +2485,18 @@ export async function createDeliveryRider(payload: {
   try {
     const { data, error } = await db.from("delivery_riders").insert(riderPayload).select().single();
     if (!error && data) {
+      // Sync to fallback file
+      const fileRiders = readFallbackRiders();
+      const filtered = fileRiders.filter((r) => Number(r.id) !== Number(data.id));
+      filtered.unshift(data as DeliveryRider);
+      writeFallbackRiders(filtered);
+
       revalidatePath("/admin/riders");
       revalidatePath("/admin/orders");
       return { success: true, data: data as DeliveryRider };
+    }
+    if (error) {
+      console.warn("[createDeliveryRider db error, writing fallback]", error.message);
     }
   } catch (e) {
     // fallback
@@ -2549,12 +2561,7 @@ export async function deleteDeliveryRider(
   const db = createAdminClient();
 
   try {
-    const { error } = await db.from("delivery_riders").delete().eq("id", id);
-    if (!error) {
-      revalidatePath("/admin/riders");
-      revalidatePath("/admin/orders");
-      return { success: true };
-    }
+    await db.from("delivery_riders").delete().eq("id", id);
   } catch (e) {
     // fallback
   }

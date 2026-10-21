@@ -297,15 +297,41 @@ export default function OrdersLiveBoard({
 
   const handleAssignRiderSubmit = (orderId: number) => {
     if (!riderNameInput.trim()) return;
+    const assignedName = riderNameInput.trim();
+    const assignedPhone = riderPhoneInput.trim();
+    const targetOrder = orders.find((o) => o.id === orderId);
+
+    // Auto-open WhatsApp message immediately upon assigning rider
+    if (assignedPhone && targetOrder) {
+      const cleanPhone = assignedPhone.replace(/\D/g, "");
+      if (cleanPhone) {
+        const portalUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/delivery/${targetOrder.order_number}`;
+        const deliveryAddress =
+          targetOrder.delivery_address ||
+          targetOrder.notes?.match(/\[DELIVERY:\s*Address:\s*([^|]+)/i)?.[1]?.trim() ||
+          "Address provided on order";
+
+        const waText = `Salam ${assignedName}, New Delivery Order [${targetOrder.order_number}]!\n` +
+          `Destination: ${deliveryAddress}\n` +
+          `Customer: ${targetOrder.customer_name} (${targetOrder.customer_phone || "N/A"})\n` +
+          `Total to Collect: ${currencySymbol}${Number(targetOrder.total).toFixed(2)}\n\n` +
+          `Tap to View Map & Confirm Delivered:\n${portalUrl}\n\n` +
+          `Please pick up from restaurant now.`;
+
+        const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`;
+        window.open(waUrl, "_blank");
+      }
+    }
+
     startTransition(async () => {
-      await assignOrderRider(orderId, riderNameInput.trim(), riderPhoneInput.trim());
+      await assignOrderRider(orderId, assignedName, assignedPhone);
       setOrders((prev) =>
         prev.map((o) =>
           o.id === orderId
             ? {
                 ...o,
-                delivery_rider_name: riderNameInput.trim(),
-                delivery_rider_phone: riderPhoneInput.trim() || null,
+                delivery_rider_name: assignedName,
+                delivery_rider_phone: assignedPhone || null,
                 status: "ready",
               }
             : o
@@ -1348,11 +1374,11 @@ export default function OrdersLiveBoard({
                                 setRiderPhoneInput(info.riderPhone || "");
                               }}
                               style={{
-                                padding: "2px 6px",
-                                borderRadius: "3px",
+                                padding: "2px 8px",
+                                borderRadius: "4px",
                                 background: "#ffffff",
                                 border: "1px solid #cbd5e1",
-                                color: "#334155",
+                                color: "#0f172a",
                                 fontSize: "10px",
                                 fontWeight: 700,
                                 cursor: "pointer",
@@ -1362,87 +1388,27 @@ export default function OrdersLiveBoard({
                             </button>
 
                             {info.riderPhone && (
-                              <>
-                                <button
-                                  type="button"
-                                  disabled={sendingRiderWaId === order.id}
-                                  onClick={() => handleSendRiderWhatsApp(order.id)}
-                                  title="Send instant automated WhatsApp alert to Rider via Railway Gateway"
-                                  style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: 3,
-                                    padding: "2px 6px",
-                                    borderRadius: "3px",
-                                    background: riderWaSentId === order.id ? "#15803d" : "#25d366",
-                                    color: "#ffffff",
-                                    fontSize: "10px",
-                                    fontWeight: 700,
-                                    border: "none",
-                                    cursor: sendingRiderWaId === order.id ? "not-allowed" : "pointer",
-                                  }}
-                                >
-                                  <span>
-                                    {sendingRiderWaId === order.id
-                                      ? "Sending..."
-                                      : riderWaSentId === order.id
-                                      ? "Sent ✓"
-                                      : "💬 Auto WA"}
-                                  </span>
-                                </button>
-
-                                <a
-                                  href={`https://wa.me/${info.riderPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                                    `Salam ${info.riderName || "Rider"}, New Delivery Order [${order.order_number}]!\n` +
-                                    `Destination: ${info.deliveryAddress || "Address provided"}\n` +
-                                    `Customer: ${order.customer_name} (${order.customer_phone || "N/A"})\n` +
-                                    `Total to Collect: ${currencySymbol}${Number(order.total).toFixed(2)}\n\n` +
-                                    `Tap to View Map & Confirm Delivered:\n` +
-                                    `${typeof window !== "undefined" ? window.location.origin : ""}/delivery/${order.order_number}\n\n` +
-                                    `Please pick up from restaurant now.`
-                                  )}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  title="Open WhatsApp Web chat directly"
-                                  style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: 3,
-                                    padding: "2px 5px",
-                                    borderRadius: "3px",
-                                    background: "#f0fdf4",
-                                    border: "1px solid #bbf7d0",
-                                    color: "#166534",
-                                    fontSize: "10px",
-                                    fontWeight: 700,
-                                    textDecoration: "none",
-                                  }}
-                                >
-                                  <span>Web ↗</span>
-                                </a>
-
-                                <a
-                                  href={`/delivery/${order.order_number}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  title="Open Rider Delivery Portal for this order"
-                                  style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: 2,
-                                    padding: "2px 5px",
-                                    borderRadius: "3px",
-                                    background: "#eff6ff",
-                                    border: "1px solid #bfdbfe",
-                                    color: "#1d4ed8",
-                                    fontSize: "10px",
-                                    fontWeight: 700,
-                                    textDecoration: "none",
-                                  }}
-                                >
-                                  <span>Portal ↗</span>
-                                </a>
-                              </>
+                              <button
+                                type="button"
+                                disabled={sendingRiderWaId === order.id}
+                                onClick={() => handleSendRiderWhatsApp(order.id)}
+                                title="Re-send WhatsApp dispatch alert to rider"
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 3,
+                                  padding: "2px 7px",
+                                  borderRadius: "4px",
+                                  background: riderWaSentId === order.id ? "#15803d" : "#25d366",
+                                  color: "#ffffff",
+                                  fontSize: "10px",
+                                  fontWeight: 700,
+                                  border: "none",
+                                  cursor: sendingRiderWaId === order.id ? "not-allowed" : "pointer",
+                                }}
+                              >
+                                <span>{riderWaSentId === order.id ? "Sent ✓" : "💬 WA"}</span>
+                              </button>
                             )}
                           </div>
                         </div>
@@ -1529,9 +1495,9 @@ export default function OrdersLiveBoard({
                                 type="button"
                                 disabled={isPending}
                                 onClick={() => handleAssignRiderSubmit(order.id)}
-                                style={{ padding: "3px 8px", background: "#059669", color: "#fff", border: "none", borderRadius: 3, fontSize: 10.5, fontWeight: 800, cursor: "pointer" }}
+                                style={{ padding: "4px 10px", background: "#059669", color: "#fff", border: "none", borderRadius: 4, fontSize: 11, fontWeight: 800, cursor: "pointer" }}
                               >
-                                Save & Dispatch
+                                Save & Send WhatsApp ➔
                               </button>
                               <button
                                 type="button"
