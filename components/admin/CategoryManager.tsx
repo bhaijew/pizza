@@ -373,45 +373,62 @@ export default function CategoryManager({
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(15, 23, 42, 0.4)",
-            backdropFilter: "blur(4px)",
+            background: "rgba(15, 23, 42, 0.6)",
+            backdropFilter: "blur(6px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "20px",
-            zIndex: 100,
+            padding: "24px 16px",
+            zIndex: 9999,
+            overflowY: "auto",
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
           }}
         >
           <div
             style={{
               background: "#ffffff",
               border: "1px solid #e2e8f0",
-              borderRadius: "12px",
-              padding: "24px",
+              borderRadius: "16px",
+              padding: "24px 26px",
               width: "100%",
-              maxWidth: "480px",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+              maxWidth: "500px",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              maxHeight: "calc(100vh - 48px)",
+              overflowY: "auto",
+              position: "relative",
+              margin: "auto",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-              <h3 style={{ fontSize: "16px", fontWeight: 800, margin: 0, color: "#0f172a" }}>
-                {editingCategory ? "Edit Category" : "Add New Category"}
-              </h3>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px", borderBottom: "1px solid #f1f5f9", paddingBottom: "12px" }}>
+              <div>
+                <h3 style={{ fontSize: "17px", fontWeight: 800, margin: "0 0 3px", color: "#0f172a" }}>
+                  {editingCategory ? "Edit Category" : "Create New Category"}
+                </h3>
+                <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
+                  Organize your menu items into structured food categories.
+                </p>
+              </div>
               <button
                 onClick={() => setIsModalOpen(false)}
                 style={{
-                  background: "none",
+                  background: "#f1f5f9",
                   border: "none",
                   color: "#64748b",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
-                  padding: "4px",
-                  borderRadius: "6px",
+                  justifyContent: "center",
+                  width: 30,
+                  height: 30,
+                  borderRadius: "50%",
+                  transition: "background 0.2s",
                 }}
+                className="hover:bg-slate-200"
                 aria-label="Close modal"
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 

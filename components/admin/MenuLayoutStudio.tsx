@@ -382,8 +382,8 @@ export default function MenuLayoutStudio({
                   {isCompressing
                     ? "⚡ Optimizing & compressing logo..."
                     : uploadFileName
-                    ? uploadFileName
-                    : "Click or Drag to Upload Logo"}
+                      ? uploadFileName
+                      : "Click or Drag to Upload Logo"}
                 </div>
                 <div style={{ fontSize: "11px", color: "#94a3b8" }}>
                   PNG, JPG, SVG, or WEBP (Automatically optimized &amp; resized, up to 20MB)

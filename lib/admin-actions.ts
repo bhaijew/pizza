@@ -355,8 +355,8 @@ export async function switchAdminStaffRole(
     targetRole === "admin"
       ? "Shop Admin"
       : targetRole === "sub_admin"
-      ? "Supervisor (Sub-Admin)"
-      : "Cashier (Staff)";
+        ? "Supervisor (Sub-Admin)"
+        : "Cashier (Staff)";
 
   cookieStore.set(ADMIN_STAFF_NAME_COOKIE, targetStaffName || defaultName, {
     httpOnly: true,
@@ -577,11 +577,11 @@ export async function createProduct(
 
   let variations = null;
   if (variationsStr) {
-    try { variations = JSON.parse(variationsStr); } catch {}
+    try { variations = JSON.parse(variationsStr); } catch { }
   }
   let extra_toppings = null;
   if (extraToppingsStr) {
-    try { extra_toppings = JSON.parse(extraToppingsStr); } catch {}
+    try { extra_toppings = JSON.parse(extraToppingsStr); } catch { }
   }
 
   const payload: Record<string, any> = {
@@ -662,11 +662,11 @@ export async function updateProduct(
 
   let variations = null;
   if (variationsStr) {
-    try { variations = JSON.parse(variationsStr); } catch {}
+    try { variations = JSON.parse(variationsStr); } catch { }
   }
   let extra_toppings = null;
   if (extraToppingsStr) {
-    try { extra_toppings = JSON.parse(extraToppingsStr); } catch {}
+    try { extra_toppings = JSON.parse(extraToppingsStr); } catch { }
   }
 
   if (!name || !slug || isNaN(category_id) || isNaN(price)) {
@@ -790,7 +790,7 @@ export async function updateSettings(
   const hero_bg_image = (formData.get("hero_bg_image") as string)?.trim() || "";
   const hero_show_pattern = formData.get("hero_show_pattern") !== "false";
   const google_review_url = (formData.get("google_review_url") as string)?.trim() || "";
-  
+
   let slider_images: any = null;
   const rawSliderImages = formData.get("slider_images") as string;
   if (rawSliderImages) {
@@ -1072,7 +1072,7 @@ export async function updateOrderStatus(
     return { error: SERVICE_ROLE_ERROR };
   }
 
-  const validStatuses = ["pending","confirmed","preparing","ready","delivered","cancelled"];
+  const validStatuses = ["pending", "confirmed", "preparing", "ready", "delivered", "cancelled"];
   if (!validStatuses.includes(status)) return { error: "Invalid status." };
 
   // STRICT RBAC: Order cancellation is strictly restricted to Shop Admin!

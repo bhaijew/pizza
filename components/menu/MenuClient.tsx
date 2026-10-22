@@ -20,6 +20,7 @@ import ProductDetailSheet from "./ProductDetailSheet";
 import CartSheet from "./CartSheet";
 import MenuEmptyState from "./MenuEmptyState";
 import MenuErrorState from "./MenuErrorState";
+import PizzgerMenuTheme from "./PizzgerMenuTheme";
 
 interface MenuClientProps {
   categories: Category[];
@@ -91,6 +92,40 @@ function MenuInner({
   const hasError = !!categoriesError || !!productsError;
   const currentVerifiedTable = verifiedTable || (isDedicatedTableRoute && tableNumber ? tableNumber : undefined);
 
+  if (settings?.menu_layout === "pizzger") {
+    return (
+      <>
+        <PizzgerMenuTheme
+          categories={categories}
+          products={products}
+          settings={settings}
+          onSelectProduct={setSelectedProduct}
+          onOpenCart={() => setCartOpen(true)}
+          verifiedTable={currentVerifiedTable}
+        />
+
+        {/* Product Detail Modal (Opens at Bottom) */}
+        <ProductDetailSheet
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+        />
+
+        {/* Cart Drawer with Table & Token checkout */}
+        <CartSheet
+          open={cartOpen}
+          onClose={() => setCartOpen(false)}
+          tableNumber={tableNumber}
+          setTableNumber={setTableNumber}
+          orderType={orderType}
+          setOrderType={setOrderType}
+          isDedicatedTableRoute={isDedicatedTableRoute}
+          shopId={settings.shop_id}
+          googleReviewUrl={settings.google_review_url || ""}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <MenuHeader
@@ -115,8 +150,8 @@ function MenuInner({
                 Array.isArray(settings?.slider_images)
                   ? (settings.slider_images as any)
                   : typeof settings?.slider_images === "string"
-                  ? JSON.parse(settings.slider_images)
-                  : undefined
+                    ? JSON.parse(settings.slider_images)
+                    : undefined
               }
               mobileHeight={settings?.slider_height_mobile || 180}
               themeColor={settings?.theme_color || "#ea580c"}
@@ -212,8 +247,8 @@ function MenuInner({
                     searchQuery
                       ? `No items matching "${searchQuery}".`
                       : activeCategoryId !== null
-                      ? "No items available in this category."
-                      : "No menu items available right now."
+                        ? "No items available in this category."
+                        : "No menu items available right now."
                   }
                 />
               ) : (

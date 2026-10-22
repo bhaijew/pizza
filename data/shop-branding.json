@@ -1,10 +1,10 @@
 {
   "5": {
     "logo_url": null,
-    "menu_layout": "default"
+    "menu_layout": "pizzger"
   },
   "main": {
     "logo_url": null,
-    "menu_layout": "default"
+    "menu_layout": "pizzger"
   }
 }

@@ -189,7 +189,7 @@ export default function ProductForm({
     const baseP = customBase !== undefined ? customBase : (parseFloat(price) || 1000);
     setVariations([
       { id: `var-small-${Date.now()}`, name: "Small", price: Math.round(baseP * 0.65), is_default: false },
-      { id: `var-big-${Date.now()}`, name: "Big", price: baseP, is_default: true },
+      { id: `var-medium-${Date.now()}`, name: "Medium", price: baseP, is_default: true },
       { id: `var-large-${Date.now()}`, name: "Large", price: Math.round(baseP * 1.45), is_default: false },
       { id: `var-xl-${Date.now()}`, name: "Extra Large", price: Math.round(baseP * 1.9), is_default: false },
     ]);
@@ -482,8 +482,19 @@ export default function ProductForm({
                   step="0.01"
                   min="0"
                   required
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
+                  value={price === "0" ? "" : price}
+                  onFocus={(e) => {
+                    if (e.target.value === "0") setPrice("");
+                    else e.target.select();
+                  }}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.length > 1 && val.startsWith("0") && !val.startsWith("0.")) {
+                      setPrice(val.replace(/^0+/, ""));
+                    } else {
+                      setPrice(val);
+                    }
+                  }}
                   placeholder="e.g. 14.99"
                   style={{
                     width: "100%",
@@ -887,7 +898,7 @@ export default function ProductForm({
                   cursor: "pointer",
                 }}
               >
-                🍕 Pizza Sizes (Small, Big, Large, XL)
+                🍕 Pizza Sizes (Small, Medium, Large, XL)
               </button>
               <button
                 type="button"
@@ -1035,9 +1046,22 @@ export default function ProductForm({
                     type="number"
                     step="0.01"
                     min="0"
-                    value={v.price}
+                    value={v.price === 0 ? "" : v.price}
                     placeholder="Price"
-                    onChange={(e) => updateVariation(idx, "price", parseFloat(e.target.value) || 0)}
+                    onFocus={(e) => {
+                      if (e.target.value === "0") {
+                        updateVariation(idx, "price", 0);
+                      }
+                      e.target.select();
+                    }}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        updateVariation(idx, "price", 0);
+                      } else {
+                        updateVariation(idx, "price", parseFloat(val) || 0);
+                      }
+                    }}
                     style={{
                       padding: "8px 12px",
                       borderRadius: "5px",
@@ -1224,9 +1248,22 @@ export default function ProductForm({
                     type="number"
                     step="0.01"
                     min="0"
-                    value={top.price}
+                    value={top.price === 0 ? "" : top.price}
                     placeholder="Price"
-                    onChange={(e) => updateTopping(idx, "price", parseFloat(e.target.value) || 0)}
+                    onFocus={(e) => {
+                      if (e.target.value === "0") {
+                        updateTopping(idx, "price", 0);
+                      }
+                      e.target.select();
+                    }}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        updateTopping(idx, "price", 0);
+                      } else {
+                        updateTopping(idx, "price", parseFloat(val) || 0);
+                      }
+                    }}
                     style={{
                       padding: "8px 12px",
                       borderRadius: "5px",

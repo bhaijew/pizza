@@ -268,7 +268,7 @@ export async function fetchShopBySlugOrId(identifier: string | number): Promise<
       try {
         const supabase = await getSupabase();
         const isNumeric = typeof identifier === "number" || /^\d+$/.test(String(identifier));
-        
+
         let query = supabase.from("shops").select("*");
         if (isNumeric) {
           query = query.eq("id", Number(identifier));
@@ -305,8 +305,8 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
     shopId !== undefined
       ? shopId
       : cookieStore.get("pizza_admin_shop_id")?.value
-      ? parseInt(cookieStore.get("pizza_admin_shop_id")!.value, 10)
-      : null;
+        ? parseInt(cookieStore.get("pizza_admin_shop_id")!.value, 10)
+        : null;
 
   const cacheKey = `settings:${targetShopId ?? "main"}`;
 

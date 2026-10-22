@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { adminLogout, switchAdminStaffRole } from "@/lib/admin-actions";
 import LiveOrderNotifier from "@/components/admin/LiveOrderNotifier";
 import BrandLogo from "@/components/BrandLogo";
@@ -255,6 +255,16 @@ export default function AdminShell({
   }, [pathname]);
 
   const isAdmin = userRole === "admin";
+
+  // Restrict Finance & Records to Super Admin / Shop Admin only (hidden from sub_admin & staff)
+  const visibleNavGroups: NavGroup[] = useMemo(() => {
+    return NAV_GROUPS.filter((group) => {
+      if (group.groupTitle === "Finance & Records" && userRole !== "admin") {
+        return false;
+      }
+      return true;
+    });
+  }, [userRole]);
 
   const handleRoleSwitch = async (targetRole: "admin" | "sub_admin" | "staff") => {
     setRoleSwitching(true);
@@ -617,7 +627,7 @@ export default function AdminShell({
           }}
           className="admin-sidebar-scroll"
         >
-          {NAV_GROUPS.map((group) => (
+          {visibleNavGroups.map((group) => (
             <div key={group.groupTitle}>
               <div
                 style={{
@@ -1455,7 +1465,7 @@ export default function AdminShell({
             }}
             className="admin-sidebar-scroll"
           >
-            {NAV_GROUPS.map((group) => (
+            {visibleNavGroups.map((group) => (
               <div key={group.groupTitle}>
                 <div
                   style={{
