@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { adminLogin } from "@/lib/admin-actions";
 import SoleWhatLogo from "@/components/SoleWhatLogo";
 import Link from "next/link";
@@ -26,6 +27,7 @@ interface AdminLoginClientProps {
 export default function AdminLoginClient({
   setupName = "Soule What Management",
 }: AdminLoginClientProps) {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [state, formAction, isPending] = useActionState(adminLogin, {
     error: null,
@@ -36,6 +38,9 @@ export default function AdminLoginClient({
 
   useEffect(() => {
     setMounted(true);
+    // Prefetch admin routes while user is on login screen for instant navigation
+    router.prefetch("/admin");
+    router.prefetch("/admin/orders");
     try {
       const now = new Date();
       setCurrentDateStr(

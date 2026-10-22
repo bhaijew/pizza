@@ -5,6 +5,7 @@ import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/adm
 import { ADMIN_SHOP_COOKIE } from "@/lib/admin-auth";
 import { adminLogout, getActiveShopContext } from "@/lib/admin-actions";
 import { ShieldAlert, Store } from "@/components/admin/AdminIcons";
+import { dbCache } from "@/lib/db-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -30,12 +31,19 @@ export default async function AdminLayout({
 
   if (shopIdStr && isServiceRoleConfigured()) {
     try {
-      const db = createAdminClient();
-      const { data: shop } = await db
-        .from("shops")
-        .select("id, name, slug, status, owner_name, currency_symbol")
-        .eq("id", parseInt(shopIdStr, 10))
-        .maybeSingle();
+      const shop = await dbCache.wrap(
+        `shop:layout:${shopIdStr}`,
+        async () => {
+          const db = createAdminClient();
+          const { data } = await db
+            .from("shops")
+            .select("id, name, slug, status, owner_name, currency_symbol")
+            .eq("id", parseInt(shopIdStr, 10))
+            .maybeSingle();
+          return data;
+        },
+        { ttlSeconds: 120, tags: ["shops"] }
+      );
 
       if (shop) {
         shopName = shop.name;
@@ -149,15 +157,19 @@ export default async function AdminLayout({
   let availableShops: { id: number; name: string; slug: string }[] = [];
   if (isServiceRoleConfigured()) {
     try {
-      const db = createAdminClient();
-      const { data: shopsData } = await db
-        .from("shops")
-        .select("id, name, slug")
-        .eq("status", "active")
-        .order("name", { ascending: true });
-      if (shopsData) {
-        availableShops = shopsData as { id: number; name: string; slug: string }[];
-      }
+      availableShops = await dbCache.wrap(
+        "shops:active-list",
+        async () => {
+          const db = createAdminClient();
+          const { data: shopsData } = await db
+            .from("shops")
+            .select("id, name, slug")
+            .eq("status", "active")
+            .order("name", { ascending: true });
+          return (shopsData as { id: number; name: string; slug: string }[]) || [];
+        },
+        { ttlSeconds: 180, tags: ["shops"] }
+      );
     } catch {}
   }
 

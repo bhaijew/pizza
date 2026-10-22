@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { fetchSettings } from "@/lib/menu-data";
 import { getActiveShopContext } from "@/lib/admin-actions";
+import { dbCache } from "@/lib/db-cache";
+import { getCurrentBusinessDate, getBusinessShiftUtcRange } from "@/lib/business-hours";
 import type { Order } from "@/types/menu";
 import {
   Flame,
@@ -29,64 +31,120 @@ import {
 
 export const dynamic = "force-dynamic";
 
+function formatHumanBusinessDate(dateStr: string): string {
+  try {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString("en-PK", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
 export default async function AdminDashboardPage() {
   const serviceRoleOk = isServiceRoleConfigured();
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
+  const settings = await fetchSettings();
+
+  const openingTime = settings.opening_time || "11:00";
+  const closingTime = settings.closing_time || "01:00";
+  const businessDate = getCurrentBusinessDate(openingTime, closingTime);
+  const shiftRange = getBusinessShiftUtcRange(businessDate, openingTime, closingTime);
 
   let productCount = 0;
   let categoryCount = 0;
-  let orderCount = 0;
+  let allTimeOrderCount = 0;
   let pendingOrders = 0;
+  let todayOrders: Order[] = [];
   let recentOrders: Order[] = [];
-  let currencySymbol = "Rs.";
-  let shopName = "Pizza Shop";
+  let todayNetSales = 0;
+  let currencySymbol = settings.currency_symbol || "Rs.";
+  let shopName =
+    activeShop.shopName && activeShop.shopName !== "Master Store"
+      ? activeShop.shopName
+      : settings.shop_name || "Soule What Management";
 
   try {
-    let prodQuery = db.from("products").select("id", { count: "exact", head: true });
-    let catQuery = db.from("categories").select("id", { count: "exact", head: true });
-    let orderQuery = db.from("orders").select("id, status");
-    let recentQuery = db.from("orders").select("*").order("created_at", { ascending: false }).limit(6);
+    const cacheKey = `dashboard:daily:${activeShop.shopId ?? "master"}:${businessDate}`;
+    const metrics = await dbCache.wrap(
+      cacheKey,
+      async () => {
+        let prodQuery = db.from("products").select("id", { count: "exact", head: true });
+        let catQuery = db.from("categories").select("id", { count: "exact", head: true });
+        let totalCountQuery = db.from("orders").select("id", { count: "exact", head: true });
+        let pendingCountQuery = db
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["pending", "preparing"]);
+        let todayQuery = db
+          .from("orders")
+          .select("*")
+          .gte("created_at", shiftRange.startUtc)
+          .lte("created_at", shiftRange.endUtc)
+          .order("created_at", { ascending: false });
+        let recentQuery = db
+          .from("orders")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(8);
 
-    if (activeShop.shopId) {
-      prodQuery = prodQuery.eq("shop_id", activeShop.shopId);
-      catQuery = catQuery.eq("shop_id", activeShop.shopId);
-      orderQuery = orderQuery.eq("shop_id", activeShop.shopId);
-      recentQuery = recentQuery.eq("shop_id", activeShop.shopId);
-    } else {
-      prodQuery = prodQuery.is("shop_id", null);
-      catQuery = catQuery.is("shop_id", null);
-      orderQuery = orderQuery.is("shop_id", null);
-      recentQuery = recentQuery.is("shop_id", null);
-    }
+        if (activeShop.shopId) {
+          prodQuery = prodQuery.eq("shop_id", activeShop.shopId);
+          catQuery = catQuery.eq("shop_id", activeShop.shopId);
+          totalCountQuery = totalCountQuery.eq("shop_id", activeShop.shopId);
+          pendingCountQuery = pendingCountQuery.eq("shop_id", activeShop.shopId);
+          todayQuery = todayQuery.eq("shop_id", activeShop.shopId);
+          recentQuery = recentQuery.eq("shop_id", activeShop.shopId);
+        } else {
+          prodQuery = prodQuery.is("shop_id", null);
+          catQuery = catQuery.is("shop_id", null);
+          totalCountQuery = totalCountQuery.is("shop_id", null);
+          pendingCountQuery = pendingCountQuery.is("shop_id", null);
+          todayQuery = todayQuery.is("shop_id", null);
+          recentQuery = recentQuery.is("shop_id", null);
+        }
 
-    const [prodRes, catRes, orderRes, recentRes, settings] = await Promise.all([
-      prodQuery,
-      catQuery,
-      orderQuery,
-      recentQuery,
-      fetchSettings(),
-    ]);
+        const [prodRes, catRes, totalCountRes, pendingCountRes, todayRes, recentRes] =
+          await Promise.all([
+            prodQuery,
+            catQuery,
+            totalCountQuery,
+            pendingCountQuery,
+            todayQuery,
+            recentQuery,
+          ]);
 
-    shopName =
-      activeShop.shopName && activeShop.shopName !== "Master Store"
-        ? activeShop.shopName
-        : settings.shop_name || "Soule What Management";
-    currencySymbol = settings.currency_symbol || "Rs.";
+        const fetchedToday = (todayRes.data as Order[]) || [];
+        const validSales = fetchedToday
+          .filter((o) => o.status !== "cancelled")
+          .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
-    productCount = prodRes.count ?? 0;
-    categoryCount = catRes.count ?? 0;
+        return {
+          productCount: prodRes.count ?? 0,
+          categoryCount: catRes.count ?? 0,
+          allTimeOrderCount: totalCountRes.count ?? 0,
+          pendingOrders: pendingCountRes.count ?? 0,
+          todayOrders: fetchedToday,
+          recentOrders: (recentRes.data as Order[]) || [],
+          todayNetSales: validSales,
+        };
+      },
+      { ttlSeconds: 20, tags: ["orders", "products", "categories"] }
+    );
 
-    if (orderRes.data) {
-      orderCount = orderRes.data.length;
-      pendingOrders = orderRes.data.filter(
-        (o) => o.status === "pending" || o.status === "preparing"
-      ).length;
-    }
-
-    if (recentRes.data) {
-      recentOrders = recentRes.data as Order[];
-    }
+    productCount = metrics.productCount;
+    categoryCount = metrics.categoryCount;
+    allTimeOrderCount = metrics.allTimeOrderCount;
+    pendingOrders = metrics.pendingOrders;
+    todayOrders = metrics.todayOrders;
+    recentOrders = metrics.recentOrders;
+    todayNetSales = metrics.todayNetSales;
   } catch (_) {}
 
   const statusColors: Record<
@@ -551,7 +609,7 @@ export default async function AdminDashboardPage() {
           </div>
         </Link>
 
-        {/* KPI 3: Total Orders */}
+        {/* KPI 3: Today's Daily Orders (Auto-updates daily) */}
         <Link
           href="/admin/orders"
           style={{
@@ -573,12 +631,12 @@ export default async function AdminDashboardPage() {
               style={{
                 fontSize: 13,
                 fontWeight: 800,
-                color: "#64748b",
+                color: "#2563eb",
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
               }}
             >
-              Total Orders
+              Today&apos;s Daily Orders
             </span>
             <div
               style={{
@@ -598,27 +656,29 @@ export default async function AdminDashboardPage() {
           </div>
           <div style={{ margin: "16px 0 10px" }}>
             <div style={{ fontSize: 38, fontWeight: 900, color: "#0f172a", lineHeight: 1.1 }}>
-              {orderCount}
+              {todayOrders.length}
             </div>
             <p
               style={{
                 margin: "4px 0 0",
-                fontSize: 14,
+                fontSize: 13,
                 color: "#64748b",
-                fontWeight: 500,
+                fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
                 gap: 5,
                 lineHeight: 1.4,
               }}
             >
-              <TrendingUp size={15} className="text-blue-500" />
-              <span>All-time completed orders</span>
+              <TrendingUp size={15} className="text-emerald-500" />
+              <span>
+                {currencySymbol} {todayNetSales.toLocaleString()} sales &bull; {businessDate}
+              </span>
             </p>
           </div>
           <div
             style={{
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: 700,
               color: "#2563eb",
               display: "flex",
@@ -627,8 +687,8 @@ export default async function AdminDashboardPage() {
               marginTop: 6,
             }}
           >
-            <span>View order history</span>
-            <ArrowUpRight size={16} />
+            <span>Live daily shift queue</span>
+            <ArrowUpRight size={15} />
           </div>
         </Link>
 
@@ -705,7 +765,7 @@ export default async function AdminDashboardPage() {
       {/* ─── Operations Grid: Recent Orders + Quick Management ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-7">
         
-        {/* LEFT: Live Order Stream */}
+        {/* LEFT: Today's Daily Orders (Auto-updates daily with active operational shift) */}
         <div
           style={{
             background: "#ffffff",
@@ -719,26 +779,49 @@ export default async function AdminDashboardPage() {
             style={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 20,
+              alignItems: "flex-start",
+              marginBottom: 16,
+              flexWrap: "wrap",
+              gap: 12,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span
-                style={{
-                  width: 9,
-                  height: 9,
-                  borderRadius: "50%",
-                  background: "#10b981",
-                  display: "inline-block",
-                  boxShadow: "0 0 10px #10b981",
-                }}
-                className="admin-pulse-green"
-              />
-              <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: "#0f172a" }}>
-                Recent Incoming Orders
-              </h2>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span
+                  style={{
+                    width: 9,
+                    height: 9,
+                    borderRadius: "50%",
+                    background: "#10b981",
+                    display: "inline-block",
+                    boxShadow: "0 0 10px #10b981",
+                  }}
+                  className="admin-pulse-green"
+                />
+                <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: "#0f172a" }}>
+                  Today&apos;s Daily Orders
+                </h2>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    padding: "2px 8px",
+                    borderRadius: 20,
+                    background: "#dcfce7",
+                    color: "#15803d",
+                    border: "1px solid #bbf7d0",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  LIVE SHIFT
+                </span>
+              </div>
+              <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b" }}>
+                Active shift: <strong>{formatHumanBusinessDate(businessDate)}</strong> ({openingTime} - {closingTime}) &bull; Automatically updates daily
+              </p>
             </div>
+
             <Link
               href="/admin/orders"
               style={{
@@ -749,7 +832,7 @@ export default async function AdminDashboardPage() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 5,
-                padding: "4px 10px",
+                padding: "6px 12px",
                 borderRadius: 8,
                 background: "#fff7ed",
                 transition: "all 0.18s ease",
@@ -761,40 +844,234 @@ export default async function AdminDashboardPage() {
             </Link>
           </div>
 
-          {recentOrders.length === 0 ? (
-            <div
-              style={{
-                padding: "54px 20px",
-                textAlign: "center",
-                color: "#64748b",
-                fontSize: 14,
-              }}
-            >
+          {/* Daily Shift Summary Pill */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              background: "#f8fafc",
+              border: "1px solid #edf2f7",
+              borderRadius: 10,
+              padding: "10px 14px",
+              marginBottom: 16,
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#334155",
+              flexWrap: "wrap",
+              gap: 8,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Clock size={14} className="text-orange-500" />
+              <span>Shift Date: {businessDate}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ color: "#0f172a", fontWeight: 800 }}>
+                {todayOrders.length} {todayOrders.length === 1 ? "Order" : "Orders"} Today
+              </span>
+              <span style={{ color: "#16a34a", fontWeight: 900 }}>
+                {currencySymbol} {todayNetSales.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+          </div>
+
+          {todayOrders.length === 0 ? (
+            <div>
               <div
                 style={{
-                  width: "60px",
-                  height: "60px",
-                  borderRadius: 16,
-                  background: "#fff7ed",
-                  color: "#ea580c",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: 16,
+                  padding: "36px 20px",
+                  textAlign: "center",
+                  color: "#64748b",
+                  fontSize: 14,
+                  background: "#fdfefe",
+                  borderRadius: 12,
+                  border: "1px dashed #cbd5e1",
+                  marginBottom: recentOrders.length > 0 ? 16 : 0,
                 }}
               >
-                <ShoppingBag size={30} />
+                <div
+                  style={{
+                    width: "52px",
+                    height: "52px",
+                    borderRadius: 14,
+                    background: "#fff7ed",
+                    color: "#ea580c",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: 12,
+                  }}
+                >
+                  <ShoppingBag size={26} />
+                </div>
+                <p style={{ margin: "0 0 4px", fontWeight: 800, color: "#0f172a", fontSize: 15 }}>
+                  Shift Open &bull; No Orders Placed Yet Today
+                </p>
+                <p style={{ margin: 0, fontSize: 12, color: "#94a3b8", maxWidth: 360, marginInline: "auto", lineHeight: 1.5 }}>
+                  Today&apos;s shift ({formatHumanBusinessDate(businessDate)}) is live. When customer orders arrive today, tickets will stream here automatically.
+                </p>
               </div>
-              <p style={{ margin: "0 0 6px", fontWeight: 800, color: "#0f172a", fontSize: 16 }}>
-                No active orders yet
-              </p>
-              <p style={{ margin: 0, fontSize: 13, color: "#94a3b8", maxWidth: 340, marginInline: "auto", lineHeight: 1.5 }}>
-                When customers place Dine-In, Delivery, or Takeaway orders, they will stream here live with instant sound alerts.
-              </p>
+
+              {recentOrders.length > 0 && (
+                <div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: "#64748b",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                      marginBottom: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <span>📋 Previous Shift Orders ({recentOrders.length})</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                    {recentOrders.map((order) => {
+                      const s = statusColors[order.status] || {
+                        bg: "#f1f5f9",
+                        text: "#334155",
+                        border: "#e2e8f0",
+                        label: order.status,
+                        dot: "#64748b",
+                      };
+
+                      const isDelivery = order.order_type === "delivery";
+                      const isDineIn = order.order_type === "dine_in";
+
+                      return (
+                        <div
+                          key={order.id}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "13px 16px",
+                            background: "#f8fafc",
+                            border: "1px solid #edf2f7",
+                            borderLeft: `4px solid ${isDelivery ? "#3b82f6" : isDineIn ? "#f97316" : "#eab308"}`,
+                            borderRadius: 12,
+                            gap: 12,
+                            transition: "all 0.18s ease",
+                          }}
+                          className="hover:bg-slate-100/90 hover:shadow-xs"
+                        >
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                              <span
+                                style={{
+                                  fontFamily: "monospace",
+                                  fontWeight: 800,
+                                  fontSize: 13,
+                                  color: "#0f172a",
+                                  background: "#ffffff",
+                                  padding: "2px 7px",
+                                  borderRadius: 6,
+                                  border: "1px solid #e2e8f0",
+                                }}
+                              >
+                                #{order.order_number}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 800,
+                                  padding: "2px 8px",
+                                  borderRadius: 6,
+                                  background: isDelivery ? "#eff6ff" : isDineIn ? "#fff7ed" : "#fefce8",
+                                  color: isDelivery ? "#1d4ed8" : isDineIn ? "#c2410c" : "#a16207",
+                                  border: `1px solid ${
+                                    isDelivery ? "#bfdbfe" : isDineIn ? "#fed7aa" : "#fef08a"
+                                  }`,
+                                  textTransform: "uppercase",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
+                                }}
+                              >
+                                {isDineIn ? (
+                                  <UtensilsCrossed size={12} />
+                                ) : isDelivery ? (
+                                  <Bike size={12} />
+                                ) : (
+                                  <ShoppingBag size={12} />
+                                )}
+                                <span>
+                                  {isDineIn
+                                    ? `Table ${order.table_number || "—"}`
+                                    : isDelivery
+                                    ? "Delivery"
+                                    : "Takeaway"}
+                                </span>
+                              </span>
+                            </div>
+
+                            <div style={{ fontSize: 13, color: "#64748b", display: "flex", alignItems: "center", gap: 8 }}>
+                              <span className="font-medium text-slate-700">{order.customer_name || "Guest"}</span>
+                              <span>&bull;</span>
+                              <span style={{ fontWeight: 800, color: "#0f172a" }}>
+                                {currencySymbol} {Number(order.total).toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 5,
+                                padding: "5px 10px",
+                                borderRadius: 8,
+                                fontSize: 11,
+                                fontWeight: 700,
+                                background: s.bg,
+                                color: s.text,
+                                border: `1px solid ${s.border}`,
+                              }}
+                            >
+                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
+                              <span>{s.label}</span>
+                            </span>
+
+                            <Link
+                              href={`/track/${order.order_number}`}
+                              target="_blank"
+                              style={{
+                                padding: "5px 10px",
+                                borderRadius: 8,
+                                background: "#ffffff",
+                                border: "1px solid #cbd5e1",
+                                color: "#334155",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                textDecoration: "none",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 3,
+                                transition: "all 0.15s ease",
+                              }}
+                              className="hover:border-slate-400 hover:bg-slate-50"
+                              title="Track Order Live Status"
+                            >
+                              <span>Track</span>
+                              <ArrowUpRight size={12} />
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-              {recentOrders.map((order) => {
+              {todayOrders.map((order) => {
                 const s = statusColors[order.status] || {
                   bg: "#f1f5f9",
                   text: "#334155",
