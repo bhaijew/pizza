@@ -13,22 +13,33 @@ const TARGET_EXE = "Sole What Setup 1.5.9.exe";
  */
 export async function GET(request: NextRequest) {
   const candidatePaths = [
-    path.join(process.cwd(), "public", "release", TARGET_EXE),
     path.join(process.cwd(), "release", TARGET_EXE),
-    path.join("C:\\Users\\azwaj\\OneDrive\\Desktop\\FloDesktop\\release", TARGET_EXE),
-    path.join("C:\\Users\\azwaj\\FloDesktopRelease", TARGET_EXE),
+    path.join(process.cwd(), "public", "release", TARGET_EXE),
   ];
+
+  // In development, also check local developer machine release paths
+  if (process.env.NODE_ENV === "development") {
+    candidatePaths.push(
+      path.join("C:\\Users\\azwaj\\OneDrive\\Desktop\\FloDesktop\\release", TARGET_EXE),
+      path.join("C:\\Users\\azwaj\\FloDesktopRelease", TARGET_EXE)
+    );
+  }
 
   let targetPath = candidatePaths.find((p) => fs.existsSync(p));
 
   // If exact 1.5.9 not found, search in release directories
   if (!targetPath) {
     const searchDirs = [
-      path.join(process.cwd(), "public", "release"),
       path.join(process.cwd(), "release"),
-      "C:\\Users\\azwaj\\OneDrive\\Desktop\\FloDesktop\\release",
-      "C:\\Users\\azwaj\\FloDesktopRelease",
+      path.join(process.cwd(), "public", "release"),
     ];
+
+    if (process.env.NODE_ENV === "development") {
+      searchDirs.push(
+        "C:\\Users\\azwaj\\OneDrive\\Desktop\\FloDesktop\\release",
+        "C:\\Users\\azwaj\\FloDesktopRelease"
+      );
+    }
 
     for (const dir of searchDirs) {
       if (fs.existsSync(dir)) {
@@ -69,7 +80,7 @@ export async function GET(request: NextRequest) {
     const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
     const chunkSize = end - start + 1;
 
-    const fileStream = fs.createReadStream(targetPath, { start, end });
+    const fileStream = fs.createReadStream(/*turbopackIgnore: true*/ targetPath, { start, end });
 
     const stream = new ReadableStream({
       start(controller) {
@@ -94,8 +105,8 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Full file stream
-  const fileStream = fs.createReadStream(targetPath);
+  // Full file stream with Turbopack ignore annotation
+  const fileStream = fs.createReadStream(/*turbopackIgnore: true*/ targetPath);
 
   const stream = new ReadableStream({
     start(controller) {
