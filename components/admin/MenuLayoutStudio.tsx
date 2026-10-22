@@ -10,8 +10,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Eye,
-  Sparkles,
-  Flame,
 } from "lucide-react";
 
 const UploadIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
@@ -50,9 +48,6 @@ export default function MenuLayoutStudio({
   shopId,
 }: MenuLayoutStudioProps) {
   const [logoUrl, setLogoUrl] = useState<string>(initialSettings.logo_url || "");
-  const [selectedLayout, setSelectedLayout] = useState<"default" | "pizzger">(
-    initialSettings.menu_layout === "pizzger" ? "pizzger" : "default"
-  );
   const [logoMode, setLogoMode] = useState<"upload" | "url">("upload");
   const [uploadFileName, setUploadFileName] = useState<string>("");
   const [isPending, startTransition] = useTransition();
@@ -94,13 +89,12 @@ export default function MenuLayoutStudio({
     startTransition(async () => {
       const formData = new FormData();
       formData.set("logo_url", logoUrl.trim());
-      formData.set("menu_layout", selectedLayout);
 
       const res = await updateShopLogoAndLayout({ error: null, success: false }, formData);
       if (res.success) {
         setStatusMessage({
           type: "success",
-          text: "Branding and Menu Style saved successfully! Customer menu has been updated.",
+          text: "Brand logo saved successfully! Customer menu and dashboard have been updated.",
         });
         setTimeout(() => {
           window.location.reload();
@@ -459,219 +453,6 @@ export default function MenuLayoutStudio({
 
             <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: "11px", color: "#94a3b8" }}>
               ✓ Automatically synchronizes across desktop sidebar, mobile drawer, and menu header.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ─── SECTION 2: CUSTOMER MENU STYLE & LAYOUT ─── */}
-      <div
-        style={{
-          background: "#ffffff",
-          borderRadius: "14px",
-          border: "1px solid #e2e8f0",
-          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.03)",
-          padding: "24px",
-          marginBottom: "32px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <h2 style={{ fontSize: "17px", fontWeight: 800, color: "#0f172a", margin: 0 }}>
-                2. Customer Menu Design &amp; Layout Style
-              </h2>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 800,
-                  padding: "2px 8px",
-                  borderRadius: "6px",
-                  background: "#fef3c7",
-                  color: "#d97706",
-                }}
-              >
-                2 STYLES AVAILABLE
-              </span>
-            </div>
-            <p style={{ fontSize: "13px", color: "#64748b", margin: "4px 0 0" }}>
-              Choose which style your customers will experience. You can switch between the original default menu and the new Pizzger artisan style at any time.
-            </p>
-          </div>
-        </div>
-
-        {/* 2 Layout Choice Cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "18px" }}>
-          {/* OPTION 1: CLASSIC DEFAULT MENU */}
-          <div
-            onClick={() => setSelectedLayout("default")}
-            style={{
-              borderRadius: "14px",
-              border: selectedLayout === "default" ? "2.5px solid #ea580c" : "1.5px solid #e2e8f0",
-              background: selectedLayout === "default" ? "#fff7ed" : "#ffffff",
-              padding: "18px",
-              cursor: "pointer",
-              position: "relative",
-              boxShadow: selectedLayout === "default" ? "0 6px 20px rgba(234, 88, 12, 0.15)" : "none",
-              transition: "all 0.2s",
-            }}
-          >
-            {/* Active Checkmark Pill */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 900,
-                  padding: "3px 8px",
-                  borderRadius: "6px",
-                  background: selectedLayout === "default" ? "#ea580c" : "#f1f5f9",
-                  color: selectedLayout === "default" ? "#ffffff" : "#64748b",
-                }}
-              >
-                CLASSIC DEFAULT
-              </span>
-
-              {selectedLayout === "default" && (
-                <div
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: "50%",
-                    background: "#ea580c",
-                    color: "#ffffff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Check size={14} strokeWidth={3} />
-                </div>
-              )}
-            </div>
-
-            <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#0f172a", margin: "0 0 4px" }}>
-              Classic Default Menu
-            </h3>
-            <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 14px", lineHeight: 1.4 }}>
-              Your original proven design featuring 2-column square product cards, banner promo sliders, and sticky category tabs.
-            </p>
-
-            {/* Visual Mini Preview */}
-            <div
-              style={{
-                borderRadius: "10px",
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                padding: "12px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-              }}
-            >
-              <div style={{ display: "flex", gap: "6px" }}>
-                <div style={{ height: "18px", flex: 1, background: "#ea580c", borderRadius: "4px" }} />
-                <div style={{ height: "18px", width: "40px", background: "#cbd5e1", borderRadius: "4px" }} />
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                <div style={{ height: "60px", background: "#ffffff", borderRadius: "6px", border: "1px solid #e2e8f0", padding: "6px" }}>
-                  <div style={{ height: "24px", background: "#f1f5f9", borderRadius: "4px", marginBottom: "4px" }} />
-                  <div style={{ height: "6px", width: "70%", background: "#cbd5e1", borderRadius: "2px" }} />
-                </div>
-                <div style={{ height: "60px", background: "#ffffff", borderRadius: "6px", border: "1px solid #e2e8f0", padding: "6px" }}>
-                  <div style={{ height: "24px", background: "#f1f5f9", borderRadius: "4px", marginBottom: "4px" }} />
-                  <div style={{ height: "6px", width: "70%", background: "#cbd5e1", borderRadius: "2px" }} />
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginTop: "12px", fontSize: "11px", color: "#64748b", fontWeight: 600 }}>
-              ✓ 2-Column Square Grid &bull; Promo Slider &bull; Category Tabs
-            </div>
-          </div>
-
-          {/* OPTION 2: PIZZGER ARTISAN MODERN */}
-          <div
-            onClick={() => setSelectedLayout("pizzger")}
-            style={{
-              borderRadius: "14px",
-              border: selectedLayout === "pizzger" ? "2.5px solid #ea580c" : "1.5px solid #e2e8f0",
-              background: selectedLayout === "pizzger" ? "#fff7ed" : "#ffffff",
-              padding: "18px",
-              cursor: "pointer",
-              position: "relative",
-              boxShadow: selectedLayout === "pizzger" ? "0 6px 20px rgba(234, 88, 12, 0.15)" : "none",
-              transition: "all 0.2s",
-            }}
-          >
-            {/* Active Checkmark Pill */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 900,
-                  padding: "3px 8px",
-                  borderRadius: "6px",
-                  background: selectedLayout === "pizzger" ? "#ea580c" : "#fef3c7",
-                  color: selectedLayout === "pizzger" ? "#ffffff" : "#b45309",
-                }}
-              >
-                NEW ARTISAN STYLE 🔥
-              </span>
-
-              {selectedLayout === "pizzger" && (
-                <div
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: "50%",
-                    background: "#ea580c",
-                    color: "#ffffff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Check size={14} strokeWidth={3} />
-                </div>
-              )}
-            </div>
-
-            <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#0f172a", margin: "0 0 4px" }}>
-              Pizzger Artisan Modern
-            </h3>
-            <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 14px", lineHeight: 1.4 }}>
-              Ultra-modern gourmet style with dark artisan hero, pill category buttons with food icons, popular items carousel, and sleek row cards with circular orange &plus; buttons.
-            </p>
-
-            {/* Visual Mini Preview */}
-            <div
-              style={{
-                borderRadius: "10px",
-                background: "#0f172a",
-                border: "1px solid #1e293b",
-                padding: "12px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ height: "12px", width: "50px", background: "#ea580c", borderRadius: "3px" }} />
-                <div style={{ height: "16px", width: "16px", background: "#f59e0b", borderRadius: "50%" }} />
-              </div>
-              <div style={{ display: "flex", gap: "6px" }}>
-                <div style={{ height: "20px", flex: 1, background: "#1e293b", borderRadius: "10px" }} />
-                <div style={{ height: "20px", flex: 1, background: "#ea580c", borderRadius: "10px" }} />
-                <div style={{ height: "20px", flex: 1, background: "#1e293b", borderRadius: "10px" }} />
-              </div>
-              <div style={{ height: "36px", background: "#1e293b", borderRadius: "8px", display: "flex", alignItems: "center", padding: "0 8px", justifyContent: "space-between" }}>
-                <div style={{ height: "20px", width: "20px", background: "#334155", borderRadius: "4px" }} />
-                <div style={{ height: "16px", width: "16px", background: "#ea580c", borderRadius: "50%" }} />
-              </div>
-            </div>
-
-            <div style={{ marginTop: "12px", fontSize: "11px", color: "#64748b", fontWeight: 600 }}>
-              ✓ Dark Hero &bull; Food Icon Pills &bull; Popular Carousel &bull; Row Cards
             </div>
           </div>
         </div>

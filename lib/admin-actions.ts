@@ -957,15 +957,13 @@ export async function updateShopLogoAndLayout(
   const activeShop = await getActiveShopContext();
 
   const rawLogo = formData.get("logo_url") as string | null;
-  const rawLayout = formData.get("menu_layout") as string | null;
 
   const logo_url = rawLogo !== null ? (rawLogo.trim() || null) : undefined;
-  const menu_layout = rawLayout === "pizzger" ? "pizzger" : "default";
 
   const { saveShopBranding } = await import("@/lib/shop-branding");
   await saveShopBranding(activeShop.shopId, {
     logo_url,
-    menu_layout,
+    menu_layout: "default",
   });
 
   revalidatePath("/admin/menu-layout");

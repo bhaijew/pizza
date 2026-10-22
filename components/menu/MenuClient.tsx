@@ -20,7 +20,6 @@ import ProductDetailSheet from "./ProductDetailSheet";
 import CartSheet from "./CartSheet";
 import MenuEmptyState from "./MenuEmptyState";
 import MenuErrorState from "./MenuErrorState";
-import PizzgerLayout from "./layouts/PizzgerLayout";
 
 interface MenuClientProps {
   categories: Category[];
@@ -306,11 +305,9 @@ function MenuInner({
 }
 
 export default function MenuClient(props: MenuClientProps) {
-  const isPizzger = props.settings.menu_layout === "pizzger";
-
   return (
     <CartProvider currencySymbol={props.settings.currency_symbol}>
-      {isPizzger ? <PizzgerLayout {...props} /> : <MenuInner {...props} />}
+      <MenuInner {...props} />
     </CartProvider>
   );
 }
