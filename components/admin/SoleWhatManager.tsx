@@ -30,6 +30,7 @@ import {
   updateSoleWhatCredentials,
   sendSoleWhatTestMessage,
 } from "@/lib/sole-what-actions";
+import SoleWhatLogo from "@/components/SoleWhatLogo";
 
 interface SoleWhatManagerProps {
   initialStatus: SoleWhatStatus;
@@ -190,36 +191,41 @@ server.listen(CONFIG.port, () => {
         />
 
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-              <span
-                style={{
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  background: status.isOnline ? "#10b981" : "#f59e0b",
-                  boxShadow: status.isOnline ? "0 0 8px #10b981" : "none",
-                }}
-              />
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 800,
-                  color: "#059669",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                Sole-What WhatsApp Gateway Hub &bull; {status.isOnline ? "Online" : "Standby"}
-              </span>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
+            <div style={{ flexShrink: 0, marginTop: "4px" }}>
+              <SoleWhatLogo size={48} variant="badge" showGlow={true} />
             </div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <span
+                  style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    background: status.isOnline ? "#10b981" : "#f59e0b",
+                    boxShadow: status.isOnline ? "0 0 8px #10b981" : "none",
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    color: "#059669",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  Sole-What WhatsApp Gateway Hub &bull; {status.isOnline ? "Online" : "Standby"}
+                </span>
+              </div>
 
-            <h1 style={{ fontSize: "22px", fontWeight: 900, margin: "0 0 6px", color: "#0f172a", letterSpacing: "-0.02em" }}>
-              Sole-What WhatsApp Automation
-            </h1>
-            <p style={{ margin: 0, fontSize: "13px", color: "#475569", maxWidth: "620px", lineHeight: 1.5 }}>
-              Dispatch automatic order confirmations, live delivery tracking links, and marketing broadcasts directly to customer WhatsApp numbers using your dedicated Sole-What instance.
-            </p>
+              <h1 style={{ fontSize: "22px", fontWeight: 900, margin: "0 0 6px", color: "#0f172a", letterSpacing: "-0.02em" }}>
+                Sole-What WhatsApp Automation
+              </h1>
+              <p style={{ margin: 0, fontSize: "13px", color: "#475569", maxWidth: "620px", lineHeight: 1.5 }}>
+                Dispatch automatic order confirmations, live delivery tracking links, and marketing broadcasts directly to customer WhatsApp numbers using your dedicated Sole-What instance.
+              </p>
+            </div>
           </div>
 
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>

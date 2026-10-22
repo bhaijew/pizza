@@ -7,6 +7,7 @@
  */
 
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
+import { dbCache } from "@/lib/db-cache";
 
 export interface SendWhatsAppAlertInput {
   phone: string;
@@ -43,7 +44,7 @@ export function formatWhatsAppPhone(rawPhone: string): string {
 /**
  * Resolve WhatsApp session ID and API key for a given shop.
  * STRICT MULTI-TENANCY: Each shop MUST have its own configured `whatsapp_session_id`.
- * No global fallback is used, ensuring no cross-shop or admin personal number usage.
+ * Cached in RAM for instant sub-1ms delivery without Supabase roundtrip on every alert.
  */
 export async function getShopWhatsAppCredentials(shopId?: number | null): Promise<{
   sessionId: string | null;
@@ -51,68 +52,74 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
   shopName: string;
   currencySymbol: string;
 }> {
-  const defaultApiKey = process.env.DEFAULT_WHATSAPP_API_KEY || "wag_8iBNQyfmDmSpZEvF0SsL7rtM2UzNzJ8M";
+  const cacheKey = `wa_creds:${shopId ?? "main"}`;
 
-  let sessionId: string | null = null;
-  let apiKey = defaultApiKey;
-  let shopName = "Pizza Shop";
-  let currencySymbol = "Rs.";
+  return dbCache.wrap(
+    cacheKey,
+    async () => {
+      const defaultApiKey = process.env.DEFAULT_WHATSAPP_API_KEY || "wag_8iBNQyfmDmSpZEvF0SsL7rtM2UzNzJ8M";
 
-  if (isServiceRoleConfigured()) {
-    try {
-      const db = createAdminClient();
+      let sessionId: string | null = null;
+      let apiKey = defaultApiKey;
+      let shopName = "Pizza Shop";
+      let currencySymbol = "Rs.";
 
-      if (shopId) {
-        // Query branch shop credentials STRICTLY for this specific shop
-        const { data: shop } = await db
-          .from("shops")
-          .select("name, currency_symbol, whatsapp_session_id, whatsapp_api_key")
-          .eq("id", shopId)
-          .maybeSingle();
+      if (isServiceRoleConfigured()) {
+        try {
+          const db = createAdminClient();
 
-        if (shop) {
-          if (shop.name) shopName = shop.name;
-          if (shop.currency_symbol) currencySymbol = shop.currency_symbol;
-          // Only use if this specific shop configured it
-          if (shop.whatsapp_session_id?.trim()) {
-            sessionId = shop.whatsapp_session_id.trim();
+          if (shopId) {
+            // Query branch shop credentials STRICTLY for this specific shop
+            const { data: shop } = await db
+              .from("shops")
+              .select("name, currency_symbol, whatsapp_session_id, whatsapp_api_key")
+              .eq("id", shopId)
+              .maybeSingle();
+
+            if (shop) {
+              if (shop.name) shopName = shop.name;
+              if (shop.currency_symbol) currencySymbol = shop.currency_symbol;
+              // Only use if this specific shop configured it
+              if (shop.whatsapp_session_id?.trim()) {
+                sessionId = shop.whatsapp_session_id.trim();
+              }
+              if (shop.whatsapp_api_key?.trim()) {
+                apiKey = shop.whatsapp_api_key.trim();
+              }
+            }
+          } else {
+            // Query master/single shop settings ONLY
+            const { data: settings } = await db
+              .from("shop_settings")
+              .select("shop_name, currency_symbol, whatsapp_session_id, whatsapp_api_key")
+              .eq("id", "main")
+              .maybeSingle();
+
+            if (settings) {
+              if (settings.shop_name) shopName = settings.shop_name;
+              if (settings.currency_symbol) currencySymbol = settings.currency_symbol;
+              if (settings.whatsapp_session_id?.trim()) {
+                sessionId = settings.whatsapp_session_id.trim();
+              }
+              if (settings.whatsapp_api_key?.trim()) {
+                apiKey = settings.whatsapp_api_key.trim();
+              }
+            }
           }
-          if (shop.whatsapp_api_key?.trim()) {
-            apiKey = shop.whatsapp_api_key.trim();
-          }
-        }
-      } else {
-        // Query master/single shop settings ONLY
-        const { data: settings } = await db
-          .from("shop_settings")
-          .select("shop_name, currency_symbol, whatsapp_session_id, whatsapp_api_key")
-          .eq("id", "main")
-          .maybeSingle();
-
-        if (settings) {
-          if (settings.shop_name) shopName = settings.shop_name;
-          if (settings.currency_symbol) currencySymbol = settings.currency_symbol;
-          if (settings.whatsapp_session_id?.trim()) {
-            sessionId = settings.whatsapp_session_id.trim();
-          }
-          if (settings.whatsapp_api_key?.trim()) {
-            apiKey = settings.whatsapp_api_key.trim();
-          }
+        } catch (err) {
+          console.warn("[getShopWhatsAppCredentials] Error fetching shop credentials:", err);
         }
       }
-    } catch (err) {
-      console.warn("[getShopWhatsAppCredentials] Error fetching shop credentials:", err);
-    }
-  }
 
-  // Strictly enforce multi-tenancy: DO NOT fallback to any default session!
-  // If this specific shop has not configured its own whatsapp_session_id, sessionId remains null.
-  // Ignore expired key
-  if (!apiKey || apiKey === "wag_qF0HVpcLGTxuqGZvBLO1I2057gJUwiV8") {
-    apiKey = defaultApiKey;
-  }
+      // Strictly enforce multi-tenancy: DO NOT fallback to any default session!
+      if (!apiKey || apiKey === "wag_qF0HVpcLGTxuqGZvBLO1I2057gJUwiV8") {
+        apiKey = defaultApiKey;
+      }
 
-  return { sessionId, apiKey, shopName, currencySymbol };
+      return { sessionId, apiKey, shopName, currencySymbol };
+    },
+    { ttlSeconds: 300, tags: ["settings", "shops"] }
+  );
 }
 
 /**

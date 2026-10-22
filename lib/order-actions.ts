@@ -13,6 +13,7 @@ import { getTableScanSession } from "@/lib/table-session";
 import { ProductVariation, ExtraTopping } from "@/types/menu";
 import { sendWhatsAppOrderAlert } from "@/lib/whatsapp";
 import { processLoyaltyPoints } from "@/lib/promo-actions";
+import { dbCache } from "@/lib/db-cache";
 
 export interface CreateOrderItem {
   id: string | number;
@@ -141,7 +142,7 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
     }
 
     const seqStr = String(nextSeq).padStart(3, "0");
-    const orderNumber = targetShopId ? `ORD-${targetShopId}-${seqStr}` : `ORD-${seqStr}`;
+    let orderNumber = targetShopId ? `ORD-${targetShopId}-${seqStr}` : `ORD-${seqStr}`;
 
     // Generate delivery verification token number for table dine-in & takeaway
     let tokenNumber = input.token_number?.trim();
@@ -199,6 +200,17 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       error = retryRes.error;
     }
 
+    // High Concurrency Race Condition Guard: If another customer checked out at the exact same millisecond
+    if (error && (error.code === "23505" || error.message.includes("unique") || error.message.includes("duplicate key"))) {
+      const collisionFreeOrderNumber = `${orderNumber}-${Math.floor(10 + Math.random() * 90)}`;
+      orderPayload.order_number = collisionFreeOrderNumber;
+      const collisionRetry = await supabase.from("orders").insert(orderPayload);
+      if (!collisionRetry.error) {
+        error = null;
+        orderNumber = collisionFreeOrderNumber;
+      }
+    }
+
     if (error) {
       console.error("[placeCustomerOrder error]", error);
       return { success: false, error: error.message };
@@ -206,6 +218,7 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
 
     // Feature 7: Inventory Automatic Stock Deduction (Finished Products)
     try {
+      let stockChanged = false;
       for (const orderedItem of input.items) {
         if (!orderedItem.id) continue;
         const { data: prodData } = await supabase
@@ -221,7 +234,11 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
             updates.is_available = false;
           }
           await supabase.from("products").update(updates).eq("id", orderedItem.id);
+          stockChanged = true;
         }
+      }
+      if (stockChanged) {
+        dbCache.invalidateTag("products", "menu");
       }
     } catch (stockErr) {
       console.warn("[placeCustomerOrder stock deduction non-blocking error]", stockErr);

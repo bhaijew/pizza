@@ -3,7 +3,10 @@ import { createClient } from "@/utils/supabase/middleware";
 import { ADMIN_COOKIE, verifySessionToken } from "@/lib/admin-auth";
 import { SUPER_ADMIN_COOKIE, verifySuperAdminSessionToken } from "@/lib/super-admin-auth";
 
-export async function middleware(request: NextRequest) {
+/**
+ * Next.js 16 Proxy Convention (replaces deprecated middleware.js)
+ */
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Refresh Supabase session cookies
@@ -35,6 +38,9 @@ export async function middleware(request: NextRequest) {
 
   return supabaseResponse;
 }
+
+// Backward compatibility export
+export const middleware = proxy;
 
 export const config = {
   matcher: ["/admin/:path*", "/super-admin/:path*"],
