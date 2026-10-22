@@ -218,7 +218,7 @@ export interface ShopSettings {
 
   // Custom Branding & Dynamic Menu Layout
   logo_url?: string | null;
-  menu_layout?: "cheezious" | "kfc" | "mcdonalds";
+  menu_layout?: "default" | string;
 }
 
 const DEFAULT_SETTINGS: ShopSettings = {
@@ -257,7 +257,7 @@ const DEFAULT_SETTINGS: ShopSettings = {
   hero_show_pattern: true,
   google_review_url: "",
   logo_url: null,
-  menu_layout: "cheezious",
+  menu_layout: "default",
 };
 
 export async function fetchShopBySlugOrId(identifier: string | number): Promise<any | null> {
@@ -456,7 +456,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
       return {
         ...baseResult,
         logo_url: branding.logo_url ?? baseResult.logo_url ?? null,
-        menu_layout: branding.menu_layout || (baseResult.menu_layout as "cheezious" | "kfc" | "mcdonalds") || "cheezious",
+        menu_layout: "default",
       };
     },
     { ttlSeconds: 180, tags: ["settings", "branding"] }

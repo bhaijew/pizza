@@ -271,7 +271,7 @@ export default async function DynamicShopMenuPage({
     hero_bg_image: (shop as any).hero_bg_image || baseSettings.hero_bg_image,
     hero_show_pattern: (shop as any).hero_show_pattern !== undefined ? (shop as any).hero_show_pattern : baseSettings.hero_show_pattern,
     logo_url: branding.logo_url || (shop as any).logo_url || baseSettings.logo_url,
-    menu_layout: (branding.menu_layout as "cheezious" | "kfc" | "mcdonalds") || (shop as any).menu_layout || baseSettings.menu_layout || "cheezious",
+    menu_layout: "default",
     shop_id: shop.id,
   };
 

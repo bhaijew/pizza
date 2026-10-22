@@ -3,7 +3,7 @@ import path from "path";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { dbCache } from "@/lib/db-cache";
 
-export type MenuLayoutType = "cheezious" | "kfc" | "mcdonalds";
+export type MenuLayoutType = "default";
 
 export interface ShopBranding {
   logo_url: string | null;
@@ -12,7 +12,7 @@ export interface ShopBranding {
 
 const DEFAULT_BRANDING: ShopBranding = {
   logo_url: null,
-  menu_layout: "cheezious",
+  menu_layout: "default",
 };
 
 const DATA_FILE = path.join(process.cwd(), "data", "shop-branding.json");
@@ -59,37 +59,27 @@ export async function getShopBranding(shopId?: number | null): Promise<ShopBrand
       if (shopId) {
         const { data } = await db
           .from("shops")
-          .select("logo_url, menu_layout")
+          .select("logo_url")
           .eq("id", shopId)
           .maybeSingle();
 
-        if (data && (data.logo_url !== undefined || data.menu_layout !== undefined)) {
-          const rawLayout = data.menu_layout || localRecord?.menu_layout;
-          const normalized =
-            rawLayout === "kfc" || rawLayout === "mcdonalds" || rawLayout === "cheezious"
-              ? rawLayout
-              : "cheezious";
+        if (data && data.logo_url !== undefined) {
           return {
             logo_url: data.logo_url ?? localRecord?.logo_url ?? null,
-            menu_layout: normalized,
+            menu_layout: "default",
           };
         }
       } else {
         const { data } = await db
           .from("shop_settings")
-          .select("logo_url, menu_layout")
+          .select("logo_url")
           .eq("id", "main")
           .maybeSingle();
 
-        if (data && (data.logo_url !== undefined || data.menu_layout !== undefined)) {
-          const rawLayout = data.menu_layout || localRecord?.menu_layout;
-          const normalized =
-            rawLayout === "kfc" || rawLayout === "mcdonalds" || rawLayout === "cheezious"
-              ? rawLayout
-              : "cheezious";
+        if (data && data.logo_url !== undefined) {
           return {
             logo_url: data.logo_url ?? localRecord?.logo_url ?? null,
-            menu_layout: normalized,
+            menu_layout: "default",
           };
         }
       }
@@ -99,14 +89,9 @@ export async function getShopBranding(shopId?: number | null): Promise<ShopBrand
   }
 
   if (localRecord) {
-    const rawLayout = localRecord.menu_layout;
-    const normalized =
-      rawLayout === "kfc" || rawLayout === "mcdonalds" || rawLayout === "cheezious"
-        ? rawLayout
-        : "cheezious";
     return {
       logo_url: localRecord.logo_url ?? null,
-      menu_layout: normalized,
+      menu_layout: "default",
     };
   }
 
@@ -118,7 +103,7 @@ export async function getShopBranding(shopId?: number | null): Promise<ShopBrand
  */
 export async function saveShopBranding(
   shopId: number | null | undefined,
-  branding: { logo_url?: string | null; menu_layout?: MenuLayoutType }
+  branding: { logo_url?: string | null; menu_layout?: string }
 ): Promise<{ success: boolean; data: ShopBranding; error?: string }> {
   const targetKey = shopId ? String(shopId) : "main";
 
@@ -128,7 +113,7 @@ export async function saveShopBranding(
 
   const updated: ShopBranding = {
     logo_url: branding.logo_url !== undefined ? branding.logo_url : current.logo_url,
-    menu_layout: branding.menu_layout || current.menu_layout || "cheezious",
+    menu_layout: "default",
   };
 
   localStore[targetKey] = updated;

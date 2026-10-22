@@ -6,12 +6,7 @@ import { updateShopLogoAndLayout } from "@/lib/admin-actions";
 import type { ShopSettings } from "@/lib/menu-data";
 import {
   Check,
-  Sparkles,
   ExternalLink,
-  Flame,
-  UtensilsCrossed,
-  Zap,
-  Image as ImageIcon,
   CheckCircle2,
   AlertCircle,
   Eye,
@@ -53,13 +48,6 @@ export default function MenuLayoutStudio({
   shopId,
 }: MenuLayoutStudioProps) {
   const [logoUrl, setLogoUrl] = useState<string>(initialSettings.logo_url || "");
-  const [menuLayout, setMenuLayout] = useState<"cheezious" | "kfc" | "mcdonalds">(
-    (initialSettings.menu_layout as "cheezious" | "kfc" | "mcdonalds") === "kfc"
-      ? "kfc"
-      : (initialSettings.menu_layout as "cheezious" | "kfc" | "mcdonalds") === "mcdonalds"
-      ? "mcdonalds"
-      : "cheezious"
-  );
   const [logoMode, setLogoMode] = useState<"upload" | "url">("upload");
   const [uploadFileName, setUploadFileName] = useState<string>("");
   const [isPending, startTransition] = useTransition();
@@ -101,13 +89,12 @@ export default function MenuLayoutStudio({
     startTransition(async () => {
       const formData = new FormData();
       formData.set("logo_url", logoUrl.trim());
-      formData.set("menu_layout", menuLayout);
 
       const res = await updateShopLogoAndLayout({ error: null, success: false }, formData);
       if (res.success) {
         setStatusMessage({
           type: "success",
-          text: "Brand logo and menu layout saved successfully! Customer menu and dashboard have been updated.",
+          text: "Brand logo saved successfully! Customer menu and dashboard have been updated.",
         });
         setTimeout(() => {
           window.location.reload();
@@ -141,7 +128,7 @@ export default function MenuLayoutStudio({
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
             <h1 style={{ fontSize: "24px", fontWeight: 900, color: "#0f172a", margin: 0 }}>
-              Menu Layout &amp; Logo Studio
+              Store Logo &amp; Branding Studio
             </h1>
             <span
               style={{
@@ -154,11 +141,11 @@ export default function MenuLayoutStudio({
                 border: "1px solid #fbcfe8",
               }}
             >
-              MULTI-TENANT BRANDING
+              MULTI-TENANT LOGO
             </span>
           </div>
           <p style={{ fontSize: "14px", color: "#64748b", margin: 0 }}>
-            Upload your branch/store logo to show in the <strong>Admin Dashboard</strong> and <strong>Customer Menu</strong>, and choose your favorite menu layout.
+            Upload your branch/store logo to show in the <strong>Admin Dashboard</strong> and <strong>Customer Menu Header</strong>.
           </p>
         </div>
 
@@ -468,302 +455,6 @@ export default function MenuLayoutStudio({
               ✓ Automatically synchronizes across desktop sidebar, mobile drawer, and menu header.
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* ─── SECTION 2: MENU LAYOUT CHOICES ─── */}
-      <div
-        style={{
-          background: "#ffffff",
-          borderRadius: "14px",
-          border: "1px solid #e2e8f0",
-          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.03)",
-          padding: "24px",
-        }}
-      >
-        <div style={{ marginBottom: "20px" }}>
-          <h2 style={{ fontSize: "17px", fontWeight: 800, color: "#0f172a", margin: "0 0 4px" }}>
-            2. Choose Menu Design Layout
-          </h2>
-          <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
-            Select one of the three real fast-food mobile app layouts. Your customer menu will dynamically switch to this presentation.
-          </p>
-        </div>
-
-        {/* 3 Real Fast-Food Layout Cards */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "20px",
-          }}
-        >
-          {/* Option 1: Cheezious Real Style */}
-          <div
-            onClick={() => setMenuLayout("cheezious")}
-            style={{
-              borderRadius: "14px",
-              border: menuLayout === "cheezious" ? "2.5px solid #ea580c" : "1.5px solid #e2e8f0",
-              background: menuLayout === "cheezious" ? "#fffbeb" : "#ffffff",
-              boxShadow: menuLayout === "cheezious" ? "0 8px 24px rgba(234, 88, 12, 0.16)" : "none",
-              padding: "18px",
-              cursor: "pointer",
-              position: "relative",
-              transition: "all 0.2s ease",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 900,
-                    padding: "3px 8px",
-                    borderRadius: "6px",
-                    background: "#fef08a",
-                    color: "#854d0e",
-                  }}
-                >
-                  REAL APP • CHEEZIOUS
-                </span>
-
-                <div
-                  style={{
-                    width: "22px",
-                    height: "22px",
-                    borderRadius: "50%",
-                    border: menuLayout === "cheezious" ? "6px solid #ea580c" : "2px solid #cbd5e1",
-                    background: "#ffffff",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <Sparkles size={20} style={{ color: "#eab308" }} />
-                <h3 style={{ fontSize: "16px", fontWeight: 900, color: "#18181b", margin: 0 }}>
-                  Cheezious Style
-                </h3>
-              </div>
-
-              <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.5, margin: "0 0 14px" }}>
-                Cheezious fast-food mobile app design. Bright Cheddar Yellow delivery switcher, circular pizzas with soft shadow, terracotta Starting Price badge, and + ADD TO CART pill.
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px", color: "#334155" }}>
-                <div>✓ Cheddar Yellow Delivery/Pickup switcher</div>
-                <div>✓ Category slider with &lt; &gt; arrow buttons</div>
-                <div>✓ Circular dish photos with subtle shadows</div>
-                <div>✓ Starting Price badge &amp; + Add To Cart pill</div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: "16px",
-                paddingTop: "12px",
-                borderTop: "1px dashed #e2e8f0",
-                fontSize: "12px",
-                fontWeight: 700,
-                color: menuLayout === "cheezious" ? "#ea580c" : "#94a3b8",
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-              }}
-            >
-              {menuLayout === "cheezious" && <Check size={14} />}
-              <span>{menuLayout === "cheezious" ? "Active Selected Layout" : "Click to Select"}</span>
-            </div>
-          </div>
-
-          {/* Option 2: KFC Real Style */}
-          <div
-            onClick={() => setMenuLayout("kfc")}
-            style={{
-              borderRadius: "14px",
-              border: menuLayout === "kfc" ? "2.5px solid #e4002b" : "1.5px solid #e2e8f0",
-              background: menuLayout === "kfc" ? "#fef2f2" : "#ffffff",
-              boxShadow: menuLayout === "kfc" ? "0 8px 24px rgba(228, 0, 43, 0.16)" : "none",
-              padding: "18px",
-              cursor: "pointer",
-              position: "relative",
-              transition: "all 0.2s ease",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 900,
-                    padding: "3px 8px",
-                    borderRadius: "6px",
-                    background: "#fee2e2",
-                    color: "#991b1b",
-                  }}
-                >
-                  REAL APP • KFC CRISPY
-                </span>
-
-                <div
-                  style={{
-                    width: "22px",
-                    height: "22px",
-                    borderRadius: "50%",
-                    border: menuLayout === "kfc" ? "6px solid #e4002b" : "2px solid #cbd5e1",
-                    background: "#ffffff",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <Flame size={20} style={{ color: "#e4002b" }} />
-                <h3 style={{ fontSize: "16px", fontWeight: 900, color: "#111827", margin: 0 }}>
-                  KFC Style
-                </h3>
-              </div>
-
-              <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.5, margin: "0 0 14px" }}>
-                Authentic KFC app design. 3-tab Delivery / Pickup / Dine-In switcher, Krunch/Zinger promos with angled red ribbons, 3 red stripes, and floating KFC Bucket cart.
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px", color: "#334155" }}>
-                <div>✓ 3-tab Delivery / Pickup / Dine-In switcher</div>
-                <div>✓ Angled red ribbon price tags (Rs 310)</div>
-                <div>✓ Iconic 3 vertical red KFC stripes on cards</div>
-                <div>✓ KFC Bucket cart floating button with badge</div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: "16px",
-                paddingTop: "12px",
-                borderTop: "1px dashed #e2e8f0",
-                fontSize: "12px",
-                fontWeight: 700,
-                color: menuLayout === "kfc" ? "#e4002b" : "#94a3b8",
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-              }}
-            >
-              {menuLayout === "kfc" && <Check size={14} />}
-              <span>{menuLayout === "kfc" ? "Active Selected Layout" : "Click to Select"}</span>
-            </div>
-          </div>
-
-          {/* Option 3: McDonald's Real Style */}
-          <div
-            onClick={() => setMenuLayout("mcdonalds")}
-            style={{
-              borderRadius: "14px",
-              border: menuLayout === "mcdonalds" ? "2.5px solid #da291c" : "1.5px solid #e2e8f0",
-              background: menuLayout === "mcdonalds" ? "#fefce8" : "#ffffff",
-              boxShadow: menuLayout === "mcdonalds" ? "0 8px 24px rgba(218, 41, 28, 0.16)" : "none",
-              padding: "18px",
-              cursor: "pointer",
-              position: "relative",
-              transition: "all 0.2s ease",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 900,
-                    padding: "3px 8px",
-                    borderRadius: "6px",
-                    background: "#fef08a",
-                    color: "#854d0e",
-                  }}
-                >
-                  REAL APP • MCDONALD&apos;S
-                </span>
-
-                <div
-                  style={{
-                    width: "22px",
-                    height: "22px",
-                    borderRadius: "50%",
-                    border: menuLayout === "mcdonalds" ? "6px solid #da291c" : "2px solid #cbd5e1",
-                    background: "#ffffff",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <Zap size={20} style={{ color: "#eab308" }} />
-                <h3 style={{ fontSize: "16px", fontWeight: 900, color: "#27251f", margin: 0 }}>
-                  McDonald&apos;s Style
-                </h3>
-              </div>
-
-              <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.5, margin: "0 0 14px" }}>
-                Iconic Golden Arches yellow and classic red mobile ordering app. McDelivery toggle, app-exclusive saver combos, McValue tags, and golden add buttons.
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px", color: "#334155" }}>
-                <div>✓ Golden Arches red &amp; gold app header</div>
-                <div>✓ McDelivery / Pick-Up toggle bar</div>
-                <div>✓ App-exclusive saver combos banner</div>
-                <div>✓ Golden yellow Add buttons &amp; McDelivery bag</div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: "16px",
-                paddingTop: "12px",
-                borderTop: "1px dashed #e2e8f0",
-                fontSize: "12px",
-                fontWeight: 700,
-                color: menuLayout === "mcdonalds" ? "#da291c" : "#94a3b8",
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-              }}
-            >
-              {menuLayout === "mcdonalds" && <Check size={14} />}
-              <span>{menuLayout === "mcdonalds" ? "Active Selected Layout" : "Click to Select"}</span>
-            </div>
-          </div>
-
-
-        </div>
-
-        {/* Bottom Save Reminder */}
-        <div style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end" }}>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isPending}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "12px 28px",
-              borderRadius: "8px",
-              background: isPending ? "#94a3b8" : "#16a34a",
-              color: "#ffffff",
-              fontSize: "14px",
-              fontWeight: 800,
-              border: "none",
-              cursor: isPending ? "not-allowed" : "pointer",
-              boxShadow: "0 2px 10px rgba(22, 163, 74, 0.25)",
-            }}
-          >
-            {isPending ? "Saving..." : "Apply & Save Selected Menu Layout"}
-          </button>
         </div>
       </div>
     </div>

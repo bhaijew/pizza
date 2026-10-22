@@ -172,9 +172,9 @@ const NAV_GROUPS: NavGroup[] = [
         icon: Palette,
       },
       {
-        label: "Menu Layout & Logo",
+        label: "Store Logo & Branding",
         href: "/admin/menu-layout",
-        badge: "NEW",
+        badge: "LOGO",
         badgeColor: "#ec4899",
         icon: LayoutIcon,
       },
