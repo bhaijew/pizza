@@ -7,6 +7,7 @@ import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/adm
 import { ADMIN_COOKIE, verifySessionToken } from "@/lib/admin-auth";
 import { getActiveShopContext } from "@/lib/admin-actions";
 import type { Deal } from "@/types/menu";
+import { dbCache } from "@/lib/db-cache";
 
 async function requireAdmin() {
   const cookieStore = await cookies();
@@ -172,6 +173,7 @@ export async function createDeal(
       console.warn("[Deals] Saved product, deals table note:", error.message);
     }
 
+    dbCache.invalidateTag("deals", "products", "menu");
     revalidatePath("/admin/deals");
     revalidatePath("/admin/products");
     revalidatePath("/");
@@ -273,6 +275,7 @@ export async function updateDeal(
         .eq("id", existingDeal.product_id);
     }
 
+    dbCache.invalidateTag("deals", "products", "menu");
     revalidatePath("/admin/deals");
     revalidatePath("/admin/products");
     revalidatePath("/");
@@ -310,6 +313,7 @@ export async function deleteDeal(id: number | string): Promise<{ error: string |
       await db.from("products").delete().eq("id", existing.product_id);
     }
 
+    dbCache.invalidateTag("deals", "products", "menu");
     revalidatePath("/admin/deals");
     revalidatePath("/admin/products");
     revalidatePath("/");
@@ -346,6 +350,7 @@ export async function toggleDealAvailability(id: number | string, isAvailable: b
       await db.from("products").update({ is_available: isAvailable }).eq("id", existing.product_id);
     }
 
+    dbCache.invalidateTag("deals", "products", "menu");
     revalidatePath("/admin/deals");
     revalidatePath("/admin/products");
     return { error: null };

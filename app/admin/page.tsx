@@ -1116,6 +1116,24 @@ export default async function AdminDashboardPage() {
               >
                 <span style={{ color: "#065f46", display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
                   <CheckCircle2 size={16} className="text-emerald-600" />
+                  Database RAM Cache:
+                </span>
+                <span style={{ fontWeight: 800, color: "#047857" }}>Active • Sub-1ms RAM</span>
+              </div>
+              
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  background: "rgba(255, 255, 255, 0.7)",
+                  border: "1px solid rgba(187, 247, 208, 0.6)",
+                }}
+              >
+                <span style={{ color: "#065f46", display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+                  <CheckCircle2 size={16} className="text-emerald-600" />
                   Customer Live Tracker:
                 </span>
                 <span style={{ fontWeight: 800, color: "#047857" }}>Active &amp; Streaming</span>

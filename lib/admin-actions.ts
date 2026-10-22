@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
+import { dbCache } from "@/lib/db-cache";
 import {
   ADMIN_COOKIE,
   ADMIN_SHOP_COOKIE,
@@ -424,6 +425,7 @@ export async function createCategory(
 
   if (error) return { error: error.message, success: false };
 
+  dbCache.invalidateTag("categories", "menu");
   revalidatePath("/admin/categories");
   revalidatePath("/admin/products");
   revalidatePath("/admin/products/new");
@@ -496,6 +498,7 @@ export async function updateCategory(
 
   if (error) return { error: error.message, success: false };
 
+  dbCache.invalidateTag("categories", "menu");
   revalidatePath("/admin/categories");
   revalidatePath("/admin/products");
   revalidatePath("/admin/products/new");
@@ -523,6 +526,7 @@ export async function deleteCategory(id: number): Promise<{ error: string | null
   const { error } = await query;
   if (error) return { error: error.message };
 
+  dbCache.invalidateTag("categories", "menu");
   revalidatePath("/admin/categories");
   revalidatePath("/admin/products");
   revalidatePath("/");
@@ -620,6 +624,7 @@ export async function createProduct(
 
   if (error) return { error: error.message, success: false };
 
+  dbCache.invalidateTag("products", "deals", "menu");
   revalidatePath("/admin/products");
   revalidatePath("/admin/inventory");
   revalidatePath("/");
@@ -709,6 +714,7 @@ export async function updateProduct(
 
   if (error) return { error: error.message, success: false };
 
+  dbCache.invalidateTag("products", "deals", "menu");
   revalidatePath("/admin/products");
   revalidatePath("/admin/inventory");
   revalidatePath("/");
@@ -732,6 +738,7 @@ export async function deleteProduct(id: number): Promise<{ error: string | null 
   const { error } = await query;
   if (error) return { error: error.message };
 
+  dbCache.invalidateTag("products", "deals", "menu");
   revalidatePath("/admin/products");
   revalidatePath("/");
   return { error: null };
@@ -934,6 +941,7 @@ export async function updateSettings(
     if (error) return { error: error.message, success: false };
   }
 
+  dbCache.invalidateTag("settings", "shops");
   revalidatePath("/admin/settings");
   revalidatePath("/admin/menu-ui");
   revalidatePath("/");
@@ -1010,6 +1018,7 @@ export async function updateMenuUiSettings(input: {
       }
     }
 
+    dbCache.invalidateTag("settings", "shops");
     revalidatePath("/admin/menu-ui");
     revalidatePath("/admin/settings");
     revalidatePath("/");
@@ -1489,6 +1498,7 @@ export async function updateProductInventory(
     return { error: error.message, success: false };
   }
 
+  dbCache.invalidateTag("products", "deals", "menu");
   revalidatePath("/admin/inventory");
   revalidatePath("/admin/products");
   revalidatePath("/");
@@ -1534,6 +1544,7 @@ export async function quickRestockProduct(
   const { error } = await query;
   if (error) return { error: error.message, success: false };
 
+  dbCache.invalidateTag("products", "deals", "menu");
   revalidatePath("/admin/inventory");
   revalidatePath("/admin/products");
   revalidatePath("/");
@@ -1581,6 +1592,7 @@ export async function createRestaurantTable(
     return { error: error.message, success: false };
   }
 
+  dbCache.invalidateTag("tables");
   revalidatePath("/admin/tables");
   revalidatePath("/table");
   return { error: null, success: true };
@@ -1603,6 +1615,7 @@ export async function deleteRestaurantTable(id: string | number): Promise<{ erro
   const { error } = await query;
   if (error) return { error: error.message };
 
+  dbCache.invalidateTag("tables");
   revalidatePath("/admin/tables");
   revalidatePath("/table");
   return { error: null };
@@ -1628,6 +1641,7 @@ export async function updateRestaurantTableStatus(
   const { error } = await query;
   if (error) return { error: error.message };
 
+  dbCache.invalidateTag("tables");
   revalidatePath("/admin/tables");
   revalidatePath("/table");
   return { error: null };

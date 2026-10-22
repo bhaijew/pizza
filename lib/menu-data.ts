@@ -9,6 +9,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import type { Category, Product, RestaurantTable } from "@/types/menu";
+import { dbCache } from "@/lib/db-cache";
 
 // ─── Helper ───────────────────────────────────────────────────────
 async function getSupabase() {
@@ -22,37 +23,42 @@ export async function fetchCategories(shopId?: number | null): Promise<{
   error: string | null;
   tableMissing: boolean;
 }> {
-  const supabase = await getSupabase();
-
-  let query = supabase
-    .from("categories")
-    .select("*")
-    .order("sort_order", { ascending: true });
-
-  if (shopId !== undefined) {
-    if (shopId !== null) {
-      query = query.eq("shop_id", shopId);
-    } else {
-      query = query.is("shop_id", null);
-    }
-  } else {
+  let resolvedShopId = shopId;
+  if (resolvedShopId === undefined) {
     const cookieStore = await cookies();
     const branchShopId = cookieStore.get("pizza_admin_shop_id")?.value;
-    if (branchShopId) {
-      query = query.eq("shop_id", parseInt(branchShopId, 10));
-    } else {
-      query = query.is("shop_id", null);
-    }
+    resolvedShopId = branchShopId ? parseInt(branchShopId, 10) : null;
   }
 
-  const { data, error } = await query;
+  const cacheKey = `categories:${resolvedShopId ?? "all"}`;
 
-  if (error) {
-    const tableMissing = error.message.includes("schema cache") || error.code === "PGRST205";
-    return { data: null, error: error.message, tableMissing };
-  }
+  return dbCache.wrap(
+    cacheKey,
+    async () => {
+      const supabase = await getSupabase();
 
-  return { data: data as Category[], error: null, tableMissing: false };
+      let query = supabase
+        .from("categories")
+        .select("*")
+        .order("sort_order", { ascending: true });
+
+      if (resolvedShopId !== null) {
+        query = query.eq("shop_id", resolvedShopId);
+      } else {
+        query = query.is("shop_id", null);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        const tableMissing = error.message.includes("schema cache") || error.code === "PGRST205";
+        return { data: null, error: error.message, tableMissing };
+      }
+
+      return { data: data as Category[], error: null, tableMissing: false };
+    },
+    { ttlSeconds: 120, tags: ["categories", "menu"] }
+  );
 }
 
 // ─── Products ─────────────────────────────────────────────────────
@@ -64,97 +70,106 @@ export async function fetchProducts(
   error: string | null;
   tableMissing: boolean;
 }> {
-  const supabase = await getSupabase();
-
-  let query = supabase
-    .from("products")
-    .select("*, category:categories(id, name, slug)")
-    .order("sort_order", { ascending: true });
-
-  if (categoryId != null) {
-    query = query.eq("category_id", categoryId);
-  }
-
-  if (shopId !== undefined) {
-    if (shopId !== null) {
-      query = query.eq("shop_id", shopId);
-    } else {
-      query = query.is("shop_id", null);
-    }
-  } else {
+  let resolvedShopId = shopId;
+  if (resolvedShopId === undefined) {
     const cookieStore = await cookies();
     const branchShopId = cookieStore.get("pizza_admin_shop_id")?.value;
-    if (branchShopId) {
-      query = query.eq("shop_id", parseInt(branchShopId, 10));
-    }
+    resolvedShopId = branchShopId ? parseInt(branchShopId, 10) : undefined;
   }
 
-  const { data, error } = await query;
+  const cacheKey = `products:${categoryId ?? "all"}:${resolvedShopId ?? "any"}`;
 
-  if (error) {
-    const tableMissing = error.message.includes("schema cache") || error.code === "PGRST205";
-    return { data: null, error: error.message, tableMissing };
-  }
+  return dbCache.wrap(
+    cacheKey,
+    async () => {
+      const supabase = await getSupabase();
 
-  const productsList = ((data || []) as Product[]).map((p) => ({ ...p }));
+      let query = supabase
+        .from("products")
+        .select("*, category:categories(id, name, slug)")
+        .order("sort_order", { ascending: true });
 
-  // Enrich products with deal data (items_included, original_price, badge)
-  try {
-    let dealQuery = supabase
-      .from("deals")
-      .select("id, product_id, title, slug, items_included, badge, deal_price, original_price, description")
-      .eq("is_active", true);
-
-    if (shopId !== undefined) {
-      if (shopId !== null) {
-        dealQuery = dealQuery.eq("shop_id", shopId);
-      } else {
-        dealQuery = dealQuery.is("shop_id", null);
-      }
-    }
-
-    const { data: dealsData } = await dealQuery;
-
-    if (dealsData && dealsData.length > 0) {
-      const dealByProdId = new Map<string, any>();
-      const dealByTitle = new Map<string, any>();
-      const dealBySlug = new Map<string, any>();
-
-      for (const d of dealsData) {
-        if (d.product_id != null) dealByProdId.set(String(d.product_id), d);
-        if (d.title) dealByTitle.set(d.title.trim().toLowerCase(), d);
-        if (d.slug) dealBySlug.set(d.slug.trim().toLowerCase(), d);
+      if (categoryId != null) {
+        query = query.eq("category_id", categoryId);
       }
 
-      for (const p of productsList) {
-        const matchedDeal =
-          dealByProdId.get(String(p.id)) ||
-          dealByTitle.get(p.name?.trim().toLowerCase()) ||
-          (p.slug ? dealBySlug.get(p.slug.trim().toLowerCase()) : null);
-
-        if (matchedDeal) {
-          let items = matchedDeal.items_included;
-          if (typeof items === "string") {
-            try {
-              items = JSON.parse(items);
-            } catch {
-              items = items.split(",").map((s: string) => s.trim()).filter(Boolean);
-            }
-          }
-          if (Array.isArray(items) && items.length > 0) {
-            p.items_included = items;
-          }
-          if (matchedDeal.badge) p.badge = matchedDeal.badge;
-          if (matchedDeal.original_price != null) p.original_price = matchedDeal.original_price;
-          p.is_deal = true;
+      if (resolvedShopId !== undefined) {
+        if (resolvedShopId !== null) {
+          query = query.eq("shop_id", resolvedShopId);
+        } else {
+          query = query.is("shop_id", null);
         }
       }
-    }
-  } catch (dealErr) {
-    console.warn("[fetchProducts] Deals enrichment skipped:", dealErr);
-  }
 
-  return { data: productsList, error: null, tableMissing: false };
+      const { data, error } = await query;
+
+      if (error) {
+        const tableMissing = error.message.includes("schema cache") || error.code === "PGRST205";
+        return { data: null, error: error.message, tableMissing };
+      }
+
+      const productsList = ((data || []) as Product[]).map((p) => ({ ...p }));
+
+      // Enrich products with deal data (items_included, original_price, badge)
+      try {
+        let dealQuery = supabase
+          .from("deals")
+          .select("id, product_id, title, slug, items_included, badge, deal_price, original_price, description")
+          .eq("is_active", true);
+
+        if (resolvedShopId !== undefined) {
+          if (resolvedShopId !== null) {
+            dealQuery = dealQuery.eq("shop_id", resolvedShopId);
+          } else {
+            dealQuery = dealQuery.is("shop_id", null);
+          }
+        }
+
+        const { data: dealsData } = await dealQuery;
+
+        if (dealsData && dealsData.length > 0) {
+          const dealByProdId = new Map<string, any>();
+          const dealByTitle = new Map<string, any>();
+          const dealBySlug = new Map<string, any>();
+
+          for (const d of dealsData) {
+            if (d.product_id != null) dealByProdId.set(String(d.product_id), d);
+            if (d.title) dealByTitle.set(d.title.trim().toLowerCase(), d);
+            if (d.slug) dealBySlug.set(d.slug.trim().toLowerCase(), d);
+          }
+
+          for (const p of productsList) {
+            const matchedDeal =
+              dealByProdId.get(String(p.id)) ||
+              dealByTitle.get(p.name?.trim().toLowerCase()) ||
+              (p.slug ? dealBySlug.get(p.slug.trim().toLowerCase()) : null);
+
+            if (matchedDeal) {
+              let items = matchedDeal.items_included;
+              if (typeof items === "string") {
+                try {
+                  items = JSON.parse(items);
+                } catch {
+                  items = items.split(",").map((s: string) => s.trim()).filter(Boolean);
+                }
+              }
+              if (Array.isArray(items) && items.length > 0) {
+                p.items_included = items;
+              }
+              if (matchedDeal.badge) p.badge = matchedDeal.badge;
+              if (matchedDeal.original_price != null) p.original_price = matchedDeal.original_price;
+              p.is_deal = true;
+            }
+          }
+        }
+      } catch (dealErr) {
+        console.warn("[fetchProducts] Deals enrichment skipped:", dealErr);
+      }
+
+      return { data: productsList, error: null, tableMissing: false };
+    },
+    { ttlSeconds: 90, tags: ["products", "deals", "menu"] }
+  );
 }
 
 // ─── Shop Settings & Mobile Promo Slider ──────────────────────────
@@ -239,39 +254,45 @@ const DEFAULT_SETTINGS: ShopSettings = {
 };
 
 export async function fetchShopBySlugOrId(identifier: string | number): Promise<any | null> {
-  try {
-    const supabase = await getSupabase();
-    const isNumeric = typeof identifier === "number" || /^\d+$/.test(String(identifier));
-    
-    let query = supabase.from("shops").select("*");
-    if (isNumeric) {
-      query = query.eq("id", Number(identifier));
-    } else {
-      query = query.eq("slug", String(identifier));
-    }
+  const cacheKey = `shop:${String(identifier).trim().toLowerCase()}`;
+  return dbCache.wrap(
+    cacheKey,
+    async () => {
+      try {
+        const supabase = await getSupabase();
+        const isNumeric = typeof identifier === "number" || /^\d+$/.test(String(identifier));
+        
+        let query = supabase.from("shops").select("*");
+        if (isNumeric) {
+          query = query.eq("id", Number(identifier));
+        } else {
+          query = query.eq("slug", String(identifier));
+        }
 
-    const { data } = await query.maybeSingle();
-    if (data) return data;
+        const { data } = await query.maybeSingle();
+        if (data) return data;
 
-    if (!isNumeric) {
-      const cleanId = String(identifier).trim();
-      const { data: prefixMatch } = await supabase
-        .from("shops")
-        .select("*")
-        .or(`slug.ilike.${cleanId}%,name.ilike.${cleanId}%`)
-        .limit(1)
-        .maybeSingle();
-      return prefixMatch || null;
-    }
+        if (!isNumeric) {
+          const cleanId = String(identifier).trim();
+          const { data: prefixMatch } = await supabase
+            .from("shops")
+            .select("*")
+            .or(`slug.ilike.${cleanId}%,name.ilike.${cleanId}%`)
+            .limit(1)
+            .maybeSingle();
+          return prefixMatch || null;
+        }
 
-    return null;
-  } catch {
-    return null;
-  }
+        return null;
+      } catch {
+        return null;
+      }
+    },
+    { ttlSeconds: 300, tags: ["shops", "settings"] }
+  );
 }
 
 export async function fetchSettings(shopId?: number | null): Promise<ShopSettings> {
-  const supabase = await getSupabase();
   const cookieStore = await cookies();
   const targetShopId =
     shopId !== undefined
@@ -280,174 +301,193 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
       ? parseInt(cookieStore.get("pizza_admin_shop_id")!.value, 10)
       : null;
 
-  if (targetShopId) {
-    try {
-      const { data: branchData } = await supabase
-        .from("shops")
-        .select("id, name, currency_symbol, status, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url")
-        .eq("id", targetShopId)
-        .maybeSingle();
+  const cacheKey = `settings:${targetShopId ?? "main"}`;
 
-      if (branchData) {
-        let parsedSlides = (branchData as any).slider_images;
-        if (typeof parsedSlides === "string") {
-          try {
-            parsedSlides = JSON.parse(parsedSlides);
-          } catch {
-            parsedSlides = DEFAULT_PROMO_SLIDES;
+  return dbCache.wrap(
+    cacheKey,
+    async () => {
+      const supabase = await getSupabase();
+
+      if (targetShopId) {
+        try {
+          const { data: branchData } = await supabase
+            .from("shops")
+            .select("id, name, currency_symbol, status, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url")
+            .eq("id", targetShopId)
+            .maybeSingle();
+
+          if (branchData) {
+            let parsedSlides = (branchData as any).slider_images;
+            if (typeof parsedSlides === "string") {
+              try {
+                parsedSlides = JSON.parse(parsedSlides);
+              } catch {
+                parsedSlides = DEFAULT_PROMO_SLIDES;
+              }
+            }
+            return {
+              ...DEFAULT_SETTINGS,
+              shop_name: branchData.name,
+              menu_title: `${branchData.name} Menu`,
+              meta_title: `${branchData.name} — Order Online`,
+              meta_description: `Order fresh from ${branchData.name}.`,
+              currency_symbol: branchData.currency_symbol || "Rs.",
+              shop_id: branchData.id,
+              whatsapp_session_id: (branchData as any).whatsapp_session_id || null,
+              whatsapp_api_key: (branchData as any).whatsapp_api_key || null,
+              opening_time: (branchData as any).opening_time || "11:00",
+              closing_time: (branchData as any).closing_time || "01:00",
+              theme_color: (branchData as any).theme_color || "#ea580c",
+              slider_enabled: (branchData as any).slider_enabled !== false,
+              slider_height_mobile: Number((branchData as any).slider_height_mobile) || 180,
+              slider_images: Array.isArray(parsedSlides) && parsedSlides.length > 0 ? parsedSlides : DEFAULT_PROMO_SLIDES,
+              hero_badge_text: (branchData as any).hero_badge_text ?? DEFAULT_SETTINGS.hero_badge_text,
+              hero_title: (branchData as any).hero_title ?? DEFAULT_SETTINGS.hero_title,
+              hero_title_highlight: (branchData as any).hero_title_highlight ?? DEFAULT_SETTINGS.hero_title_highlight,
+              hero_subtitle: (branchData as any).hero_subtitle ?? DEFAULT_SETTINGS.hero_subtitle,
+              hero_btn_primary_text: (branchData as any).hero_btn_primary_text ?? DEFAULT_SETTINGS.hero_btn_primary_text,
+              hero_btn_primary_link: (branchData as any).hero_btn_primary_link || DEFAULT_SETTINGS.hero_btn_primary_link,
+              hero_btn_secondary_text: (branchData as any).hero_btn_secondary_text ?? DEFAULT_SETTINGS.hero_btn_secondary_text,
+              hero_btn_secondary_link: (branchData as any).hero_btn_secondary_link || DEFAULT_SETTINGS.hero_btn_secondary_link,
+              hero_chip1_text: (branchData as any).hero_chip1_text ?? DEFAULT_SETTINGS.hero_chip1_text,
+              hero_chip2_text: (branchData as any).hero_chip2_text ?? DEFAULT_SETTINGS.hero_chip2_text,
+              hero_chip3_text: (branchData as any).hero_chip3_text ?? DEFAULT_SETTINGS.hero_chip3_text,
+              hero_show_chips: (branchData as any).hero_show_chips !== undefined ? (branchData as any).hero_show_chips : DEFAULT_SETTINGS.hero_show_chips,
+              hero_bg_type: (branchData as any).hero_bg_type || DEFAULT_SETTINGS.hero_bg_type,
+              hero_bg_color: (branchData as any).hero_bg_color || "",
+              hero_bg_gradient: (branchData as any).hero_bg_gradient || "",
+              hero_bg_image: (branchData as any).hero_bg_image || "",
+              hero_show_pattern: (branchData as any).hero_show_pattern !== undefined ? (branchData as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
+              google_review_url: (branchData as any).google_review_url || "",
+            };
           }
+        } catch {
+          // Continue to default
         }
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("shop_settings")
+          .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url")
+          .eq("id", "main")
+          .single();
+
+        if (!error && data) {
+          let parsedSlides = (data as any).slider_images;
+          if (typeof parsedSlides === "string") {
+            try {
+              parsedSlides = JSON.parse(parsedSlides);
+            } catch {
+              parsedSlides = DEFAULT_PROMO_SLIDES;
+            }
+          }
+          return {
+            ...DEFAULT_SETTINGS,
+            ...data,
+            currency_symbol: data.currency_symbol || "$",
+            shop_id: null,
+            opening_time: (data as any).opening_time || "11:00",
+            closing_time: (data as any).closing_time || "01:00",
+            theme_color: (data as any).theme_color || "#ea580c",
+            slider_enabled: (data as any).slider_enabled !== false,
+            slider_height_mobile: Number((data as any).slider_height_mobile) || 180,
+            slider_images: Array.isArray(parsedSlides) && parsedSlides.length > 0 ? parsedSlides : DEFAULT_PROMO_SLIDES,
+            hero_badge_text: (data as any).hero_badge_text ?? DEFAULT_SETTINGS.hero_badge_text,
+            hero_title: (data as any).hero_title ?? DEFAULT_SETTINGS.hero_title,
+            hero_title_highlight: (data as any).hero_title_highlight ?? DEFAULT_SETTINGS.hero_title_highlight,
+            hero_subtitle: (data as any).hero_subtitle ?? DEFAULT_SETTINGS.hero_subtitle,
+            hero_btn_primary_text: (data as any).hero_btn_primary_text ?? DEFAULT_SETTINGS.hero_btn_primary_text,
+            hero_btn_primary_link: (data as any).hero_btn_primary_link || DEFAULT_SETTINGS.hero_btn_primary_link,
+            hero_btn_secondary_text: (data as any).hero_btn_secondary_text ?? DEFAULT_SETTINGS.hero_btn_secondary_text,
+            hero_btn_secondary_link: (data as any).hero_btn_secondary_link || DEFAULT_SETTINGS.hero_btn_secondary_link,
+            hero_chip1_text: (data as any).hero_chip1_text ?? DEFAULT_SETTINGS.hero_chip1_text,
+            hero_chip2_text: (data as any).hero_chip2_text ?? DEFAULT_SETTINGS.hero_chip2_text,
+            hero_chip3_text: (data as any).hero_chip3_text ?? DEFAULT_SETTINGS.hero_chip3_text,
+            hero_show_chips: (data as any).hero_show_chips !== undefined ? (data as any).hero_show_chips : DEFAULT_SETTINGS.hero_show_chips,
+            hero_bg_type: (data as any).hero_bg_type || DEFAULT_SETTINGS.hero_bg_type,
+            hero_bg_color: (data as any).hero_bg_color || "",
+            hero_bg_gradient: (data as any).hero_bg_gradient || "",
+            hero_bg_image: (data as any).hero_bg_image || "",
+            hero_show_pattern: (data as any).hero_show_pattern !== undefined ? (data as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
+            google_review_url: (data as any).google_review_url || "",
+          } as ShopSettings;
+        }
+      } catch {
+        // Fallback if columns not migrated yet
+      }
+
+      const { data: fallbackData } = await supabase
+        .from("shop_settings")
+        .select("shop_name, menu_title, meta_title, meta_description, currency_symbol")
+        .eq("id", "main")
+        .single();
+
+      if (fallbackData) {
         return {
           ...DEFAULT_SETTINGS,
-          shop_name: branchData.name,
-          menu_title: `${branchData.name} Menu`,
-          meta_title: `${branchData.name} — Order Online`,
-          meta_description: `Order fresh from ${branchData.name}.`,
-          currency_symbol: branchData.currency_symbol || "Rs.",
-          shop_id: branchData.id,
-          whatsapp_session_id: (branchData as any).whatsapp_session_id || null,
-          whatsapp_api_key: (branchData as any).whatsapp_api_key || null,
-          opening_time: (branchData as any).opening_time || "11:00",
-          closing_time: (branchData as any).closing_time || "01:00",
-          theme_color: (branchData as any).theme_color || "#ea580c",
-          slider_enabled: (branchData as any).slider_enabled !== false,
-          slider_height_mobile: Number((branchData as any).slider_height_mobile) || 180,
-          slider_images: Array.isArray(parsedSlides) && parsedSlides.length > 0 ? parsedSlides : DEFAULT_PROMO_SLIDES,
-          hero_badge_text: (branchData as any).hero_badge_text ?? DEFAULT_SETTINGS.hero_badge_text,
-          hero_title: (branchData as any).hero_title ?? DEFAULT_SETTINGS.hero_title,
-          hero_title_highlight: (branchData as any).hero_title_highlight ?? DEFAULT_SETTINGS.hero_title_highlight,
-          hero_subtitle: (branchData as any).hero_subtitle ?? DEFAULT_SETTINGS.hero_subtitle,
-          hero_btn_primary_text: (branchData as any).hero_btn_primary_text ?? DEFAULT_SETTINGS.hero_btn_primary_text,
-          hero_btn_primary_link: (branchData as any).hero_btn_primary_link || DEFAULT_SETTINGS.hero_btn_primary_link,
-          hero_btn_secondary_text: (branchData as any).hero_btn_secondary_text ?? DEFAULT_SETTINGS.hero_btn_secondary_text,
-          hero_btn_secondary_link: (branchData as any).hero_btn_secondary_link || DEFAULT_SETTINGS.hero_btn_secondary_link,
-          hero_chip1_text: (branchData as any).hero_chip1_text ?? DEFAULT_SETTINGS.hero_chip1_text,
-          hero_chip2_text: (branchData as any).hero_chip2_text ?? DEFAULT_SETTINGS.hero_chip2_text,
-          hero_chip3_text: (branchData as any).hero_chip3_text ?? DEFAULT_SETTINGS.hero_chip3_text,
-          hero_show_chips: (branchData as any).hero_show_chips !== undefined ? (branchData as any).hero_show_chips : DEFAULT_SETTINGS.hero_show_chips,
-          hero_bg_type: (branchData as any).hero_bg_type || DEFAULT_SETTINGS.hero_bg_type,
-          hero_bg_color: (branchData as any).hero_bg_color || "",
-          hero_bg_gradient: (branchData as any).hero_bg_gradient || "",
-          hero_bg_image: (branchData as any).hero_bg_image || "",
-          hero_show_pattern: (branchData as any).hero_show_pattern !== undefined ? (branchData as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
-          google_review_url: (branchData as any).google_review_url || "",
-        };
+          ...fallbackData,
+          currency_symbol: fallbackData.currency_symbol || "$",
+          shop_id: null,
+          whatsapp_session_id: null,
+          whatsapp_api_key: null,
+          opening_time: "11:00",
+          closing_time: "01:00",
+          theme_color: "#ea580c",
+          slider_enabled: true,
+          slider_height_mobile: 180,
+          slider_images: DEFAULT_PROMO_SLIDES,
+        } as ShopSettings;
       }
-    } catch {
-      // Continue to default
-    }
-  }
 
-  try {
-    const { data, error } = await supabase
-      .from("shop_settings")
-      .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url")
-      .eq("id", "main")
-      .single();
-
-    if (!error && data) {
-      let parsedSlides = (data as any).slider_images;
-      if (typeof parsedSlides === "string") {
-        try {
-          parsedSlides = JSON.parse(parsedSlides);
-        } catch {
-          parsedSlides = DEFAULT_PROMO_SLIDES;
-        }
-      }
-      return {
-        ...DEFAULT_SETTINGS,
-        ...data,
-        currency_symbol: data.currency_symbol || "$",
-        shop_id: null,
-        opening_time: (data as any).opening_time || "11:00",
-        closing_time: (data as any).closing_time || "01:00",
-        theme_color: (data as any).theme_color || "#ea580c",
-        slider_enabled: (data as any).slider_enabled !== false,
-        slider_height_mobile: Number((data as any).slider_height_mobile) || 180,
-        slider_images: Array.isArray(parsedSlides) && parsedSlides.length > 0 ? parsedSlides : DEFAULT_PROMO_SLIDES,
-        hero_badge_text: (data as any).hero_badge_text ?? DEFAULT_SETTINGS.hero_badge_text,
-        hero_title: (data as any).hero_title ?? DEFAULT_SETTINGS.hero_title,
-        hero_title_highlight: (data as any).hero_title_highlight ?? DEFAULT_SETTINGS.hero_title_highlight,
-        hero_subtitle: (data as any).hero_subtitle ?? DEFAULT_SETTINGS.hero_subtitle,
-        hero_btn_primary_text: (data as any).hero_btn_primary_text ?? DEFAULT_SETTINGS.hero_btn_primary_text,
-        hero_btn_primary_link: (data as any).hero_btn_primary_link || DEFAULT_SETTINGS.hero_btn_primary_link,
-        hero_btn_secondary_text: (data as any).hero_btn_secondary_text ?? DEFAULT_SETTINGS.hero_btn_secondary_text,
-        hero_btn_secondary_link: (data as any).hero_btn_secondary_link || DEFAULT_SETTINGS.hero_btn_secondary_link,
-        hero_chip1_text: (data as any).hero_chip1_text ?? DEFAULT_SETTINGS.hero_chip1_text,
-        hero_chip2_text: (data as any).hero_chip2_text ?? DEFAULT_SETTINGS.hero_chip2_text,
-        hero_chip3_text: (data as any).hero_chip3_text ?? DEFAULT_SETTINGS.hero_chip3_text,
-        hero_show_chips: (data as any).hero_show_chips !== undefined ? (data as any).hero_show_chips : DEFAULT_SETTINGS.hero_show_chips,
-        hero_bg_type: (data as any).hero_bg_type || DEFAULT_SETTINGS.hero_bg_type,
-        hero_bg_color: (data as any).hero_bg_color || "",
-        hero_bg_gradient: (data as any).hero_bg_gradient || "",
-        hero_bg_image: (data as any).hero_bg_image || "",
-        hero_show_pattern: (data as any).hero_show_pattern !== undefined ? (data as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
-        google_review_url: (data as any).google_review_url || "",
-      } as ShopSettings;
-    }
-  } catch {
-    // Fallback if columns not migrated yet
-  }
-
-  const { data: fallbackData } = await supabase
-    .from("shop_settings")
-    .select("shop_name, menu_title, meta_title, meta_description, currency_symbol")
-    .eq("id", "main")
-    .single();
-
-  if (fallbackData) {
-    return {
-      ...DEFAULT_SETTINGS,
-      ...fallbackData,
-      currency_symbol: fallbackData.currency_symbol || "$",
-      shop_id: null,
-      whatsapp_session_id: null,
-      whatsapp_api_key: null,
-      opening_time: "11:00",
-      closing_time: "01:00",
-      theme_color: "#ea580c",
-      slider_enabled: true,
-      slider_height_mobile: 180,
-      slider_images: DEFAULT_PROMO_SLIDES,
-    } as ShopSettings;
-  }
-
-  return DEFAULT_SETTINGS;
+      return DEFAULT_SETTINGS;
+    },
+    { ttlSeconds: 180, tags: ["settings"] }
+  );
 }
 
 // ─── Restaurant Tables ────────────────────────────────────────────
 export async function fetchRestaurantTables(shopId?: number | null): Promise<RestaurantTable[]> {
-  try {
-    const supabase = await getSupabase();
-    let query = supabase
-      .from("restaurant_tables")
-      .select("*")
-      .order("created_at", { ascending: true });
-
-    if (shopId !== undefined) {
-      if (shopId !== null) {
-        query = query.eq("shop_id", shopId);
-      } else {
-        query = query.is("shop_id", null);
-      }
-    } else {
-      const cookieStore = await cookies();
-      const branchShopId = cookieStore.get("pizza_admin_shop_id")?.value;
-      if (branchShopId) {
-        query = query.eq("shop_id", parseInt(branchShopId, 10));
-      }
-    }
-
-    const { data, error } = await query;
-
-    if (error || !data) {
-      return [];
-    }
-
-    return data as RestaurantTable[];
-  } catch {
-    return [];
+  let resolvedShopId = shopId;
+  if (resolvedShopId === undefined) {
+    const cookieStore = await cookies();
+    const branchShopId = cookieStore.get("pizza_admin_shop_id")?.value;
+    resolvedShopId = branchShopId ? parseInt(branchShopId, 10) : undefined;
   }
+
+  const cacheKey = `restaurant_tables:${resolvedShopId ?? "all"}`;
+
+  return dbCache.wrap(
+    cacheKey,
+    async () => {
+      try {
+        const supabase = await getSupabase();
+        let query = supabase
+          .from("restaurant_tables")
+          .select("*")
+          .order("created_at", { ascending: true });
+
+        if (resolvedShopId !== undefined) {
+          if (resolvedShopId !== null) {
+            query = query.eq("shop_id", resolvedShopId);
+          } else {
+            query = query.is("shop_id", null);
+          }
+        }
+
+        const { data, error } = await query;
+
+        if (error || !data) {
+          return [];
+        }
+
+        return data as RestaurantTable[];
+      } catch {
+        return [];
+      }
+    },
+    { ttlSeconds: 60, tags: ["tables"] }
+  );
 }
 
 // ─── Table Scan Verification (Anti-Fake Order Protection) ────────
