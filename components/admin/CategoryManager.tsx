@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { Category } from "@/types/menu";
 import { createCategory, updateCategory, deleteCategory } from "@/lib/admin-actions";
 import {
@@ -36,6 +37,26 @@ export default function CategoryManager({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock background scroll and support Escape key when modal is open
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsModalOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = orig;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [isModalOpen]);
 
   // Form states
   const [formName, setFormName] = useState("");
@@ -367,19 +388,19 @@ export default function CategoryManager({
         </div>
       )}
 
-      {/* ─── ADD / EDIT CATEGORY MODAL ───────────────────────── */}
-      {isModalOpen && (
+      {/* ─── ADD / EDIT CATEGORY MODAL (PORTAL) ───────────────── */}
+      {mounted && isModalOpen && typeof document !== "undefined" && createPortal(
         <div
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(15, 23, 42, 0.6)",
+            background: "rgba(15, 23, 42, 0.72)",
             backdropFilter: "blur(6px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "24px 16px",
-            zIndex: 9999,
+            padding: "16px",
+            zIndex: 99999,
             overflowY: "auto",
           }}
           onClick={(e) => {
@@ -391,26 +412,39 @@ export default function CategoryManager({
               background: "#ffffff",
               border: "1px solid #e2e8f0",
               borderRadius: "16px",
-              padding: "24px 26px",
               width: "100%",
-              maxWidth: "500px",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              maxHeight: "calc(100vh - 48px)",
-              overflowY: "auto",
+              maxWidth: "540px",
+              maxHeight: "min(92vh, 680px)",
+              boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.35)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
               position: "relative",
               margin: "auto",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px", borderBottom: "1px solid #f1f5f9", paddingBottom: "12px" }}>
+            {/* Modal Header (Fixed at top) */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "18px 24px",
+                borderBottom: "1px solid #f1f5f9",
+                background: "#ffffff",
+                flexShrink: 0,
+              }}
+            >
               <div>
                 <h3 style={{ fontSize: "17px", fontWeight: 800, margin: "0 0 3px", color: "#0f172a" }}>
                   {editingCategory ? "Edit Category" : "Create New Category"}
                 </h3>
                 <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
-                  Organize your menu items into structured food categories.
+                  Organize your pizzas, drinks, sides, and desserts into menu categories.
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
                 style={{
                   background: "#f1f5f9",
@@ -420,120 +454,69 @@ export default function CategoryManager({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  width: 30,
-                  height: 30,
+                  width: 32,
+                  height: 32,
                   borderRadius: "50%",
-                  transition: "background 0.2s",
+                  transition: "all 0.15s ease",
                 }}
-                className="hover:bg-slate-200"
+                className="hover:bg-slate-200 hover:text-slate-900"
                 aria-label="Close modal"
               >
                 <X size={16} />
               </button>
             </div>
 
-            {errorMessage && (
+            {/* Modal Form */}
+            <form
+              onSubmit={handleSave}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                flex: "1 1 auto",
+                minHeight: 0,
+                overflow: "hidden",
+              }}
+            >
+              {/* Scrollable Form Body */}
               <div
                 style={{
-                  padding: "10px 14px",
-                  borderRadius: "5px",
-                  background: "#fef2f2",
-                  border: "1px solid #fecaca",
-                  color: "#b91c1c",
-                  fontSize: "13px",
-                  marginBottom: "14px",
+                  padding: "20px 24px",
+                  overflowY: "auto",
+                  flex: "1 1 auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
                 }}
               >
-                {errorMessage}
-              </div>
-            )}
+                {errorMessage && (
+                  <div
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: "6px",
+                      background: "#fef2f2",
+                      border: "1px solid #fecaca",
+                      color: "#b91c1c",
+                      fontSize: "13px",
+                    }}
+                  >
+                    {errorMessage}
+                  </div>
+                )}
 
-            <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "5px" }}>
-                  Category Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formName}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="e.g. Gourmet Pizzas"
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: "5px",
-                    border: "1px solid #cbd5e1",
-                    background: "#ffffff",
-                    color: "#0f172a",
-                    fontSize: "13px",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "5px" }}>
-                  URL Slug *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formSlug}
-                  onChange={(e) => setFormSlug(e.target.value)}
-                  placeholder="e.g. gourmet-pizzas"
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: "5px",
-                    border: "1px solid #cbd5e1",
-                    background: "#ffffff",
-                    color: "#0f172a",
-                    fontSize: "13px",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "5px" }}>
-                  Description (Optional)
-                </label>
-                <textarea
-                  rows={2}
-                  value={formDesc}
-                  onChange={(e) => setFormDesc(e.target.value)}
-                  placeholder="Short explanation shown on menu..."
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: "5px",
-                    border: "1px solid #cbd5e1",
-                    background: "#ffffff",
-                    color: "#0f172a",
-                    fontSize: "13px",
-                    outline: "none",
-                    boxSizing: "border-box",
-                    resize: "none",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "5px" }}>
-                    Sort Order
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                    Category Name *
                   </label>
                   <input
-                    type="number"
-                    value={formSortOrder}
-                    onChange={(e) => setFormSortOrder(parseInt(e.target.value) || 0)}
+                    type="text"
+                    required
+                    value={formName}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    placeholder="e.g. Gourmet Pizzas, Appetizers, Beverages"
                     style={{
                       width: "100%",
-                      padding: "9px 12px",
-                      borderRadius: "5px",
+                      padding: "10px 14px",
+                      borderRadius: "6px",
                       border: "1px solid #cbd5e1",
                       background: "#ffffff",
                       color: "#0f172a",
@@ -544,122 +527,266 @@ export default function CategoryManager({
                   />
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", paddingTop: "20px" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px", color: "#334155" }}>
-                    <input
-                      type="checkbox"
-                      checked={formIsActive}
-                      onChange={(e) => setFormIsActive(e.target.checked)}
-                      style={{ width: "16px", height: "16px", accentColor: "#ef4444" }}
-                    />
-                    <span>Active on Menu</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Branch Assignment Selector */}
-              {currentShopId ? (
                 <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
-                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#334155" }}>
-                      Assigned Branch / Store
-                    </label>
-                    <span style={{ fontSize: "11px", color: "#16a34a", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                      <Lock size={12} /> Locked to Current Branch
-                    </span>
-                  </div>
-                  <select
-                    value={String(currentShopId)}
-                    disabled
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                    URL Slug *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formSlug}
+                    onChange={(e) => setFormSlug(e.target.value)}
+                    placeholder="e.g. gourmet-pizzas"
                     style={{
                       width: "100%",
-                      padding: "9px 12px",
-                      borderRadius: "5px",
-                      border: "1px solid #cbd5e1",
-                      background: "#f8fafc",
-                      color: "#0f172a",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      outline: "none",
-                      boxSizing: "border-box",
-                      cursor: "not-allowed",
-                    }}
-                  >
-                    <option value={String(currentShopId)}>
-                      🏪 {currentShopName} (#{currentShopId})
-                    </option>
-                  </select>
-                  <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
-                    This category will strictly appear on this branch&apos;s menu ({currentShopName}) and its admin management.
-                  </p>
-                </div>
-              ) : availableShops && availableShops.length > 0 ? (
-                <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "5px" }}>
-                    Assigned Branch / Store
-                  </label>
-                  <select
-                    value={formShopId}
-                    onChange={(e) => setFormShopId(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "9px 12px",
-                      borderRadius: "5px",
+                      padding: "10px 14px",
+                      borderRadius: "6px",
                       border: "1px solid #cbd5e1",
                       background: "#ffffff",
                       color: "#0f172a",
                       fontSize: "13px",
                       outline: "none",
                       boxSizing: "border-box",
-                      cursor: "pointer",
+                      fontFamily: "monospace",
                     }}
-                  >
-                    <option value="">🌐 Master Store (Global / Unassigned)</option>
-                    {availableShops.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        🏪 {s.name} (#{s.id})
-                      </option>
-                    ))}
-                  </select>
+                  />
                   <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
-                    This category will only appear on this branch&apos;s menu and its admin management.
+                    Unique URL identifier for category filters and navigation.
                   </p>
                 </div>
-              ) : (
-                <div
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: "5px",
-                    background: "#eff6ff",
-                    border: "1px solid #bfdbfe",
-                    fontSize: "12px",
-                    color: "#1e40af",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
-                >
-                  <span>🏪</span>
-                  <span>
-                    Saving to branch: <strong>{currentShopName}</strong> {currentShopId ? `(#${currentShopId})` : ""}
-                  </span>
-                </div>
-              )}
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "10px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={formDesc}
+                    onChange={(e) => setFormDesc(e.target.value)}
+                    placeholder="Short summary shown under category header..."
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      background: "#ffffff",
+                      color: "#0f172a",
+                      fontSize: "13px",
+                      outline: "none",
+                      boxSizing: "border-box",
+                      resize: "vertical",
+                    }}
+                  />
+                </div>
+
+                {/* Optional Category Image */}
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                    Category Image URL (Optional)
+                  </label>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <input
+                      type="url"
+                      value={formImageUrl}
+                      onChange={(e) => setFormImageUrl(e.target.value)}
+                      placeholder="https://... or /images/category.jpg"
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        borderRadius: "6px",
+                        border: "1px solid #cbd5e1",
+                        background: "#ffffff",
+                        color: "#0f172a",
+                        fontSize: "13px",
+                        outline: "none",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                    {formImageUrl && (
+                      <img
+                        src={formImageUrl}
+                        alt="Preview"
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: "6px",
+                          objectFit: "cover",
+                          border: "1px solid #cbd5e1",
+                          flexShrink: 0,
+                        }}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = "none";
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", alignItems: "center" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                      Sort Order (Display sequence)
+                    </label>
+                    <input
+                      type="number"
+                      value={formSortOrder}
+                      onChange={(e) => setFormSortOrder(parseInt(e.target.value) || 0)}
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        borderRadius: "6px",
+                        border: "1px solid #cbd5e1",
+                        background: "#ffffff",
+                        color: "#0f172a",
+                        fontSize: "13px",
+                        outline: "none",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ paddingTop: "18px" }}>
+                    <label
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        color: "#0f172a",
+                        fontWeight: 700,
+                        userSelect: "none",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formIsActive}
+                        onChange={(e) => setFormIsActive(e.target.checked)}
+                        style={{ width: "18px", height: "18px", accentColor: "#ef4444", cursor: "pointer" }}
+                      />
+                      <span>Active on Menu</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Branch Assignment Selector */}
+                {currentShopId ? (
+                  <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                      <label style={{ fontSize: "12px", fontWeight: 700, color: "#334155" }}>
+                        Assigned Branch / Store
+                      </label>
+                      <span style={{ fontSize: "11px", color: "#16a34a", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        <Lock size={12} /> Branch Locked
+                      </span>
+                    </div>
+                    <select
+                      value={String(currentShopId)}
+                      disabled
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        borderRadius: "6px",
+                        border: "1px solid #cbd5e1",
+                        background: "#ffffff",
+                        color: "#0f172a",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        outline: "none",
+                        boxSizing: "border-box",
+                        cursor: "not-allowed",
+                      }}
+                    >
+                      <option value={String(currentShopId)}>
+                        🏪 {currentShopName} (#{currentShopId})
+                      </option>
+                    </select>
+                    <p style={{ margin: "5px 0 0", fontSize: "11px", color: "#64748b" }}>
+                      This category strictly appears on {currentShopName}&apos;s menu.
+                    </p>
+                  </div>
+                ) : availableShops && availableShops.length > 0 ? (
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                      Assigned Branch / Store
+                    </label>
+                    <select
+                      value={formShopId}
+                      onChange={(e) => setFormShopId(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        borderRadius: "6px",
+                        border: "1px solid #cbd5e1",
+                        background: "#ffffff",
+                        color: "#0f172a",
+                        fontSize: "13px",
+                        outline: "none",
+                        boxSizing: "border-box",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <option value="">🌐 Master Store (Global / Unassigned)</option>
+                      {availableShops.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          🏪 {s.name} (#{s.id})
+                        </option>
+                      ))}
+                    </select>
+                    <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
+                      Assign which store menu displays this food category.
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      padding: "9px 14px",
+                      borderRadius: "6px",
+                      background: "#eff6ff",
+                      border: "1px solid #bfdbfe",
+                      fontSize: "12px",
+                      color: "#1e40af",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <span>🏪</span>
+                    <span>
+                      Saving to branch: <strong>{currentShopName}</strong> {currentShopId ? `(#${currentShopId})` : ""}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer (Fixed at bottom) */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "14px 24px",
+                  borderTop: "1px solid #f1f5f9",
+                  background: "#f8fafc",
+                  flexShrink: 0,
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   style={{
-                    padding: "9px 16px",
-                    borderRadius: "5px",
+                    padding: "9px 18px",
+                    borderRadius: "6px",
                     background: "#ffffff",
                     border: "1px solid #cbd5e1",
                     color: "#475569",
                     cursor: "pointer",
-                    fontWeight: 600,
+                    fontWeight: 700,
                     fontSize: "13px",
+                    transition: "all 0.15s ease",
                   }}
+                  className="hover:bg-slate-100"
                 >
                   Cancel
                 </button>
@@ -667,23 +794,27 @@ export default function CategoryManager({
                   type="submit"
                   disabled={isPending}
                   style={{
-                    padding: "9px 18px",
-                    borderRadius: "5px",
-                    background: "#ef4444",
+                    padding: "9px 22px",
+                    borderRadius: "6px",
+                    background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
                     color: "#ffffff",
                     border: "none",
                     cursor: isPending ? "not-allowed" : "pointer",
-                    fontWeight: 700,
+                    fontWeight: 800,
                     fontSize: "13px",
+                    boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
                     opacity: isPending ? 0.7 : 1,
+                    transition: "all 0.15s ease",
                   }}
+                  className="hover:opacity-95"
                 >
                   {isPending ? "Saving..." : editingCategory ? "Update Category" : "Create Category"}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
