@@ -40,6 +40,7 @@ import {
   Search,
   Download,
   Bike,
+  LayoutTemplate,
 } from "lucide-react";
 import NavigationProgressBar from "@/components/admin/NavigationProgressBar";
 import SoleWhatLogo from "@/components/SoleWhatLogo";
@@ -69,6 +70,7 @@ interface AdminShellProps {
   userRole?: "admin" | "sub_admin" | "staff";
   staffName?: string;
   canCancelOrders?: boolean;
+  logoUrl?: string | null;
 }
 
 interface NavItem {
@@ -162,6 +164,13 @@ const NAV_GROUPS: NavGroup[] = [
         badgeColor: "#7c3aed",
         icon: Palette,
       },
+      {
+        label: "Menu Layout & Logo",
+        href: "/admin/menu-layout",
+        badge: "NEW",
+        badgeColor: "#ec4899",
+        icon: LayoutTemplate,
+      },
     ],
   },
   {
@@ -223,6 +232,7 @@ export default function AdminShell({
   userRole = "admin",
   staffName = "Shop Admin",
   canCancelOrders = true,
+  logoUrl,
 }: AdminShellProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -511,7 +521,24 @@ export default function AdminShell({
             gap: "10px",
           }}
         >
-          <BrandLogo size={36} variant="iconOnly" />
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={activeBranch}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "8px",
+                objectFit: "cover",
+                border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.18)",
+                background: "#ffffff",
+                flexShrink: 0,
+                boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+              }}
+            />
+          ) : (
+            <BrandLogo size={36} variant="iconOnly" />
+          )}
 
           <div style={{ minWidth: 0, flex: 1 }}>
             <div
@@ -1335,7 +1362,24 @@ export default function AdminShell({
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
-              <BrandLogo size={36} variant="iconOnly" />
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={activeBranch}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "8px",
+                    objectFit: "cover",
+                    border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.18)",
+                    background: "#ffffff",
+                    flexShrink: 0,
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+                  }}
+                />
+              ) : (
+                <BrandLogo size={36} variant="iconOnly" />
+              )}
               <div style={{ minWidth: 0 }}>
                 <div
                   style={{

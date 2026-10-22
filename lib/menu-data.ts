@@ -10,6 +10,7 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import type { Category, Product, RestaurantTable } from "@/types/menu";
 import { dbCache } from "@/lib/db-cache";
+import { getShopBranding } from "@/lib/shop-branding";
 
 // ─── Helper ───────────────────────────────────────────────────────
 async function getSupabase() {
@@ -214,6 +215,10 @@ export interface ShopSettings {
 
   // Google Maps Review Link
   google_review_url?: string;
+
+  // Custom Branding & Dynamic Menu Layout
+  logo_url?: string | null;
+  menu_layout?: "classic" | "modern_bistro" | "street_express";
 }
 
 const DEFAULT_SETTINGS: ShopSettings = {
@@ -251,6 +256,8 @@ const DEFAULT_SETTINGS: ShopSettings = {
   hero_bg_image: "",
   hero_show_pattern: true,
   google_review_url: "",
+  logo_url: null,
+  menu_layout: "classic",
 };
 
 export async function fetchShopBySlugOrId(identifier: string | number): Promise<any | null> {
@@ -308,6 +315,8 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
     async () => {
       const supabase = await getSupabase();
 
+      let baseResult = DEFAULT_SETTINGS;
+
       if (targetShopId) {
         try {
           const { data: branchData } = await supabase
@@ -325,7 +334,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
                 parsedSlides = DEFAULT_PROMO_SLIDES;
               }
             }
-            return {
+            baseResult = {
               ...DEFAULT_SETTINGS,
               shop_name: branchData.name,
               menu_title: `${branchData.name} Menu`,
@@ -364,85 +373,93 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
         } catch {
           // Continue to default
         }
-      }
+      } else {
+        try {
+          const { data, error } = await supabase
+            .from("shop_settings")
+            .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url")
+            .eq("id", "main")
+            .single();
 
-      try {
-        const { data, error } = await supabase
-          .from("shop_settings")
-          .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url")
-          .eq("id", "main")
-          .single();
-
-        if (!error && data) {
-          let parsedSlides = (data as any).slider_images;
-          if (typeof parsedSlides === "string") {
-            try {
-              parsedSlides = JSON.parse(parsedSlides);
-            } catch {
-              parsedSlides = DEFAULT_PROMO_SLIDES;
+          if (!error && data) {
+            let parsedSlides = (data as any).slider_images;
+            if (typeof parsedSlides === "string") {
+              try {
+                parsedSlides = JSON.parse(parsedSlides);
+              } catch {
+                parsedSlides = DEFAULT_PROMO_SLIDES;
+              }
             }
+            baseResult = {
+              ...DEFAULT_SETTINGS,
+              ...data,
+              currency_symbol: data.currency_symbol || "$",
+              shop_id: null,
+              opening_time: (data as any).opening_time || "11:00",
+              closing_time: (data as any).closing_time || "01:00",
+              theme_color: (data as any).theme_color || "#ea580c",
+              slider_enabled: (data as any).slider_enabled !== false,
+              slider_height_mobile: Number((data as any).slider_height_mobile) || 180,
+              slider_images: Array.isArray(parsedSlides) && parsedSlides.length > 0 ? parsedSlides : DEFAULT_PROMO_SLIDES,
+              hero_badge_text: (data as any).hero_badge_text ?? DEFAULT_SETTINGS.hero_badge_text,
+              hero_title: (data as any).hero_title ?? DEFAULT_SETTINGS.hero_title,
+              hero_title_highlight: (data as any).hero_title_highlight ?? DEFAULT_SETTINGS.hero_title_highlight,
+              hero_subtitle: (data as any).hero_subtitle ?? DEFAULT_SETTINGS.hero_subtitle,
+              hero_btn_primary_text: (data as any).hero_btn_primary_text ?? DEFAULT_SETTINGS.hero_btn_primary_text,
+              hero_btn_primary_link: (data as any).hero_btn_primary_link || DEFAULT_SETTINGS.hero_btn_primary_link,
+              hero_btn_secondary_text: (data as any).hero_btn_secondary_text ?? DEFAULT_SETTINGS.hero_btn_secondary_text,
+              hero_btn_secondary_link: (data as any).hero_btn_secondary_link || DEFAULT_SETTINGS.hero_btn_secondary_link,
+              hero_chip1_text: (data as any).hero_chip1_text ?? DEFAULT_SETTINGS.hero_chip1_text,
+              hero_chip2_text: (data as any).hero_chip2_text ?? DEFAULT_SETTINGS.hero_chip2_text,
+              hero_chip3_text: (data as any).hero_chip3_text ?? DEFAULT_SETTINGS.hero_chip3_text,
+              hero_show_chips: (data as any).hero_show_chips !== undefined ? (data as any).hero_show_chips : DEFAULT_SETTINGS.hero_show_chips,
+              hero_bg_type: (data as any).hero_bg_type || DEFAULT_SETTINGS.hero_bg_type,
+              hero_bg_color: (data as any).hero_bg_color || "",
+              hero_bg_gradient: (data as any).hero_bg_gradient || "",
+              hero_bg_image: (data as any).hero_bg_image || "",
+              hero_show_pattern: (data as any).hero_show_pattern !== undefined ? (data as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
+              google_review_url: (data as any).google_review_url || "",
+            } as ShopSettings;
           }
-          return {
-            ...DEFAULT_SETTINGS,
-            ...data,
-            currency_symbol: data.currency_symbol || "$",
-            shop_id: null,
-            opening_time: (data as any).opening_time || "11:00",
-            closing_time: (data as any).closing_time || "01:00",
-            theme_color: (data as any).theme_color || "#ea580c",
-            slider_enabled: (data as any).slider_enabled !== false,
-            slider_height_mobile: Number((data as any).slider_height_mobile) || 180,
-            slider_images: Array.isArray(parsedSlides) && parsedSlides.length > 0 ? parsedSlides : DEFAULT_PROMO_SLIDES,
-            hero_badge_text: (data as any).hero_badge_text ?? DEFAULT_SETTINGS.hero_badge_text,
-            hero_title: (data as any).hero_title ?? DEFAULT_SETTINGS.hero_title,
-            hero_title_highlight: (data as any).hero_title_highlight ?? DEFAULT_SETTINGS.hero_title_highlight,
-            hero_subtitle: (data as any).hero_subtitle ?? DEFAULT_SETTINGS.hero_subtitle,
-            hero_btn_primary_text: (data as any).hero_btn_primary_text ?? DEFAULT_SETTINGS.hero_btn_primary_text,
-            hero_btn_primary_link: (data as any).hero_btn_primary_link || DEFAULT_SETTINGS.hero_btn_primary_link,
-            hero_btn_secondary_text: (data as any).hero_btn_secondary_text ?? DEFAULT_SETTINGS.hero_btn_secondary_text,
-            hero_btn_secondary_link: (data as any).hero_btn_secondary_link || DEFAULT_SETTINGS.hero_btn_secondary_link,
-            hero_chip1_text: (data as any).hero_chip1_text ?? DEFAULT_SETTINGS.hero_chip1_text,
-            hero_chip2_text: (data as any).hero_chip2_text ?? DEFAULT_SETTINGS.hero_chip2_text,
-            hero_chip3_text: (data as any).hero_chip3_text ?? DEFAULT_SETTINGS.hero_chip3_text,
-            hero_show_chips: (data as any).hero_show_chips !== undefined ? (data as any).hero_show_chips : DEFAULT_SETTINGS.hero_show_chips,
-            hero_bg_type: (data as any).hero_bg_type || DEFAULT_SETTINGS.hero_bg_type,
-            hero_bg_color: (data as any).hero_bg_color || "",
-            hero_bg_gradient: (data as any).hero_bg_gradient || "",
-            hero_bg_image: (data as any).hero_bg_image || "",
-            hero_show_pattern: (data as any).hero_show_pattern !== undefined ? (data as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
-            google_review_url: (data as any).google_review_url || "",
-          } as ShopSettings;
+        } catch {
+          // Fallback if columns not migrated yet
         }
-      } catch {
-        // Fallback if columns not migrated yet
+
+        if (baseResult === DEFAULT_SETTINGS) {
+          const { data: fallbackData } = await supabase
+            .from("shop_settings")
+            .select("shop_name, menu_title, meta_title, meta_description, currency_symbol")
+            .eq("id", "main")
+            .single();
+
+          if (fallbackData) {
+            baseResult = {
+              ...DEFAULT_SETTINGS,
+              ...fallbackData,
+              currency_symbol: fallbackData.currency_symbol || "$",
+              shop_id: null,
+              whatsapp_session_id: null,
+              whatsapp_api_key: null,
+              opening_time: "11:00",
+              closing_time: "01:00",
+              theme_color: "#ea580c",
+              slider_enabled: true,
+              slider_height_mobile: 180,
+              slider_images: DEFAULT_PROMO_SLIDES,
+            } as ShopSettings;
+          }
+        }
       }
 
-      const { data: fallbackData } = await supabase
-        .from("shop_settings")
-        .select("shop_name, menu_title, meta_title, meta_description, currency_symbol")
-        .eq("id", "main")
-        .single();
-
-      if (fallbackData) {
-        return {
-          ...DEFAULT_SETTINGS,
-          ...fallbackData,
-          currency_symbol: fallbackData.currency_symbol || "$",
-          shop_id: null,
-          whatsapp_session_id: null,
-          whatsapp_api_key: null,
-          opening_time: "11:00",
-          closing_time: "01:00",
-          theme_color: "#ea580c",
-          slider_enabled: true,
-          slider_height_mobile: 180,
-          slider_images: DEFAULT_PROMO_SLIDES,
-        } as ShopSettings;
-      }
-
-      return DEFAULT_SETTINGS;
+      // Attach custom logo and menu layout
+      const branding = await getShopBranding(targetShopId);
+      return {
+        ...baseResult,
+        logo_url: branding.logo_url ?? baseResult.logo_url ?? null,
+        menu_layout: branding.menu_layout || baseResult.menu_layout || "classic",
+      };
     },
-    { ttlSeconds: 180, tags: ["settings"] }
+    { ttlSeconds: 180, tags: ["settings", "branding"] }
   );
 }
 

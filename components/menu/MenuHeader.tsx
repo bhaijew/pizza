@@ -12,9 +12,10 @@ interface MenuHeaderProps {
   onCartOpen: () => void;
   shopName?: string;
   verifiedTable?: string;
+  logoUrl?: string | null;
 }
 
-export default function MenuHeader({ onCartOpen, shopName = "Pizza Shop", verifiedTable }: MenuHeaderProps) {
+export default function MenuHeader({ onCartOpen, shopName = "Pizza Shop", verifiedTable, logoUrl }: MenuHeaderProps) {
   const { totalItems, totalPrice, formatPrice } = useCart();
 
   return (
@@ -40,9 +41,26 @@ export default function MenuHeader({ onCartOpen, shopName = "Pizza Shop", verifi
             gap: 16,
           }}
         >
-          {/* Logo / Brand — Vibrant Red, Orange & Golden Yellow Square Emblem */}
+          {/* Logo / Brand */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <BrandLogo size={36} variant="iconOnly" />
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={shopName}
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 8,
+                  objectFit: "cover",
+                  border: "1px solid #e2e8f0",
+                  background: "#ffffff",
+                  flexShrink: 0,
+                  boxShadow: "0 1px 4px rgba(0, 0, 0, 0.06)",
+                }}
+              />
+            ) : (
+              <BrandLogo size={36} variant="iconOnly" />
+            )}
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <h1

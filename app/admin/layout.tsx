@@ -6,6 +6,7 @@ import { ADMIN_SHOP_COOKIE } from "@/lib/admin-auth";
 import { adminLogout, getActiveShopContext } from "@/lib/admin-actions";
 import { ShieldAlert, Store } from "@/components/admin/AdminIcons";
 import { dbCache } from "@/lib/db-cache";
+import { getShopBranding } from "@/lib/shop-branding";
 
 export const dynamic = "force-dynamic";
 
@@ -173,7 +174,10 @@ export default async function AdminLayout({
     } catch {}
   }
 
-  const activeContext = await getActiveShopContext();
+  const [activeContext, branding] = await Promise.all([
+    getActiveShopContext(),
+    getShopBranding(shopIdNum),
+  ]);
 
   return (
     <AdminShell
@@ -186,6 +190,7 @@ export default async function AdminLayout({
       userRole={activeContext.role}
       staffName={activeContext.staffName}
       canCancelOrders={activeContext.canCancelOrders}
+      logoUrl={branding.logo_url}
     >
       {children}
     </AdminShell>

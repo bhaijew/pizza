@@ -7,6 +7,7 @@ import {
   fetchSettings,
   fetchShopBySlugOrId,
 } from "@/lib/menu-data";
+import { getShopBranding } from "@/lib/shop-branding";
 import MenuClient from "@/components/menu/MenuClient";
 import MenuSkeleton from "@/components/menu/MenuSkeleton";
 import Link from "next/link";
@@ -233,10 +234,11 @@ export default async function DynamicShopMenuPage({
   }
 
   // 4. Shop is active — fetch categories & products isolated to this shop
-  const [categoriesResult, productsResult, baseSettings] = await Promise.all([
+  const [categoriesResult, productsResult, baseSettings, branding] = await Promise.all([
     fetchCategories(shop.id),
     fetchProducts(null, shop.id),
     fetchSettings(shop.id),
+    getShopBranding(shop.id),
   ]);
 
   // Build shop settings tailored to this specific shop
@@ -268,6 +270,8 @@ export default async function DynamicShopMenuPage({
     hero_bg_gradient: (shop as any).hero_bg_gradient || baseSettings.hero_bg_gradient,
     hero_bg_image: (shop as any).hero_bg_image || baseSettings.hero_bg_image,
     hero_show_pattern: (shop as any).hero_show_pattern !== undefined ? (shop as any).hero_show_pattern : baseSettings.hero_show_pattern,
+    logo_url: branding.logo_url || (shop as any).logo_url || baseSettings.logo_url,
+    menu_layout: branding.menu_layout || (shop as any).menu_layout || baseSettings.menu_layout || "classic",
     shop_id: shop.id,
   };
 

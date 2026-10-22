@@ -944,7 +944,39 @@ export async function updateSettings(
   dbCache.invalidateTag("settings", "shops");
   revalidatePath("/admin/settings");
   revalidatePath("/admin/menu-ui");
+  revalidatePath("/admin/menu-layout");
   revalidatePath("/");
+  return { error: null, success: true };
+}
+
+export async function updateShopLogoAndLayout(
+  _prev: { error: string | null; success: boolean },
+  formData: FormData
+): Promise<{ error: string | null; success: boolean }> {
+  await requireAdmin();
+  const activeShop = await getActiveShopContext();
+
+  const rawLogo = formData.get("logo_url") as string | null;
+  const rawLayout = formData.get("menu_layout") as string | null;
+
+  const logo_url = rawLogo !== null ? (rawLogo.trim() || null) : undefined;
+  const validLayouts = ["classic", "modern_bistro", "street_express"];
+  const menu_layout = (validLayouts.includes(rawLayout || "") ? rawLayout : "classic") as "classic" | "modern_bistro" | "street_express";
+
+  const { saveShopBranding } = await import("@/lib/shop-branding");
+  await saveShopBranding(activeShop.shopId, {
+    logo_url,
+    menu_layout,
+  });
+
+  revalidatePath("/admin/menu-layout");
+  revalidatePath("/admin");
+  revalidatePath("/admin/settings");
+  revalidatePath("/");
+  if (activeShop.shopSlug) {
+    revalidatePath(`/${activeShop.shopSlug}`);
+  }
+
   return { error: null, success: true };
 }
 
