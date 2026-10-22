@@ -4,6 +4,7 @@ import React, { useState, useTransition } from "react";
 import BrandLogo from "@/components/BrandLogo";
 import { updateShopLogoAndLayout } from "@/lib/admin-actions";
 import type { ShopSettings } from "@/lib/menu-data";
+import { compressImageFile } from "@/lib/client-image-compression";
 import {
   Check,
   ExternalLink,
@@ -50,11 +51,12 @@ export default function MenuLayoutStudio({
   const [logoUrl, setLogoUrl] = useState<string>(initialSettings.logo_url || "");
   const [logoMode, setLogoMode] = useState<"upload" | "url">("upload");
   const [uploadFileName, setUploadFileName] = useState<string>("");
+  const [isCompressing, setIsCompressing] = useState<boolean>(false);
   const [isPending, startTransition] = useTransition();
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // File Upload to Data URL
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // File Upload to Data URL with automatic client compression
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -63,20 +65,31 @@ export default function MenuLayoutStudio({
       return;
     }
 
-    if (file.size > 4 * 1024 * 1024) {
-      alert("Logo file size must be less than 4MB.");
+    if (file.size > 20 * 1024 * 1024) {
+      alert("Logo file size must be less than 20MB.");
       return;
     }
 
     setUploadFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      if (result) {
-        setLogoUrl(result);
-      }
-    };
-    reader.readAsDataURL(file);
+    setIsCompressing(true);
+
+    try {
+      // Auto-downscale to max 512px and compress to lightweight base64 (< 60KB)
+      const compressedDataUrl = await compressImageFile(file, 512, 0.85);
+      setLogoUrl(compressedDataUrl);
+    } catch (err) {
+      console.error("Compression error, fallback to raw read:", err);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (result) {
+          setLogoUrl(result);
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsCompressing(false);
+    }
   };
 
   const handleResetLogo = () => {
@@ -177,24 +190,26 @@ export default function MenuLayoutStudio({
           <button
             type="button"
             onClick={handleSave}
-            disabled={isPending}
+            disabled={isPending || isCompressing}
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: "8px",
               padding: "10px 22px",
               borderRadius: "8px",
-              background: isPending ? "#94a3b8" : "#16a34a",
+              background: (isPending || isCompressing) ? "#94a3b8" : "#16a34a",
               color: "#ffffff",
               fontSize: "13px",
               fontWeight: 800,
               border: "none",
-              cursor: isPending ? "not-allowed" : "pointer",
+              cursor: (isPending || isCompressing) ? "not-allowed" : "pointer",
               boxShadow: "0 2px 10px rgba(22, 163, 74, 0.25)",
             }}
             className="hover:bg-emerald-700"
           >
-            {isPending ? (
+            {isCompressing ? (
+              <span>Optimizing Image...</span>
+            ) : isPending ? (
               <span>Saving Changes...</span>
             ) : (
               <>
@@ -364,10 +379,14 @@ export default function MenuLayoutStudio({
                   <UploadIcon size={20} />
                 </div>
                 <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", marginBottom: "2px" }}>
-                  {uploadFileName ? uploadFileName : "Click or Drag to Upload Logo"}
+                  {isCompressing
+                    ? "⚡ Optimizing & compressing logo..."
+                    : uploadFileName
+                    ? uploadFileName
+                    : "Click or Drag to Upload Logo"}
                 </div>
                 <div style={{ fontSize: "11px", color: "#94a3b8" }}>
-                  PNG, JPG, SVG, or WEBP (Square 1:1 ratio recommended, up to 4MB)
+                  PNG, JPG, SVG, or WEBP (Automatically optimized &amp; resized, up to 20MB)
                 </div>
               </label>
             ) : (

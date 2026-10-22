@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { Product, Category, ProductVariation, ExtraTopping } from "@/types/menu";
 import { createProduct, updateProduct } from "@/lib/admin-actions";
 import { PRESET_FOOD_IMAGES, type PresetFoodImage } from "@/lib/preset-images";
+import { compressImageFile } from "@/lib/client-image-compression";
 
 interface ProductFormProps {
   initialProduct?: Product | null;
@@ -109,26 +110,32 @@ export default function ProductForm({
   };
 
   // Custom File Upload handler (converts to base64 DataURL with client resizing)
-  const processImageFile = (file: File) => {
+  const processImageFile = async (file: File) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       alert("Please select a valid image file (PNG, JPG, WEBP).");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image file size should be less than 5MB.");
+    if (file.size > 20 * 1024 * 1024) {
+      alert("Image file size should be less than 20MB.");
       return;
     }
 
     setUploadFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      if (dataUrl) {
-        setImageUrl(dataUrl);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressed = await compressImageFile(file, 800, 0.85);
+      setImageUrl(compressed);
+    } catch (err) {
+      console.error("Compression error, fallback to raw read:", err);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        if (dataUrl) {
+          setImageUrl(dataUrl);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
