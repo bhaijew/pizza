@@ -2,7 +2,7 @@
 
 import { useActionState, useState, useEffect } from "react";
 import { adminLogin } from "@/lib/admin-actions";
-import BrandLogo from "@/components/BrandLogo";
+import SoleWhatLogo from "@/components/SoleWhatLogo";
 import Link from "next/link";
 import {
   Lock,
@@ -118,8 +118,8 @@ export default function AdminLoginClient({
           
           {/* Brand & Setup Identity */}
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="p-1.5 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/70 shadow-xs flex-shrink-0">
-              <BrandLogo size={28} showGlow={false} />
+            <div className="flex-shrink-0">
+              <SoleWhatLogo size={36} variant="shield" showGlow={false} />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -291,9 +291,9 @@ export default function AdminLoginClient({
               {/* Header Icon & Brand */}
               <div className="text-center mb-6">
                 
-                {/* Brand Logo Container with soft badge styling */}
-                <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white shadow-md shadow-red-500/25 mb-4 transition-transform hover:scale-105">
-                  <BrandLogo size={36} showGlow={false} />
+                {/* Sole-What Bespoke Brand Logo Container */}
+                <div className="inline-flex items-center justify-center mb-3 transition-transform hover:scale-105">
+                  <SoleWhatLogo size={64} variant="badge" showGlow={true} />
                 </div>
 
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 mb-2">
