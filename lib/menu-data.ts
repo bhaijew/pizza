@@ -456,7 +456,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
       return {
         ...baseResult,
         logo_url: branding.logo_url ?? baseResult.logo_url ?? null,
-        menu_layout: "default",
+        menu_layout: branding.menu_layout || (baseResult.menu_layout as "default" | "pizzger") || "default",
       };
     },
     { ttlSeconds: 180, tags: ["settings", "branding"] }

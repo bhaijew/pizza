@@ -3,7 +3,7 @@ import path from "path";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { dbCache } from "@/lib/db-cache";
 
-export type MenuLayoutType = "default";
+export type MenuLayoutType = "default" | "pizzger";
 
 export interface ShopBranding {
   logo_url: string | null;
@@ -59,27 +59,29 @@ export async function getShopBranding(shopId?: number | null): Promise<ShopBrand
       if (shopId) {
         const { data } = await db
           .from("shops")
-          .select("logo_url")
+          .select("logo_url, menu_layout")
           .eq("id", shopId)
           .maybeSingle();
 
-        if (data && data.logo_url !== undefined) {
+        if (data && (data.logo_url !== undefined || data.menu_layout !== undefined)) {
+          const raw = data.menu_layout || localRecord?.menu_layout;
           return {
             logo_url: data.logo_url ?? localRecord?.logo_url ?? null,
-            menu_layout: "default",
+            menu_layout: raw === "pizzger" ? "pizzger" : "default",
           };
         }
       } else {
         const { data } = await db
           .from("shop_settings")
-          .select("logo_url")
+          .select("logo_url, menu_layout")
           .eq("id", "main")
           .maybeSingle();
 
-        if (data && data.logo_url !== undefined) {
+        if (data && (data.logo_url !== undefined || data.menu_layout !== undefined)) {
+          const raw = data.menu_layout || localRecord?.menu_layout;
           return {
             logo_url: data.logo_url ?? localRecord?.logo_url ?? null,
-            menu_layout: "default",
+            menu_layout: raw === "pizzger" ? "pizzger" : "default",
           };
         }
       }
@@ -91,7 +93,7 @@ export async function getShopBranding(shopId?: number | null): Promise<ShopBrand
   if (localRecord) {
     return {
       logo_url: localRecord.logo_url ?? null,
-      menu_layout: "default",
+      menu_layout: localRecord.menu_layout === "pizzger" ? "pizzger" : "default",
     };
   }
 
@@ -111,9 +113,12 @@ export async function saveShopBranding(
   const localStore = readLocalBranding();
   const current = localStore[targetKey] || { ...DEFAULT_BRANDING };
 
+  const normalizedLayout: MenuLayoutType =
+    branding.menu_layout === "pizzger" ? "pizzger" : "default";
+
   const updated: ShopBranding = {
     logo_url: branding.logo_url !== undefined ? branding.logo_url : current.logo_url,
-    menu_layout: "default",
+    menu_layout: branding.menu_layout !== undefined ? normalizedLayout : (current.menu_layout || "default"),
   };
 
   localStore[targetKey] = updated;
@@ -125,7 +130,7 @@ export async function saveShopBranding(
       const db = createAdminClient();
       const payload: Record<string, any> = {};
       if (branding.logo_url !== undefined) payload.logo_url = branding.logo_url;
-      if (branding.menu_layout !== undefined) payload.menu_layout = branding.menu_layout;
+      if (branding.menu_layout !== undefined) payload.menu_layout = updated.menu_layout;
 
       if (Object.keys(payload).length > 0) {
         if (shopId) {
