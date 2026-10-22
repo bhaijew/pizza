@@ -375,8 +375,8 @@ export default async function AdminDashboardPage() {
               ? "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)"
               : "#ffffff",
             border: pendingOrders > 0 ? "1.5px solid #fdba74" : "1px solid #e2e8f0",
-            borderRadius: 5,
-            padding: 22,
+            borderRadius: 6,
+            padding: "22px 20px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
@@ -389,20 +389,20 @@ export default async function AdminDashboardPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 800,
                 color: pendingOrders > 0 ? "#9a3412" : "#64748b",
                 textTransform: "uppercase",
-                letterSpacing: "0.05em",
+                letterSpacing: "0.06em",
               }}
             >
               Active Orders
             </span>
             <div
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 5,
+                width: 42,
+                height: 42,
+                borderRadius: 6,
                 background: pendingOrders > 0 ? "#ea580c" : "#f1f5f9",
                 color: pendingOrders > 0 ? "#ffffff" : "#64748b",
                 display: "flex",
@@ -411,19 +411,20 @@ export default async function AdminDashboardPage() {
                 boxShadow: pendingOrders > 0 ? "0 4px 12px rgba(234, 88, 12, 0.35)" : "none",
               }}
             >
-              <Flame size={20} className={pendingOrders > 0 ? "animate-pulse" : ""} />
+              <Flame size={22} className={pendingOrders > 0 ? "animate-pulse" : ""} />
             </div>
           </div>
-          <div style={{ margin: "14px 0 6px" }}>
-            <div style={{ fontSize: 32, fontWeight: 900, color: pendingOrders > 0 ? "#c2410c" : "#0f172a" }}>
+          <div style={{ margin: "14px 0 8px" }}>
+            <div style={{ fontSize: 36, fontWeight: 900, color: pendingOrders > 0 ? "#c2410c" : "#0f172a", lineHeight: 1.1 }}>
               {pendingOrders}
             </div>
             <p
               style={{
-                margin: "2px 0 0",
-                fontSize: 12,
+                margin: "4px 0 0",
+                fontSize: 14,
                 color: pendingOrders > 0 ? "#ea580c" : "#64748b",
                 fontWeight: 600,
+                lineHeight: 1.4,
               }}
             >
               {pendingOrders > 0 ? "Needs kitchen preparation" : "All orders caught up"}
@@ -431,16 +432,17 @@ export default async function AdminDashboardPage() {
           </div>
           <div
             style={{
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 700,
               color: "#ea580c",
               display: "flex",
               alignItems: "center",
-              gap: 4,
+              gap: 5,
+              marginTop: 6,
             }}
           >
             <span>Open live order board</span>
-            <ArrowUpRight size={14} />
+            <ArrowUpRight size={16} />
           </div>
         </Link>
 
@@ -451,8 +453,8 @@ export default async function AdminDashboardPage() {
             textDecoration: "none",
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: 5,
-            padding: 22,
+            borderRadius: 6,
+            padding: "22px 20px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
@@ -463,20 +465,20 @@ export default async function AdminDashboardPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 800,
                 color: "#64748b",
                 textTransform: "uppercase",
-                letterSpacing: "0.05em",
+                letterSpacing: "0.06em",
               }}
             >
               Menu Products
             </span>
             <div
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 5,
+                width: 42,
+                height: 42,
+                borderRadius: 6,
                 background: "#fef2f2",
                 color: "#dc2626",
                 display: "flex",
@@ -484,29 +486,30 @@ export default async function AdminDashboardPage() {
                 justifyContent: "center",
               }}
             >
-              <Pizza size={20} />
+              <Pizza size={22} />
             </div>
           </div>
-          <div style={{ margin: "14px 0 6px" }}>
-            <div style={{ fontSize: 32, fontWeight: 900, color: "#0f172a" }}>
+          <div style={{ margin: "14px 0 8px" }}>
+            <div style={{ fontSize: 36, fontWeight: 900, color: "#0f172a", lineHeight: 1.1 }}>
               {productCount}
             </div>
-            <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
+            <p style={{ margin: "4px 0 0", fontSize: 14, color: "#64748b", fontWeight: 500, lineHeight: 1.4 }}>
               Across {categoryCount} food categories
             </p>
           </div>
           <div
             style={{
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 700,
               color: "#dc2626",
               display: "flex",
               alignItems: "center",
-              gap: 4,
+              gap: 5,
+              marginTop: 6,
             }}
           >
             <span>Manage food items</span>
-            <ArrowUpRight size={14} />
+            <ArrowUpRight size={16} />
           </div>
         </Link>
 
@@ -517,8 +520,8 @@ export default async function AdminDashboardPage() {
             textDecoration: "none",
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: 5,
-            padding: 22,
+            borderRadius: 6,
+            padding: "22px 20px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
@@ -529,20 +532,20 @@ export default async function AdminDashboardPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 800,
                 color: "#64748b",
                 textTransform: "uppercase",
-                letterSpacing: "0.05em",
+                letterSpacing: "0.06em",
               }}
             >
               Total Orders
             </span>
             <div
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 5,
+                width: 42,
+                height: 42,
+                borderRadius: 6,
                 background: "#eff6ff",
                 color: "#2563eb",
                 display: "flex",
@@ -550,39 +553,42 @@ export default async function AdminDashboardPage() {
                 justifyContent: "center",
               }}
             >
-              <ShoppingBag size={20} />
+              <ShoppingBag size={22} />
             </div>
           </div>
-          <div style={{ margin: "14px 0 6px" }}>
-            <div style={{ fontSize: 32, fontWeight: 900, color: "#0f172a" }}>
+          <div style={{ margin: "14px 0 8px" }}>
+            <div style={{ fontSize: 36, fontWeight: 900, color: "#0f172a", lineHeight: 1.1 }}>
               {orderCount}
             </div>
             <p
               style={{
-                margin: "2px 0 0",
-                fontSize: 12,
+                margin: "4px 0 0",
+                fontSize: 14,
                 color: "#64748b",
+                fontWeight: 500,
                 display: "flex",
                 alignItems: "center",
-                gap: 4,
+                gap: 5,
+                lineHeight: 1.4,
               }}
             >
-              <TrendingUp size={13} className="text-blue-500" />
+              <TrendingUp size={15} className="text-blue-500" />
               <span>All-time completed orders</span>
             </p>
           </div>
           <div
             style={{
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 700,
               color: "#2563eb",
               display: "flex",
               alignItems: "center",
-              gap: 4,
+              gap: 5,
+              marginTop: 6,
             }}
           >
             <span>View order history</span>
-            <ArrowUpRight size={14} />
+            <ArrowUpRight size={16} />
           </div>
         </Link>
 
@@ -593,8 +599,8 @@ export default async function AdminDashboardPage() {
             textDecoration: "none",
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: 5,
-            padding: 22,
+            borderRadius: 6,
+            padding: "22px 20px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
@@ -605,20 +611,20 @@ export default async function AdminDashboardPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 800,
                 color: "#64748b",
                 textTransform: "uppercase",
-                letterSpacing: "0.05em",
+                letterSpacing: "0.06em",
               }}
             >
               Promos &amp; Loyalty
             </span>
             <div
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 5,
+                width: 42,
+                height: 42,
+                borderRadius: 6,
                 background: "#ecfdf5",
                 color: "#059669",
                 display: "flex",
@@ -626,29 +632,30 @@ export default async function AdminDashboardPage() {
                 justifyContent: "center",
               }}
             >
-              <Sparkles size={20} />
+              <Sparkles size={22} />
             </div>
           </div>
-          <div style={{ margin: "14px 0 6px" }}>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#059669" }}>
+          <div style={{ margin: "14px 0 8px" }}>
+            <div style={{ fontSize: 24, fontWeight: 900, color: "#059669", lineHeight: 1.2 }}>
               VIP Cash Engine
             </div>
-            <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b" }}>
+            <p style={{ margin: "4px 0 0", fontSize: 14, color: "#64748b", fontWeight: 500, lineHeight: 1.4 }}>
               1 pt per Rs. 50 (2% Cashback)
             </p>
           </div>
           <div
             style={{
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 700,
               color: "#059669",
               display: "flex",
               alignItems: "center",
-              gap: 4,
+              gap: 5,
+              marginTop: 6,
             }}
           >
             <span>Manage coupons &amp; points</span>
-            <ArrowUpRight size={14} />
+            <ArrowUpRight size={16} />
           </div>
         </Link>
       </div>
