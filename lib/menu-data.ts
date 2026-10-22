@@ -218,7 +218,7 @@ export interface ShopSettings {
 
   // Custom Branding & Dynamic Menu Layout
   logo_url?: string | null;
-  menu_layout?: "classic" | "modern_bistro" | "street_express";
+  menu_layout?: "kfc" | "cheezious" | "mcdonalds" | "classic" | "modern_bistro" | "street_express";
 }
 
 const DEFAULT_SETTINGS: ShopSettings = {

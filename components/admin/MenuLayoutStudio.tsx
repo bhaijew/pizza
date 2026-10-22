@@ -53,9 +53,9 @@ export default function MenuLayoutStudio({
   shopId,
 }: MenuLayoutStudioProps) {
   const [logoUrl, setLogoUrl] = useState<string>(initialSettings.logo_url || "");
-  const [menuLayout, setMenuLayout] = useState<"classic" | "modern_bistro" | "street_express">(
-    initialSettings.menu_layout || "classic"
-  );
+  const [menuLayout, setMenuLayout] = useState<
+    "kfc" | "cheezious" | "mcdonalds" | "classic" | "modern_bistro" | "street_express"
+  >(initialSettings.menu_layout || "cheezious");
   const [logoMode, setLogoMode] = useState<"upload" | "url">("upload");
   const [uploadFileName, setUploadFileName] = useState<string>("");
   const [isPending, startTransition] = useTransition();
@@ -482,23 +482,263 @@ export default function MenuLayoutStudio({
             2. Choose Menu Design Layout
           </h2>
           <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
-            Select one of three fully crafted menu designs. Your customer menu will dynamically switch to this presentation.
+            Select one of the fast-food brand menu designs. Your customer menu will dynamically switch to this presentation.
           </p>
         </div>
 
-        {/* 3 Layout Cards */}
+        {/* 4 Layout Cards */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))",
-            gap: "20px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            gap: "18px",
           }}
         >
-          {/* Option 1: Classic Artisan */}
+          {/* Option 1: Cheezious Real Style */}
+          <div
+            onClick={() => setMenuLayout("cheezious")}
+            style={{
+              borderRadius: "14px",
+              border: menuLayout === "cheezious" ? "2.5px solid #ea580c" : "1.5px solid #e2e8f0",
+              background: menuLayout === "cheezious" ? "#fffbeb" : "#ffffff",
+              boxShadow: menuLayout === "cheezious" ? "0 8px 24px rgba(234, 88, 12, 0.16)" : "none",
+              padding: "18px",
+              cursor: "pointer",
+              position: "relative",
+              transition: "all 0.2s ease",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 900,
+                    padding: "3px 8px",
+                    borderRadius: "6px",
+                    background: "#fef08a",
+                    color: "#854d0e",
+                  }}
+                >
+                  REAL APP • CHEEZIOUS
+                </span>
+
+                <div
+                  style={{
+                    width: "22px",
+                    height: "22px",
+                    borderRadius: "50%",
+                    border: menuLayout === "cheezious" ? "6px solid #ea580c" : "2px solid #cbd5e1",
+                    background: "#ffffff",
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                <Sparkles size={20} style={{ color: "#eab308" }} />
+                <h3 style={{ fontSize: "16px", fontWeight: 900, color: "#18181b", margin: 0 }}>
+                  Cheezious Style
+                </h3>
+              </div>
+
+              <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.5, margin: "0 0 14px" }}>
+                Cheezious fast-food mobile app design. Bright Cheddar Yellow delivery switcher, circular pizzas with soft shadow, terracotta Starting Price badge, and + ADD TO CART pill.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px", color: "#334155" }}>
+                <div>✓ Cheddar Yellow Delivery/Pickup switcher</div>
+                <div>✓ Category slider with &lt; &gt; arrow buttons</div>
+                <div>✓ Circular dish photos with subtle shadows</div>
+                <div>✓ Starting Price badge &amp; + Add To Cart pill</div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "16px",
+                paddingTop: "12px",
+                borderTop: "1px dashed #e2e8f0",
+                fontSize: "12px",
+                fontWeight: 700,
+                color: menuLayout === "cheezious" ? "#ea580c" : "#94a3b8",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+              }}
+            >
+              {menuLayout === "cheezious" && <Check size={14} />}
+              <span>{menuLayout === "cheezious" ? "Active Selected Layout" : "Click to Select"}</span>
+            </div>
+          </div>
+
+          {/* Option 2: KFC Real Style */}
+          <div
+            onClick={() => setMenuLayout("kfc")}
+            style={{
+              borderRadius: "14px",
+              border: menuLayout === "kfc" ? "2.5px solid #e4002b" : "1.5px solid #e2e8f0",
+              background: menuLayout === "kfc" ? "#fef2f2" : "#ffffff",
+              boxShadow: menuLayout === "kfc" ? "0 8px 24px rgba(228, 0, 43, 0.16)" : "none",
+              padding: "18px",
+              cursor: "pointer",
+              position: "relative",
+              transition: "all 0.2s ease",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 900,
+                    padding: "3px 8px",
+                    borderRadius: "6px",
+                    background: "#fee2e2",
+                    color: "#991b1b",
+                  }}
+                >
+                  REAL APP • KFC CRISPY
+                </span>
+
+                <div
+                  style={{
+                    width: "22px",
+                    height: "22px",
+                    borderRadius: "50%",
+                    border: menuLayout === "kfc" ? "6px solid #e4002b" : "2px solid #cbd5e1",
+                    background: "#ffffff",
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                <Flame size={20} style={{ color: "#e4002b" }} />
+                <h3 style={{ fontSize: "16px", fontWeight: 900, color: "#111827", margin: 0 }}>
+                  KFC Style
+                </h3>
+              </div>
+
+              <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.5, margin: "0 0 14px" }}>
+                Authentic KFC app design. 3-tab Delivery / Pickup / Dine-In switcher, Krunch/Zinger promos with angled red ribbons, 3 red stripes, and floating KFC Bucket cart.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px", color: "#334155" }}>
+                <div>✓ 3-tab Delivery / Pickup / Dine-In switcher</div>
+                <div>✓ Angled red ribbon price tags (Rs 310)</div>
+                <div>✓ Iconic 3 vertical red KFC stripes on cards</div>
+                <div>✓ KFC Bucket cart floating button with badge</div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "16px",
+                paddingTop: "12px",
+                borderTop: "1px dashed #e2e8f0",
+                fontSize: "12px",
+                fontWeight: 700,
+                color: menuLayout === "kfc" ? "#e4002b" : "#94a3b8",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+              }}
+            >
+              {menuLayout === "kfc" && <Check size={14} />}
+              <span>{menuLayout === "kfc" ? "Active Selected Layout" : "Click to Select"}</span>
+            </div>
+          </div>
+
+          {/* Option 3: McDonald's Real Style */}
+          <div
+            onClick={() => setMenuLayout("mcdonalds")}
+            style={{
+              borderRadius: "14px",
+              border: menuLayout === "mcdonalds" ? "2.5px solid #da291c" : "1.5px solid #e2e8f0",
+              background: menuLayout === "mcdonalds" ? "#fefce8" : "#ffffff",
+              boxShadow: menuLayout === "mcdonalds" ? "0 8px 24px rgba(218, 41, 28, 0.16)" : "none",
+              padding: "18px",
+              cursor: "pointer",
+              position: "relative",
+              transition: "all 0.2s ease",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 900,
+                    padding: "3px 8px",
+                    borderRadius: "6px",
+                    background: "#fef08a",
+                    color: "#854d0e",
+                  }}
+                >
+                  REAL APP • MCDONALD&apos;S
+                </span>
+
+                <div
+                  style={{
+                    width: "22px",
+                    height: "22px",
+                    borderRadius: "50%",
+                    border: menuLayout === "mcdonalds" ? "6px solid #da291c" : "2px solid #cbd5e1",
+                    background: "#ffffff",
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                <Zap size={20} style={{ color: "#eab308" }} />
+                <h3 style={{ fontSize: "16px", fontWeight: 900, color: "#27251f", margin: 0 }}>
+                  McDonald&apos;s Style
+                </h3>
+              </div>
+
+              <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.5, margin: "0 0 14px" }}>
+                Iconic Golden Arches yellow and classic red mobile ordering app. McDelivery toggle, app-exclusive saver combos, McValue tags, and golden add buttons.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px", color: "#334155" }}>
+                <div>✓ Golden Arches red &amp; gold app header</div>
+                <div>✓ McDelivery / Pick-Up toggle bar</div>
+                <div>✓ App-exclusive saver combos banner</div>
+                <div>✓ Golden yellow Add buttons &amp; McDelivery bag</div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "16px",
+                paddingTop: "12px",
+                borderTop: "1px dashed #e2e8f0",
+                fontSize: "12px",
+                fontWeight: 700,
+                color: menuLayout === "mcdonalds" ? "#da291c" : "#94a3b8",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+              }}
+            >
+              {menuLayout === "mcdonalds" && <Check size={14} />}
+              <span>{menuLayout === "mcdonalds" ? "Active Selected Layout" : "Click to Select"}</span>
+            </div>
+          </div>
+
+          {/* Option 4: Classic Artisan */}
           <div
             onClick={() => setMenuLayout("classic")}
             style={{
-              borderRadius: "12px",
+              borderRadius: "14px",
               border: menuLayout === "classic" ? "2.5px solid #ea580c" : "1.5px solid #e2e8f0",
               background: menuLayout === "classic" ? "#fffbf7" : "#ffffff",
               boxShadow: menuLayout === "classic" ? "0 8px 24px rgba(234, 88, 12, 0.12)" : "none",
@@ -518,7 +758,7 @@ export default function MenuLayoutStudio({
                     fontSize: "11px",
                     fontWeight: 800,
                     padding: "3px 8px",
-                    borderRadius: "4px",
+                    borderRadius: "6px",
                     background: "#fef3c7",
                     color: "#92400e",
                   }}
@@ -571,166 +811,6 @@ export default function MenuLayoutStudio({
             >
               {menuLayout === "classic" && <Check size={14} />}
               <span>{menuLayout === "classic" ? "Active Selected Layout" : "Click to Select"}</span>
-            </div>
-          </div>
-
-          {/* Option 2: Modern Bistro */}
-          <div
-            onClick={() => setMenuLayout("modern_bistro")}
-            style={{
-              borderRadius: "12px",
-              border: menuLayout === "modern_bistro" ? "2.5px solid #0f172a" : "1.5px solid #e2e8f0",
-              background: menuLayout === "modern_bistro" ? "#f8fafc" : "#ffffff",
-              boxShadow: menuLayout === "modern_bistro" ? "0 8px 24px rgba(15, 23, 42, 0.12)" : "none",
-              padding: "18px",
-              cursor: "pointer",
-              position: "relative",
-              transition: "all 0.2s ease",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 800,
-                    padding: "3px 8px",
-                    borderRadius: "4px",
-                    background: "#ede9fe",
-                    color: "#6d28d9",
-                  }}
-                >
-                  NEW • LUXURY BISTRO
-                </span>
-
-                <div
-                  style={{
-                    width: "22px",
-                    height: "22px",
-                    borderRadius: "50%",
-                    border: menuLayout === "modern_bistro" ? "6px solid #0f172a" : "2px solid #cbd5e1",
-                    background: "#ffffff",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <UtensilsCrossed size={20} style={{ color: "#7c3aed" }} />
-                <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#0f172a", margin: 0 }}>
-                  Modern Bistro
-                </h3>
-              </div>
-
-              <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.5, margin: "0 0 14px" }}>
-                High-end gastronomic boutique theme. Dark obsidian hero with champagne accents, horizontal course cards, chef notes, and floating bag pill.
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px", color: "#334155" }}>
-                <div>✓ Obsidian &amp; gold haute cuisine banner</div>
-                <div>✓ Horizontal editorial dish cards</div>
-                <div>✓ Course counters with smooth carousels</div>
-                <div>✓ Floating luxury bag summary pill</div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: "16px",
-                paddingTop: "12px",
-                borderTop: "1px dashed #e2e8f0",
-                fontSize: "12px",
-                fontWeight: 700,
-                color: menuLayout === "modern_bistro" ? "#0f172a" : "#94a3b8",
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-              }}
-            >
-              {menuLayout === "modern_bistro" && <Check size={14} />}
-              <span>{menuLayout === "modern_bistro" ? "Active Selected Layout" : "Click to Select"}</span>
-            </div>
-          </div>
-
-          {/* Option 3: Street Express */}
-          <div
-            onClick={() => setMenuLayout("street_express")}
-            style={{
-              borderRadius: "12px",
-              border: menuLayout === "street_express" ? "2.5px solid #16a34a" : "1.5px solid #e2e8f0",
-              background: menuLayout === "street_express" ? "#f0fdf4" : "#ffffff",
-              boxShadow: menuLayout === "street_express" ? "0 8px 24px rgba(22, 163, 74, 0.12)" : "none",
-              padding: "18px",
-              cursor: "pointer",
-              position: "relative",
-              transition: "all 0.2s ease",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 800,
-                    padding: "3px 8px",
-                    borderRadius: "4px",
-                    background: "#dcfce7",
-                    color: "#15803d",
-                  }}
-                >
-                  NEW • FAST CASUAL
-                </span>
-
-                <div
-                  style={{
-                    width: "22px",
-                    height: "22px",
-                    borderRadius: "50%",
-                    border: menuLayout === "street_express" ? "6px solid #16a34a" : "2px solid #cbd5e1",
-                    background: "#ffffff",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <Zap size={20} style={{ color: "#16a34a" }} />
-                <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#0f172a", margin: 0 }}>
-                  Street Express
-                </h3>
-              </div>
-
-              <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.5, margin: "0 0 14px" }}>
-                High-speed casual foodie grid with direct on-card quantity increment steppers (- 1 +), speed-order banner, and sticky checkout bar.
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px", color: "#334155" }}>
-                <div>✓ Electric speed-order banner</div>
-                <div>✓ Direct card quantity steppers (- / +)</div>
-                <div>✓ High-density visual card grid</div>
-                <div>✓ Sticky high-contrast checkout action bar</div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: "16px",
-                paddingTop: "12px",
-                borderTop: "1px dashed #e2e8f0",
-                fontSize: "12px",
-                fontWeight: 700,
-                color: menuLayout === "street_express" ? "#16a34a" : "#94a3b8",
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-              }}
-            >
-              {menuLayout === "street_express" && <Check size={14} />}
-              <span>{menuLayout === "street_express" ? "Active Selected Layout" : "Click to Select"}</span>
             </div>
           </div>
         </div>

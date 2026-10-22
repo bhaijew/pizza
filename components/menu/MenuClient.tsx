@@ -17,6 +17,9 @@ import CartSheet from "./CartSheet";
 import ClassicLayout from "./layouts/ClassicLayout";
 import ModernBistroLayout from "./layouts/ModernBistroLayout";
 import StreetExpressLayout from "./layouts/StreetExpressLayout";
+import KfcLayout from "./layouts/KfcLayout";
+import CheeziousLayout from "./layouts/CheeziousLayout";
+import McDonaldsLayout from "./layouts/McDonaldsLayout";
 
 interface MenuClientProps {
   categories: Category[];
@@ -88,16 +91,81 @@ function MenuInner({
   const hasError = !!categoriesError || !!productsError;
   const currentVerifiedTable = verifiedTable || (isDedicatedTableRoute && tableNumber ? tableNumber : undefined);
 
+  // Fast-food layouts (KFC, Cheezious, McDonald's) provide their own dedicated app header
+  const isDedicatedAppLayout =
+    settings.menu_layout === "kfc" ||
+    settings.menu_layout === "cheezious" ||
+    settings.menu_layout === "mcdonalds";
+
   return (
     <>
-      <MenuHeader
-        onCartOpen={() => setCartOpen(true)}
-        shopName={settings.shop_name}
-        verifiedTable={currentVerifiedTable}
-        logoUrl={settings.logo_url}
-      />
+      {!isDedicatedAppLayout && (
+        <MenuHeader
+          onCartOpen={() => setCartOpen(true)}
+          shopName={settings.shop_name}
+          verifiedTable={currentVerifiedTable}
+          logoUrl={settings.logo_url}
+        />
+      )}
 
-      {settings.menu_layout === "modern_bistro" ? (
+      {settings.menu_layout === "kfc" ? (
+        <KfcLayout
+          categories={categories}
+          products={products}
+          filteredProducts={filteredProducts}
+          categoriesError={categoriesError}
+          productsError={productsError}
+          tableMissing={tableMissing}
+          hasError={hasError}
+          settings={settings}
+          activeCategoryId={activeCategoryId}
+          setActiveCategoryId={setActiveCategoryId}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedProduct={selectedProduct}
+          setSelectedProduct={setSelectedProduct}
+          currentVerifiedTable={currentVerifiedTable}
+          onCartOpen={() => setCartOpen(true)}
+        />
+      ) : settings.menu_layout === "cheezious" ? (
+        <CheeziousLayout
+          categories={categories}
+          products={products}
+          filteredProducts={filteredProducts}
+          categoriesError={categoriesError}
+          productsError={productsError}
+          tableMissing={tableMissing}
+          hasError={hasError}
+          settings={settings}
+          activeCategoryId={activeCategoryId}
+          setActiveCategoryId={setActiveCategoryId}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedProduct={selectedProduct}
+          setSelectedProduct={setSelectedProduct}
+          currentVerifiedTable={currentVerifiedTable}
+          onCartOpen={() => setCartOpen(true)}
+        />
+      ) : settings.menu_layout === "mcdonalds" ? (
+        <McDonaldsLayout
+          categories={categories}
+          products={products}
+          filteredProducts={filteredProducts}
+          categoriesError={categoriesError}
+          productsError={productsError}
+          tableMissing={tableMissing}
+          hasError={hasError}
+          settings={settings}
+          activeCategoryId={activeCategoryId}
+          setActiveCategoryId={setActiveCategoryId}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedProduct={selectedProduct}
+          setSelectedProduct={setSelectedProduct}
+          currentVerifiedTable={currentVerifiedTable}
+          onCartOpen={() => setCartOpen(true)}
+        />
+      ) : settings.menu_layout === "modern_bistro" ? (
         <ModernBistroLayout
           categories={categories}
           products={products}

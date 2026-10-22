@@ -3,7 +3,13 @@ import path from "path";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { dbCache } from "@/lib/db-cache";
 
-export type MenuLayoutType = "classic" | "modern_bistro" | "street_express";
+export type MenuLayoutType =
+  | "kfc"
+  | "cheezious"
+  | "mcdonalds"
+  | "classic"
+  | "modern_bistro"
+  | "street_express";
 
 export interface ShopBranding {
   logo_url: string | null;

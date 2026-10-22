@@ -1,10 +1,10 @@
 {
-  "main": {
-    "logo_url": null,
-    "menu_layout": "classic"
-  },
   "5": {
     "logo_url": null,
-    "menu_layout": "classic"
+    "menu_layout": "cheezious"
+  },
+  "main": {
+    "logo_url": null,
+    "menu_layout": "cheezious"
   }
 }

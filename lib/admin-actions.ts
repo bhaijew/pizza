@@ -960,8 +960,14 @@ export async function updateShopLogoAndLayout(
   const rawLayout = formData.get("menu_layout") as string | null;
 
   const logo_url = rawLogo !== null ? (rawLogo.trim() || null) : undefined;
-  const validLayouts = ["classic", "modern_bistro", "street_express"];
-  const menu_layout = (validLayouts.includes(rawLayout || "") ? rawLayout : "classic") as "classic" | "modern_bistro" | "street_express";
+  const validLayouts = ["kfc", "cheezious", "mcdonalds", "classic", "modern_bistro", "street_express"];
+  const menu_layout = (validLayouts.includes(rawLayout || "") ? rawLayout : "classic") as
+    | "kfc"
+    | "cheezious"
+    | "mcdonalds"
+    | "classic"
+    | "modern_bistro"
+    | "street_express";
 
   const { saveShopBranding } = await import("@/lib/shop-branding");
   await saveShopBranding(activeShop.shopId, {
