@@ -32,6 +32,11 @@ import {
 import OrderRecreateModal from "@/components/admin/OrderRecreateModal";
 import ThermalDualPrintModal from "@/components/admin/ThermalDualPrintModal";
 import type { DeliveryRider } from "@/lib/admin-actions";
+import AudioNotificationController, {
+  playAlertChime,
+  SOUND_VOLUME_KEY,
+  SOUND_MUTED_KEY,
+} from "@/components/admin/AudioNotificationController";
 
 interface OrdersLiveBoardProps {
   initialOrders: Order[];
@@ -255,37 +260,17 @@ export default function OrdersLiveBoard({
     };
   }, [todayOrders, orders]);
 
-  // Play crisp 2-tone enterprise POS alert chime (A5 -> D6)
+  // Play crisp enterprise POS alert chime with user-selected volume
   const playPosOrderChime = useCallback(() => {
+    let vol = 80;
+    let muted = false;
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const now = ctx.currentTime;
-
-      const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc1.type = "sine";
-      osc1.frequency.setValueAtTime(880, now); // A5
-      osc2.type = "triangle";
-      osc2.frequency.setValueAtTime(1174.66, now + 0.12); // D6
-
-      gain.gain.setValueAtTime(0.24, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc1.start(now);
-      osc1.stop(now + 0.18);
-      osc2.start(now + 0.12);
-      osc2.stop(now + 0.6);
-    } catch {
-      // Audio autoplay policy fallback
-    }
+      const savedVol = localStorage.getItem(SOUND_VOLUME_KEY);
+      const savedMuted = localStorage.getItem(SOUND_MUTED_KEY);
+      if (savedVol !== null) vol = parseInt(savedVol, 10);
+      if (savedMuted !== null) muted = savedMuted === "true";
+    } catch {}
+    playAlertChime(vol, muted, "pos");
   }, []);
 
   // Feature 8: Rider assignment state
@@ -700,36 +685,12 @@ export default function OrdersLiveBoard({
           </p>
         </div>
 
-        {/* Sound Alert Toggle & Search */}
+        {/* Sound Alert Controller, KDS & Search */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-          <button
-            type="button"
-            onClick={() => {
-              const next = !soundEnabled;
-              setSoundEnabled(next);
-              if (next) {
-                playPosOrderChime();
-              }
-            }}
-            title={soundEnabled ? "Mute live order sound alerts" : "Enable live order sound alerts"}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 12px",
-              borderRadius: "6px",
-              border: soundEnabled ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
-              background: soundEnabled ? "#f0fdf4" : "#f8fafc",
-              color: soundEnabled ? "#16a34a" : "#64748b",
-              fontSize: "12px",
-              fontWeight: 700,
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-            }}
-          >
-            {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
-            <span>{soundEnabled ? "Sound: ON" : "Sound: OFF"}</span>
-          </button>
+          <AudioNotificationController
+            soundType="pos"
+            onVolumeChange={(_vol, isMuted) => setSoundEnabled(!isMuted)}
+          />
 
           {/* Standalone KDS Screen Tablet Link */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>

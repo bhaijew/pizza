@@ -28,6 +28,11 @@ import {
   Zap,
   Lock,
 } from "lucide-react";
+import AudioNotificationController, {
+  playAlertChime,
+  SOUND_VOLUME_KEY,
+  SOUND_MUTED_KEY,
+} from "@/components/admin/AudioNotificationController";
 import ThermalDualPrintModal from "@/components/admin/ThermalDualPrintModal";
 
 interface KitchenDisplayProps {
@@ -72,22 +77,15 @@ export default function KitchenDisplay({
   }, [soundEnabled]);
 
   const playKitchenChime = useCallback(() => {
+    let vol = 80;
+    let muted = false;
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(880, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1174.66, ctx.currentTime + 0.15);
-      gain.gain.setValueAtTime(0.2, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.35);
+      const savedVol = localStorage.getItem(SOUND_VOLUME_KEY);
+      const savedMuted = localStorage.getItem(SOUND_MUTED_KEY);
+      if (savedVol !== null) vol = parseInt(savedVol, 10);
+      if (savedMuted !== null) muted = savedMuted === "true";
     } catch {}
+    playAlertChime(vol, muted, "kitchen");
   }, []);
 
   // Live second clock for kitchen chefs
@@ -463,27 +461,8 @@ export default function KitchenDisplay({
             <span>{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setSoundEnabled((prev) => !prev)}
-            style={{
-              padding: "7px 12px",
-              borderRadius: 5,
-              border: soundEnabled ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
-              background: soundEnabled ? "#f0fdf4" : "#ffffff",
-              color: soundEnabled ? "#16a34a" : "#64748b",
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              transition: "all 0.15s ease",
-            }}
-          >
-            {soundEnabled ? <Volume2 size={14} className="text-emerald-500" /> : <VolumeX size={14} />}
-            <span>{soundEnabled ? "Chime ON" : "Chime OFF"}</span>
-          </button>
+          {/* Audio Chime Notification & Volume Controller */}
+          <AudioNotificationController soundType="kitchen" />
 
           {/* Standalone Lock KDS Screen Button */}
           {isStandalone && (
