@@ -131,8 +131,8 @@ export default async function AdminDashboardPage() {
       {/* ─── Top Command Center Hero ─── */}
       <div
         style={{
-          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-          borderRadius: 5,
+          background: "linear-gradient(135deg, #090e1a 0%, #111a2e 50%, #162035 100%)",
+          borderRadius: 8,
           color: "#ffffff",
           marginBottom: 24,
           display: "flex",
@@ -140,8 +140,8 @@ export default async function AdminDashboardPage() {
           alignItems: "center",
           flexWrap: "wrap",
           gap: 16,
-          boxShadow: "0 12px 32px rgba(15, 23, 42, 0.2)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
+          boxShadow: "0 16px 36px -10px rgba(9, 14, 26, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
           position: "relative",
           overflow: "hidden",
         }}
@@ -150,11 +150,22 @@ export default async function AdminDashboardPage() {
         <div
           style={{
             position: "absolute",
-            right: "-40px",
-            top: "-40px",
-            width: "200px",
-            height: "200px",
-            background: "radial-gradient(circle, rgba(239, 68, 68, 0.15) 0%, transparent 70%)",
+            right: "-30px",
+            top: "-30px",
+            width: "240px",
+            height: "240px",
+            background: "radial-gradient(circle, rgba(234, 88, 12, 0.22) 0%, rgba(239, 68, 68, 0.1) 45%, transparent 70%)",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            left: "-40px",
+            bottom: "-40px",
+            width: "220px",
+            height: "220px",
+            background: "radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 65%)",
             pointerEvents: "none",
           }}
         />
