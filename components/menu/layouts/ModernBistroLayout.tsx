@@ -7,7 +7,16 @@ import { useCart } from "../CartContext";
 import BrandLogo from "@/components/BrandLogo";
 import MenuEmptyState from "../MenuEmptyState";
 import MenuErrorState from "../MenuErrorState";
-import { Search, Sparkles, Clock, Utensils, ChevronRight, ShoppingBag } from "lucide-react";
+import { Search, Sparkles, Clock, ChevronRight, ShoppingBag } from "lucide-react";
+
+const UtensilsIcon = ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M18 2v6a3 3 0 0 1-3 3 3 3 0 0 1-3-3V2" />
+    <path d="M15 2v19" />
+    <path d="M6 2v7a3 3 0 0 0 6 0V2" />
+    <path d="M9 2v19" />
+  </svg>
+);
 
 interface ModernBistroLayoutProps {
   categories: Category[];
@@ -427,7 +436,7 @@ export default function ModernBistroLayout({
                           color: "#94a3b8",
                         }}
                       >
-                        <Utensils size={32} />
+                        <UtensilsIcon size={32} />
                       </div>
                     )}
 

@@ -5,8 +5,6 @@ import BrandLogo from "@/components/BrandLogo";
 import { updateShopLogoAndLayout } from "@/lib/admin-actions";
 import type { ShopSettings } from "@/lib/menu-data";
 import {
-  Upload,
-  Link as LinkIcon,
   Check,
   Sparkles,
   ExternalLink,
@@ -14,11 +12,32 @@ import {
   UtensilsCrossed,
   Zap,
   Image as ImageIcon,
-  RotateCcw,
   CheckCircle2,
   AlertCircle,
   Eye,
 } from "lucide-react";
+
+const UploadIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </svg>
+);
+
+const LinkIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+  </svg>
+);
+
+const RotateCcwIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+    <path d="M3 3v5h5" />
+  </svg>
+);
 
 interface MenuLayoutStudioProps {
   initialSettings: ShopSettings;
@@ -258,7 +277,7 @@ export default function MenuLayoutStudio({
               }}
               className="hover:bg-red-50"
             >
-              <RotateCcw size={13} />
+              <RotateCcwIcon size={13} />
               <span>Reset to Default Pizza Icon</span>
             </button>
           )}
@@ -287,7 +306,7 @@ export default function MenuLayoutStudio({
                   gap: "6px",
                 }}
               >
-                <Upload size={14} />
+                <UploadIcon size={14} />
                 <span>Upload Logo File</span>
               </button>
 
@@ -351,7 +370,7 @@ export default function MenuLayoutStudio({
                     marginBottom: "10px",
                   }}
                 >
-                  <Upload size={20} />
+                  <UploadIcon size={20} />
                 </div>
                 <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", marginBottom: "2px" }}>
                   {uploadFileName ? uploadFileName : "Click or Drag to Upload Logo"}

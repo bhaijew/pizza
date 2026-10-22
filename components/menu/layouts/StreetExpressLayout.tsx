@@ -7,7 +7,22 @@ import { useCart } from "../CartContext";
 import BrandLogo from "@/components/BrandLogo";
 import MenuEmptyState from "../MenuEmptyState";
 import MenuErrorState from "../MenuErrorState";
-import { Search, Flame, Zap, Plus, Minus, ArrowRight, ShoppingBag, Utensils } from "lucide-react";
+import { Search, Flame, Zap, Plus, ArrowRight, ShoppingBag } from "lucide-react";
+
+const MinusIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+const UtensilsIcon = ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M18 2v6a3 3 0 0 1-3 3 3 3 0 0 1-3-3V2" />
+    <path d="M15 2v19" />
+    <path d="M6 2v7a3 3 0 0 0 6 0V2" />
+    <path d="M9 2v19" />
+  </svg>
+);
 
 interface StreetExpressLayoutProps {
   categories: Category[];
@@ -45,7 +60,7 @@ export default function StreetExpressLayout({
   currentVerifiedTable,
   onCartOpen,
 }: StreetExpressLayoutProps) {
-  const { items, totalItems, totalPrice, formatPrice, addItem, setQuantity, getItemKey } = useCart();
+  const { items, totalItems, totalPrice, formatPrice, addItem, setQty, getItemKey } = useCart();
   const themeColor = settings.theme_color || "#ea580c";
 
   // Helper to find existing cart item count for a single-variant product
@@ -69,7 +84,7 @@ export default function StreetExpressLayout({
 
   const handleStepQty = (e: React.MouseEvent, itemKey: string, newQty: number) => {
     e.stopPropagation();
-    setQuantity(itemKey, newQty);
+    setQty(itemKey, newQty);
   };
 
   return (
@@ -350,7 +365,7 @@ export default function StreetExpressLayout({
                           color: "#94a3b8",
                         }}
                       >
-                        <Utensils size={36} />
+                        <UtensilsIcon size={36} />
                       </div>
                     )}
 
@@ -464,7 +479,7 @@ export default function StreetExpressLayout({
                               cursor: "pointer",
                             }}
                           >
-                            <Minus size={13} />
+                            <MinusIcon size={13} />
                           </button>
 
                           <span style={{ fontSize: "13px", fontWeight: 900 }}>{count}</span>
