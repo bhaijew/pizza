@@ -53,9 +53,13 @@ export default function MenuLayoutStudio({
   shopId,
 }: MenuLayoutStudioProps) {
   const [logoUrl, setLogoUrl] = useState<string>(initialSettings.logo_url || "");
-  const [menuLayout, setMenuLayout] = useState<
-    "kfc" | "cheezious" | "mcdonalds" | "classic" | "modern_bistro" | "street_express"
-  >(initialSettings.menu_layout || "cheezious");
+  const [menuLayout, setMenuLayout] = useState<"cheezious" | "kfc" | "mcdonalds">(
+    (initialSettings.menu_layout as "cheezious" | "kfc" | "mcdonalds") === "kfc"
+      ? "kfc"
+      : (initialSettings.menu_layout as "cheezious" | "kfc" | "mcdonalds") === "mcdonalds"
+      ? "mcdonalds"
+      : "cheezious"
+  );
   const [logoMode, setLogoMode] = useState<"upload" | "url">("upload");
   const [uploadFileName, setUploadFileName] = useState<string>("");
   const [isPending, startTransition] = useTransition();
@@ -482,16 +486,16 @@ export default function MenuLayoutStudio({
             2. Choose Menu Design Layout
           </h2>
           <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
-            Select one of the fast-food brand menu designs. Your customer menu will dynamically switch to this presentation.
+            Select one of the three real fast-food mobile app layouts. Your customer menu will dynamically switch to this presentation.
           </p>
         </div>
 
-        {/* 4 Layout Cards */}
+        {/* 3 Real Fast-Food Layout Cards */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "18px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "20px",
           }}
         >
           {/* Option 1: Cheezious Real Style */}
@@ -734,85 +738,7 @@ export default function MenuLayoutStudio({
             </div>
           </div>
 
-          {/* Option 4: Classic Artisan */}
-          <div
-            onClick={() => setMenuLayout("classic")}
-            style={{
-              borderRadius: "14px",
-              border: menuLayout === "classic" ? "2.5px solid #ea580c" : "1.5px solid #e2e8f0",
-              background: menuLayout === "classic" ? "#fffbf7" : "#ffffff",
-              boxShadow: menuLayout === "classic" ? "0 8px 24px rgba(234, 88, 12, 0.12)" : "none",
-              padding: "18px",
-              cursor: "pointer",
-              position: "relative",
-              transition: "all 0.2s ease",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 800,
-                    padding: "3px 8px",
-                    borderRadius: "6px",
-                    background: "#fef3c7",
-                    color: "#92400e",
-                  }}
-                >
-                  TRADITIONAL PIZZERIA
-                </span>
 
-                <div
-                  style={{
-                    width: "22px",
-                    height: "22px",
-                    borderRadius: "50%",
-                    border: menuLayout === "classic" ? "6px solid #ea580c" : "2px solid #cbd5e1",
-                    background: "#ffffff",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <Flame size={20} style={{ color: "#ea580c" }} />
-                <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#0f172a", margin: 0 }}>
-                  Classic Artisan
-                </h3>
-              </div>
-
-              <p style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.5, margin: "0 0 14px" }}>
-                Stone-baked artisan layout with vibrant hero banner, promo slider, category tabs, and 2-column square product cards.
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px", color: "#334155" }}>
-                <div>✓ Hero Section with wood-fired badges</div>
-                <div>✓ Multi-image Promo Banner slider</div>
-                <div>✓ 2-column square product grid</div>
-                <div>✓ Standard bottom drawer cart</div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: "16px",
-                paddingTop: "12px",
-                borderTop: "1px dashed #e2e8f0",
-                fontSize: "12px",
-                fontWeight: 700,
-                color: menuLayout === "classic" ? "#ea580c" : "#94a3b8",
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-              }}
-            >
-              {menuLayout === "classic" && <Check size={14} />}
-              <span>{menuLayout === "classic" ? "Active Selected Layout" : "Click to Select"}</span>
-            </div>
-          </div>
         </div>
 
         {/* Bottom Save Reminder */}

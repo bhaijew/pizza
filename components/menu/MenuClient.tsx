@@ -14,11 +14,8 @@ import { CartProvider } from "./CartContext";
 import MenuHeader from "./MenuHeader";
 import ProductDetailSheet from "./ProductDetailSheet";
 import CartSheet from "./CartSheet";
-import ClassicLayout from "./layouts/ClassicLayout";
-import ModernBistroLayout from "./layouts/ModernBistroLayout";
-import StreetExpressLayout from "./layouts/StreetExpressLayout";
-import KfcLayout from "./layouts/KfcLayout";
 import CheeziousLayout from "./layouts/CheeziousLayout";
+import KfcLayout from "./layouts/KfcLayout";
 import McDonaldsLayout from "./layouts/McDonaldsLayout";
 
 interface MenuClientProps {
@@ -127,25 +124,6 @@ function MenuInner({
           currentVerifiedTable={currentVerifiedTable}
           onCartOpen={() => setCartOpen(true)}
         />
-      ) : settings.menu_layout === "cheezious" ? (
-        <CheeziousLayout
-          categories={categories}
-          products={products}
-          filteredProducts={filteredProducts}
-          categoriesError={categoriesError}
-          productsError={productsError}
-          tableMissing={tableMissing}
-          hasError={hasError}
-          settings={settings}
-          activeCategoryId={activeCategoryId}
-          setActiveCategoryId={setActiveCategoryId}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          selectedProduct={selectedProduct}
-          setSelectedProduct={setSelectedProduct}
-          currentVerifiedTable={currentVerifiedTable}
-          onCartOpen={() => setCartOpen(true)}
-        />
       ) : settings.menu_layout === "mcdonalds" ? (
         <McDonaldsLayout
           categories={categories}
@@ -165,46 +143,8 @@ function MenuInner({
           currentVerifiedTable={currentVerifiedTable}
           onCartOpen={() => setCartOpen(true)}
         />
-      ) : settings.menu_layout === "modern_bistro" ? (
-        <ModernBistroLayout
-          categories={categories}
-          products={products}
-          filteredProducts={filteredProducts}
-          categoriesError={categoriesError}
-          productsError={productsError}
-          tableMissing={tableMissing}
-          hasError={hasError}
-          settings={settings}
-          activeCategoryId={activeCategoryId}
-          setActiveCategoryId={setActiveCategoryId}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          selectedProduct={selectedProduct}
-          setSelectedProduct={setSelectedProduct}
-          currentVerifiedTable={currentVerifiedTable}
-          onCartOpen={() => setCartOpen(true)}
-        />
-      ) : settings.menu_layout === "street_express" ? (
-        <StreetExpressLayout
-          categories={categories}
-          products={products}
-          filteredProducts={filteredProducts}
-          categoriesError={categoriesError}
-          productsError={productsError}
-          tableMissing={tableMissing}
-          hasError={hasError}
-          settings={settings}
-          activeCategoryId={activeCategoryId}
-          setActiveCategoryId={setActiveCategoryId}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          selectedProduct={selectedProduct}
-          setSelectedProduct={setSelectedProduct}
-          currentVerifiedTable={currentVerifiedTable}
-          onCartOpen={() => setCartOpen(true)}
-        />
       ) : (
-        <ClassicLayout
+        <CheeziousLayout
           categories={categories}
           products={products}
           filteredProducts={filteredProducts}
@@ -220,6 +160,7 @@ function MenuInner({
           selectedProduct={selectedProduct}
           setSelectedProduct={setSelectedProduct}
           currentVerifiedTable={currentVerifiedTable}
+          onCartOpen={() => setCartOpen(true)}
         />
       )}
 

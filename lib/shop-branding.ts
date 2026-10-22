@@ -3,13 +3,7 @@ import path from "path";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { dbCache } from "@/lib/db-cache";
 
-export type MenuLayoutType =
-  | "kfc"
-  | "cheezious"
-  | "mcdonalds"
-  | "classic"
-  | "modern_bistro"
-  | "street_express";
+export type MenuLayoutType = "cheezious" | "kfc" | "mcdonalds";
 
 export interface ShopBranding {
   logo_url: string | null;
@@ -18,7 +12,7 @@ export interface ShopBranding {
 
 const DEFAULT_BRANDING: ShopBranding = {
   logo_url: null,
-  menu_layout: "classic",
+  menu_layout: "cheezious",
 };
 
 const DATA_FILE = path.join(process.cwd(), "data", "shop-branding.json");
@@ -70,9 +64,14 @@ export async function getShopBranding(shopId?: number | null): Promise<ShopBrand
           .maybeSingle();
 
         if (data && (data.logo_url !== undefined || data.menu_layout !== undefined)) {
+          const rawLayout = data.menu_layout || localRecord?.menu_layout;
+          const normalized =
+            rawLayout === "kfc" || rawLayout === "mcdonalds" || rawLayout === "cheezious"
+              ? rawLayout
+              : "cheezious";
           return {
             logo_url: data.logo_url ?? localRecord?.logo_url ?? null,
-            menu_layout: (data.menu_layout as MenuLayoutType) || localRecord?.menu_layout || "classic",
+            menu_layout: normalized,
           };
         }
       } else {
@@ -83,9 +82,14 @@ export async function getShopBranding(shopId?: number | null): Promise<ShopBrand
           .maybeSingle();
 
         if (data && (data.logo_url !== undefined || data.menu_layout !== undefined)) {
+          const rawLayout = data.menu_layout || localRecord?.menu_layout;
+          const normalized =
+            rawLayout === "kfc" || rawLayout === "mcdonalds" || rawLayout === "cheezious"
+              ? rawLayout
+              : "cheezious";
           return {
             logo_url: data.logo_url ?? localRecord?.logo_url ?? null,
-            menu_layout: (data.menu_layout as MenuLayoutType) || localRecord?.menu_layout || "classic",
+            menu_layout: normalized,
           };
         }
       }
@@ -95,9 +99,14 @@ export async function getShopBranding(shopId?: number | null): Promise<ShopBrand
   }
 
   if (localRecord) {
+    const rawLayout = localRecord.menu_layout;
+    const normalized =
+      rawLayout === "kfc" || rawLayout === "mcdonalds" || rawLayout === "cheezious"
+        ? rawLayout
+        : "cheezious";
     return {
       logo_url: localRecord.logo_url ?? null,
-      menu_layout: localRecord.menu_layout || "classic",
+      menu_layout: normalized,
     };
   }
 
@@ -119,7 +128,7 @@ export async function saveShopBranding(
 
   const updated: ShopBranding = {
     logo_url: branding.logo_url !== undefined ? branding.logo_url : current.logo_url,
-    menu_layout: branding.menu_layout || current.menu_layout || "classic",
+    menu_layout: branding.menu_layout || current.menu_layout || "cheezious",
   };
 
   localStore[targetKey] = updated;
