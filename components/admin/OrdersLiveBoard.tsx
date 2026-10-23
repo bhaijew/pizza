@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useTransition, useCallback } from "react";
 import type { Order } from "@/types/menu";
-import { updateOrderStatus, assignOrderRider, triggerRiderWhatsAppAlert } from "@/lib/admin-actions";
+import { updateOrderStatus, assignOrderRider, triggerRiderWhatsAppAlert, deleteOrder } from "@/lib/admin-actions";
 import { createClient } from "@/utils/supabase/client";
 import { isOrderInTodayShift } from "@/lib/business-hours";
 import {
@@ -28,6 +28,7 @@ import {
   Printer,
   Copy,
   Check,
+  Trash2,
 } from "lucide-react";
 import OrderRecreateModal from "@/components/admin/OrderRecreateModal";
 import ThermalDualPrintModal from "@/components/admin/ThermalDualPrintModal";
@@ -484,6 +485,20 @@ export default function OrdersLiveBoard({
 
     startTransition(async () => {
       const res = await updateOrderStatus(orderId, nextStatus);
+      if (res?.error) {
+        alert(res.error);
+        window.location.reload();
+      }
+    });
+  };
+
+  const handleDeleteOrder = (orderId: number, orderNum: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete order ${orderNum}? This will remove it completely.`)) {
+      return;
+    }
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    startTransition(async () => {
+      const res = await deleteOrder(orderId);
       if (res?.error) {
         alert(res.error);
         window.location.reload();
@@ -1832,12 +1847,16 @@ export default function OrdersLiveBoard({
                       )}
                     </div>
 
-                    {/* ROW 2: Utility Toolbelt (Print Slips, Recreate, Cancel) */}
+                    {/* ROW 2: Utility Toolbelt (Print Slips, Recreate, Cancel, Delete) */}
                     <div
                       style={{
                         display: "grid",
                         gridTemplateColumns:
-                          order.status !== "cancelled" && order.status !== "delivered"
+                          canCancelOrders
+                            ? order.status !== "cancelled" && order.status !== "delivered"
+                              ? "repeat(4, 1fr)"
+                              : "repeat(3, 1fr)"
+                            : order.status !== "cancelled" && order.status !== "delivered"
                             ? "repeat(3, 1fr)"
                             : "repeat(2, 1fr)",
                         gap: "5px",
@@ -1961,6 +1980,36 @@ export default function OrdersLiveBoard({
                             <span>🔒 Cancel</span>
                           </button>
                         )
+                      )}
+
+                      {/* Delete / Remove Fake Order Button (Admin Only) */}
+                      {canCancelOrders && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteOrder(order.id, order.order_number)}
+                          style={{
+                            height: "28px",
+                            borderRadius: "5px",
+                            background: "#fff1f2",
+                            color: "#e11d48",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            border: "1px solid #fecdd3",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "3px",
+                            whiteSpace: "nowrap",
+                            padding: "0 4px",
+                            transition: "all 0.15s ease",
+                          }}
+                          className="hover:bg-rose-100 hover:border-rose-300"
+                          title="Permanently remove / delete this fake or test order from database"
+                        >
+                          <Trash2 size={12} style={{ flexShrink: 0 }} />
+                          <span>Delete</span>
+                        </button>
                       )}
                     </div>
                   </div>

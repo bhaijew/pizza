@@ -73,22 +73,46 @@ export default function HeroSection({
     settings?.hero_show_chips !== false &&
     (!!chip1.trim() || !!chip2.trim() || !!chip3.trim());
 
-  const bgType = settings?.hero_bg_type || "gradient";
+  const bgType = settings?.hero_bg_type || "image";
   const bgImage = settings?.hero_bg_image;
   const bgGradient = settings?.hero_bg_gradient;
   const bgColor = settings?.hero_bg_color;
-  const showPattern = settings?.hero_show_pattern !== false;
+  // Eliminate intrusive grid mesh so food photos are crystal clear
+  const showPattern = settings?.hero_show_pattern === true;
 
-  // ─── Compute Background Style ────────────────────────────────
-  let backgroundStyle = `linear-gradient(135deg, ${themeColor} 0%, #b91c1c 30%, #c2410c 70%, #d97706 100%)`;
+  // ─── Dynamic Auto-Scrolling Background Slideshow ────────────────
+  const heroSlideImages = (function () {
+    const slides: string[] = [];
+    if (bgImage?.trim()) slides.push(bgImage.trim());
+    if (Array.isArray(settings?.slider_images)) {
+      settings.slider_images.forEach((s: any) => {
+        if (s?.image_url && !slides.includes(s.image_url)) slides.push(s.image_url);
+      });
+    }
+    const defaultSlides = [
+      "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1600&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1600&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=1600&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=1600&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=1600&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1594007654729-407eedc4be65?w=1600&auto=format&fit=crop&q=80",
+    ];
+    defaultSlides.forEach((url) => {
+      if (!slides.includes(url)) slides.push(url);
+    });
+    return slides;
+  })();
 
-  if (bgType === "image" && bgImage?.trim()) {
-    backgroundStyle = `linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.82)), url("${bgImage.trim()}") center/cover no-repeat`;
-  } else if (bgType === "solid" && bgColor?.trim()) {
-    backgroundStyle = bgColor.trim();
-  } else if (bgGradient?.trim()) {
-    backgroundStyle = bgGradient.trim();
-  }
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  // Auto-cycle slide every 4.5 seconds
+  useEffect(() => {
+    if (heroSlideImages.length <= 1) return;
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % heroSlideImages.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [heroSlideImages.length]);
 
   // Determine badge text
   const renderedBadge = verifiedTable
@@ -107,13 +131,162 @@ export default function HeroSection({
       style={{
         position: "relative",
         overflow: "hidden",
-        background: backgroundStyle,
+        backgroundColor: "#09090b",
         color: "#ffffff",
-        padding: "clamp(20px, 3.2vw, 36px) clamp(16px, 2.5vw, 24px)",
+        padding: "clamp(24px, 3.6vw, 42px) clamp(16px, 2.5vw, 24px)",
         borderBottom: "2px solid #f59e0b",
       }}
     >
-      {/* Subtle modern square grid pattern */}
+      {/* Dynamic Auto-Scrolling Background Slideshow with Horizontal Slide Animation */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          overflow: "hidden",
+          zIndex: 0,
+          pointerEvents: "none",
+        }}
+      >
+        {heroSlideImages.map((imgUrl, idx) => {
+          const isActive = idx === activeSlide;
+          const isPrev = (idx === activeSlide - 1) || (activeSlide === 0 && idx === heroSlideImages.length - 1);
+          return (
+            <div
+              key={imgUrl + idx}
+              style={{
+                position: "absolute",
+                inset: 0,
+                backgroundImage: `url("${imgUrl}")`,
+                backgroundPosition: "center",
+                backgroundSize: "cover",
+                backgroundRepeat: "no-repeat",
+                opacity: isActive ? 1 : 0,
+                transform: isActive
+                  ? "translateX(0) scale(1.06)"
+                  : isPrev
+                  ? "translateX(-8%) scale(1.0)"
+                  : "translateX(8%) scale(1.0)",
+                transition: "opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 5s cubic-bezier(0.25, 1, 0.5, 1)",
+              }}
+            />
+          );
+        })}
+
+        {/* Deep Cinematic Gradient Overlay for 100% Text Clarity */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(105deg, rgba(9, 9, 11, 0.92) 0%, rgba(9, 9, 11, 0.78) 45%, rgba(9, 9, 11, 0.65) 100%)",
+          }}
+        />
+      </div>
+
+      {/* Auto-Slide Glowing Progress Timer Bar */}
+      <div
+        key={`hero-timer-${activeSlide}`}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          height: 3,
+          background: "linear-gradient(90deg, #f59e0b, #fbbf24, #fde047)",
+          boxShadow: "0 0 10px rgba(251, 191, 36, 0.7)",
+          zIndex: 10,
+          animation: "heroSlideTimer 4.5s linear forwards",
+        }}
+      />
+
+      {/* Slide Navigation Dots & Manual Arrows */}
+      {heroSlideImages.length > 1 && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 12,
+            right: 18,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            zIndex: 3,
+            background: "rgba(0, 0, 0, 0.35)",
+            backdropFilter: "blur(6px)",
+            padding: "4px 8px",
+            borderRadius: 20,
+            border: "1px solid rgba(255, 255, 255, 0.15)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setActiveSlide((prev) => (prev - 1 + heroSlideImages.length) % heroSlideImages.length)}
+            aria-label="Previous image"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#ffffff",
+              cursor: "pointer",
+              padding: "0 2px",
+              display: "flex",
+              alignItems: "center",
+              opacity: 0.8,
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+
+          {heroSlideImages.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setActiveSlide(i)}
+              aria-label={`Go to slide ${i + 1}`}
+              style={{
+                width: i === activeSlide ? 18 : 6,
+                height: 6,
+                borderRadius: 3,
+                background: i === activeSlide ? "#fbbf24" : "rgba(255, 255, 255, 0.4)",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                padding: 0,
+              }}
+            />
+          ))}
+
+          <button
+            type="button"
+            onClick={() => setActiveSlide((prev) => (prev + 1) % heroSlideImages.length)}
+            aria-label="Next image"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#ffffff",
+              cursor: "pointer",
+              padding: "0 2px",
+              display: "flex",
+              alignItems: "center",
+              opacity: 0.8,
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Embedded Animation Keyframes */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes heroSlideTimer {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
+      `}} />
+
+      {/* Subtle grid pattern if explicitly enabled */}
       {showPattern && (
         <div
           aria-hidden="true"
@@ -121,9 +294,10 @@ export default function HeroSection({
             position: "absolute",
             inset: 0,
             backgroundImage:
-              "linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px)",
+              "linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px)",
             backgroundSize: "32px 32px",
             pointerEvents: "none",
+            zIndex: 1,
           }}
         />
       )}
@@ -137,8 +311,9 @@ export default function HeroSection({
           right: "10%",
           width: 420,
           height: 220,
-          background: "radial-gradient(circle, rgba(251, 191, 36, 0.28) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(251, 191, 36, 0.22) 0%, transparent 70%)",
           pointerEvents: "none",
+          zIndex: 1,
         }}
       />
 

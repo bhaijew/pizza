@@ -36,6 +36,20 @@ interface MenuClientProps {
   verifiedTable?: string;
 }
 
+function getCategoryIcon(name: string) {
+  const n = name.toLowerCase();
+  if (n.includes("deal")) return "🎁";
+  if (n.includes("pizza")) return "🍕";
+  if (n.includes("burger")) return "🍔";
+  if (n.includes("fries")) return "🍟";
+  if (n.includes("shawarma")) return "🌯";
+  if (n.includes("paratha")) return "🫓";
+  if (n.includes("pasta")) return "🍝";
+  if (n.includes("sauce")) return "🥫";
+  if (n.includes("drink") || n.includes("bottle") || n.includes("water")) return "🥤";
+  return "🍽️";
+}
+
 function MenuInner({
   categories,
   products,
@@ -71,6 +85,57 @@ function MenuInner({
       setOrderType("dine_in");
     }
   }, [urlTableParam, initialTableNumber, verifiedTable]);
+
+  // Top Featured Zinger Burgers (highlighted right at the top of All Items)
+  const topZingerPicks = useMemo(() => {
+    const list = products.filter((p) => {
+      const lower = p.name.toLowerCase();
+      return (
+        lower === "zinger burger" ||
+        lower.includes("zinger burger") ||
+        (lower.includes("zinger") &&
+          !lower.includes("deal") &&
+          !lower.includes("shawarma") &&
+          !lower.includes("paratha"))
+      );
+    });
+
+    // If only 1 zinger found, also add Pizza Burger or Tower Burger so we have 2 top burger picks ("ak do")
+    if (list.length < 2) {
+      const secondPick = products.find((p) => {
+        const lower = p.name.toLowerCase();
+        return (
+          (lower.includes("pizza burger") ||
+            lower.includes("tower burger") ||
+            lower.includes("burger")) &&
+          !list.some((item) => item.id === p.id)
+        );
+      });
+      if (secondPick) list.push(secondPick);
+    }
+
+    return list.slice(0, 2);
+  }, [products]);
+
+  // When activeCategoryId is null and no search, group products by category
+  const categoriesWithProducts = useMemo(() => {
+    if (activeCategoryId !== null || searchQuery.trim()) return [];
+
+    return categories
+      .map((cat) => {
+        const catProducts = products.filter((p) => p.category_id === cat.id);
+        return {
+          category: cat,
+          products: catProducts,
+        };
+      })
+      .filter((group) => group.products.length > 0);
+  }, [categories, products, activeCategoryId, searchQuery]);
+
+  const activeCategoryObj = useMemo(() => {
+    if (activeCategoryId === null) return null;
+    return categories.find((c) => c.id === activeCategoryId) || null;
+  }, [categories, activeCategoryId]);
 
   // Filter products by selected category AND search query
   const filteredProducts = useMemo(() => {
@@ -142,23 +207,6 @@ function MenuInner({
           themeColor={settings?.theme_color || "#991b1b"}
           settings={settings}
         />
-
-        {/* Featured Deals & Promo Banner Slider */}
-        {settings?.slider_enabled !== false && (
-          <div style={{ marginTop: "12px", marginBottom: "4px" }}>
-            <MenuPromoSlider
-              slides={
-                Array.isArray(settings?.slider_images)
-                  ? (settings.slider_images as any)
-                  : typeof settings?.slider_images === "string"
-                    ? JSON.parse(settings.slider_images)
-                    : undefined
-              }
-              mobileHeight={settings?.slider_height_mobile || 180}
-              themeColor={settings?.theme_color || "#ea580c"}
-            />
-          </div>
-        )}
 
         {/* Menu section */}
         <section
@@ -241,33 +289,384 @@ function MenuInner({
                 />
               </div>
 
-              {/* Product grid — Strictly 2 Products Per Row */}
-              {filteredProducts.length === 0 ? (
-                <MenuEmptyState
-                  message={
-                    searchQuery
-                      ? `No items matching "${searchQuery}".`
-                      : activeCategoryId !== null
-                        ? "No items available in this category."
-                        : "No menu items available right now."
-                  }
-                />
+              {/* Case 1: Search Query is Active */}
+              {searchQuery.trim() ? (
+                <div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 16,
+                      padding: "10px 14px",
+                      background: "#fffbeb",
+                      borderRadius: 8,
+                      border: "1px solid #fde68a",
+                    }}
+                  >
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#92400e" }}>
+                      Search results for &ldquo;{searchQuery}&rdquo; ({filteredProducts.length} items)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "#b45309",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                      }}
+                    >
+                      Clear Search ✕
+                    </button>
+                  </div>
+
+                  {filteredProducts.length === 0 ? (
+                    <MenuEmptyState message={`No items matching "${searchQuery}".`} />
+                  ) : (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                        gap: "clamp(12px, 2vw, 24px)",
+                      }}
+                      className="stagger-children"
+                    >
+                      {filteredProducts.map((product, idx) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          index={idx}
+                          onSelect={setSelectedProduct}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : activeCategoryId !== null ? (
+                /* Case 2: Specific Category Filtered View */
+                <div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 20,
+                      paddingBottom: 12,
+                      borderBottom: "2px solid #fed7aa",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 24 }}>
+                        {activeCategoryObj ? getCategoryIcon(activeCategoryObj.name) : "🍽️"}
+                      </span>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <h3
+                            style={{
+                              margin: 0,
+                              fontSize: "clamp(18px, 3vw, 22px)",
+                              fontWeight: 800,
+                              color: "#0f172a",
+                              letterSpacing: "-0.01em",
+                            }}
+                          >
+                            {activeCategoryObj?.name || "Category Items"}
+                          </h3>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              padding: "2px 8px",
+                              borderRadius: 12,
+                              background: "#ffedd5",
+                              color: "#c2410c",
+                              border: "1px solid #fed7aa",
+                            }}
+                          >
+                            {filteredProducts.length} items
+                          </span>
+                        </div>
+                        {activeCategoryObj?.description && (
+                          <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
+                            {activeCategoryObj.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveCategoryId(null)}
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "#c2410c",
+                        background: "#ffedd5",
+                        border: "1px solid #fdba74",
+                        padding: "6px 12px",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                      }}
+                    >
+                      ← Show All Categories
+                    </button>
+                  </div>
+
+                  {filteredProducts.length === 0 ? (
+                    <MenuEmptyState message="No items available in this category." />
+                  ) : (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                        gap: "clamp(12px, 2vw, 24px)",
+                      }}
+                      className="stagger-children"
+                    >
+                      {filteredProducts.map((product, idx) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          index={idx}
+                          onSelect={setSelectedProduct}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                    gap: "clamp(12px, 2vw, 24px)",
-                  }}
-                  className="stagger-children"
-                >
-                  {filteredProducts.map((product, idx) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      index={idx}
-                      onSelect={setSelectedProduct}
-                    />
+                /* Case 3: "All Items" Tab (Category-Wise Grouped + Top Zinger Spotlight) */
+                <div>
+                  {/* TOP SPOTLIGHT: 1-2 Featured Zinger Burgers */}
+                  {topZingerPicks.length > 0 && (
+                    <div
+                      style={{
+                        marginBottom: 36,
+                        background: "linear-gradient(135deg, #fffbeb 0%, #fff7ed 50%, #fef2f2 100%)",
+                        borderRadius: 14,
+                        padding: "clamp(14px, 2vw, 20px)",
+                        border: "2px solid #fed7aa",
+                        boxShadow: "0 10px 25px -5px rgba(234, 88, 12, 0.12)",
+                      }}
+                    >
+                      {/* Spotlight Header */}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          flexWrap: "wrap",
+                          gap: 8,
+                          marginBottom: 16,
+                          paddingBottom: 10,
+                          borderBottom: "1px dashed #fdba74",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span
+                            style={{
+                              fontSize: 22,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: 36,
+                              height: 36,
+                              borderRadius: "50%",
+                              background: "#ea580c",
+                              color: "#fff",
+                              boxShadow: "0 4px 10px rgba(234, 88, 12, 0.35)",
+                            }}
+                          >
+                            🍔
+                          </span>
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <h3
+                                style={{
+                                  margin: 0,
+                                  fontSize: "clamp(17px, 2.5vw, 21px)",
+                                  fontWeight: 900,
+                                  color: "#7c2d12",
+                                  letterSpacing: "-0.01em",
+                                }}
+                              >
+                                Top Recommended Zingers
+                              </h3>
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 800,
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.06em",
+                                  padding: "2px 7px",
+                                  borderRadius: 4,
+                                  background: "#ea580c",
+                                  color: "#fff",
+                                }}
+                              >
+                                Hot Sellers 🔥
+                              </span>
+                            </div>
+                            <p style={{ margin: "2px 0 0", fontSize: 12, color: "#9a3412", fontWeight: 500 }}>
+                              Freshly prepared, ultra-crispy fillets with signature house sauce!
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const burgerCat = categories.find((c) =>
+                              c.name.toLowerCase().includes("burger")
+                            );
+                            if (burgerCat) setActiveCategoryId(burgerCat.id);
+                          }}
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: "#c2410c",
+                            background: "#ffffff",
+                            border: "1px solid #fed7aa",
+                            padding: "5px 12px",
+                            borderRadius: 6,
+                            cursor: "pointer",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                          }}
+                        >
+                          View All Burgers →
+                        </button>
+                      </div>
+
+                      {/* Top Zinger Cards Grid */}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                          gap: "clamp(12px, 2vw, 20px)",
+                        }}
+                      >
+                        {topZingerPicks.map((product, idx) => (
+                          <ProductCard
+                            key={`top-zinger-${product.id}`}
+                            product={product}
+                            index={idx}
+                            onSelect={setSelectedProduct}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Category-Wise Sections */}
+                  {categoriesWithProducts.map(({ category, products: catProducts }) => (
+                    <section
+                      key={category.id}
+                      id={`category-section-${category.id}`}
+                      style={{
+                        marginBottom: 40,
+                        scrollMarginTop: 100,
+                      }}
+                    >
+                      {/* Category Header */}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          marginBottom: 16,
+                          paddingBottom: 10,
+                          borderBottom: "2px solid #fed7aa",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span style={{ fontSize: 24 }}>{getCategoryIcon(category.name)}</span>
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <h3
+                                style={{
+                                  margin: 0,
+                                  fontSize: "clamp(18px, 2.5vw, 22px)",
+                                  fontWeight: 800,
+                                  color: "#0f172a",
+                                  letterSpacing: "-0.01em",
+                                }}
+                              >
+                                {category.name}
+                              </h3>
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  padding: "2px 8px",
+                                  borderRadius: 12,
+                                  background: "#ffedd5",
+                                  color: "#c2410c",
+                                  border: "1px solid #fed7aa",
+                                }}
+                              >
+                                {catProducts.length} items
+                              </span>
+                            </div>
+                            {category.description && (
+                              <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
+                                {category.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Quick Filter button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveCategoryId(category.id);
+                            window.scrollTo({ top: 380, behavior: "smooth" });
+                          }}
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: settings?.theme_color || "#c2410c",
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            padding: "4px 8px",
+                            borderRadius: 4,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          Only {category.name} &rarr;
+                        </button>
+                      </div>
+
+                      {/* 2 Products Per Row */}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                          gap: "clamp(12px, 2vw, 24px)",
+                        }}
+                        className="stagger-children"
+                      >
+                        {catProducts.map((product, idx) => (
+                          <ProductCard
+                            key={product.id}
+                            product={product}
+                            index={idx}
+                            onSelect={setSelectedProduct}
+                          />
+                        ))}
+                      </div>
+                    </section>
                   ))}
                 </div>
               )}

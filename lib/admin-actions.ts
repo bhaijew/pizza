@@ -1104,8 +1104,43 @@ export async function updateOrderStatus(
 
   if (error) return { error: error.message };
 
+  dbCache.invalidateTag("orders");
   revalidatePath("/admin/orders");
   revalidatePath("/admin/kitchen");
+  revalidatePath("/kitchen");
+  return { error: null };
+}
+
+export async function deleteOrder(
+  id: number
+): Promise<{ error: string | null }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR };
+  }
+
+  // STRICT RBAC: Permanent order deletion is restricted to Shop Admin!
+  if (activeShop.role !== "admin") {
+    return {
+      error: "Permission Denied: Order deletion is strictly restricted to Shop Admin.",
+    };
+  }
+
+  let query = db.from("orders").delete().eq("id", id);
+  if (activeShop.shopId) {
+    query = query.eq("shop_id", activeShop.shopId);
+  }
+
+  const { error } = await query;
+  if (error) return { error: error.message };
+
+  dbCache.invalidateTag("orders");
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/kitchen");
+  revalidatePath("/admin");
   revalidatePath("/kitchen");
   return { error: null };
 }
