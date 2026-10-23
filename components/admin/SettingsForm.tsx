@@ -75,6 +75,7 @@ export default function SettingsForm({
   const [currencySymbol, setCurrencySymbol] = useState(initialSettings.currency_symbol || "Rs. ");
   const [openingTime, setOpeningTime] = useState(initialSettings.opening_time || "11:00");
   const [closingTime, setClosingTime] = useState(initialSettings.closing_time || "01:00");
+  const [ownerPhone, setOwnerPhone] = useState(initialSettings.owner_phone || "");
   const [googleReviewUrl, setGoogleReviewUrl] = useState(initialSettings.google_review_url || "");
 
   const [whatsappSessionId, setWhatsappSessionId] = useState(initialSettings.whatsapp_session_id || "");
@@ -452,6 +453,51 @@ export default function SettingsForm({
               />
               <p style={{ margin: "5px 0 0", fontSize: "11px", color: "#94a3b8" }}>
                 Title displayed directly above the food categories on the customer menu.
+              </p>
+            </div>
+
+            {/* Owner WhatsApp Number for Closing Alerts */}
+            <div>
+              <label
+                htmlFor="owner_phone"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  color: "#334155",
+                  marginBottom: "6px",
+                }}
+              >
+                <span>Owner WhatsApp Number (Alerts &amp; Auto-Closing)</span>
+                <span style={{ fontSize: "10px", color: "#16a34a", fontWeight: 700 }}>📲 Direct WhatsApp Bot</span>
+              </label>
+              <input
+                id="owner_phone"
+                name="owner_phone"
+                type="text"
+                value={ownerPhone}
+                onChange={(e) => setOwnerPhone(e.target.value)}
+                placeholder="e.g. 03001234567 or 923001234567"
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: "5px",
+                  border: "1px solid #cbd5e1",
+                  background: "#ffffff",
+                  color: "#0f172a",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  outline: "none",
+                  boxSizing: "border-box",
+                  fontFamily: "monospace",
+                  transition: "border-color 0.15s ease",
+                }}
+                className="focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+              />
+              <p style={{ margin: "5px 0 0", fontSize: "11px", color: "#94a3b8" }}>
+                Receives automated daily register closing reports, day sales, and critical store notifications.
               </p>
             </div>
           </div>

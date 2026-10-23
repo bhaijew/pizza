@@ -9,6 +9,13 @@
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { dbCache } from "@/lib/db-cache";
 
+export function getAppBaseUrl(): string {
+  const envUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://pizza-murex-three.vercel.app");
+  return envUrl.replace(/\/+$/, "");
+}
+
 export interface SendWhatsAppAlertInput {
   phone: string;
   customerName?: string | null;
@@ -172,14 +179,13 @@ export async function sendWhatsAppOrderAlert({
         ? rawGatewayUrl
         : "https://solewhat-production-33f6.up.railway.app"
     ).replace(/\/+$/, "");
-
     const endpoint = `${gatewayBaseUrl}/api/messages/${targetSessionId}/send`;
 
     const formattedTotal = String(total).includes(resolvedCurrency)
       ? String(total)
       : `${resolvedCurrency} ${total}`;
 
-    const appBaseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+    const appBaseUrl = getAppBaseUrl();
     const trackingSection = `\n📍 Live Status Tracker:\n${appBaseUrl}/track/${orderId}\n`;
 
     const defaultMessage = `Salam ${customerName || "Valued Customer"}! 🎉
@@ -288,7 +294,7 @@ export async function sendWhatsAppRiderAlert({
 }> {
   const curr = currencySymbol || "Rs.";
   const formattedTotal = String(total).includes(curr) ? String(total) : `${curr} ${total}`;
-  const appBaseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+  const appBaseUrl = getAppBaseUrl();
   const deliveryPortalLink = `${appBaseUrl}/delivery/${orderNumber}`;
 
   const message = `Salam ${riderName || "Rider"}! 🛵
@@ -338,7 +344,7 @@ export async function sendWhatsAppCustomerDispatchedAlert({
   messageId?: string;
   error?: string;
 }> {
-  const appBaseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+  const appBaseUrl = getAppBaseUrl();
   const message = `Salam ${customerName || "Valued Customer"}! 🍕
 Your order #${orderNumber} is now ON THE WAY!
 

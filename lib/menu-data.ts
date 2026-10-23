@@ -187,6 +187,7 @@ export interface ShopSettings {
   shop_id?: number | null;
   whatsapp_session_id?: string | null;
   whatsapp_api_key?: string | null;
+  owner_phone?: string | null;
   opening_time?: string;
   closing_time?: string;
   theme_color?: string;
@@ -230,6 +231,7 @@ const DEFAULT_SETTINGS: ShopSettings = {
   shop_id: null,
   whatsapp_session_id: null,
   whatsapp_api_key: null,
+  owner_phone: null,
   opening_time: "11:00",
   closing_time: "01:00",
   theme_color: "#ea580c",
@@ -321,7 +323,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
         try {
           const { data: branchData } = await supabase
             .from("shops")
-            .select("id, name, currency_symbol, status, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url")
+            .select("id, name, currency_symbol, status, owner_phone, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url")
             .eq("id", targetShopId)
             .maybeSingle();
 
@@ -342,6 +344,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
               meta_description: `Order fresh from ${branchData.name}.`,
               currency_symbol: branchData.currency_symbol || "Rs.",
               shop_id: branchData.id,
+              owner_phone: (branchData as any).owner_phone || null,
               whatsapp_session_id: (branchData as any).whatsapp_session_id || null,
               whatsapp_api_key: (branchData as any).whatsapp_api_key || null,
               opening_time: (branchData as any).opening_time || "11:00",

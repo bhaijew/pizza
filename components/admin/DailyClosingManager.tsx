@@ -6,7 +6,8 @@
  * calculates Net Daily Profit, auto-detects Admin vs Staff closing identity,
  * exports professional PDF Z-Reports, and dispatches automated WhatsApp closing summaries.
  */
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
   recordDailyClosing,
@@ -54,6 +55,11 @@ export default function DailyClosingManager({
   const [data, setData] = useState(initialData);
   const [selectedDate, setSelectedDate] = useState(initialData.date);
   const [isPending, startTransition] = useTransition();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Dynamic Closed By initialization based on logged-in role & name
   const detectedClosedBy =
@@ -67,6 +73,28 @@ export default function DailyClosingManager({
   const [whatsappPhone, setWhatsappPhone] = useState(ownerPhone || "");
   const [autoExportPDF, setAutoExportPDF] = useState(true);
   const [autoSendWhatsApp, setAutoSendWhatsApp] = useState(true);
+
+  // Sync owner phone if props update
+  useEffect(() => {
+    if (ownerPhone && !whatsappPhone) {
+      setWhatsappPhone(ownerPhone);
+    }
+  }, [ownerPhone, whatsappPhone]);
+
+  // Lock background scroll and support Escape key when modal is open
+  useEffect(() => {
+    if (!showCloseModal) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowCloseModal(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = orig;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [showCloseModal]);
 
   const [feedbackMsg, setFeedbackMsg] = useState<{
     type: "success" | "error";
@@ -694,88 +722,182 @@ export default function DailyClosingManager({
         </div>
       </div>
 
-      {/* ─── Close Register Modal with Operator Identity & WhatsApp Alert ─── */}
-      {showCloseModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+      {/* ─── Close Register Modal with Operator Identity & WhatsApp Alert (PORTAL) ─── */}
+      {mounted && showCloseModal && typeof document !== "undefined" && createPortal(
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.72)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+            zIndex: 99999,
+            overflowY: "auto",
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowCloseModal(false);
+          }}
+        >
           <div
-            style={{ borderRadius: "5px" }}
-            className="bg-white border border-gray-200 w-full max-w-lg p-6 space-y-4 shadow-2xl"
+            style={{
+              background: "#ffffff",
+              border: "1px solid #e2e8f0",
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: "540px",
+              maxHeight: "min(92vh, 700px)",
+              boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.35)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              position: "relative",
+              margin: "auto",
+            }}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🔒</span>
+            {/* Modal Header (Fixed at top) */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "18px 24px",
+                borderBottom: "1px solid #f1f5f9",
+                background: "#ffffff",
+                flexShrink: 0,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "22px" }}>🔒</span>
                 <div>
-                  <h3 className="text-base font-black text-gray-900 uppercase tracking-tight">
+                  <h3 style={{ fontSize: "16px", fontWeight: 900, color: "#0f172a", textTransform: "uppercase", letterSpacing: "-0.01em", margin: 0 }}>
                     Reconcile &amp; Close Register
                   </h3>
-                  <span className="text-[11px] text-gray-500">
-                    Business Date: <strong>{selectedDate}</strong>
+                  <span style={{ fontSize: "11px", color: "#64748b" }}>
+                    Business Shift Date: <strong style={{ color: "#0f172a" }}>{selectedDate}</strong>
                   </span>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setShowCloseModal(false)}
-                className="text-gray-400 hover:text-gray-700 text-lg font-bold border-none bg-transparent cursor-pointer"
+                style={{
+                  background: "#f1f5f9",
+                  border: "none",
+                  color: "#64748b",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  transition: "all 0.15s ease",
+                  fontSize: "14px",
+                }}
+                className="hover:bg-slate-200 hover:text-slate-900"
+                aria-label="Close modal"
               >
                 ✕
               </button>
             </div>
 
-            {/* Operator Identity Tag */}
+            {/* Scrollable Modal Body */}
             <div
-              style={{ borderRadius: "5px" }}
-              className={`p-3 text-xs flex items-center justify-between border ${
-                userRole === "admin"
-                  ? "bg-amber-50 border-amber-200 text-amber-900"
-                  : "bg-blue-50 border-blue-200 text-blue-900"
-              }`}
+              style={{
+                padding: "20px 24px",
+                overflowY: "auto",
+                flex: "1 1 auto",
+                display: "flex",
+                flexDirection: "column",
+                gap: "14px",
+              }}
             >
-              <div>
-                <span className="font-bold uppercase tracking-wider text-[10px] opacity-75">
-                  Closing Operator Identity
-                </span>
-                <p className="font-extrabold text-sm mt-0.5">
-                  {userRole === "admin" ? `👑 ADMIN — ${staffName}` : `👤 STAFF — ${staffName}`}
-                </p>
-              </div>
-              <span
-                style={{ borderRadius: "5px" }}
-                className="px-2 py-0.5 text-[10px] font-black uppercase bg-white/80 border border-current"
+              {/* Operator Identity Tag */}
+              <div
+                style={{
+                  borderRadius: "8px",
+                  padding: "10px 14px",
+                  fontSize: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  border: userRole === "admin" ? "1px solid #fde68a" : "1px solid #bfdbfe",
+                  background: userRole === "admin" ? "#fffbeb" : "#eff6ff",
+                  color: userRole === "admin" ? "#78350f" : "#1e40af",
+                }}
               >
-                {userRole === "admin" ? "Store Admin" : "Staff Member"}
-              </span>
-            </div>
-
-            <div
-              style={{ borderRadius: "5px" }}
-              className="bg-gray-50 border border-gray-200 p-3 text-xs text-gray-700 space-y-1.5"
-            >
-              <div className="flex justify-between">
-                <span>Gross Day Sales:</span>
-                <strong className="text-gray-900">
-                  {currencySymbol}
-                  {data.totalSales.toFixed(2)}
-                </strong>
-              </div>
-              <div className="flex justify-between">
-                <span>Deducted Shift Expenses:</span>
-                <strong className="text-red-600">
-                  -{currencySymbol}
-                  {data.totalExpenses.toFixed(2)}
-                </strong>
-              </div>
-              <div className="flex justify-between pt-1 border-t border-gray-200 font-bold text-sm">
-                <span>Net Cash Balance:</span>
-                <span className={isProfitable ? "text-emerald-700" : "text-red-700"}>
-                  {currencySymbol}
-                  {data.netProfit.toFixed(2)}
+                <div>
+                  <span style={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px", opacity: 0.8 }}>
+                    Closing Operator Identity
+                  </span>
+                  <p style={{ fontWeight: 800, fontSize: "13px", margin: "2px 0 0" }}>
+                    {userRole === "admin" ? `👑 ADMIN — ${staffName}` : `👤 STAFF — ${staffName}`}
+                  </p>
+                </div>
+                <span
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                    fontSize: "10px",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    background: "rgba(255,255,255,0.85)",
+                    border: "1px solid currentColor",
+                  }}
+                >
+                  {userRole === "admin" ? "Store Admin" : "Staff Member"}
                 </span>
               </div>
-            </div>
 
-            <div className="space-y-3 text-xs">
+              {/* Financial Breakdown */}
+              <div
+                style={{
+                  borderRadius: "8px",
+                  background: "#f8fafc",
+                  border: "1px solid #e2e8f0",
+                  padding: "12px 14px",
+                  fontSize: "12px",
+                  color: "#334155",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>Gross Day Sales:</span>
+                  <strong style={{ color: "#0f172a" }}>
+                    {currencySymbol}{data.totalSales.toFixed(2)}
+                  </strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>Deducted Shift Expenses:</span>
+                  <strong style={{ color: "#dc2626" }}>
+                    -{currencySymbol}{data.totalExpenses.toFixed(2)}
+                  </strong>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    paddingTop: "6px",
+                    borderTop: "1px solid #e2e8f0",
+                    fontWeight: 800,
+                    fontSize: "14px",
+                  }}
+                >
+                  <span>Net Cash Balance:</span>
+                  <span style={{ color: isProfitable ? "#047857" : "#b91c1c" }}>
+                    {currencySymbol}{data.netProfit.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Closed By Tag */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-700 mb-1">
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: "#334155", marginBottom: "5px" }}>
                   Closed By Name / Audit Tag *
                 </label>
                 <input
@@ -783,29 +905,55 @@ export default function DailyClosingManager({
                   required
                   value={closedBy}
                   onChange={(e) => setClosedBy(e.target.value)}
-                  style={{ borderRadius: "5px" }}
-                  className="w-full bg-white border border-gray-300 px-3 py-2 text-xs text-gray-900 font-semibold focus:border-red-500 focus:outline-none"
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
                   placeholder="e.g. Admin (Ali) or Staff (Farhan)"
                 />
               </div>
 
+              {/* Owner WhatsApp Number */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-700 mb-1 flex items-center justify-between">
+                <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: "#334155", marginBottom: "5px" }}>
                   <span>Owner WhatsApp Number (Alert Notification)</span>
-                  <span className="text-[10px] text-emerald-600 font-bold">📲 Direct WhatsApp Bot</span>
+                  <span style={{ fontSize: "10px", color: "#059669", fontWeight: 700 }}>📲 Direct WhatsApp Bot</span>
                 </label>
                 <input
                   type="text"
                   value={whatsappPhone}
                   onChange={(e) => setWhatsappPhone(e.target.value)}
-                  style={{ borderRadius: "5px" }}
-                  className="w-full bg-white border border-gray-300 px-3 py-2 text-xs text-gray-900 font-mono focus:border-emerald-500 focus:outline-none"
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "12px",
+                    fontFamily: "monospace",
+                    fontWeight: 700,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
                   placeholder="e.g. 03001234567 or 923001234567"
                 />
+                <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>
+                  This number receives the automated executive sales closing report and profit breakdown.
+                </p>
               </div>
 
+              {/* Closing Notes */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-700 mb-1">
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: "#334155", marginBottom: "5px" }}>
                   Closing Notes (Float cash, drawer balance, notes)
                 </label>
                 <textarea
@@ -813,56 +961,125 @@ export default function DailyClosingManager({
                   placeholder="e.g. Cash drawer balanced, 100 float kept for tomorrow morning..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  style={{ borderRadius: "5px" }}
-                  className="w-full bg-white border border-gray-300 px-3 py-2 text-xs text-gray-900 placeholder-gray-400 focus:border-red-500 focus:outline-none resize-none"
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "12px",
+                    outline: "none",
+                    boxSizing: "border-box",
+                    resize: "vertical",
+                  }}
                 />
               </div>
 
               {/* Automation Switches */}
-              <div className="space-y-2 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer font-medium text-gray-800">
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "2px" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "12px", color: "#1e293b", fontWeight: 600 }}>
                   <input
                     type="checkbox"
                     checked={autoExportPDF}
                     onChange={(e) => setAutoExportPDF(e.target.checked)}
-                    className="accent-orange-600"
+                    style={{ width: "16px", height: "16px", accentColor: "#ea580c", cursor: "pointer" }}
                   />
                   <span>📄 Automatically download and open <strong>Executive PDF Report</strong></span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer font-medium text-gray-800">
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "12px", color: "#1e293b", fontWeight: 600 }}>
                   <input
                     type="checkbox"
                     checked={autoSendWhatsApp}
                     onChange={(e) => setAutoSendWhatsApp(e.target.checked)}
-                    className="accent-emerald-600"
+                    style={{ width: "16px", height: "16px", accentColor: "#10b981", cursor: "pointer" }}
                   />
                   <span>📲 Send WhatsApp Closing Report to Owner phone</span>
                 </label>
               </div>
+
+              {/* Auto-closing hint */}
+              <div
+                style={{
+                  background: "#eff6ff",
+                  border: "1px solid #bfdbfe",
+                  borderRadius: "6px",
+                  padding: "8px 12px",
+                  fontSize: "11px",
+                  color: "#1d4ed8",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <span>ℹ️</span>
+                <span>
+                  Once closed, this business shift locks and all subsequent orders automatically transition to the next business date.
+                </span>
+              </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200">
+            {/* Modal Footer (Fixed at bottom) */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                gap: "10px",
+                padding: "14px 24px",
+                borderTop: "1px solid #f1f5f9",
+                background: "#f8fafc",
+                flexShrink: 0,
+              }}
+            >
               <button
                 type="button"
                 onClick={() => setShowCloseModal(false)}
-                style={{ borderRadius: "5px" }}
-                className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-gray-900 border border-gray-300 bg-white cursor-pointer"
+                style={{
+                  padding: "9px 18px",
+                  borderRadius: "6px",
+                  background: "#ffffff",
+                  border: "1px solid #cbd5e1",
+                  color: "#475569",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  transition: "all 0.15s ease",
+                }}
+                className="hover:bg-slate-100"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleConfirmClose}
                 disabled={isPending}
-                style={{ borderRadius: "5px" }}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider px-5 py-2.5 transition-colors shadow-sm disabled:opacity-50 border-none cursor-pointer flex items-center gap-2"
+                style={{
+                  padding: "9px 22px",
+                  borderRadius: "6px",
+                  background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+                  color: "#ffffff",
+                  border: "none",
+                  cursor: isPending ? "not-allowed" : "pointer",
+                  fontWeight: 800,
+                  fontSize: "13px",
+                  boxShadow: "0 2px 8px rgba(220, 38, 38, 0.35)",
+                  opacity: isPending ? 0.7 : 1,
+                  transition: "all 0.15s ease",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+                className="hover:opacity-95"
               >
                 <span>🔒</span>
                 <span>{isPending ? "Reconciling & Closing..." : "Confirm & Close Register"}</span>
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

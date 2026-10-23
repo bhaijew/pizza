@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
+import { checkAndPerformAutoClosing } from "@/lib/admin-actions";
 import type { Order } from "@/types/menu";
 
 export const dynamic = "force-dynamic";
+
+let lastAutoCloseCheckMs = 0;
 
 /**
  * GET /api/orders/live
@@ -17,6 +20,16 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const shopIdParam = searchParams.get("shopId");
   const isKitchen = searchParams.get("kitchen") === "true";
+
+  // Periodically verify if previous business shift has ended and needs automated daily closing
+  const nowMs = Date.now();
+  if (nowMs - lastAutoCloseCheckMs > 60000) {
+    lastAutoCloseCheckMs = nowMs;
+    const sId = shopIdParam && !isNaN(Number(shopIdParam)) ? Number(shopIdParam) : null;
+    checkAndPerformAutoClosing(sId).catch((err) => {
+      console.error("[Background auto-closing check error]", err);
+    });
+  }
 
   const db = createAdminClient();
 

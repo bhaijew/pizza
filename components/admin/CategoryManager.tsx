@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import type { Category } from "@/types/menu";
 import { createCategory, updateCategory, deleteCategory } from "@/lib/admin-actions";
 import {
@@ -32,6 +33,7 @@ export default function CategoryManager({
   isMasterAdmin = false,
   availableShops = [],
 }: CategoryManagerProps) {
+  const router = useRouter();
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -131,7 +133,21 @@ export default function CategoryManager({
         setErrorMessage(res.error);
       } else {
         setIsModalOpen(false);
-        window.location.reload();
+        if (res.category) {
+          const cat = res.category as Category;
+          if (editingCategory) {
+            setCategories((prev) =>
+              prev
+                .map((c) => (String(c.id) === String(cat.id) ? cat : c))
+                .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+            );
+          } else {
+            setCategories((prev) =>
+              [...prev, cat].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+            );
+          }
+        }
+        router.refresh();
       }
     });
   };
@@ -150,7 +166,8 @@ export default function CategoryManager({
       if (res.error) {
         alert(res.error);
       } else {
-        window.location.reload();
+        setCategories((prev) => prev.filter((c) => String(c.id) !== String(id)));
+        router.refresh();
       }
     });
   };

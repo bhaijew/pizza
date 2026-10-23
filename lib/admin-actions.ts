@@ -5,6 +5,8 @@
  * All functions use the service_role Supabase client (server-only).
  * Auth is verified on every action via the admin session cookie.
  */
+import fs from "fs";
+import path from "path";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -27,9 +29,12 @@ import {
   sendWhatsAppCustomerDispatchedAlert,
   sendWhatsAppDailyClosingAlert,
 } from "@/lib/whatsapp";
-import fs from "fs";
-import path from "path";
-import { getCurrentBusinessDate, getBusinessShiftUtcRange } from "@/lib/business-hours";
+import {
+  getCurrentBusinessDate,
+  getBusinessShiftUtcRange,
+  getPakistanNow,
+  formatDateStr,
+} from "@/lib/business-hours";
 
 // ─── Auth helper ─────────────────────────────────────────────────
 async function requireAdmin() {
@@ -377,7 +382,7 @@ export async function switchAdminStaffRole(
 export async function createCategory(
   _prev: { error: string | null; success: boolean },
   formData: FormData
-): Promise<{ error: string | null; success: boolean }> {
+): Promise<{ error: string | null; success: boolean; category?: any }> {
   await requireAdmin();
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
@@ -411,7 +416,7 @@ export async function createCategory(
     slug = `${slug}-${targetShopId}`;
   }
 
-  const { error } = await db
+  const { data: newCat, error } = await db
     .from("categories")
     .insert({
       name,
@@ -421,7 +426,9 @@ export async function createCategory(
       sort_order,
       is_active,
       shop_id: targetShopId,
-    });
+    })
+    .select()
+    .single();
 
   if (error) return { error: error.message, success: false };
 
@@ -433,14 +440,14 @@ export async function createCategory(
   if (activeShop.shopSlug) {
     revalidatePath(`/${activeShop.shopSlug}`);
   }
-  return { error: null, success: true };
+  return { error: null, success: true, category: newCat };
 }
 
 export async function updateCategory(
   id: number,
   _prev: { error: string | null; success: boolean },
   formData: FormData
-): Promise<{ error: string | null; success: boolean }> {
+): Promise<{ error: string | null; success: boolean; category?: any }> {
   await requireAdmin();
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
@@ -494,7 +501,7 @@ export async function updateCategory(
     query = query.eq("shop_id", activeShop.shopId);
   }
 
-  const { error } = await query;
+  const { data: updatedCat, error } = await query.select().single();
 
   if (error) return { error: error.message, success: false };
 
@@ -506,7 +513,7 @@ export async function updateCategory(
   if (activeShop.shopSlug) {
     revalidatePath(`/${activeShop.shopSlug}`);
   }
-  return { error: null, success: true };
+  return { error: null, success: true, category: updatedCat };
 }
 
 export async function deleteCategory(id: number): Promise<{ error: string | null }> {
@@ -767,6 +774,7 @@ export async function updateSettings(
   const whatsapp_api_key = (formData.get("whatsapp_api_key") as string)?.trim() || null;
   const opening_time = (formData.get("opening_time") as string)?.trim() || "11:00";
   const closing_time = (formData.get("closing_time") as string)?.trim() || "01:00";
+  const owner_phone = (formData.get("owner_phone") as string)?.trim() || null;
   const theme_color = (formData.get("theme_color") as string)?.trim() || "#ea580c";
   const slider_enabled = formData.get("slider_enabled") !== "false";
   const slider_height_mobile = parseInt(formData.get("slider_height_mobile") as string, 10) || 180;
@@ -835,6 +843,7 @@ export async function updateSettings(
       whatsapp_api_key,
       opening_time,
       closing_time,
+      owner_phone,
       theme_color,
       slider_enabled,
       slider_height_mobile,
@@ -1772,7 +1781,7 @@ export async function deleteExpense(id: number | string): Promise<{ error: strin
 
 // ─── DAILY REGISTER CLOSING ACTIONS ───────────────────────────────
 
-export async function fetchDailyClosingData(targetDate?: string): Promise<{
+export async function fetchDailyClosingData(targetDate?: string, skipAutoCheck = false): Promise<{
   date: string;
   totalOrders: number;
   totalSales: number;
@@ -1793,6 +1802,15 @@ export async function fetchDailyClosingData(targetDate?: string): Promise<{
   await requireAdmin();
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
+
+  // If viewing current active shift, verify if previous shift needs auto-closing
+  if (!skipAutoCheck && !targetDate) {
+    try {
+      await checkAndPerformAutoClosing(activeShop.shopId);
+    } catch (e) {
+      console.error("[Auto-close hook error]", e);
+    }
+  }
 
   // Retrieve shop operating shift timing (e.g. 11:00 AM to 01:00 AM Next Day)
   let openingTime = "11:00";
@@ -2016,6 +2034,164 @@ export async function sendDailyClosingWhatsAppAction(input: {
     currencySymbol,
     shopName,
   });
+}
+
+/**
+ * Automatically reconciles and closes the daily register when shop closing time has passed,
+ * dispatches the automated WhatsApp closing report to the owner's phone,
+ * and rolls over the register to the next business date.
+ */
+export async function checkAndPerformAutoClosing(shopId?: number | null): Promise<{
+  autoClosed: boolean;
+  date?: string;
+  message?: string;
+}> {
+  try {
+    const db = createAdminClient();
+    if (!isServiceRoleConfigured()) {
+      return { autoClosed: false, message: "Service role not configured" };
+    }
+
+    let resolvedShopId = shopId;
+    if (resolvedShopId === undefined) {
+      try {
+        const activeShop = await getActiveShopContext();
+        resolvedShopId = activeShop.shopId;
+      } catch {
+        resolvedShopId = null;
+      }
+    }
+
+    let openingTime = "11:00";
+    let closingTime = "01:00";
+    let ownerPhone = "";
+    let shopName = "Pizza System";
+    let currencySymbol = "Rs.";
+
+    if (resolvedShopId) {
+      const { data: sData } = await db
+        .from("shops")
+        .select("name, opening_time, closing_time, owner_phone, phone, currency_symbol")
+        .eq("id", resolvedShopId)
+        .maybeSingle();
+      if (sData) {
+        if (sData.opening_time) openingTime = sData.opening_time;
+        if (sData.closing_time) closingTime = sData.closing_time;
+        ownerPhone = sData.owner_phone || sData.phone || "";
+        if (sData.name) shopName = sData.name;
+        if (sData.currency_symbol) currencySymbol = sData.currency_symbol;
+      }
+    } else {
+      const { data: stData } = await db
+        .from("shop_settings")
+        .select("shop_name, opening_time, closing_time, currency_symbol")
+        .eq("id", "main")
+        .maybeSingle();
+      if (stData) {
+        if (stData.opening_time) openingTime = stData.opening_time;
+        if (stData.closing_time) closingTime = stData.closing_time;
+        if (stData.shop_name) shopName = stData.shop_name;
+        if (stData.currency_symbol) currencySymbol = stData.currency_symbol;
+      }
+    }
+
+    const pktNow = getPakistanNow();
+    const currentBusinessDate = getCurrentBusinessDate(openingTime, closingTime);
+    const yesterdayDate = formatDateStr(new Date(pktNow.getTime() - 24 * 3600000));
+
+    // Candidates to auto-close: yesterday's shift if unclosed
+    const datesToCheck = [yesterdayDate];
+
+    // If current business date's closing time has also elapsed
+    const [closeHStr, closeMStr] = closingTime.split(":");
+    const closeH = parseInt(closeHStr || "1", 10);
+    const closeM = parseInt(closeMStr || "0", 10);
+    const [openHStr, openMStr] = openingTime.split(":");
+    const openH = parseInt(openHStr || "11", 10);
+    const openM = parseInt(openMStr || "0", 10);
+    const currentMins = pktNow.getHours() * 60 + pktNow.getMinutes();
+    const closeMins = closeH * 60 + closeM;
+    const isCrossMidnight = closeH < openH || (closeH === openH && closeM <= openM);
+
+    if (!isCrossMidnight && currentMins >= closeMins) {
+      if (!datesToCheck.includes(currentBusinessDate)) {
+        datesToCheck.push(currentBusinessDate);
+      }
+    }
+
+    for (const checkDate of datesToCheck) {
+      let q = db
+        .from("daily_closings")
+        .select("id")
+        .eq("closing_date", checkDate);
+      if (resolvedShopId) {
+        q = q.eq("shop_id", resolvedShopId);
+      } else {
+        q = q.is("shop_id", null);
+      }
+      const { data: existingClosing } = await q.maybeSingle();
+
+      if (!existingClosing) {
+        const summary = await fetchDailyClosingData(checkDate, true);
+
+        const payload: Record<string, any> = {
+          closing_date: checkDate,
+          total_orders: summary.totalOrders,
+          total_sales: summary.totalSales,
+          dine_in_sales: summary.dineInSales,
+          takeaway_sales: summary.takeawaySales,
+          total_expenses: summary.totalExpenses,
+          net_profit: summary.netProfit,
+          closed_by: "Auto System (Shift End)",
+          notes: `Automatic day-end closing at scheduled shop closing time (${closingTime} PKT).`,
+          shop_id: resolvedShopId || null,
+        };
+
+        const { error: insertErr } = await db.from("daily_closings").upsert(payload);
+        if (!insertErr) {
+          if (ownerPhone) {
+            try {
+              await sendWhatsAppDailyClosingAlert({
+                recipientPhone: ownerPhone,
+                date: checkDate,
+                closedBy: "Auto System (Shift End)",
+                totalOrders: summary.totalOrders,
+                totalSales: summary.totalSales,
+                dineInSales: summary.dineInSales,
+                takeawaySales: summary.takeawaySales,
+                dineInOrdersCount: summary.dineInOrdersCount,
+                takeawayOrdersCount: summary.takeawayOrdersCount,
+                totalExpenses: summary.totalExpenses,
+                netProfit: summary.netProfit,
+                notes: `Auto-closed according to shop closing time (${closingTime} PKT). Next business date is now active.`,
+                shiftWindow: summary.shiftWindow,
+                shopId: resolvedShopId,
+                currencySymbol,
+                shopName,
+              });
+            } catch (waErr) {
+              console.error("[Auto-close WhatsApp Error]", waErr);
+            }
+          }
+
+          dbCache.invalidateTag("daily_closings", "closings");
+          revalidatePath("/admin/closing");
+          revalidatePath("/admin");
+
+          return {
+            autoClosed: true,
+            date: checkDate,
+            message: `Register for ${checkDate} auto-closed at shop closing time and WhatsApp sent to owner.`,
+          };
+        }
+      }
+    }
+
+    return { autoClosed: false };
+  } catch (err: any) {
+    console.error("[checkAndPerformAutoClosing error]", err);
+    return { autoClosed: false, message: err?.message };
+  }
 }
 
 // ─── STAFF & SUB-ADMIN MANAGEMENT ACTIONS ────────────────────────

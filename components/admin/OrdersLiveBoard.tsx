@@ -290,7 +290,11 @@ export default function OrdersLiveBoard({
     if (assignedPhone && targetOrder) {
       const cleanPhone = assignedPhone.replace(/\D/g, "");
       if (cleanPhone) {
-        const portalUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/delivery/${targetOrder.order_number}`;
+        const origin =
+          typeof window !== "undefined" && !window.location.origin.includes("localhost")
+            ? window.location.origin
+            : "https://pizza-murex-three.vercel.app";
+        const portalUrl = `${origin}/delivery/${targetOrder.order_number}`;
         const deliveryAddress =
           targetOrder.delivery_address ||
           targetOrder.notes?.match(/\[DELIVERY:\s*Address:\s*([^|]+)/i)?.[1]?.trim() ||
