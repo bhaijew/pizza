@@ -583,3 +583,49 @@ export async function markDeliveryPickedUpByRider(
   }
 }
 
+/**
+ * Customer Order Review Action
+ * Saves customer rating (1-5 stars) and feedback comment directly to the order.
+ */
+export async function submitCustomerOrderReview(payload: {
+  orderNumber: string;
+  rating: number;
+  comment?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const cleanNumber = payload.orderNumber?.trim();
+    if (!cleanNumber) return { success: false, error: "Invalid order number." };
+
+    const supabase = isServiceRoleConfigured()
+      ? createAdminClient()
+      : createClient(await cookies());
+
+    const { data: order, error: fetchErr } = await supabase
+      .from("orders")
+      .select("id, notes")
+      .ilike("order_number", cleanNumber)
+      .maybeSingle();
+
+    if (fetchErr || !order) return { success: false, error: "Order not found." };
+
+    const ratingStars = Math.max(1, Math.min(5, payload.rating || 5));
+    const starIcons = "⭐".repeat(ratingStars);
+    const commentText = payload.comment?.trim() || "";
+    const reviewNote = `[GOOGLE REVIEW: ${starIcons} (${ratingStars}/5)${commentText ? ` | "${commentText}"` : ""}]`;
+    const updatedNotes = order.notes ? `${order.notes} ${reviewNote}` : reviewNote;
+
+    await supabase
+      .from("orders")
+      .update({ notes: updatedNotes })
+      .eq("id", order.id);
+
+    revalidatePath("/admin/orders");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (err: any) {
+    console.warn("[submitCustomerOrderReview error]", err);
+    return { success: false, error: err?.message || "Failed to record review." };
+  }
+}
+
+

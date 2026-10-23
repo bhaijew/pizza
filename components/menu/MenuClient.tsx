@@ -120,6 +120,7 @@ function MenuInner({
           setOrderType={setOrderType}
           isDedicatedTableRoute={isDedicatedTableRoute}
           shopId={settings.shop_id}
+          shopName={settings.shop_name}
           googleReviewUrl={settings.google_review_url || ""}
         />
       </>
@@ -333,6 +334,7 @@ function MenuInner({
         setOrderType={setOrderType}
         isDedicatedTableRoute={isDedicatedTableRoute}
         shopId={settings.shop_id}
+        shopName={settings.shop_name}
         googleReviewUrl={settings.google_review_url || ""}
       />
     </>
