@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { fetchSettings } from "@/lib/menu-data";
 import { getActiveShopContext } from "@/lib/admin-actions";
+import CommandCenterHero from "@/components/admin/CommandCenterHero";
 import { dbCache } from "@/lib/db-cache";
 import { getCurrentBusinessDate, getBusinessShiftUtcRange } from "@/lib/business-hours";
 import type { Order } from "@/types/menu";
@@ -189,272 +190,26 @@ export default async function AdminDashboardPage() {
         </div>
       )}
 
-      {/* ─── Top Command Center Hero ─── */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #070c18 0%, #0d1527 50%, #151d32 100%)",
-          borderRadius: 16,
-          color: "#ffffff",
-          marginBottom: 26,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 20,
-          boxShadow: "0 20px 40px -15px rgba(7, 12, 24, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          position: "relative",
-          overflow: "hidden",
-        }}
-        className="p-5 sm:p-7 md:p-8"
-      >
-        {/* Ambient Glow Lights */}
-        <div
-          style={{
-            position: "absolute",
-            right: "-40px",
-            top: "-40px",
-            width: "280px",
-            height: "280px",
-            background: "radial-gradient(circle, rgba(234, 88, 12, 0.28) 0%, rgba(239, 68, 68, 0.12) 50%, transparent 70%)",
-            pointerEvents: "none",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            left: "-50px",
-            bottom: "-50px",
-            width: "260px",
-            height: "260px",
-            background: "radial-gradient(circle, rgba(16, 185, 129, 0.16) 0%, transparent 65%)",
-            pointerEvents: "none",
-          }}
-        />
-
-        {/* Micro-dot Cyber Texture */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            opacity: 0.05,
-            backgroundImage: "radial-gradient(#ffffff 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
-            pointerEvents: "none",
-          }}
-        />
-
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 640 }}>
-          {/* Live Operations Pill */}
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "4px 12px",
-              borderRadius: 20,
-              background: "rgba(16, 185, 129, 0.12)",
-              border: "1px solid rgba(16, 185, 129, 0.3)",
-              marginBottom: 12,
-            }}
-          >
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: "#10b981",
-                display: "inline-block",
-                boxShadow: "0 0 10px #10b981",
-              }}
-              className="admin-pulse-green"
-            />
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 800,
-                color: "#34d399",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-              }}
-            >
-              Live Operations Terminal
-            </span>
-          </div>
-
-          <h1
-            style={{
-              fontSize: 28,
-              fontWeight: 900,
-              color: "#ffffff",
-              letterSpacing: "-0.02em",
-              margin: "0 0 8px",
-              lineHeight: 1.2,
-            }}
-          >
-            <span className="bg-gradient-to-r from-white via-slate-100 to-amber-200 bg-clip-text text-transparent">
-              {shopName}
-            </span>{" "}
-            Command Center
-          </h1>
-          <p style={{ margin: 0, fontSize: 14, color: "#94a3b8", lineHeight: 1.5 }}>
-            Real-time kitchen order sequencing, WhatsApp dispatch automation &amp; daily shift telemetry.
-          </p>
-        </div>
-
-        {/* Quick Executive Shortcuts */}
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", position: "relative", zIndex: 1 }}>
-          <Link
-            href="/admin/orders"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "11px 18px",
-              borderRadius: 10,
-              background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
-              color: "#ffffff",
-              fontWeight: 800,
-              fontSize: 13,
-              textDecoration: "none",
-              boxShadow: "0 6px 18px -2px rgba(234, 88, 12, 0.45)",
-              border: "none",
-              transition: "all 0.2s ease",
-            }}
-            className="hover:scale-105 active:scale-95"
-          >
-            <ShoppingBag size={16} />
-            <span>Live Order Board</span>
-            {pendingOrders > 0 && (
-              <span
-                style={{
-                  background: "#ffffff",
-                  color: "#ea580c",
-                  padding: "1px 8px",
-                  borderRadius: 12,
-                  fontSize: 11,
-                  fontWeight: 900,
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                }}
-              >
-                {pendingOrders}
-              </span>
-            )}
-          </Link>
-
-          <Link
-            href="/admin/kitchen"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "11px 18px",
-              borderRadius: 10,
-              background: "rgba(255, 255, 255, 0.08)",
-              color: "#ffffff",
-              fontWeight: 700,
-              fontSize: 13,
-              textDecoration: "none",
-              border: "1px solid rgba(255, 255, 255, 0.18)",
-              backdropFilter: "blur(8px)",
-              transition: "all 0.2s ease",
-            }}
-            className="hover:bg-white/15 hover:scale-105 active:scale-95"
-          >
-            <ChefHat size={16} className="text-orange-400" />
-            <span>Kitchen KDS</span>
-          </Link>
-
-          <Link
-            href="/admin/sole-what"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "11px 16px",
-              borderRadius: 10,
-              background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-              color: "#ffffff",
-              fontWeight: 800,
-              fontSize: 13,
-              textDecoration: "none",
-              boxShadow: "0 6px 18px -2px rgba(16, 185, 129, 0.4)",
-              border: "none",
-              transition: "all 0.2s ease",
-            }}
-            className="hover:scale-105 active:scale-95"
-            title="Sole-What WhatsApp Gateway Hub"
-          >
-            <MessageSquare size={16} />
-            <span>Sole-What WA</span>
-            <span
-              style={{
-                background: "#ffffff",
-                color: "#059669",
-                padding: "1px 6px",
-                borderRadius: 10,
-                fontSize: 10,
-                fontWeight: 900,
-              }}
-            >
-              BOT
-            </span>
-          </Link>
-
-          <Link
-            href={
-              activeShop.shopSlug
-                ? `/demo/pos?shop=${encodeURIComponent(activeShop.shopSlug)}`
-                : activeShop.shopId
-                ? `/demo/pos?shopId=${activeShop.shopId}`
-                : "/demo/pos"
-            }
-            target="_blank"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "11px 16px",
-              borderRadius: 10,
-              background: "rgba(16, 185, 129, 0.12)",
-              color: "#34d399",
-              fontWeight: 700,
-              fontSize: 13,
-              textDecoration: "none",
-              border: "1px solid rgba(16, 185, 129, 0.35)",
-              backdropFilter: "blur(8px)",
-              transition: "all 0.2s ease",
-            }}
-            className="hover:bg-emerald-500/20 hover:scale-105 active:scale-95"
-            title="Open Cashier POS Terminal"
-          >
-            <Download size={15} />
-            <span>Open POS</span>
-          </Link>
-
-          <Link
-            href="/admin/products?action=new"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "11px 16px",
-              borderRadius: 10,
-              background: "rgba(255, 255, 255, 0.05)",
-              color: "#cbd5e1",
-              fontWeight: 600,
-              fontSize: 13,
-              textDecoration: "none",
-              border: "1px solid rgba(255, 255, 255, 0.14)",
-              transition: "all 0.2s ease",
-            }}
-            className="hover:bg-white/12 hover:scale-105 active:scale-95"
-          >
-            <Plus size={15} />
-            <span>Add Pizza</span>
-          </Link>
-        </div>
-      </div>
+      {/* ─── Top Command Center Hero (Multiple Animated Background Images) ─── */}
+      <CommandCenterHero
+        shopName={shopName}
+        pendingOrders={pendingOrders}
+        posUrl={
+          activeShop.shopSlug
+            ? `/demo/pos?shop=${encodeURIComponent(activeShop.shopSlug)}`
+            : activeShop.shopId
+            ? `/demo/pos?shopId=${activeShop.shopId}`
+            : "/demo/pos"
+        }
+        customImages={
+          [
+            settings.hero_bg_image,
+            ...(Array.isArray(settings.slider_images)
+              ? settings.slider_images.map((s: any) => s?.image_url)
+              : []),
+          ].filter(Boolean) as string[]
+        }
+      />
 
       {/* ─── Metric KPI Cards Grid (Modern Elevated Unique Squircles) ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-7 sm:mb-9">
