@@ -62,7 +62,7 @@ export default function SoleWhatManager({
 
   const [testPhone, setTestPhone] = useState("");
   const [testMessage, setTestMessage] = useState(
-    `Salam! 🍕 Pizza Alert from ${shopName}: Your order has been received and is being prepared in the kitchen. Track live: http://localhost:3000/track/1001`
+    `Salam! 🍕 Pizza Alert from ${shopName}: Your order has been received and is being prepared in the kitchen. Track live: https://pizza-murex-three.vercel.app/track/1001`
   );
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [isSendingTest, setIsSendingTest] = useState(false);

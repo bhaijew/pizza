@@ -10,10 +10,20 @@ import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/adm
 import { dbCache } from "@/lib/db-cache";
 
 export function getAppBaseUrl(): string {
-  const envUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://pizza-murex-three.vercel.app");
-  return envUrl.replace(/\/+$/, "");
+  const CANONICAL_LIVE_URL = "https://pizza-murex-three.vercel.app";
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  // If explicitly configured with an external custom production domain
+  if (
+    envUrl &&
+    !envUrl.includes("localhost") &&
+    !envUrl.includes("127.0.0.1") &&
+    !envUrl.includes(".local")
+  ) {
+    return envUrl.replace(/\/+$/, "");
+  }
+
+  return CANONICAL_LIVE_URL;
 }
 
 export interface SendWhatsAppAlertInput {

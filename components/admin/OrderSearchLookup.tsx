@@ -166,8 +166,16 @@ export default function OrderSearchLookup({
     }
   };
 
+  const getLiveBaseUrl = () => {
+    if (typeof window !== "undefined" && !window.location.origin.includes("localhost") && !window.location.origin.includes("127.0.0.1")) {
+      return window.location.origin;
+    }
+    return "https://pizza-murex-three.vercel.app";
+  };
+
   const handleCopySummary = (order: Order) => {
     const items = getOrderItems(order);
+    const liveBase = getLiveBaseUrl();
     const lines = [
       `🍕 *${shopName} — Order Invoice*`,
       `Order: #${order.order_number || order.id}`,
@@ -188,7 +196,7 @@ export default function OrderSearchLookup({
       `-----------------------------`,
       `*Total: ${currencySymbol} ${Number(order.total).toLocaleString()}*`,
       `Payment: ${order.payment_method?.toUpperCase() || "CASH"} (${order.payment_status?.toUpperCase() || "PAID"})`,
-      `Track: ${window.location.origin}/track/${order.order_number}`,
+      `Track: ${liveBase}/track/${order.order_number}`,
     ]
       .filter(Boolean)
       .join("\n");
@@ -199,7 +207,8 @@ export default function OrderSearchLookup({
   };
 
   const handleCopyTrackingLink = (order: Order) => {
-    const url = `${window.location.origin}/track/${order.order_number}`;
+    const liveBase = getLiveBaseUrl();
+    const url = `${liveBase}/track/${order.order_number}`;
     navigator.clipboard.writeText(url);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
@@ -522,7 +531,7 @@ export default function OrderSearchLookup({
                       <>
                         <a
                           href={`https://wa.me/${selectedOrder.customer_phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                            `Salam! Regarding your ${shopName} order #${selectedOrder.order_number || selectedOrder.id}:`
+                            `Salam ${selectedOrder.customer_name || "Valued Customer"}! Regarding your ${shopName} order #${selectedOrder.order_number || selectedOrder.id}.\n\nTrack your order live here:\n${getLiveBaseUrl()}/track/${selectedOrder.order_number || selectedOrder.id}`
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"

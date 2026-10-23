@@ -1264,11 +1264,45 @@ export default function OrdersLiveBoard({
                         <span>{order.customer_name || "Guest Customer"}</span>
                       </div>
                       {order.customer_phone && (
-                        <div style={{ color: "#64748b", fontSize: "10.5px", display: "flex", alignItems: "center", gap: "4px", fontFamily: "monospace", fontWeight: 600 }}>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#94a3b8", flexShrink: 0 }}>
-                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                          </svg>
-                          <span>{order.customer_phone}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <div style={{ color: "#64748b", fontSize: "10.5px", display: "flex", alignItems: "center", gap: "4px", fontFamily: "monospace", fontWeight: 600 }}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#94a3b8", flexShrink: 0 }}>
+                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                            </svg>
+                            <span>{order.customer_phone}</span>
+                          </div>
+                          {(() => {
+                            const cleanCust = order.customer_phone.replace(/\D/g, "");
+                            const custOrigin =
+                              typeof window !== "undefined" && !window.location.origin.includes("localhost") && !window.location.origin.includes("127.0.0.1")
+                                ? window.location.origin
+                                : "https://pizza-murex-three.vercel.app";
+                            const custTrackLink = `${custOrigin}/track/${order.order_number}`;
+                            const custWaMsg = `Salam ${order.customer_name || "Valued Customer"}! 🎉\nYour order #${order.order_number} is being processed.\n\n📍 Live Status Tracker:\n${custTrackLink}\n\nThank you for choosing us!`;
+                            const custWaUrl = `https://wa.me/${cleanCust.startsWith("03") ? "92" + cleanCust.slice(1) : cleanCust}?text=${encodeURIComponent(custWaMsg)}`;
+                            return (
+                              <a
+                                href={custWaUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Send live order tracking link to customer on WhatsApp"
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "3px",
+                                  padding: "1px 6px",
+                                  borderRadius: "4px",
+                                  background: "#25d366",
+                                  color: "#ffffff",
+                                  fontSize: "9.5px",
+                                  fontWeight: 700,
+                                  textDecoration: "none",
+                                }}
+                              >
+                                <span>💬 Track</span>
+                              </a>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
