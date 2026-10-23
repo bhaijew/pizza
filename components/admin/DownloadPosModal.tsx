@@ -45,7 +45,7 @@ export default function DownloadPosModal({
       setDownloadStarted(true);
       const a = document.createElement("a");
       a.href = "/api/download-pos";
-      a.download = "Sole What Setup 1.5.9.exe";
+      a.download = "Sole What Setup 1.6.1.exe";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -58,7 +58,7 @@ export default function DownloadPosModal({
     setIsDownloading(true);
     const a = document.createElement("a");
     a.href = "/api/download-pos";
-    a.download = "Sole What Setup 1.5.9.exe";
+    a.download = "Sole What Setup 1.6.1.exe";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -283,7 +283,7 @@ exit
                     Download automatically started:
                   </span>
                   <span style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", background: "rgba(0,0,0,0.3)", padding: "1px 6px", borderRadius: "4px" }}>
-                    Sole What Setup 1.5.9.exe (~1.13 GB)
+                    Sole What Setup 1.6.1.exe (~97 MB)
                   </span>
                 </div>
                 <span style={{ fontSize: "11px", color: "#94a3b8" }}>
@@ -455,7 +455,7 @@ exit
                     </div>
                     <div>
                       <h3 style={{ margin: "0 0 3px", fontSize: "16px", fontWeight: 900, color: "#ffffff" }}>
-                        Sole What POS Setup 1.5.9 (.EXE)
+                        Sole What POS Setup 1.6.1 (.EXE)
                       </h3>
                       <p style={{ margin: 0, fontSize: "12.5px", color: "#94a3b8" }}>
                         Official FloDesktop Desktop Application with Direct ESC/POS USB Thermal Printing, Cash Drawer &amp; Offline Cache
@@ -483,13 +483,13 @@ exit
                   <div style={{ background: "rgba(0,0,0,0.35)", padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
                     <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>Source File</div>
                     <div style={{ fontSize: "12px", color: "#f8fafc", fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      Sole What Setup 1.5.9.exe
+                      Sole What Setup 1.6.1.exe
                     </div>
                   </div>
                   <div style={{ background: "rgba(0,0,0,0.35)", padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
                     <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>Package Size</div>
                     <div style={{ fontSize: "12px", color: "#34d399", fontWeight: 800 }}>
-                      ~1.13 GB (Windows Native)
+                      ~97 MB (Windows Native)
                     </div>
                   </div>
                   <div style={{ background: "rgba(0,0,0,0.35)", padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -504,7 +504,7 @@ exit
                 <div style={{ display: "flex", gap: "10px", marginTop: "4px", flexWrap: "wrap" }}>
                   <a
                     href="/api/download-pos"
-                    download="Sole What Setup 1.5.9.exe"
+                    download="Sole What Setup 1.6.1.exe"
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
@@ -523,7 +523,7 @@ exit
                     className="hover:scale-105"
                   >
                     <Download size={17} />
-                    <span>Download Windows Installer (1.5.9.exe)</span>
+                    <span>Download Windows Installer (1.6.1.exe)</span>
                   </a>
                 </div>
               </div>

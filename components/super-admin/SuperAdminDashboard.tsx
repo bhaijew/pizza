@@ -1342,8 +1342,8 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
 
             {/* Direct POS Download (No Popup) */}
             <a
-              href="/release/Sole%20What%20Setup%201.5.9.exe"
-              download="Sole What Setup 1.5.9.exe"
+              href="/release/Sole%20What%20Setup%201.6.1.exe"
+              download="Sole What Setup 1.6.1.exe"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -1360,10 +1360,10 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                 textDecoration: "none",
               }}
               className="hover:scale-105 transition-transform"
-              title="Download FloDesktop POS Setup 1.5.9.exe (Direct Download)"
+              title="Download FloDesktop POS Setup 1.6.1.exe (Direct Download)"
             >
               <Download size={14} />
-              <span className="hidden sm:inline">Download POS (1.5.9)</span>
+              <span className="hidden sm:inline">Download POS (1.6.1)</span>
               <span className="sm:hidden">POS</span>
             </a>
           </div>
@@ -3089,8 +3089,8 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                   </button>
 
                   <a
-                    href="/release/Sole%20What%20Setup%201.5.9.exe"
-                    download="Sole What Setup 1.5.9.exe"
+                    href="/release/Sole%20What%20Setup%201.6.1.exe"
+                    download="Sole What Setup 1.6.1.exe"
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
@@ -3106,10 +3106,10 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                       boxShadow: "0 3px 12px rgba(16, 185, 129, 0.3)",
                     }}
                     className="hover:scale-105 transition-transform"
-                    title="Download FloDesktop POS Setup 1.5.9.exe"
+                    title="Download FloDesktop POS Setup 1.6.1.exe"
                   >
                     <Download size={15} />
-                    <span>Download POS Setup (1.5.9.exe)</span>
+                    <span>Download POS Setup (1.6.1.exe)</span>
                   </a>
 
                   <a

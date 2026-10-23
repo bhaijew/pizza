@@ -739,8 +739,8 @@ export default function AdminShell({
         >
           {/* Direct POS App Download (No Popup) */}
           <a
-            href="/release/Sole%20What%20Setup%201.5.9.exe"
-            download="Sole What Setup 1.5.9.exe"
+            href="/release/Sole%20What%20Setup%201.6.1.exe"
+            download="Sole What Setup 1.6.1.exe"
             style={{
               width: "100%",
               display: "flex",
@@ -758,10 +758,10 @@ export default function AdminShell({
               transition: "all 0.15s ease",
             }}
             className="hover:opacity-90"
-            title="Download FloDesktop POS Setup 1.5.9.exe (Direct Download)"
+            title="Download FloDesktop POS Setup 1.6.1.exe (Direct Download)"
           >
             <Download size={13} />
-            <span>Download POS App (1.5.9)</span>
+            <span>Download POS App (1.6.1)</span>
           </a>
 
           {/* Dark Mode Toggle */}
@@ -985,8 +985,8 @@ export default function AdminShell({
 
             {/* Direct Download FloDesktop POS Setup Button (No Popup) */}
             <a
-              href="/release/Sole%20What%20Setup%201.5.9.exe"
-              download="Sole What Setup 1.5.9.exe"
+              href="/release/Sole%20What%20Setup%201.6.1.exe"
+              download="Sole What Setup 1.6.1.exe"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -1004,7 +1004,7 @@ export default function AdminShell({
                 whiteSpace: "nowrap",
               }}
               className="hover:scale-105"
-              title="Download FloDesktop POS Setup 1.5.9.exe (Direct Download)"
+              title="Download FloDesktop POS Setup 1.6.1.exe (Direct Download)"
             >
               <Download size={13} style={{ flexShrink: 0 }} />
               <span>Download POS</span>
@@ -1295,8 +1295,8 @@ export default function AdminShell({
 
             {/* Mobile Direct POS Download Button */}
             <a
-              href="/release/Sole%20What%20Setup%201.5.9.exe"
-              download="Sole What Setup 1.5.9.exe"
+              href="/release/Sole%20What%20Setup%201.6.1.exe"
+              download="Sole What Setup 1.6.1.exe"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -1310,7 +1310,7 @@ export default function AdminShell({
                 fontWeight: 800,
                 textDecoration: "none",
               }}
-              title="Download FloDesktop POS Setup 1.5.9.exe"
+              title="Download FloDesktop POS Setup 1.6.1.exe"
             >
               <Download size={13} />
               <span>POS</span>
@@ -1580,8 +1580,8 @@ export default function AdminShell({
           >
             {/* Direct POS App Download (No Popup) */}
             <a
-              href="/release/Sole%20What%20Setup%201.5.9.exe"
-              download="Sole What Setup 1.5.9.exe"
+              href="/release/Sole%20What%20Setup%201.6.1.exe"
+              download="Sole What Setup 1.6.1.exe"
               style={{
                 width: "100%",
                 display: "flex",
@@ -1599,10 +1599,10 @@ export default function AdminShell({
                 transition: "all 0.15s ease",
               }}
               className="hover:opacity-90"
-              title="Download FloDesktop POS Setup 1.5.9.exe"
+              title="Download FloDesktop POS Setup 1.6.1.exe"
             >
               <Download size={13} />
-              <span>Download POS App (1.5.9)</span>
+              <span>Download POS App (1.6.1)</span>
             </a>
 
             {/* Dark Mode Toggle */}
