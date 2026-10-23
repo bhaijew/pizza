@@ -517,7 +517,6 @@ export async function confirmDeliveryByRider(
       .from("orders")
       .update({
         status: "delivered",
-        payment_status: "paid",
         notes: updatedNotes,
       })
       .eq("id", order.id)
