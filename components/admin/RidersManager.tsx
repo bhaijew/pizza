@@ -75,6 +75,9 @@ export default function RidersManager({
 
   const activeCount = riders.filter((r) => r.is_active).length;
   const inactiveCount = riders.length - activeCount;
+  const totalRidesAll = useMemo(() => riders.reduce((s, r) => s + (r.total_rides || 0), 0), [riders]);
+  const todayRidesAll = useMemo(() => riders.reduce((s, r) => s + (r.today_rides || 0), 0), [riders]);
+  const deliveredRidesAll = useMemo(() => riders.reduce((s, r) => s + (r.delivered_rides || 0), 0), [riders]);
 
   // Open Add Modal
   const handleOpenAdd = () => {
@@ -317,7 +320,7 @@ GRANT ALL ON public.delivery_riders TO anon, authenticated, service_role;`;
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
           gap: "12px",
           marginBottom: "20px",
         }}
@@ -393,6 +396,79 @@ GRANT ALL ON public.delivery_riders TO anon, authenticated, service_role;`;
         <div
           style={{
             background: "#ffffff",
+            border: "1px solid #bbf7d0",
+            borderRadius: "8px",
+            padding: "14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+          }}
+        >
+          <div
+            style={{
+              width: "42px",
+              height: "42px",
+              borderRadius: "8px",
+              background: "#f0fdf4",
+              color: "#16a34a",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span style={{ fontSize: "20px" }}>📦</span>
+          </div>
+          <div>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#166534", textTransform: "uppercase" }}>
+              Total Deliveries
+            </span>
+            <div style={{ fontSize: "20px", fontWeight: 800, color: "#16a34a" }}>
+              {totalRidesAll}{" "}
+              <span style={{ fontSize: "11.5px", fontWeight: 600, color: "#64748b" }}>
+                ({deliveredRidesAll} delivered)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #fed7aa",
+            borderRadius: "8px",
+            padding: "14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+          }}
+        >
+          <div
+            style={{
+              width: "42px",
+              height: "42px",
+              borderRadius: "8px",
+              background: "#fff7ed",
+              color: "#ea580c",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span style={{ fontSize: "20px" }}>⚡</span>
+          </div>
+          <div>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#9a3412", textTransform: "uppercase" }}>
+              Today's Shift Rides
+            </span>
+            <div style={{ fontSize: "20px", fontWeight: 800, color: "#c2410c" }}>{todayRidesAll}</div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: "#ffffff",
             border: "1px solid #fed7aa",
             borderRadius: "8px",
             padding: "14px",
@@ -421,40 +497,6 @@ GRANT ALL ON public.delivery_riders TO anon, authenticated, service_role;`;
               Off Duty
             </span>
             <div style={{ fontSize: "20px", fontWeight: 800, color: "#c2410c" }}>{inactiveCount}</div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #bfdbfe",
-            borderRadius: "8px",
-            padding: "14px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
-          }}
-        >
-          <div
-            style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "8px",
-              background: "#eff6ff",
-              color: "#1d4ed8",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <MessageSquare size={22} />
-          </div>
-          <div>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#1e40af", textTransform: "uppercase" }}>
-              WhatsApp Bot
-            </span>
-            <div style={{ fontSize: "13px", fontWeight: 800, color: "#1d4ed8" }}>Sole-What Ready ✓</div>
           </div>
         </div>
       </div>
@@ -743,6 +785,126 @@ GRANT ALL ON public.delivery_riders TO anon, authenticated, service_role;`;
                       <p style={{ margin: "5px 0 0", fontSize: "10.5px", color: "#64748b", fontStyle: "italic" }}>
                         {rider.notes}
                       </p>
+                    )}
+                  </div>
+
+                  {/* Rider Ride & Performance Statistics */}
+                  <div
+                    style={{
+                      background: "#f0fdf4",
+                      border: "1px solid #bbf7d0",
+                      borderRadius: "6px",
+                      padding: "8px 10px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 800,
+                          color: "#166534",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.3px",
+                        }}
+                      >
+                        📊 Delivery Rides
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: "#15803d",
+                          background: "#dcfce7",
+                          padding: "1px 6px",
+                          borderRadius: "10px",
+                        }}
+                      >
+                        Today: {rider.today_rides ?? 0}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr 1fr",
+                        gap: "5px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <div
+                        style={{
+                          background: "#ffffff",
+                          padding: "5px 4px",
+                          borderRadius: "4px",
+                          border: "1px solid #dcfce7",
+                        }}
+                      >
+                        <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>TOTAL</div>
+                        <div style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>
+                          {rider.total_rides ?? 0}
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          background: "#ffffff",
+                          padding: "5px 4px",
+                          borderRadius: "4px",
+                          border: "1px solid #dcfce7",
+                        }}
+                      >
+                        <div style={{ fontSize: "9px", color: "#059669", fontWeight: 700 }}>DELIVERED</div>
+                        <div style={{ fontSize: "14px", fontWeight: 800, color: "#059669" }}>
+                          {rider.delivered_rides ?? 0}
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          background: "#ffffff",
+                          padding: "5px 4px",
+                          borderRadius: "4px",
+                          border: "1px solid #dcfce7",
+                        }}
+                      >
+                        <div style={{ fontSize: "9px", color: "#ea580c", fontWeight: 700 }}>ACTIVE</div>
+                        <div
+                          style={{
+                            fontSize: "14px",
+                            fontWeight: 800,
+                            color: (rider.active_rides ?? 0) > 0 ? "#ea580c" : "#64748b",
+                          }}
+                        >
+                          {rider.active_rides ?? 0}
+                        </div>
+                      </div>
+                    </div>
+
+                    {(rider.total_cash_collected ?? 0) > 0 && (
+                      <div
+                        style={{
+                          marginTop: "6px",
+                          paddingTop: "4px",
+                          borderTop: "1px dashed #bbf7d0",
+                          fontSize: "10.5px",
+                          color: "#166534",
+                          fontWeight: 700,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span>Cash Collected:</span>
+                        <span style={{ fontFamily: "monospace", fontWeight: 800 }}>
+                          Rs. {rider.total_cash_collected?.toLocaleString()}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>

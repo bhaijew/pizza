@@ -284,45 +284,67 @@ export default function OrdersLiveBoard({
     playAlertChime(vol, muted, "pos");
   }, []);
 
-  // Feature 8: Rider assignment state
+  // Feature 8: Rider assignment & Round-Robin auto-rotation
   const [assigningRiderOrderId, setAssigningRiderOrderId] = useState<number | null>(null);
   const [riderNameInput, setRiderNameInput] = useState("");
   const [riderPhoneInput, setRiderPhoneInput] = useState("");
   const [sendingRiderWaId, setSendingRiderWaId] = useState<number | null>(null);
   const [riderWaSentId, setRiderWaSentId] = useState<number | null>(null);
 
-  const handleAssignRiderSubmit = (orderId: number) => {
-    if (!riderNameInput.trim()) return;
-    const assignedName = riderNameInput.trim();
-    const assignedPhone = riderPhoneInput.trim();
-    const targetOrder = orders.find((o) => o.id === orderId);
+  // Active on-duty saved riders
+  const activeSavedRiders = useMemo(() => {
+    return (savedRiders || []).filter((r) => r.is_active);
+  }, [savedRiders]);
 
-    // Auto-open WhatsApp message immediately upon assigning rider
-    if (assignedPhone && targetOrder) {
-      const cleanPhone = assignedPhone.replace(/\D/g, "");
-      if (cleanPhone) {
-        const origin =
-          typeof window !== "undefined" && !window.location.origin.includes("localhost")
-            ? window.location.origin
-            : "https://pizza-murex-three.vercel.app";
-        const portalUrl = `${origin}/delivery/${targetOrder.order_number}`;
-        const deliveryAddress =
-          targetOrder.delivery_address ||
-          targetOrder.notes?.match(/\[DELIVERY:\s*Address:\s*([^|]+)/i)?.[1]?.trim() ||
-          "Address provided on order";
+  // Find the last assigned rider among delivery orders to determine rotation sequence
+  const lastAssignedRider = useMemo(() => {
+    const deliveryWithRider = orders
+      .filter((o) => {
+        const info = getOrderServiceInfo(o);
+        return info.type === "delivery" && (info.riderName || o.delivery_rider_name);
+      })
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-        const waText = `Salam ${assignedName}, New Delivery Order [${targetOrder.order_number}]!\n` +
-          `Destination: ${deliveryAddress}\n` +
-          `Customer: ${targetOrder.customer_name} (${targetOrder.customer_phone || "N/A"})\n` +
-          `Total to Collect: ${currencySymbol}${Number(targetOrder.total).toFixed(2)}\n\n` +
-          `Tap to View Map & Confirm Delivered:\n${portalUrl}\n\n` +
-          `Please pick up from restaurant now.`;
+    if (deliveryWithRider.length === 0) return null;
+    const latest = deliveryWithRider[0];
+    const info = getOrderServiceInfo(latest);
+    return {
+      name: info.riderName || latest.delivery_rider_name || "",
+      phone: info.riderPhone || latest.delivery_rider_phone || "",
+    };
+  }, [orders]);
 
-        const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`;
-        window.open(waUrl, "_blank");
-      }
+  // Next round-robin rider: automatically rotates to the next active on-duty rider
+  const nextRoundRobinRider = useMemo(() => {
+    if (activeSavedRiders.length === 0) return null;
+    if (!lastAssignedRider) return activeSavedRiders[0];
+
+    const lastClean = (lastAssignedRider.phone || "").replace(/\D/g, "");
+    const lastNameLower = (lastAssignedRider.name || "").toLowerCase().trim();
+
+    const foundIdx = activeSavedRiders.findIndex((r) => {
+      const rClean = (r.phone || "").replace(/\D/g, "");
+      const rName = (r.name || "").toLowerCase().trim();
+      return (
+        (lastClean && rClean && (lastClean === rClean || lastClean.endsWith(rClean) || rClean.endsWith(lastClean))) ||
+        (lastNameLower && rName === lastNameLower)
+      );
+    });
+
+    if (foundIdx === -1) {
+      return activeSavedRiders[0];
     }
 
+    const nextIdx = (foundIdx + 1) % activeSavedRiders.length;
+    return activeSavedRiders[nextIdx];
+  }, [activeSavedRiders, lastAssignedRider]);
+
+  const handleAssignRiderSubmit = (orderId: number, overrideName?: string, overridePhone?: string) => {
+    const assignedName = (overrideName !== undefined ? overrideName : riderNameInput).trim();
+    const assignedPhone = (overridePhone !== undefined ? overridePhone : riderPhoneInput).trim();
+    if (!assignedName) return;
+
+    // Do NOT open WhatsApp in a new tab upon assigning. Background alert or manual 💬 WA button is available.
     startTransition(async () => {
       await assignOrderRider(orderId, assignedName, assignedPhone);
       setOrders((prev) =>
@@ -1388,13 +1410,45 @@ export default function OrdersLiveBoard({
                             </span>
                           </div>
 
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                            {!info.riderName && nextRoundRobinRider && (
+                              <button
+                                type="button"
+                                disabled={isPending}
+                                onClick={() => handleAssignRiderSubmit(order.id, nextRoundRobinRider.name, nextRoundRobinRider.phone)}
+                                title={`Auto-assign to next rider in turn: ${nextRoundRobinRider.name} (${nextRoundRobinRider.phone})`}
+                                style={{
+                                  padding: "2px 8px",
+                                  borderRadius: "4px",
+                                  background: "#ecfdf5",
+                                  border: "1px solid #10b981",
+                                  color: "#065f46",
+                                  fontSize: "10px",
+                                  fontWeight: 800,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 3,
+                                }}
+                              >
+                                <span>⚡ Assign {nextRoundRobinRider.name}</span>
+                              </button>
+                            )}
+
                             <button
                               type="button"
                               onClick={() => {
                                 setAssigningRiderOrderId(order.id);
-                                setRiderNameInput(info.riderName || "");
-                                setRiderPhoneInput(info.riderPhone || "");
+                                if (info.riderName) {
+                                  setRiderNameInput(info.riderName);
+                                  setRiderPhoneInput(info.riderPhone || "");
+                                } else if (nextRoundRobinRider) {
+                                  setRiderNameInput(nextRoundRobinRider.name);
+                                  setRiderPhoneInput(nextRoundRobinRider.phone || "");
+                                } else {
+                                  setRiderNameInput("");
+                                  setRiderPhoneInput("");
+                                }
                               }}
                               style={{
                                 padding: "2px 8px",
@@ -1407,7 +1461,7 @@ export default function OrdersLiveBoard({
                                 cursor: "pointer",
                               }}
                             >
-                              {info.riderName ? "Change" : "Assign"}
+                              {info.riderName ? "Change" : "Pick Rider"}
                             </button>
 
                             {info.riderPhone && (
@@ -1415,7 +1469,7 @@ export default function OrdersLiveBoard({
                                 type="button"
                                 disabled={sendingRiderWaId === order.id}
                                 onClick={() => handleSendRiderWhatsApp(order.id)}
-                                title="Re-send WhatsApp dispatch alert to rider"
+                                title="Send / Re-send WhatsApp dispatch alert to rider"
                                 style={{
                                   display: "inline-flex",
                                   alignItems: "center",
@@ -1458,14 +1512,22 @@ export default function OrdersLiveBoard({
                             {/* Quick Select from Saved Active Riders */}
                             {savedRiders && savedRiders.filter((r) => r.is_active).length > 0 && (
                               <div style={{ marginBottom: 6 }}>
-                                <span style={{ fontSize: "9px", fontWeight: 700, color: "#64748b", display: "block", marginBottom: 3 }}>
-                                  ⚡ Quick Pick Saved Rider:
-                                </span>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                                  <span style={{ fontSize: "9px", fontWeight: 700, color: "#64748b" }}>
+                                    ⚡ Quick Pick Saved Rider:
+                                  </span>
+                                  {nextRoundRobinRider && (
+                                    <span style={{ fontSize: "8.5px", fontWeight: 700, color: "#059669" }}>
+                                      Next in rotation: <b>{nextRoundRobinRider.name}</b>
+                                    </span>
+                                  )}
+                                </div>
                                 <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                                   {savedRiders
                                     .filter((r) => r.is_active)
                                     .map((r) => {
                                       const isSelected = riderNameInput === r.name;
+                                      const isNextInTurn = nextRoundRobinRider?.id === r.id;
                                       return (
                                         <button
                                           key={r.id}
@@ -1475,11 +1537,11 @@ export default function OrdersLiveBoard({
                                             setRiderPhoneInput(r.phone);
                                           }}
                                           style={{
-                                            padding: "2px 6px",
+                                            padding: "2px 7px",
                                             borderRadius: "3px",
-                                            background: isSelected ? "#059669" : "#f1f5f9",
-                                            color: isSelected ? "#ffffff" : "#0f172a",
-                                            border: "1px solid " + (isSelected ? "#047857" : "#cbd5e1"),
+                                            background: isSelected ? "#059669" : isNextInTurn ? "#ecfdf5" : "#f1f5f9",
+                                            color: isSelected ? "#ffffff" : isNextInTurn ? "#065f46" : "#0f172a",
+                                            border: "1px solid " + (isSelected ? "#047857" : isNextInTurn ? "#10b981" : "#cbd5e1"),
                                             fontSize: "9.5px",
                                             fontWeight: 700,
                                             cursor: "pointer",
@@ -1487,9 +1549,15 @@ export default function OrdersLiveBoard({
                                             alignItems: "center",
                                             gap: 2,
                                           }}
+                                          title={isNextInTurn ? "Next rider in round-robin rotation" : undefined}
                                         >
-                                          <span>{isSelected ? "✓" : "🛵"}</span>
+                                          <span>{isSelected ? "✓" : isNextInTurn ? "⚡" : "🛵"}</span>
                                           <span>{r.name}</span>
+                                          {isNextInTurn && !isSelected && (
+                                            <span style={{ fontSize: "8px", background: "#dcfce7", color: "#15803d", padding: "0 3px", borderRadius: 2 }}>
+                                              Next
+                                            </span>
+                                          )}
                                         </button>
                                       );
                                     })}
@@ -1518,9 +1586,9 @@ export default function OrdersLiveBoard({
                                 type="button"
                                 disabled={isPending}
                                 onClick={() => handleAssignRiderSubmit(order.id)}
-                                style={{ padding: "4px 10px", background: "#059669", color: "#fff", border: "none", borderRadius: 4, fontSize: 11, fontWeight: 800, cursor: "pointer" }}
+                                style={{ padding: "4px 12px", background: "#059669", color: "#fff", border: "none", borderRadius: 4, fontSize: 11, fontWeight: 800, cursor: "pointer" }}
                               >
-                                Save & Send WhatsApp ➔
+                                Assign Rider ✓
                               </button>
                               <button
                                 type="button"

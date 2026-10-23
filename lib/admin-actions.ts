@@ -2722,6 +2722,12 @@ export interface DeliveryRider {
   notes?: string | null;
   created_at?: string;
   updated_at?: string;
+  total_rides?: number;
+  delivered_rides?: number;
+  active_rides?: number;
+  today_rides?: number;
+  total_cash_collected?: number;
+  last_assigned_at?: string | null;
 }
 
 const RIDERS_FILE = path.join(process.cwd(), "data", "delivery_riders.json");
@@ -2757,6 +2763,8 @@ export async function fetchDeliveryRiders(shopId?: number | null): Promise<Deliv
   const activeShop = await getActiveShopContext();
   const effectiveShopId = shopId !== undefined ? shopId : activeShop.shopId;
 
+  let baseRiders: DeliveryRider[] = [];
+
   try {
     let query = db.from("delivery_riders").select("*").order("created_at", { ascending: false });
     if (effectiveShopId) {
@@ -2764,7 +2772,7 @@ export async function fetchDeliveryRiders(shopId?: number | null): Promise<Deliv
     }
     const { data, error } = await query;
     if (!error && Array.isArray(data)) {
-      return data as DeliveryRider[];
+      baseRiders = data as DeliveryRider[];
     }
     if (error) {
       console.warn("[fetchDeliveryRiders db warning]", error.message);
@@ -2773,12 +2781,80 @@ export async function fetchDeliveryRiders(shopId?: number | null): Promise<Deliv
     // fallback
   }
 
-  // Graceful fallback to data/delivery_riders.json
-  const fileRiders = readFallbackRiders();
-  if (effectiveShopId) {
-    return fileRiders.filter((r) => !r.shop_id || r.shop_id === effectiveShopId);
+  // Graceful fallback to data/delivery_riders.json if DB table empty
+  if (baseRiders.length === 0) {
+    const fileRiders = readFallbackRiders();
+    baseRiders = effectiveShopId
+      ? fileRiders.filter((r) => !r.shop_id || r.shop_id === effectiveShopId)
+      : fileRiders;
   }
-  return fileRiders;
+
+  // Dynamically enrich riders with live performance and trip stats from orders
+  try {
+    let ordersQuery = db
+      .from("orders")
+      .select("id, delivery_rider_name, delivery_rider_phone, status, total, created_at")
+      .not("delivery_rider_name", "is", null)
+      .order("created_at", { ascending: false });
+
+    if (effectiveShopId) {
+      ordersQuery = ordersQuery.eq("shop_id", effectiveShopId);
+    }
+
+    const { data: orderRows } = await ordersQuery;
+
+    let shiftStartTime: string | null = null;
+    try {
+      const boundary = await getShopActiveShiftBoundary(effectiveShopId);
+      shiftStartTime = boundary?.activeShiftStartUtc || boundary?.lastClosedAt || null;
+    } catch {
+      // fallback
+    }
+    const todayDatePrefix = new Date().toISOString().slice(0, 10);
+
+    if (orderRows && orderRows.length > 0) {
+      return baseRiders.map((r) => {
+        const rPhoneClean = (r.phone || "").replace(/\D/g, "");
+        const rNameLower = (r.name || "").toLowerCase().trim();
+
+        const matched = orderRows.filter((o: any) => {
+          const oPhoneClean = (o.delivery_rider_phone || "").replace(/\D/g, "");
+          const oNameLower = (o.delivery_rider_name || "").toLowerCase().trim();
+          return (
+            (rPhoneClean && oPhoneClean && (rPhoneClean === oPhoneClean || oPhoneClean.endsWith(rPhoneClean) || rPhoneClean.endsWith(oPhoneClean))) ||
+            (rNameLower && oNameLower === rNameLower)
+          );
+        });
+
+        const total_rides = matched.length;
+        const delivered_rides = matched.filter((o: any) => o.status === "delivered").length;
+        const active_rides = matched.filter((o: any) => ["pending", "preparing", "ready"].includes(o.status)).length;
+        const today_rides = matched.filter((o: any) => {
+          if (!o.created_at) return false;
+          if (shiftStartTime) return o.created_at >= shiftStartTime;
+          return o.created_at.startsWith(todayDatePrefix);
+        }).length;
+        const total_cash_collected = matched
+          .filter((o: any) => o.status === "delivered")
+          .reduce((sum: number, o: any) => sum + (Number(o.total) || 0), 0);
+        const last_assigned_at = matched[0]?.created_at || null;
+
+        return {
+          ...r,
+          total_rides,
+          delivered_rides,
+          active_rides,
+          today_rides,
+          total_cash_collected,
+          last_assigned_at,
+        };
+      });
+    }
+  } catch (enrichErr) {
+    console.warn("[fetchDeliveryRiders enrich warning]", enrichErr);
+  }
+
+  return baseRiders;
 }
 
 export async function createDeliveryRider(payload: {
