@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
-import { checkAndPerformAutoClosing } from "@/lib/admin-actions";
+import { checkAndPerformAutoClosing, getShopActiveShiftBoundary } from "@/lib/admin-actions";
 import type { Order } from "@/types/menu";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +11,7 @@ let lastAutoCloseCheckMs = 0;
  * GET /api/orders/live
  * Fast, unblocked real-time order polling endpoint.
  * Runs with service_role to guarantee zero RLS drops and instant updates for Admin & KDS.
+ * Excludes orders from previous shifts that were already closed in the daily register.
  */
 export async function GET(request: NextRequest) {
   if (!isServiceRoleConfigured()) {
@@ -21,33 +22,40 @@ export async function GET(request: NextRequest) {
   const shopIdParam = searchParams.get("shopId");
   const isKitchen = searchParams.get("kitchen") === "true";
 
+  const parsedShopId =
+    shopIdParam && shopIdParam !== "null" && shopIdParam !== "all" && shopIdParam !== "undefined" && !isNaN(Number(shopIdParam))
+      ? Number(shopIdParam)
+      : null;
+
   // Periodically verify if previous business shift has ended and needs automated daily closing
   const nowMs = Date.now();
   if (nowMs - lastAutoCloseCheckMs > 60000) {
     lastAutoCloseCheckMs = nowMs;
-    const sId = shopIdParam && !isNaN(Number(shopIdParam)) ? Number(shopIdParam) : null;
-    checkAndPerformAutoClosing(sId).catch((err) => {
+    checkAndPerformAutoClosing(parsedShopId).catch((err) => {
       console.error("[Background auto-closing check error]", err);
     });
   }
 
+  const shiftBoundary = await getShopActiveShiftBoundary(parsedShopId);
   const db = createAdminClient();
 
   let query = db.from("orders").select("*");
+
+  // Only show orders belonging to current active shift (after previous shift closing)
+  if (shiftBoundary.activeShiftStartUtc) {
+    query = query.gte("created_at", shiftBoundary.activeShiftStartUtc);
+  }
 
   if (isKitchen) {
     // Kitchen shows pending (new tickets), confirmed, and preparing orders
     query = query.in("status", ["pending", "confirmed", "preparing"]);
   } else {
-    // Admin orders board: all recent orders for the shift / pipeline
-    query = query.order("created_at", { ascending: false }).limit(80);
+    // Admin orders board: recent active pipeline orders for the shift
+    query = query.order("created_at", { ascending: false }).limit(100);
   }
 
-  if (shopIdParam && shopIdParam !== "null" && shopIdParam !== "all" && shopIdParam !== "undefined") {
-    const parsedShopId = Number(shopIdParam);
-    if (!isNaN(parsedShopId)) {
-      query = query.eq("shop_id", parsedShopId);
-    }
+  if (parsedShopId !== null) {
+    query = query.eq("shop_id", parsedShopId);
   }
 
   query = query.order("created_at", { ascending: isKitchen ? true : false });
@@ -59,7 +67,11 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json(
-    { orders: (orders as Order[]) || [] },
+    {
+      orders: (orders as Order[]) || [],
+      activeBusinessDate: shiftBoundary.activeBusinessDate,
+      lastClosedAt: shiftBoundary.lastClosedAt,
+    },
     {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",

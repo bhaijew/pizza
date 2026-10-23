@@ -58,6 +58,8 @@ interface OrdersLiveBoardProps {
   canCancelOrders?: boolean;
   openingTime?: string;
   closingTime?: string;
+  lastClosedAt?: string | null;
+  activeBusinessDate?: string;
 }
 
 
@@ -182,8 +184,12 @@ export default function OrdersLiveBoard({
   canCancelOrders = true,
   openingTime = "11:00",
   closingTime = "01:00",
+  lastClosedAt = null,
+  activeBusinessDate = "",
 }: OrdersLiveBoardProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [currentLastClosedAt, setCurrentLastClosedAt] = useState<string | null>(lastClosedAt || null);
+  const [currentActiveDate, setCurrentActiveDate] = useState<string>(activeBusinessDate || "");
   const [savedRiders, setSavedRiders] = useState<DeliveryRider[]>(initialRiders);
   const [activeTab, setActiveTab] = useState<FilterTab>("active");
   const [searchQuery, setSearchQuery] = useState("");
@@ -221,10 +227,15 @@ export default function OrdersLiveBoard({
   };
 
 
-  // Today's shift orders (Cross-midnight 24h operational cycle aware)
+  // Today's shift orders (Filtered strictly to exclude any orders prior to last daily closing)
   const todayOrders = useMemo(() => {
-    return orders.filter((o) => isOrderInTodayShift(o.created_at, openingTime, closingTime));
-  }, [orders, openingTime, closingTime]);
+    return orders.filter((o) => {
+      if (currentLastClosedAt && new Date(o.created_at).getTime() <= new Date(currentLastClosedAt).getTime()) {
+        return false;
+      }
+      return true;
+    });
+  }, [orders, currentLastClosedAt]);
 
   // Real-Time live sales metrics updated via Supabase websocket stream
   const salesStats = useMemo(() => {
@@ -242,8 +253,8 @@ export default function OrdersLiveBoard({
       else takeawayCount++;
     });
 
-    const activeInKitchen = orders.filter((o) => o.status === "pending" || o.status === "preparing").length;
-    const readyCount = orders.filter((o) => o.status === "ready").length;
+    const activeInKitchen = todayOrders.filter((o) => o.status === "pending" || o.status === "preparing").length;
+    const readyCount = todayOrders.filter((o) => o.status === "ready").length;
     const deliveredCount = todayOrders.filter((o) => o.status === "delivered").length;
     const cancelledCount = todayOrders.filter((o) => o.status === "cancelled").length;
 
@@ -258,7 +269,7 @@ export default function OrdersLiveBoard({
       deliveredCount,
       cancelledCount,
     };
-  }, [todayOrders, orders]);
+  }, [todayOrders]);
 
   // Play crisp enterprise POS alert chime with user-selected volume
   const playPosOrderChime = useCallback(() => {
@@ -408,6 +419,12 @@ export default function OrdersLiveBoard({
         });
         if (res.ok) {
           const json = await res.json();
+          if (json.lastClosedAt !== undefined && json.lastClosedAt !== currentLastClosedAt) {
+            setCurrentLastClosedAt(json.lastClosedAt);
+          }
+          if (json.activeBusinessDate && json.activeBusinessDate !== currentActiveDate) {
+            setCurrentActiveDate(json.activeBusinessDate);
+          }
           if (json.orders && Array.isArray(json.orders)) {
             const data = json.orders as Order[];
             setOrders((prev) => {
@@ -454,12 +471,17 @@ export default function OrdersLiveBoard({
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
+      // Exclude orders from closed previous shifts
+      if (currentLastClosedAt && new Date(order.created_at).getTime() <= new Date(currentLastClosedAt).getTime()) {
+        return false;
+      }
+
       const info = getOrderServiceInfo(order);
 
       if (activeTab === "active") {
         if (order.status === "delivered" || order.status === "cancelled") return false;
       } else if (activeTab === "today") {
-        if (!isOrderInTodayShift(order.created_at, openingTime, closingTime)) return false;
+        return true;
       } else if (activeTab === "delivery") {
         if (info.type !== "delivery") return false;
       } else if (activeTab === "tables") {
@@ -1079,11 +1101,13 @@ export default function OrdersLiveBoard({
             </svg>
           </div>
           <h3 style={{ fontSize: "16px", fontWeight: 700, margin: "0 0 6px", color: "#0f172a" }}>
-            No orders found in this view
+            {orders.length === 0
+              ? `New Shift Active (${currentActiveDate || "Next Day"})`
+              : "No orders found in this view"}
           </h3>
           <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
             {orders.length === 0
-              ? "When customers place orders from the menu page, they will appear here instantly."
+              ? "Previous shift has been closed. Ready for new incoming orders."
               : "No orders match your selected filter or search query."}
           </p>
         </div>

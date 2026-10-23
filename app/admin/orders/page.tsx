@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/utils/supabase/admin";
 import { fetchSettings } from "@/lib/menu-data";
-import { getActiveShopContext, fetchDeliveryRiders } from "@/lib/admin-actions";
+import { getActiveShopContext, fetchDeliveryRiders, getShopActiveShiftBoundary } from "@/lib/admin-actions";
 import OrdersLiveBoard from "@/components/admin/OrdersLiveBoard";
 import type { Order } from "@/types/menu";
 
@@ -10,7 +10,13 @@ export default async function AdminOrdersPage() {
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
 
-  let ordersQuery = db.from("orders").select("*").order("created_at", { ascending: false });
+  const shiftBoundary = await getShopActiveShiftBoundary(activeShop.shopId);
+
+  let ordersQuery = db
+    .from("orders")
+    .select("*")
+    .gte("created_at", shiftBoundary.activeShiftStartUtc)
+    .order("created_at", { ascending: false });
 
   if (activeShop.shopId) {
     ordersQuery = ordersQuery.eq("shop_id", activeShop.shopId);
@@ -62,6 +68,8 @@ export default async function AdminOrdersPage() {
         canCancelOrders={activeShop.canCancelOrders}
         openingTime={settings.opening_time || "11:00"}
         closingTime={settings.closing_time || "01:00"}
+        lastClosedAt={shiftBoundary.lastClosedAt}
+        activeBusinessDate={shiftBoundary.activeBusinessDate}
       />
     </div>
   );

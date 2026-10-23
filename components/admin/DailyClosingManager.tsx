@@ -34,6 +34,8 @@ interface DailyClosingProps {
     shiftWindow?: string;
     openingTime?: string;
     closingTime?: string;
+    activeBusinessDate?: string;
+    nextBusinessDate?: string;
   };
   currencySymbol?: string;
   shopName?: string;
@@ -312,11 +314,24 @@ export default function DailyClosingManager({
               <span>🔒</span> Close Register
             </button>
           ) : (
-            <div
-              style={{ borderRadius: "5px" }}
-              className="bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-xs uppercase px-3 py-1.5 flex items-center gap-1.5 shrink-0 whitespace-nowrap"
-            >
-              <span>✓</span> Register Closed
+            <div className="flex items-center gap-1.5">
+              <div
+                style={{ borderRadius: "5px" }}
+                className="bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-xs uppercase px-3 py-1.5 flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+              >
+                <span>✓</span> Register Closed
+              </div>
+              {data.nextBusinessDate && data.nextBusinessDate !== selectedDate && (
+                <button
+                  type="button"
+                  onClick={() => handleDateChange(data.nextBusinessDate!)}
+                  style={{ borderRadius: "5px" }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase px-3 py-1.5 transition-colors shadow-sm flex items-center gap-1.5 border-none cursor-pointer shrink-0 whitespace-nowrap"
+                  title="Switch to next business day register"
+                >
+                  <span>▶</span> Next Shift ({data.nextBusinessDate})
+                </button>
+              )}
             </div>
           )}
         </div>

@@ -1781,6 +1781,93 @@ export async function deleteExpense(id: number | string): Promise<{ error: strin
 
 // ─── DAILY REGISTER CLOSING ACTIONS ───────────────────────────────
 
+export interface ActiveShiftBoundary {
+  lastClosedAt: string | null;
+  lastClosingDate: string | null;
+  activeBusinessDate: string;
+  activeShiftStartUtc: string;
+  isCurrentDateClosed: boolean;
+  nextBusinessDate: string;
+}
+
+/**
+ * Retrieves the latest daily closing for a shop and determines the active shift boundary.
+ * If a shift was closed:
+ * - Orders created AFTER the closing belong to the NEXT day's shift.
+ * - Previous orders from the closed shift are excluded from the live orders board.
+ */
+export async function getShopActiveShiftBoundary(shopId?: number | null): Promise<ActiveShiftBoundary> {
+  const db = createAdminClient();
+  let closingQ = db
+    .from("daily_closings")
+    .select("closing_date, created_at")
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (shopId !== undefined && shopId !== null) {
+    closingQ = closingQ.eq("shop_id", shopId);
+  } else {
+    closingQ = closingQ.is("shop_id", null);
+  }
+
+  const { data: latestClosingRows } = await closingQ;
+  const latestClosing = latestClosingRows && latestClosingRows.length > 0 ? latestClosingRows[0] : null;
+
+  // Retrieve shop hours
+  let openingTime = "11:00";
+  let closingTime = "01:00";
+  if (shopId) {
+    const { data: s } = await db.from("shops").select("opening_time, closing_time").eq("id", shopId).maybeSingle();
+    if (s?.opening_time) openingTime = s.opening_time;
+    if (s?.closing_time) closingTime = s.closing_time;
+  } else {
+    const { data: s } = await db.from("shop_settings").select("opening_time, closing_time").eq("id", "main").maybeSingle();
+    if (s?.opening_time) openingTime = s.opening_time;
+    if (s?.closing_time) closingTime = s.closing_time;
+  }
+
+  const currentBusinessDate = getCurrentBusinessDate(openingTime, closingTime);
+  const { startUtc: normalStartUtc } = getBusinessShiftUtcRange(currentBusinessDate, openingTime, closingTime);
+
+  let lastClosedAt: string | null = null;
+  let lastClosingDate: string | null = null;
+  let activeShiftStartUtc = normalStartUtc;
+  let isCurrentDateClosed = false;
+
+  const [y, m, d] = currentBusinessDate.split("-").map(Number);
+  const nextDateObj = new Date(Date.UTC(y, m - 1, d + 1));
+  const nextBusinessDate = formatDateStr(nextDateObj);
+
+  let activeBusinessDate = currentBusinessDate;
+
+  if (latestClosing) {
+    lastClosedAt = latestClosing.created_at;
+    lastClosingDate = latestClosing.closing_date;
+
+    // If the calculated activeBusinessDate has ALREADY been closed in daily_closings:
+    // Then today is officially CLOSED, and the active operational date rolls over to NEXT DAY!
+    if (lastClosingDate && (lastClosingDate === currentBusinessDate || new Date(lastClosingDate).getTime() >= new Date(currentBusinessDate).getTime())) {
+      isCurrentDateClosed = true;
+      activeBusinessDate = nextBusinessDate;
+    }
+
+    // Active shift start is whichever is more recent:
+    // If closing was completed recently, orders for the new active shift MUST have been placed AFTER that closing!
+    if (lastClosedAt && new Date(lastClosedAt).getTime() > new Date(normalStartUtc).getTime()) {
+      activeShiftStartUtc = lastClosedAt;
+    }
+  }
+
+  return {
+    lastClosedAt,
+    lastClosingDate,
+    activeBusinessDate,
+    activeShiftStartUtc,
+    isCurrentDateClosed,
+    nextBusinessDate,
+  };
+}
+
 export async function fetchDailyClosingData(targetDate?: string, skipAutoCheck = false): Promise<{
   date: string;
   totalOrders: number;
@@ -1798,6 +1885,8 @@ export async function fetchDailyClosingData(targetDate?: string, skipAutoCheck =
   shiftWindow?: string;
   openingTime?: string;
   closingTime?: string;
+  activeBusinessDate?: string;
+  nextBusinessDate?: string;
 }> {
   await requireAdmin();
   const db = createAdminClient();
@@ -1838,20 +1927,50 @@ export async function fetchDailyClosingData(targetDate?: string, skipAutoCheck =
     }
   }
 
-  // Determine current active operational date based on shop hours
-  const dateStr = targetDate || getCurrentBusinessDate(openingTime, closingTime);
+  const boundary = await getShopActiveShiftBoundary(activeShop.shopId);
+
+  // If targetDate is specified, view that date.
+  // Otherwise, default to targetDate or current active date.
+  const dateStr = targetDate || (boundary.isCurrentDateClosed ? boundary.lastClosingDate! : boundary.activeBusinessDate);
+
   const { startUtc, endUtc, label: shiftWindow } = getBusinessShiftUtcRange(
     dateStr,
     openingTime,
     closingTime
   );
 
+  // Check if register already closed for this shop and date
+  let closingQuery = db
+    .from("daily_closings")
+    .select("*")
+    .eq("closing_date", dateStr);
+
+  if (activeShop.shopId) {
+    closingQuery = closingQuery.eq("shop_id", activeShop.shopId);
+  } else {
+    closingQuery = closingQuery.is("shop_id", null);
+  }
+
+  const { data: closingRecord } = await closingQuery.maybeSingle();
+
+  // If viewing the open active shift after a closing, orders start right after that closing!
+  let queryStartUtc = startUtc;
+  if (!closingRecord && boundary.lastClosedAt && new Date(boundary.lastClosedAt).getTime() > new Date(startUtc).getTime()) {
+    queryStartUtc = boundary.lastClosedAt;
+  }
+
   // Fetch orders strictly within this operational business shift window
   let ordersQuery = db
     .from("orders")
     .select("*")
-    .gte("created_at", startUtc)
-    .lte("created_at", endUtc);
+    .gte("created_at", queryStartUtc);
+
+  // If this date is already closed, only include orders placed BEFORE closing time
+  if (closingRecord && closingRecord.created_at) {
+    ordersQuery = ordersQuery.lte("created_at", closingRecord.created_at);
+  } else {
+    ordersQuery = ordersQuery.lte("created_at", endUtc);
+  }
 
   if (activeShop.shopId) {
     ordersQuery = ordersQuery.eq("shop_id", activeShop.shopId);
@@ -1874,20 +1993,6 @@ export async function fetchDailyClosingData(targetDate?: string, skipAutoCheck =
   }
 
   const { data: dayExpenses } = await expensesQuery;
-
-  // Check if register already closed for this shop
-  let closingQuery = db
-    .from("daily_closings")
-    .select("*")
-    .eq("closing_date", dateStr);
-
-  if (activeShop.shopId) {
-    closingQuery = closingQuery.eq("shop_id", activeShop.shopId);
-  } else {
-    closingQuery = closingQuery.is("shop_id", null);
-  }
-
-  const { data: closingRecord } = await closingQuery.maybeSingle();
 
   const orders = allOrders || [];
   const validOrders = orders.filter((o) => o.status !== "cancelled");
@@ -1932,6 +2037,8 @@ export async function fetchDailyClosingData(targetDate?: string, skipAutoCheck =
     shiftWindow,
     openingTime,
     closingTime,
+    activeBusinessDate: boundary.activeBusinessDate,
+    nextBusinessDate: boundary.nextBusinessDate,
   };
 }
 
@@ -1967,8 +2074,12 @@ export async function recordDailyClosing(
 
   if (error) return { error: error.message, success: false };
 
+  dbCache.invalidateTag("daily_closings", "closings", "orders");
   revalidatePath("/admin/closing");
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/kitchen");
   revalidatePath("/admin");
+  revalidatePath("/kitchen");
   return { error: null, success: true };
 }
 
