@@ -215,6 +215,9 @@ export default function OrdersLiveBoard({
   const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
   const [printTab, setPrintTab] = useState<"counter" | "kitchen" | "dual">("dual");
   const [copiedKdsLink, setCopiedKdsLink] = useState(false);
+  const [editingFeeOrderId, setEditingFeeOrderId] = useState<number | null>(null);
+  const [feeInput, setFeeInput] = useState<string>("");
+  const [savingFeeId, setSavingFeeId] = useState<number | null>(null);
 
   const handleCopyKdsLink = () => {
     if (typeof window !== "undefined") {
@@ -1506,33 +1509,135 @@ export default function OrdersLiveBoard({
                         </div>
 
                         {/* Delivery Charges Info & Quick Admin Adjuster */}
-                        <div style={{ marginTop: 4, display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "10.5px", background: "#f8fafc", padding: "3px 6px", borderRadius: "4px", border: "1px dashed #cbd5e1" }}>
-                          <span style={{ color: "#065f46", fontWeight: 700, display: "flex", alignItems: "center", gap: 3 }}>
-                            <span>🛵 Delivery Fee:</span>
-                            <strong style={{ color: Number(order.delivery_fee || 0) > 0 ? "#059669" : "#16a34a" }}>
-                              {Number(order.delivery_fee || 0) > 0 ? `${currencySymbol}${Number(order.delivery_fee).toFixed(0)}` : "Free (Rs. 0)"}
-                            </strong>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPrintingOrder(order);
-                              setPrintTab("counter");
-                            }}
-                            style={{
-                              padding: "1px 7px",
-                              borderRadius: "3px",
-                              background: "#ecfdf5",
-                              border: "1px solid #a7f3d0",
-                              color: "#065f46",
-                              fontSize: "10px",
-                              fontWeight: 800,
-                              cursor: "pointer",
-                            }}
-                            title="Admin: Edit delivery fee and recalculate total"
-                          >
-                            ✏️ Add/Change Fee
-                          </button>
+                        <div style={{ marginTop: 4, background: "#f8fafc", padding: "4px 7px", borderRadius: "4px", border: "1px dashed #cbd5e1" }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "10.5px" }}>
+                            <span style={{ color: "#065f46", fontWeight: 700, display: "flex", alignItems: "center", gap: 3 }}>
+                              <span>🛵 Delivery Fee:</span>
+                              <strong style={{ color: Number(order.delivery_fee || 0) > 0 ? "#059669" : "#16a34a" }}>
+                                {Number(order.delivery_fee || 0) > 0 ? `${currencySymbol}${Number(order.delivery_fee).toFixed(0)}` : "Free (Rs. 0)"}
+                              </strong>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (editingFeeOrderId === order.id) {
+                                  setEditingFeeOrderId(null);
+                                } else {
+                                  setEditingFeeOrderId(order.id);
+                                  setFeeInput(Number(order.delivery_fee || 0) > 0 ? String(order.delivery_fee) : "");
+                                }
+                              }}
+                              style={{
+                                padding: "1px 7px",
+                                borderRadius: "3px",
+                                background: "#ecfdf5",
+                                border: "1px solid #a7f3d0",
+                                color: "#065f46",
+                                fontSize: "10px",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                              }}
+                              title="Admin: Edit delivery fee and recalculate order total"
+                            >
+                              {editingFeeOrderId === order.id ? "Close ✕" : "✏️ Add/Change Fee"}
+                            </button>
+                          </div>
+
+                          {/* Inline Delivery Fee Editor for Admin */}
+                          {editingFeeOrderId === order.id && (
+                            <div style={{ marginTop: 6, paddingTop: 5, borderTop: "1px solid #e2e8f0" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 5 }}>
+                                <span style={{ fontSize: "11px", fontWeight: 700, color: "#065f46" }}>Rs.</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="10"
+                                  placeholder="0 (Free Delivery)"
+                                  value={feeInput}
+                                  onChange={(e) => setFeeInput(e.target.value)}
+                                  style={{
+                                    flex: 1,
+                                    height: "26px",
+                                    padding: "0 6px",
+                                    fontSize: "11.5px",
+                                    fontWeight: 700,
+                                    border: "1px solid #10b981",
+                                    borderRadius: "3px",
+                                    background: "#ffffff",
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  disabled={savingFeeId === order.id}
+                                  onClick={async () => {
+                                    setSavingFeeId(order.id);
+                                    const safeFee = Math.max(0, Number(feeInput) || 0);
+                                    try {
+                                      const { updateOrderDeliveryDetails } = await import("@/lib/admin-actions");
+                                      const res = await updateOrderDeliveryDetails(order.id, safeFee);
+                                      if (res.success) {
+                                        setOrders((prev) =>
+                                          prev.map((o) =>
+                                            o.id === order.id
+                                              ? {
+                                                  ...o,
+                                                  delivery_fee: safeFee,
+                                                  total: Math.max(0, Number((Number(o.total || 0) - Number(o.delivery_fee || 0) + safeFee).toFixed(2))),
+                                                }
+                                              : o
+                                          )
+                                        );
+                                        setEditingFeeOrderId(null);
+                                      } else {
+                                        alert(res.error || "Failed to update fee");
+                                      }
+                                    } catch (err: any) {
+                                      alert(err?.message || "Error updating fee");
+                                    } finally {
+                                      setSavingFeeId(null);
+                                    }
+                                  }}
+                                  style={{
+                                    height: "26px",
+                                    padding: "0 10px",
+                                    borderRadius: "3px",
+                                    background: "#059669",
+                                    color: "#ffffff",
+                                    fontSize: "10.5px",
+                                    fontWeight: 800,
+                                    border: "none",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  {savingFeeId === order.id ? "Saving..." : "Save ✓"}
+                                </button>
+                              </div>
+
+                              {/* Quick Presets: 0 Free, 50, 100, 150, 200 */}
+                              <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center" }}>
+                                <span style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>Quick:</span>
+                                {[0, 50, 100, 150, 200].map((fee) => (
+                                  <button
+                                    key={fee}
+                                    type="button"
+                                    onClick={() => setFeeInput(fee === 0 ? "0" : String(fee))}
+                                    style={{
+                                      padding: "1px 5px",
+                                      borderRadius: "2px",
+                                      fontSize: "9px",
+                                      fontWeight: 700,
+                                      border: "1px solid #cbd5e1",
+                                      background: "#ffffff",
+                                      color: "#0f172a",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    {fee === 0 ? "Free" : `Rs. ${fee}`}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Modal/Inline Form to Assign Rider */}
@@ -1877,53 +1982,22 @@ export default function OrdersLiveBoard({
                       )}
                     </div>
 
-                    {/* ROW 2: Utility Toolbelt (Print Slips, Recreate, Cancel, Delete) */}
+                    {/* ROW 2: Utility Toolbelt (Recreate, Cancel, Delete) */}
                     <div
                       style={{
                         display: "grid",
                         gridTemplateColumns:
                           canCancelOrders
                             ? order.status !== "cancelled" && order.status !== "delivered"
-                              ? "repeat(4, 1fr)"
-                              : "repeat(3, 1fr)"
+                              ? "repeat(3, 1fr)"
+                              : "repeat(2, 1fr)"
                             : order.status !== "cancelled" && order.status !== "delivered"
-                            ? "repeat(3, 1fr)"
-                            : "repeat(2, 1fr)",
+                            ? "repeat(2, 1fr)"
+                            : "1fr",
                         gap: "5px",
                         width: "100%",
                       }}
                     >
-                      {/* Dual Thermal Print Button */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPrintingOrder(order);
-                          setPrintTab("dual");
-                        }}
-                        style={{
-                          height: "28px",
-                          borderRadius: "5px",
-                          background: "#f0f9ff",
-                          color: "#0369a1",
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          border: "1px solid #bae6fd",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "4px",
-                          whiteSpace: "nowrap",
-                          padding: "0 4px",
-                          transition: "all 0.15s ease",
-                        }}
-                        className="hover:bg-sky-100 hover:border-sky-300"
-                        title="Print Counter Receipt & Kitchen KOT (Dual Slips)"
-                      >
-                        <Printer size={12} style={{ flexShrink: 0 }} />
-                        <span>Print Slips</span>
-                      </button>
-
                       {/* Recreate / Modify Order Button */}
                       <button
                         type="button"
