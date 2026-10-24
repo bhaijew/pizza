@@ -333,8 +333,8 @@ function POSContent() {
         delivery_address: `${activeShop.name} Delivery Zone, Street 4, Sector B`,
         status: "pending",
         total: totalAmount,
-        subtotal: totalAmount - 150,
-        delivery_fee: 150,
+        subtotal: totalAmount,
+        delivery_fee: 0,
         items: sampleItems,
         notes: `Simulated POS Test Order for ${activeShop.name}`,
         created_at: new Date().toISOString(),
@@ -1100,6 +1100,10 @@ function POSContent() {
             currencySymbol: "Rs.",
           }}
           defaultTab="dual"
+          onOrderUpdated={(updated) => {
+            setOrders((prev) => prev.map((o) => (o.id === String(updated.id) ? { ...o, ...updated } : o)));
+            setViewingReceiptOrder((prev: any) => (prev?.id === updated.id ? { ...prev, ...updated } : prev));
+          }}
           onClose={() => setViewingReceiptOrder(null)}
         />
       )}

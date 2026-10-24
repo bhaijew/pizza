@@ -1180,6 +1180,70 @@ export async function updateOrderStatus(
   return { error: null };
 }
 
+export async function updateOrderDeliveryDetails(
+  id: number,
+  deliveryFee: number,
+  orderType?: "dine_in" | "takeaway" | "delivery",
+  deliveryAddress?: string | null,
+  riderName?: string | null
+): Promise<{ success: boolean; error?: string | null }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  if (!isServiceRoleConfigured()) {
+    return { success: false, error: SERVICE_ROLE_ERROR };
+  }
+
+  // Fetch current order to recalculate total
+  let orderQuery = db.from("orders").select("id, total, delivery_fee, discount_amount, items, notes").eq("id", id);
+  if (activeShop.shopId) {
+    orderQuery = orderQuery.eq("shop_id", activeShop.shopId);
+  }
+
+  const { data: currentOrder, error: fetchErr } = await orderQuery.maybeSingle();
+  if (fetchErr || !currentOrder) {
+    return { success: false, error: fetchErr?.message || "Order not found." };
+  }
+
+  const safeFee = Math.max(0, Number(deliveryFee) || 0);
+  const oldFee = Number(currentOrder.delivery_fee) || 0;
+  const currentTotal = Number(currentOrder.total) || 0;
+  const newTotal = Math.max(0, Number((currentTotal - oldFee + safeFee).toFixed(2)));
+
+  const updatePayload: Record<string, any> = {
+    delivery_fee: safeFee,
+    total: newTotal,
+  };
+
+  if (orderType) {
+    updatePayload.order_type = orderType;
+  }
+  if (deliveryAddress !== undefined) {
+    updatePayload.delivery_address = deliveryAddress;
+  }
+  if (riderName !== undefined) {
+    updatePayload.delivery_rider_name = riderName;
+  }
+
+  let updateQuery = db.from("orders").update(updatePayload).eq("id", id);
+  if (activeShop.shopId) {
+    updateQuery = updateQuery.eq("shop_id", activeShop.shopId);
+  }
+
+  const { error: updateErr } = await updateQuery;
+  if (updateErr) {
+    return { success: false, error: updateErr.message };
+  }
+
+  dbCache.invalidateTag("orders");
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/kitchen");
+  revalidatePath("/kitchen");
+
+  return { success: true, error: null };
+}
+
 export async function deleteOrder(
   id: number
 ): Promise<{ error: string | null }> {

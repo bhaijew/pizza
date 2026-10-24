@@ -717,6 +717,10 @@ export default function OrderSearchLookup({
         <ThermalDualPrintModal
           order={printingOrder}
           onClose={() => setPrintingOrder(null)}
+          onOrderUpdated={(updated) => {
+            setOrders((prev) => prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o)));
+            setSelectedOrder((prev) => (prev?.id === updated.id ? { ...prev, ...updated } : prev));
+          }}
           shopInfo={{
             name: shopName,
             address: shopAddress,

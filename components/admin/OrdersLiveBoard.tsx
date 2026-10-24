@@ -2047,6 +2047,9 @@ export default function OrdersLiveBoard({
             currencySymbol: currencySymbol,
           }}
           defaultTab={printTab}
+          onOrderUpdated={(updated) => {
+            setOrders((prev) => prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o)));
+          }}
           onClose={() => setPrintingOrder(null)}
         />
       )}

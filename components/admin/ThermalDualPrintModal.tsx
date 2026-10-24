@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   Check,
 } from "lucide-react";
+import { updateOrderDeliveryDetails } from "@/lib/admin-actions";
 
 export interface ThermalPrintItem {
   name: string;
@@ -62,6 +63,7 @@ interface ThermalDualPrintModalProps {
   };
   onClose: () => void;
   defaultTab?: "counter" | "kitchen" | "dual";
+  onOrderUpdated?: (updatedOrder: any) => void;
 }
 
 export function normalizeOrderForPrint(
@@ -188,12 +190,72 @@ export default function ThermalDualPrintModal({
   shopInfo,
   onClose,
   defaultTab = "dual",
+  onOrderUpdated,
 }: ThermalDualPrintModalProps) {
   const [activeTab, setActiveTab] = useState<"counter" | "kitchen" | "dual">(defaultTab);
   const [paperWidth, setPaperWidth] = useState<"80mm" | "58mm">("80mm");
   const [printMode, setPrintMode] = useState<"counter" | "kitchen" | "dual" | null>(null);
 
   const data = normalizeOrderForPrint(order, shopInfo);
+
+  // Delivery & Print Time customization
+  const [editableDeliveryFee, setEditableDeliveryFee] = useState<number>(
+    Number(order?.delivery_fee ?? order?.deliveryFee ?? data.deliveryFee ?? 0)
+  );
+  const [editableOrderType, setEditableOrderType] = useState<"dine_in" | "takeaway" | "delivery">(
+    data.orderType
+  );
+  const [savingFee, setSavingFee] = useState(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEditableDeliveryFee(Number(order?.delivery_fee ?? order?.deliveryFee ?? data.deliveryFee ?? 0));
+    setEditableOrderType(data.orderType);
+  }, [order?.id, order?.delivery_fee, order?.deliveryFee, data.orderType]);
+
+  const currentSafeFee = Math.max(0, Number(editableDeliveryFee) || 0);
+  const effectiveSubtotal = data.subtotal;
+  const effectiveDiscount = data.discountAmount || 0;
+  const effectiveDeliveryFee = editableOrderType === "delivery" ? currentSafeFee : currentSafeFee;
+  const effectiveTotal = Math.max(0, Number((effectiveSubtotal - effectiveDiscount + effectiveDeliveryFee).toFixed(2)));
+
+  const printData: ThermalPrintOrderData = {
+    ...data,
+    orderType: editableOrderType,
+    deliveryFee: effectiveDeliveryFee,
+    total: effectiveTotal,
+  };
+
+  const handleSaveDeliveryDetails = async () => {
+    if (!order?.id) return;
+    setSavingFee(true);
+    setSaveSuccessMsg(null);
+    try {
+      const res = await updateOrderDeliveryDetails(
+        Number(order.id),
+        currentSafeFee,
+        editableOrderType
+      );
+      if (res.success) {
+        setSaveSuccessMsg("Delivery fee updated!");
+        if (onOrderUpdated) {
+          onOrderUpdated({
+            ...order,
+            delivery_fee: currentSafeFee,
+            order_type: editableOrderType,
+            total: effectiveTotal,
+          });
+        }
+        setTimeout(() => setSaveSuccessMsg(null), 3000);
+      } else {
+        alert(res.error || "Failed to update delivery fee");
+      }
+    } catch (e: any) {
+      alert(e?.message || "Error saving delivery fee");
+    } finally {
+      setSavingFee(false);
+    }
+  };
 
   const formattedDate = (() => {
     try {
@@ -344,6 +406,98 @@ export default function ThermalDualPrintModal({
             </div>
           </div>
 
+          {/* POS Print-Time Delivery Fee & Order Type Adjuster */}
+          <div className="bg-amber-50/80 border-b border-amber-200 px-4 py-2 sm:px-6 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <span className="text-[11px] font-black uppercase text-amber-950 tracking-wide flex items-center gap-1.5">
+                <Bike className="w-3.5 h-3.5 text-amber-700" />
+                POS Adjuster:
+              </span>
+
+              {/* Order Type Toggle */}
+              <div className="flex bg-white p-0.5 rounded-md border border-amber-300 text-xs shadow-xs">
+                {(["takeaway", "dine_in", "delivery"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setEditableOrderType(t)}
+                    className={`px-2.5 py-1 rounded text-[11px] font-extrabold transition-all cursor-pointer ${
+                      editableOrderType === t
+                        ? "bg-amber-500 text-slate-950 shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    {t === "delivery" ? "🛵 Delivery" : t === "dine_in" ? "🍽️ Dine-In" : "🛍️ Takeaway"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Delivery Fee Input & Presets */}
+              <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-md border border-amber-300 shadow-xs">
+                <label className="text-[11px] font-bold text-slate-700">Fee (Rs.):</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="10"
+                  value={editableDeliveryFee === 0 ? "" : editableDeliveryFee}
+                  placeholder="0 (Free)"
+                  onChange={(e) => setEditableDeliveryFee(Math.max(0, Number(e.target.value) || 0))}
+                  className="w-20 h-6 px-1.5 text-xs font-black text-slate-900 bg-amber-50/60 rounded border border-amber-200 outline-none focus:border-amber-500"
+                />
+                <div className="flex gap-1">
+                  {[0, 50, 100, 150, 200].map((fee) => (
+                    <button
+                      key={fee}
+                      type="button"
+                      onClick={() => setEditableDeliveryFee(fee)}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold transition-all cursor-pointer ${
+                        editableDeliveryFee === fee
+                          ? "bg-amber-600 text-white"
+                          : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                      }`}
+                    >
+                      {fee === 0 ? "Free" : fee}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Live Net Total & Save to DB */}
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-[10px] text-slate-500 font-bold uppercase leading-none">Net Total</div>
+                <div className="text-xs sm:text-sm font-black text-slate-950 font-mono">
+                  {data.currencySymbol} {effectiveTotal.toLocaleString()}
+                </div>
+              </div>
+
+              {order?.id && (
+                <button
+                  type="button"
+                  onClick={handleSaveDeliveryDetails}
+                  disabled={savingFee}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-3 py-1.5 rounded-lg shadow-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                  title="Save new delivery fee to order in database"
+                >
+                  {savingFee ? (
+                    <span>Saving...</span>
+                  ) : saveSuccessMsg ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-200" />
+                      <span>Saved!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Save Fee</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Action Print Buttons Ribbon */}
           <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5 sm:px-6 flex flex-wrap items-center justify-between gap-2">
             {/* Tab Selector */}
@@ -431,7 +585,7 @@ export default function ThermalDualPrintModal({
                     style={{ width: paperWidth === "80mm" ? 310 : 240 }}
                     className="bg-white text-black p-4 sm:p-5 rounded shadow-lg border border-slate-300 font-mono text-[11px] leading-snug"
                   >
-                    <CounterSlipContent data={data} formattedDate={formattedDate} paperWidth={paperWidth} />
+                    <CounterSlipContent data={printData} formattedDate={formattedDate} paperWidth={paperWidth} />
                   </div>
                 </div>
 
@@ -454,7 +608,7 @@ export default function ThermalDualPrintModal({
                     style={{ width: paperWidth === "80mm" ? 310 : 240 }}
                     className="bg-amber-50/50 text-black p-4 sm:p-5 rounded shadow-lg border border-amber-300 font-mono text-[11px] leading-snug"
                   >
-                    <KitchenKotContent data={data} formattedDate={formattedDate} paperWidth={paperWidth} />
+                    <KitchenKotContent data={printData} formattedDate={formattedDate} paperWidth={paperWidth} />
                   </div>
                 </div>
               </div>
@@ -463,14 +617,14 @@ export default function ThermalDualPrintModal({
                 style={{ width: paperWidth === "80mm" ? 340 : 260 }}
                 className="bg-white text-black p-5 rounded shadow-xl border border-slate-300 font-mono text-xs leading-snug"
               >
-                <CounterSlipContent data={data} formattedDate={formattedDate} paperWidth={paperWidth} />
+                <CounterSlipContent data={printData} formattedDate={formattedDate} paperWidth={paperWidth} />
               </div>
             ) : (
               <div
                 style={{ width: paperWidth === "80mm" ? 340 : 260 }}
                 className="bg-amber-50/50 text-black p-5 rounded shadow-xl border border-amber-300 font-mono text-xs leading-snug"
               >
-                <KitchenKotContent data={data} formattedDate={formattedDate} paperWidth={paperWidth} />
+                <KitchenKotContent data={printData} formattedDate={formattedDate} paperWidth={paperWidth} />
               </div>
             )}
           </div>
@@ -501,7 +655,7 @@ export default function ThermalDualPrintModal({
           {/* 1. Counter Slip Print Element */}
           {(printMode === "counter" || printMode === "dual") && (
             <div className="print-slip-counter">
-              <CounterSlipContent data={data} formattedDate={formattedDate} paperWidth={paperWidth} />
+              <CounterSlipContent data={printData} formattedDate={formattedDate} paperWidth={paperWidth} />
             </div>
           )}
 
@@ -511,7 +665,7 @@ export default function ThermalDualPrintModal({
           {/* 3. Kitchen KOT Print Element */}
           {(printMode === "kitchen" || printMode === "dual") && (
             <div className="print-slip-kitchen">
-              <KitchenKotContent data={data} formattedDate={formattedDate} paperWidth={paperWidth} />
+              <KitchenKotContent data={printData} formattedDate={formattedDate} paperWidth={paperWidth} />
             </div>
           )}
         </div>
@@ -649,6 +803,11 @@ function CounterSlipContent({
           <div className="flex justify-between">
             <span>Delivery Charges:</span>
             <span>+ {data.currencySymbol} {data.deliveryFee.toLocaleString()}</span>
+          </div>
+        ) : data.orderType === "delivery" ? (
+          <div className="flex justify-between font-bold">
+            <span>Delivery Charges:</span>
+            <span>FREE (Rs. 0)</span>
           </div>
         ) : null}
         <div className="flex justify-between font-black text-sm pt-1 border-t border-black mt-1">

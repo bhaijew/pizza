@@ -879,6 +879,9 @@ export default function KitchenDisplay({
             currencySymbol: shopInfo?.currencySymbol || "Rs.",
           }}
           defaultTab={printTab}
+          onOrderUpdated={(updated) => {
+            setOrders((prev) => prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o)));
+          }}
           onClose={() => setPrintingOrder(null)}
         />
       )}

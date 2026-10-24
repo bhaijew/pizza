@@ -69,7 +69,7 @@ export default function CartSheet({
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [deliveryFee] = useState(150);
+  const [deliveryFee, setDeliveryFee] = useState<number>(0);
   const [orderNotes, setOrderNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -1225,8 +1225,8 @@ export default function CartSheet({
                         Home Delivery Dispatch
                       </span>
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: "#059669" }}>
-                      Fee: {formatPrice(deliveryFee)}
+                    <span style={{ fontSize: 11, fontWeight: 800, color: deliveryFee > 0 ? "#059669" : "#16a34a" }}>
+                      {deliveryFee > 0 ? `Fee: ${formatPrice(deliveryFee)}` : "Free Delivery"}
                     </span>
                   </div>
 
@@ -1264,6 +1264,68 @@ export default function CartSheet({
                   <p style={{ fontSize: 10, color: "#047857", margin: "4px 0 0", fontWeight: 600 }}>
                     Our dispatch rider will deliver hot &amp; fresh to your doorstep.
                   </p>
+
+                  {/* Delivery Charges Selector / Input */}
+                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed #a7f3d0" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <label style={{ fontSize: 11, fontWeight: 800, color: "#065f46", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                        Delivery Charges (Rs.)
+                      </label>
+                      <span style={{ fontSize: 10, fontWeight: 800, color: deliveryFee > 0 ? "#059669" : "#16a34a" }}>
+                        {deliveryFee > 0 ? formatPrice(deliveryFee) : "Free (Rs. 0)"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: "#065f46" }}>Rs.</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="10"
+                        value={deliveryFee === 0 ? "" : deliveryFee}
+                        placeholder="0 (Free Delivery)"
+                        onChange={(e) => {
+                          const val = Math.max(0, Number(e.target.value) || 0);
+                          setDeliveryFee(val);
+                        }}
+                        style={{
+                          flex: 1,
+                          height: 34,
+                          padding: "0 10px",
+                          borderRadius: 4,
+                          border: "1px solid #10b981",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: "#0f172a",
+                          background: "#ffffff",
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+                    {/* Quick delivery fee presets */}
+                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "#047857" }}>Quick:</span>
+                      {[0, 50, 100, 150, 200].map((fee) => (
+                        <button
+                          key={fee}
+                          type="button"
+                          onClick={() => setDeliveryFee(fee)}
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: 3,
+                            fontSize: 10,
+                            fontWeight: 700,
+                            border: deliveryFee === fee ? "1.5px solid #059669" : "1px solid #a7f3d0",
+                            background: deliveryFee === fee ? "#059669" : "#ffffff",
+                            color: deliveryFee === fee ? "#ffffff" : "#065f46",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          {fee === 0 ? "Free (0)" : `Rs. ${fee}`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1734,7 +1796,9 @@ export default function CartSheet({
                     }}
                   >
                     <span>🛵 Delivery Fee</span>
-                    <span style={{ fontWeight: 700 }}>+{formatPrice(deliveryFee)}</span>
+                    <span style={{ fontWeight: 700 }}>
+                      {deliveryFee > 0 ? `+${formatPrice(deliveryFee)}` : "FREE"}
+                    </span>
                   </div>
                 )}
 
