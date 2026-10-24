@@ -106,9 +106,9 @@ export async function createDeal(
   }
 
   try {
-    // 1. Ensure "Deals" category exists for this shop
+    // 1. Ensure "Super Duper Deals" or "Deals" category exists for this shop
     let dealsCatId: number | string | null = null;
-    let catQuery = db.from("categories").select("id").eq("name", "Deals");
+    let catQuery = db.from("categories").select("id").in("name", ["Super Duper Deals", "Deals"]);
     if (targetShopId) catQuery = catQuery.eq("shop_id", targetShopId);
     else catQuery = catQuery.is("shop_id", null);
 
@@ -119,9 +119,9 @@ export async function createDeal(
       const { data: newCat } = await db
         .from("categories")
         .insert({
-          name: "Deals",
-          slug: `deals-${targetShopId || "global"}`,
-          description: "Exclusive bundle offers and special discount deals",
+          name: "Super Duper Deals",
+          slug: `super-duper-deals-${targetShopId || "global"}`,
+          description: "Exclusive Super Duper Deals",
           sort_order: 0,
           is_active: true,
           shop_id: targetShopId,
