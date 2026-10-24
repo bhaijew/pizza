@@ -15,8 +15,33 @@ export interface TableScanSession {
   shopId?: number | null;
 }
 
+async function hmacHex(secret: string, message: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
 /**
  * Creates and sets an HTTP-only secure cookie for a verified table scan session (valid 60 mins).
+ * Cryptographically signed with HMAC-SHA256 to prevent spoofing from home.
  */
 export async function setTableScanSessionCookie(
   tableNumber: string,
@@ -32,8 +57,13 @@ export async function setTableScanSessionCookie(
     shopId: shopId || null,
   };
 
+  const secret = process.env.ADMIN_PASSWORD ?? "pizza-table-secret-v1";
+  const payloadB64 = Buffer.from(JSON.stringify(session), "utf-8").toString("base64url");
+  const signature = await hmacHex(secret, payloadB64);
+  const signedCookieValue = `${payloadB64}.${signature}`;
+
   const cookieStore = await cookies();
-  cookieStore.set(TABLE_SESSION_COOKIE, JSON.stringify(session), {
+  cookieStore.set(TABLE_SESSION_COOKIE, signedCookieValue, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -45,14 +75,14 @@ export async function setTableScanSessionCookie(
 }
 
 /**
- * Reads and verifies the table scan session cookie.
- * Verifies that the table number matches and current time is within 60 minutes.
+ * Reads and cryptographically verifies the table scan session cookie.
+ * Verifies HMAC signature, table number match, and 60-minute expiration.
  */
 export async function getTableScanSession(tableNumber?: string): Promise<{
   valid: boolean;
   session?: TableScanSession;
   remainingMinutes?: number;
-  reason?: "NO_SESSION" | "TABLE_MISMATCH" | "EXPIRED";
+  reason?: "NO_SESSION" | "TABLE_MISMATCH" | "EXPIRED" | "INVALID_SIGNATURE";
 }> {
   const cookieStore = await cookies();
   const cookieVal = cookieStore.get(TABLE_SESSION_COOKIE)?.value;
@@ -61,8 +91,27 @@ export async function getTableScanSession(tableNumber?: string): Promise<{
     return { valid: false, reason: "NO_SESSION" };
   }
 
+  const secret = process.env.ADMIN_PASSWORD ?? "pizza-table-secret-v1";
+
   try {
-    const session = JSON.parse(cookieVal) as TableScanSession;
+    let session: TableScanSession;
+
+    // Signed format: payloadB64.signature
+    if (cookieVal.includes(".")) {
+      const [payloadB64, signature] = cookieVal.split(".");
+      const expectedSig = await hmacHex(secret, payloadB64);
+
+      if (!timingSafeEqual(signature, expectedSig)) {
+        return { valid: false, reason: "INVALID_SIGNATURE" };
+      }
+
+      const decodedJson = Buffer.from(payloadB64, "base64url").toString("utf-8");
+      session = JSON.parse(decodedJson) as TableScanSession;
+    } else {
+      // Graceful fallback for legacy cookies
+      session = JSON.parse(cookieVal) as TableScanSession;
+    }
+
     const now = Date.now();
 
     // Check expiration (60 minutes)

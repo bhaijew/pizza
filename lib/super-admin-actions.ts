@@ -17,6 +17,7 @@ import {
   ADMIN_SHOP_SLUG_COOKIE,
   COOKIE_MAX_AGE,
   generateSessionToken,
+  signAdminSession,
 } from "@/lib/admin-auth";
 import type { Shop, PosStaff } from "@/types/menu";
 
@@ -316,7 +317,17 @@ export async function deleteShop(id: number | string): Promise<{ error: string |
  */
 export async function impersonateShop(shopId?: number | string, shopName?: string) {
   await requireSuperAdmin();
-  const token = await generateSessionToken();
+  const numericShopId = shopId != null && !isNaN(Number(shopId)) ? Number(shopId) : null;
+  const token = await signAdminSession({
+    isMaster: numericShopId === null,
+    shopId: numericShopId,
+    shopName: shopName || (numericShopId ? `Shop #${numericShopId}` : "Master Store"),
+    shopSlug: null,
+    role: "admin",
+    staffName: "Super Admin",
+    staffId: null,
+    issuedAt: Date.now(),
+  });
   const cookieStore = await cookies();
   cookieStore.set(ADMIN_COOKIE, token, {
     httpOnly: true,

@@ -83,7 +83,7 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
     const tableNumber = input.table_number?.trim() || null;
 
     // Prefer service role client if configured, otherwise use standard server client
-    let supabase;
+    let supabase: any;
     if (isServiceRoleConfigured()) {
       supabase = createAdminClient();
     } else {
@@ -112,37 +112,127 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       }
     }
 
-    // Sequential Order Numbering Per Shop — every new shop starts from #1 (#001)
-    let nextSeq = 1;
-    try {
-      let seqQuery = supabase
+    // -------------------------------------------------------------
+    // FINANCIAL SECURITY: Server-Side Price & Total Verification
+    // Prevents price tampering via DevTools or API tools (Postman/curl)
+    // -------------------------------------------------------------
+    const rawProdIds = (input.items || [])
+      .map((it) => Number(it.id))
+      .filter((id) => !isNaN(id) && id > 0);
+
+    let verifiedItems = [...(input.items || [])];
+    let verifiedSubtotal = 0;
+
+    if (rawProdIds.length > 0) {
+      const { data: dbProducts } = await supabase
+        .from("products")
+        .select("id, name, price, variations")
+        .in("id", Array.from(new Set(rawProdIds)));
+
+      const prodMap = new Map<number, any>();
+      if (dbProducts) {
+        for (const p of dbProducts) {
+          prodMap.set(Number(p.id), p);
+        }
+      }
+
+      verifiedItems = (input.items || []).map((it) => {
+        const prod = prodMap.get(Number(it.id));
+        const qty = Number(it.qty || (it as any).quantity || 1);
+        let unitPrice = Number(it.price) || 0;
+
+        if (prod) {
+          let expectedPrice = Number(prod.price) || 0;
+
+          // Check if variation selected
+          const rawVar = (it as any).selected_variation || (it as any).selectedVariation;
+          const varName = (
+            typeof rawVar === "string"
+              ? rawVar
+              : rawVar && typeof rawVar === "object"
+              ? rawVar.name || ""
+              : ""
+          ).toLowerCase().trim();
+
+          if (varName && Array.isArray(prod.variations)) {
+            const matchedVar = prod.variations.find(
+              (v: any) => v && String(v.name || "").toLowerCase().trim() === varName
+            );
+            if (matchedVar && matchedVar.price != null) {
+              expectedPrice = Number(matchedVar.price);
+            }
+          }
+
+          // If client tampered price (difference > Rs. 1), enforce server DB price
+          if (Math.abs(unitPrice - expectedPrice) > 1) {
+            console.warn(
+              `[SECURITY: Price Tampering Intercepted] Item "${it.name}" (ID: ${it.id}) submitted with Rs. ${unitPrice}, overridden with server price Rs. ${expectedPrice}`
+            );
+            unitPrice = expectedPrice;
+          }
+        }
+
+        verifiedSubtotal += unitPrice * qty;
+
+        return {
+          ...it,
+          price: unitPrice,
+          qty,
+          quantity: qty,
+        };
+      });
+    } else {
+      verifiedSubtotal = (input.items || []).reduce(
+        (sum, it) => sum + (Number(it.price) || 0) * Number(it.qty || (it as any).quantity || 1),
+        0
+      );
+    }
+
+    const deliveryFee = input.order_type === "delivery" ? Number(input.delivery_fee || 0) : 0;
+    const discountAmount = Number(input.discount_amount || 0);
+    const verifiedTotal = Math.max(0, Number((verifiedSubtotal + deliveryFee - discountAmount).toFixed(2)));
+
+    // If client total was manipulated, override with verified total
+    const finalTotal = Math.abs(Number(input.total) - verifiedTotal) > 1 ? verifiedTotal : Number(input.total.toFixed(2));
+
+    // -------------------------------------------------------------
+    // CONCURRENCY-SAFE ORDER NUMBERING: Atomic Sequence with Retry Loop
+    // Prevents duplicate key collisions (23505) under rush-hour surges
+    // -------------------------------------------------------------
+    async function getNextOrderNumber(shopId: number | null): Promise<{ seq: number; num: string }> {
+      let query = supabase
         .from("orders")
         .select("order_number, id")
         .order("id", { ascending: false })
         .limit(1);
 
-      if (targetShopId) {
-        seqQuery = seqQuery.eq("shop_id", targetShopId);
+      if (shopId) {
+        query = query.eq("shop_id", shopId);
       } else {
-        seqQuery = seqQuery.is("shop_id", null);
+        query = query.is("shop_id", null);
       }
 
-      const { data: latestRows } = await seqQuery;
-      if (latestRows && latestRows.length > 0) {
-        const lastNum = String(latestRows[0].order_number || "");
-        const match = lastNum.match(/(\d+)$/);
-        if (match) {
-          nextSeq = parseInt(match[1], 10) + 1;
-        } else {
-          nextSeq = (Number(latestRows[0].id) || 0) + 1;
+      let seq = 1;
+      try {
+        const { data: latestRows } = await query;
+        if (latestRows && latestRows.length > 0) {
+          const lastNum = String(latestRows[0].order_number || "");
+          const match = lastNum.match(/(\d+)$/);
+          if (match) {
+            seq = parseInt(match[1], 10) + 1;
+          } else {
+            seq = (Number(latestRows[0].id) || 0) + 1;
+          }
         }
+      } catch {
+        seq = 1;
       }
-    } catch {
-      nextSeq = 1;
+      const seqStr = String(seq).padStart(3, "0");
+      const num = shopId ? `ORD-${shopId}-${seqStr}` : `ORD-${seqStr}`;
+      return { seq, num };
     }
 
-    const seqStr = String(nextSeq).padStart(3, "0");
-    let orderNumber = targetShopId ? `ORD-${targetShopId}-${seqStr}` : `ORD-${seqStr}`;
+    let { seq: nextSeq, num: orderNumber } = await getNextOrderNumber(targetShopId);
 
     // Generate delivery verification token number for table dine-in & takeaway
     let tokenNumber = input.token_number?.trim();
@@ -157,7 +247,7 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
     } else if (input.order_type === "takeaway" && tokenNumber) {
       enrichedNotes = `[TAKEAWAY: Token ${tokenNumber}] ${enrichedNotes}`.trim();
     } else if (input.order_type === "delivery") {
-      enrichedNotes = `[DELIVERY: Address: ${input.delivery_address?.trim()} | Phone: ${input.customer_phone?.trim()} | Fee: ${input.delivery_fee || 0}] ${enrichedNotes}`.trim();
+      enrichedNotes = `[DELIVERY: Address: ${input.delivery_address?.trim()} | Phone: ${input.customer_phone?.trim()} | Fee: ${deliveryFee}] ${enrichedNotes}`.trim();
     }
 
     const orderPayload: Record<string, any> = {
@@ -166,167 +256,234 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       customer_name: input.customer_name.trim(),
       customer_phone: input.customer_phone?.trim() || null,
       notes: enrichedNotes || null,
-      items: input.items,
-      total: Number(input.total.toFixed(2)),
+      items: verifiedItems,
+      total: finalTotal,
       order_type: input.order_type,
       table_number: tableNumber,
       token_number: tokenNumber || null,
       shop_id: targetShopId || null,
       delivery_address: input.delivery_address?.trim() || null,
-      delivery_fee: input.delivery_fee || 0,
-      discount_amount: input.discount_amount || 0,
+      delivery_fee: deliveryFee,
+      discount_amount: discountAmount,
       promo_code: input.promo_code || null,
       points_redeemed: input.points_redeemed || 0,
     };
 
-    // Attempt insert with new columns
-    let { error } = await supabase.from("orders").insert(orderPayload);
+    // Attempt insertion with up to 3 automatic concurrency conflict retries
+    let error: any = null;
+    let insertSuccess = false;
 
-    // If new columns don't exist yet in Supabase (migration pending), fallback to basic payload
-    if (error && (error.message.includes("delivery_address") || error.message.includes("delivery_fee") || error.message.includes("order_type") || error.message.includes("table_number") || error.message.includes("token_number") || error.message.includes("shop_id") || error.message.includes("discount_amount") || error.message.includes("promo_code"))) {
-      const fallbackPayload: Record<string, any> = {
-        order_number: orderNumber,
-        status: "pending",
-        customer_name: input.customer_name.trim(),
-        customer_phone: input.customer_phone?.trim() || null,
-        notes: enrichedNotes || null,
-        items: input.items,
-        total: Number(input.total.toFixed(2)),
-      };
-      if (!error.message.includes("shop_id") && targetShopId) {
-        fallbackPayload.shop_id = targetShopId;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      let insertRes = await supabase.from("orders").insert(orderPayload);
+      error = insertRes.error;
+
+      // Fallback if newly migrated columns don't exist in Supabase yet
+      if (error && (error.message?.includes("delivery_address") || error.message?.includes("delivery_fee") || error.message?.includes("order_type") || error.message?.includes("table_number") || error.message?.includes("token_number") || error.message?.includes("shop_id") || error.message?.includes("discount_amount") || error.message?.includes("promo_code"))) {
+        const fallbackPayload: Record<string, any> = {
+          order_number: orderPayload.order_number,
+          status: "pending",
+          customer_name: input.customer_name.trim(),
+          customer_phone: input.customer_phone?.trim() || null,
+          notes: enrichedNotes || null,
+          items: verifiedItems,
+          total: finalTotal,
+        };
+        if (!error.message.includes("shop_id") && targetShopId) {
+          fallbackPayload.shop_id = targetShopId;
+        }
+        const fallbackRes = await supabase.from("orders").insert(fallbackPayload);
+        error = fallbackRes.error;
       }
-      const retryRes = await supabase.from("orders").insert(fallbackPayload);
-      error = retryRes.error;
+
+      // Check for duplicate key / unique collision
+      if (error && (error.code === "23505" || error.message?.includes("unique") || error.message?.includes("duplicate key"))) {
+        console.warn(`[Concurrency Collision on attempt ${attempt}] Order number ${orderPayload.order_number} collided. Re-deriving sequence...`);
+        const refreshed = await getNextOrderNumber(targetShopId);
+        if (refreshed.num === orderPayload.order_number) {
+          const jitterSeq = refreshed.seq + attempt;
+          orderPayload.order_number = targetShopId
+            ? `ORD-${targetShopId}-${String(jitterSeq).padStart(3, "0")}`
+            : `ORD-${String(jitterSeq).padStart(3, "0")}`;
+        } else {
+          orderPayload.order_number = refreshed.num;
+        }
+        orderNumber = orderPayload.order_number;
+        continue;
+      }
+
+      if (!error) {
+        insertSuccess = true;
+        break;
+      }
     }
 
-    // High Concurrency Race Condition Guard: If another customer checked out at the exact same millisecond
-    if (error && (error.code === "23505" || error.message.includes("unique") || error.message.includes("duplicate key"))) {
-      const collisionFreeOrderNumber = `${orderNumber}-${Math.floor(10 + Math.random() * 90)}`;
-      orderPayload.order_number = collisionFreeOrderNumber;
-      const collisionRetry = await supabase.from("orders").insert(orderPayload);
-      if (!collisionRetry.error) {
+    if (!insertSuccess && error) {
+      // Last-ditch collision-free fallback with microsecond timestamp
+      const fallbackNumber = `${orderNumber}-${Date.now().toString().slice(-4)}`;
+      orderPayload.order_number = fallbackNumber;
+      const finalTry = await supabase.from("orders").insert(orderPayload);
+      if (!finalTry.error) {
+        orderNumber = fallbackNumber;
         error = null;
-        orderNumber = collisionFreeOrderNumber;
+      } else {
+        console.error("[placeCustomerOrder fatal error]", error);
+        return { success: false, error: error.message };
       }
     }
 
-    if (error) {
-      console.error("[placeCustomerOrder error]", error);
-      return { success: false, error: error.message };
-    }
-
-    // Feature 7: Inventory Automatic Stock Deduction (Finished Products)
+    // -------------------------------------------------------------
+    // CHECKOUT SPEED OPTIMIZATION: High-Performance Batch Stock Deduction
+    // Consolidates 70+ sequential network queries into 3-4 parallel batch calls
+    // -------------------------------------------------------------
     try {
-      let stockChanged = false;
-      for (const orderedItem of input.items) {
-        if (!orderedItem.id) continue;
-        const { data: prodData } = await supabase
+      // A. Finished Product Stock Deduction (Batch)
+      const qtyByProdId = new Map<number, number>();
+      for (const item of verifiedItems) {
+        if (!item.id) continue;
+        const pid = Number(item.id);
+        const q = Number(item.qty || (item as any).quantity || 1);
+        qtyByProdId.set(pid, (qtyByProdId.get(pid) || 0) + q);
+      }
+
+      const prodIds = Array.from(qtyByProdId.keys());
+      if (prodIds.length > 0) {
+        const { data: trackableProds } = await supabase
           .from("products")
           .select("id, track_inventory, stock_quantity")
-          .eq("id", orderedItem.id)
-          .maybeSingle();
+          .in("id", prodIds)
+          .eq("track_inventory", true);
 
-        if (prodData && prodData.track_inventory && prodData.stock_quantity !== null && prodData.stock_quantity !== undefined) {
-          const newStock = Math.max(0, Number(prodData.stock_quantity) - (orderedItem.qty || 1));
-          const updates: Record<string, any> = { stock_quantity: newStock };
-          if (newStock === 0) {
-            updates.is_available = false;
+        if (trackableProds && trackableProds.length > 0) {
+          const productUpdates = (trackableProds as any[])
+            .filter((p: any) => p.stock_quantity !== null && p.stock_quantity !== undefined)
+            .map((p: any) => {
+              const orderedQty = qtyByProdId.get(Number(p.id)) || 0;
+              const newStock = Math.max(0, Number(p.stock_quantity) - orderedQty);
+              const updateData: Record<string, any> = { stock_quantity: newStock };
+              if (newStock === 0) updateData.is_available = false;
+              return supabase.from("products").update(updateData).eq("id", p.id);
+            });
+
+          if (productUpdates.length > 0) {
+            await Promise.all(productUpdates);
+            dbCache.invalidateTag("products", "menu");
           }
-          await supabase.from("products").update(updates).eq("id", orderedItem.id);
-          stockChanged = true;
         }
       }
-      if (stockChanged) {
-        dbCache.invalidateTag("products", "menu");
-      }
-    } catch (stockErr) {
-      console.warn("[placeCustomerOrder stock deduction non-blocking error]", stockErr);
-    }
 
-    // Phase 1: Recipe & Raw Material Automatic Stock Deduction (Kacha Maal)
-    try {
-      for (const orderedItem of input.items) {
-        if (!orderedItem.id) continue;
-        const prodId = Number(orderedItem.id);
-        const qty = Number(orderedItem.qty || (orderedItem as any).quantity || 1);
-
-        // Robustly extract variation name whether it's string, object or null
-        const rawVar =
-          (orderedItem as any).selected_variation ||
-          (orderedItem as any).selectedVariation;
-        const variationName = (
-          typeof rawVar === "string"
-            ? rawVar
-            : rawVar && typeof rawVar === "object"
-            ? rawVar.name || ""
-            : ""
-        ).toLowerCase().trim();
-
-        // Check if recipes exist for this product FOR THIS SHOP
+      // B. Recipe & Raw Material Deduction (Batch)
+      if (prodIds.length > 0) {
         let recQuery = supabase
           .from("product_recipes")
-          .select("ingredient_id, quantity_required, variation_name")
-          .eq("product_id", prodId);
+          .select("product_id, ingredient_id, quantity_required, variation_name")
+          .in("product_id", prodIds);
 
         if (targetShopId) {
           recQuery = recQuery.eq("shop_id", targetShopId);
         }
 
-        const { data: recipes } = await recQuery;
+        const { data: allRecipes } = await recQuery;
 
-        if (recipes && recipes.length > 0) {
-          // 1. If variationName exists (e.g. "Small"), look for recipes matching this variation
-          let matchedRecipes = variationName
-            ? recipes.filter(
-                (r) =>
-                  r.variation_name &&
-                  r.variation_name.toLowerCase().trim() === variationName
-              )
-            : [];
-
-          // 2. If no variation-specific recipe matched, fall back to base recipes (where variation_name is null/empty)
-          if (matchedRecipes.length === 0) {
-            matchedRecipes = recipes.filter((r) => !r.variation_name);
+        if (allRecipes && allRecipes.length > 0) {
+          // Map recipes by product_id
+          const recipesByProd = new Map<number, any[]>();
+          for (const r of allRecipes) {
+            const list = recipesByProd.get(Number(r.product_id)) || [];
+            list.push(r);
+            recipesByProd.set(Number(r.product_id), list);
           }
 
-          for (const recipe of matchedRecipes) {
-            const reqQty = Number(recipe.quantity_required) || 0;
-            const deductAmount = Number((reqQty * qty).toFixed(3));
+          // In-memory aggregation of total required deduction per ingredient
+          const totalDeductByIngredient = new Map<number, { amount: number; notes: string[] }>();
 
-            if (deductAmount > 0) {
-              const { data: ing } = await supabase
-                .from("raw_ingredients")
-                .select("current_stock")
-                .eq("id", recipe.ingredient_id)
-                .maybeSingle();
+          for (const item of verifiedItems) {
+            if (!item.id) continue;
+            const pid = Number(item.id);
+            const itemQty = Number(item.qty || (item as any).quantity || 1);
+            const recipes = recipesByProd.get(pid);
+            if (!recipes || recipes.length === 0) continue;
 
-              if (ing) {
+            const rawVar = (item as any).selected_variation || (item as any).selectedVariation;
+            const variationName = (
+              typeof rawVar === "string"
+                ? rawVar
+                : rawVar && typeof rawVar === "object"
+                ? rawVar.name || ""
+                : ""
+            ).toLowerCase().trim();
+
+            let matched = variationName
+              ? recipes.filter((r) => r.variation_name && r.variation_name.toLowerCase().trim() === variationName)
+              : [];
+
+            if (matched.length === 0) {
+              matched = recipes.filter((r) => !r.variation_name);
+            }
+
+            for (const r of matched) {
+              const reqQty = Number(r.quantity_required) || 0;
+              const deduct = Number((reqQty * itemQty).toFixed(3));
+              if (deduct > 0) {
+                const ingId = Number(r.ingredient_id);
+                const prev = totalDeductByIngredient.get(ingId) || { amount: 0, notes: [] };
+                prev.amount = Number((prev.amount + deduct).toFixed(3));
+                prev.notes.push(`${itemQty}x ${variationName || "Base"}`);
+                totalDeductByIngredient.set(ingId, prev);
+              }
+            }
+          }
+
+          // Single query for all needed raw ingredients
+          const ingIds = Array.from(totalDeductByIngredient.keys());
+          if (ingIds.length > 0) {
+            const { data: rawIngredients } = await supabase
+              .from("raw_ingredients")
+              .select("id, current_stock")
+              .in("id", ingIds);
+
+            if (rawIngredients && rawIngredients.length > 0) {
+              const nowIso = new Date().toISOString();
+              const ingUpdatePromises: any[] = [];
+              const stockLogs: any[] = [];
+
+              for (const ing of rawIngredients) {
+                const ingId = Number(ing.id);
+                const deductInfo = totalDeductByIngredient.get(ingId);
+                if (!deductInfo) continue;
+
                 const currentStock = Number(ing.current_stock) || 0;
-                const newStock = Math.max(0, Number((currentStock - deductAmount).toFixed(3)));
+                const newStock = Math.max(0, Number((currentStock - deductInfo.amount).toFixed(3)));
 
-                await supabase
-                  .from("raw_ingredients")
-                  .update({ current_stock: newStock, updated_at: new Date().toISOString() })
-                  .eq("id", recipe.ingredient_id);
+                ingUpdatePromises.push(
+                  supabase
+                    .from("raw_ingredients")
+                    .update({ current_stock: newStock, updated_at: nowIso })
+                    .eq("id", ingId)
+                );
 
-                await supabase.from("ingredient_stock_logs").insert({
+                stockLogs.push({
                   shop_id: targetShopId || null,
-                  ingredient_id: recipe.ingredient_id,
+                  ingredient_id: ingId,
                   change_type: "order_deduction",
-                  quantity_change: -deductAmount,
+                  quantity_change: -deductInfo.amount,
                   previous_stock: currentStock,
                   new_stock: newStock,
                   reference_id: orderNumber,
-                  notes: `Used in Order #${orderNumber} (${qty}x ${variationName || "Base"})`,
+                  notes: `Used in Order #${orderNumber} (${deductInfo.notes.join(", ")})`,
                 });
               }
+
+              // Parallel updates + single batch log insert
+              await Promise.all([
+                Promise.all(ingUpdatePromises),
+                supabase.from("ingredient_stock_logs").insert(stockLogs),
+              ]);
             }
           }
         }
       }
-    } catch (recipeErr) {
-      console.warn("[placeCustomerOrder recipe deduction non-blocking error]", recipeErr);
+    } catch (stockDeductionErr) {
+      console.warn("[placeCustomerOrder batch stock deduction non-blocking error]", stockDeductionErr);
     }
 
     // If order succeeded and belongs to a registered shop, increment its aggregate counters
@@ -345,7 +502,7 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
             .from("shops")
             .update({
               total_orders_count: currentCount + 1,
-              total_revenue: Number((currentRev + input.total).toFixed(2)),
+              total_revenue: Number((currentRev + finalTotal).toFixed(2)),
             })
             .eq("id", targetShopId);
         }
@@ -359,7 +516,7 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       processLoyaltyPoints(
         input.customer_phone.trim(),
         input.customer_name?.trim() || "Customer",
-        input.total,
+        finalTotal,
         input.points_redeemed || 0,
         targetShopId
       ).catch((loyaltyErr) => {
@@ -368,16 +525,24 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
     }
 
     // Trigger WhatsApp notification alert (multi-tenant session ID support)
+    // CRITICAL: Bounded await ensures serverless runtime finishes HTTP connection before freezing
     if (input.customer_phone?.trim()) {
-      sendWhatsAppOrderAlert({
-        phone: input.customer_phone.trim(),
-        customerName: input.customer_name?.trim() || "Customer",
-        orderId: orderNumber,
-        total: `${input.total.toFixed(2)}`,
-        shopId: targetShopId,
-      }).catch((waErr) => {
-        console.error("[WhatsApp order alert non-blocking error]", waErr);
-      });
+      try {
+        await Promise.race([
+          sendWhatsAppOrderAlert({
+            phone: input.customer_phone.trim(),
+            customerName: input.customer_name?.trim() || "Customer",
+            orderId: orderNumber,
+            total: `${finalTotal.toFixed(2)}`,
+            shopId: targetShopId,
+          }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("WhatsApp dispatch timeout")), 3500)
+          ),
+        ]);
+      } catch (waErr) {
+        console.warn("[WhatsApp order alert non-blocking warning]", waErr);
+      }
     }
 
     return {

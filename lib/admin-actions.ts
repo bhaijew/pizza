@@ -23,6 +23,9 @@ import {
   COOKIE_MAX_AGE,
   generateSessionToken,
   verifySessionToken,
+  signAdminSession,
+  verifyAdminSession,
+  type AdminSessionClaims,
 } from "@/lib/admin-auth";
 import {
   sendWhatsAppRiderAlert,
@@ -55,6 +58,22 @@ export async function getActiveShopContext(): Promise<{
   canCancelOrders: boolean;
 }> {
   const cookieStore = await cookies();
+  const token = cookieStore.get(ADMIN_COOKIE)?.value;
+  const verifiedClaims = token ? await verifyAdminSession(token) : null;
+
+  if (verifiedClaims) {
+    return {
+      shopId: verifiedClaims.shopId,
+      shopName: verifiedClaims.shopName || "Master Store",
+      shopSlug: verifiedClaims.shopSlug || null,
+      isMasterAdmin: verifiedClaims.isMaster === true,
+      role: verifiedClaims.role || "admin",
+      staffName: verifiedClaims.staffName || (verifiedClaims.role === "admin" ? "Shop Admin" : "Staff Member"),
+      canCancelOrders: verifiedClaims.role === "admin",
+    };
+  }
+
+  // Fallback for legacy unsigned cookies (during transition)
   const shopIdStr = cookieStore.get(ADMIN_SHOP_COOKIE)?.value;
   const shopName = cookieStore.get(ADMIN_SHOP_NAME_COOKIE)?.value || "Master Store";
   const shopSlug = cookieStore.get(ADMIN_SHOP_SLUG_COOKIE)?.value || null;
@@ -66,10 +85,11 @@ export async function getActiveShopContext(): Promise<{
     shopId: isNaN(shopId as number) ? null : shopId,
     shopName,
     shopSlug,
-    isMasterAdmin: !shopId,
+    // CRITICAL SECURITY FIX: Never treat as Master Admin simply because shopId is empty or absent
+    isMasterAdmin: false,
     role,
     staffName,
-    canCancelOrders: role === "admin", // Strict RBAC: only Admin can cancel orders!
+    canCancelOrders: role === "admin",
   };
 }
 
@@ -212,7 +232,18 @@ export async function adminLogin(
     return { error: "Incorrect password or staff PIN. Please verify your credentials." };
   }
 
-  const token = await generateSessionToken();
+  const claims: AdminSessionClaims = {
+    isMaster: !matchedShopData,
+    shopId: matchedShopData ? matchedShopData.id : null,
+    shopName: matchedShopData ? matchedShopData.name : "Master Store",
+    shopSlug: matchedShopData ? matchedShopData.slug : null,
+    role: userRole,
+    staffName: staffName,
+    staffId: staffId,
+    issuedAt: Date.now(),
+  };
+
+  const token = await signAdminSession(claims);
   const cookieStore = await cookies();
   cookieStore.set(ADMIN_COOKIE, token, {
     httpOnly: true,
@@ -284,6 +315,27 @@ export async function adminLogin(
 export async function switchAdminBranch(targetShopId: number | null) {
   await requireAdmin();
   const cookieStore = await cookies();
+  const token = cookieStore.get(ADMIN_COOKIE)?.value;
+  const currentClaims = token ? await verifyAdminSession(token) : null;
+
+  // Strict RBAC: Only a verified Master Admin can switch branch view
+  if (currentClaims && !currentClaims.isMaster) {
+    console.warn("[switchAdminBranch] Unauthorized branch switch attempt rejected.");
+    return;
+  }
+
+  let updatedClaims: AdminSessionClaims = currentClaims
+    ? { ...currentClaims, issuedAt: Date.now() }
+    : {
+        isMaster: true,
+        shopId: null,
+        shopName: "Master Store",
+        shopSlug: null,
+        role: "admin",
+        staffName: "Master Store Admin",
+        staffId: null,
+        issuedAt: Date.now(),
+      };
 
   if (targetShopId !== null) {
     const db = createAdminClient();
@@ -294,6 +346,10 @@ export async function switchAdminBranch(targetShopId: number | null) {
       .maybeSingle();
 
     if (shop) {
+      updatedClaims.shopId = shop.id;
+      updatedClaims.shopName = shop.name;
+      updatedClaims.shopSlug = shop.slug || null;
+
       cookieStore.set(ADMIN_SHOP_COOKIE, String(shop.id), {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -320,10 +376,23 @@ export async function switchAdminBranch(targetShopId: number | null) {
     }
   } else {
     // Switch to Master Store (All / Unassigned)
+    updatedClaims.shopId = null;
+    updatedClaims.shopName = "Master Store";
+    updatedClaims.shopSlug = null;
+
     cookieStore.delete(ADMIN_SHOP_COOKIE);
     cookieStore.delete(ADMIN_SHOP_NAME_COOKIE);
     cookieStore.delete(ADMIN_SHOP_SLUG_COOKIE);
   }
+
+  const newToken = await signAdminSession(updatedClaims);
+  cookieStore.set(ADMIN_COOKIE, newToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: COOKIE_MAX_AGE,
+    path: "/",
+  });
 
   revalidatePath("/admin");
   revalidatePath("/admin/categories");
@@ -2632,8 +2701,18 @@ export async function unlockBranchKitchen(
       };
     }
 
-    // Set session cookies
-    const token = await generateSessionToken();
+    // Set signed session cookies
+    const claims: AdminSessionClaims = {
+      isMaster: false,
+      shopId: shop.id,
+      shopName: shop.name,
+      shopSlug: shop.slug || null,
+      role: userRole,
+      staffName: staffName,
+      staffId: null,
+      issuedAt: Date.now(),
+    };
+    const token = await signAdminSession(claims);
     const cookieStore = await cookies();
 
     cookieStore.set(ADMIN_COOKIE, token, {
