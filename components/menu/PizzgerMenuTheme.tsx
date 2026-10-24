@@ -4,6 +4,7 @@ import React, { useState, useMemo, useRef } from "react";
 import type { Category, Product } from "@/types/menu";
 import type { ShopSettings } from "@/lib/menu-data";
 import { useCart } from "./CartContext";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import {
   Search,
   X,
@@ -1206,23 +1207,13 @@ function ProductCardItem({
             {badgeText}
           </span>
         )}
-
-        <img
-          src={
-            imgError
-              ? "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80"
-              : product.image_url ||
-                "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80"
-          }
-          onError={() => setImgError(true)}
+        <OptimizedImage
+          src={product.image_url}
           alt={product.name}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            transition: "transform 0.3s",
-          }}
-          className="hover:scale-105"
+          productName={product.name}
+          priority={idx < 4}
+          aspectRatio="auto"
+          style={{ width: "100%", height: "100%" }}
         />
       </div>
 

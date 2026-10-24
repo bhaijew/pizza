@@ -519,4 +519,28 @@ button, input, select, textarea, optgroup { font-family: inherit; }
   transition: transform 0.08s ease;
 }
 
+/* ─── Ultra-Fast Image Shimmer for Slow 2G/3G Networks ──────────── */
+@keyframes imageShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.image-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f1f5f9 0%,
+    #e2e8f0 35%,
+    #f8fafc 50%,
+    #e2e8f0 65%,
+    #f1f5f9 100%
+  );
+  background-size: 200% 100%;
+  animation: imageShimmer 1.8s infinite ease-in-out;
+}
+
+
 

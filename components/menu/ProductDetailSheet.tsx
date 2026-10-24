@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Product, ProductVariation, ExtraTopping } from "@/types/menu";
 import { useCart } from "./CartContext";
 import ImagePlaceholder from "./ImagePlaceholder";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { getDealItems } from "@/lib/deal-helper";
 
 interface ProductDetailSheetProps {
@@ -208,17 +209,15 @@ function SheetContent({
                 overflow: "hidden",
               }}
             >
-              {product.image_url && !imageError ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  onError={() => setImageError(true)}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              ) : (
-                <ImagePlaceholder />
-              )}
+              <OptimizedImage
+                src={product.image_url}
+                alt={product.name}
+                categoryName={product.category?.name}
+                productName={product.name}
+                priority={true}
+                onHoverZoom={false}
+                style={{ width: "100%", height: "100%" }}
+              />
 
               {product.category?.name && (
                 <div

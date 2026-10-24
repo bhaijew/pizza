@@ -7,6 +7,7 @@
 import { useState } from "react";
 import type { Product } from "@/types/menu";
 import ImagePlaceholder from "./ImagePlaceholder";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { useCart } from "./CartContext";
 import { getDealItems } from "@/lib/deal-helper";
 
@@ -93,29 +94,14 @@ export default function ProductCard({
           borderBottom: "1px solid #f1f5f9",
         }}
       >
-        {product.image_url && !imageError ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={product.image_url}
-            alt={product.name}
-            onError={() => setImageError(true)}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              transition: "transform 0.35s ease",
-            }}
-            loading="lazy"
-            onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLImageElement).style.transform = "scale(1.05)")
-            }
-            onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLImageElement).style.transform = "scale(1)")
-            }
-          />
-        ) : (
-          <ImagePlaceholder />
-        )}
+        <OptimizedImage
+          src={product.image_url}
+          alt={product.name}
+          categoryName={product.category?.name}
+          productName={product.name}
+          priority={index < 4}
+          aspectRatio="16/10"
+        />
 
         {/* Category Tag (Overlayed cleanly on top-left of image - only for non-deals) */}
         {product.category?.name && !isDeal && (
