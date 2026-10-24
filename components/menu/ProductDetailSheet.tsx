@@ -42,6 +42,7 @@ function SheetContent({
     variations.length > 0 ? variations[0] : null
   );
   const [selectedToppings, setSelectedToppings] = useState<ExtraTopping[]>([]);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -207,11 +208,12 @@ function SheetContent({
                 overflow: "hidden",
               }}
             >
-              {product.image_url ? (
+              {product.image_url && !imageError ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={product.image_url}
                   alt={product.name}
+                  onError={() => setImageError(true)}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               ) : (

@@ -535,6 +535,9 @@ export default function CartSheet({
                             <img
                               src={item.product.image_url}
                               alt={item.product.name}
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).style.display = "none";
+                              }}
                               style={{ width: "100%", height: "100%", objectFit: "cover" }}
                             />
                           ) : (

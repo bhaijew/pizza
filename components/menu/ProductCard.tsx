@@ -23,6 +23,7 @@ export default function ProductCard({
 }: ProductCardProps) {
   const { formatPrice, addItem } = useCart();
   const [showItems, setShowItems] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const variations = product.variations || [];
   const hasVariations = variations.length > 0;
 
@@ -47,7 +48,7 @@ export default function ProductCard({
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!available) return;
-    if (hasVariations || (product.extra_toppings && product.extra_toppings.length > 0) || isDeal) {
+    if (hasVariations) {
       onSelect(product);
       return;
     }
@@ -92,11 +93,12 @@ export default function ProductCard({
           borderBottom: "1px solid #f1f5f9",
         }}
       >
-        {product.image_url ? (
+        {product.image_url && !imageError ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={product.image_url}
             alt={product.name}
+            onError={() => setImageError(true)}
             style={{
               width: "100%",
               height: "100%",
@@ -115,8 +117,8 @@ export default function ProductCard({
           <ImagePlaceholder />
         )}
 
-        {/* Category Tag (Overlayed cleanly on top-left of image) */}
-        {product.category?.name && (
+        {/* Category Tag (Overlayed cleanly on top-left of image - only for non-deals) */}
+        {product.category?.name && !isDeal && (
           <div
             style={{
               position: "absolute",
@@ -151,12 +153,16 @@ export default function ProductCard({
               fontWeight: 800,
               letterSpacing: "0.04em",
               textTransform: "uppercase",
-              padding: "2px 7px",
-              borderRadius: 3,
-              boxShadow: "0 2px 5px rgba(220, 38, 38, 0.3)",
+              padding: "3px 8px",
+              borderRadius: 4,
+              boxShadow: "0 2px 6px rgba(220, 38, 38, 0.35)",
               display: "flex",
               alignItems: "center",
-              gap: 3,
+              gap: 4,
+              maxWidth: "90%",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
           >
             <span>🔥</span>
@@ -213,15 +219,15 @@ export default function ProductCard({
           {product.name}
         </h3>
 
-        {/* Description */}
-        {product.description && (
+        {/* Description - omitted if already verbatim included in product title */}
+        {product.description &&
+          !product.name.toLowerCase().includes(product.description.toLowerCase().trim()) && (
           <p
             style={{
               fontSize: "clamp(11px, 1.1vw, 13px)",
               color: "#64748b",
               margin: "0 0 8px",
               lineHeight: 1.45,
-              flex: 1,
               display: "-webkit-box",
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
@@ -321,15 +327,15 @@ export default function ProductCard({
                   gap: 4,
                   padding: "6px clamp(9px, 1.3vw, 14px)",
                   borderRadius: 4,
-                  background: (hasVariations || isDeal) ? "#fff7ed" : "linear-gradient(135deg, #dc2626 0%, #ea580c 100%)",
-                  color: (hasVariations || isDeal) ? "#c2410c" : "#ffffff",
-                  border: (hasVariations || isDeal) ? "1px solid #fed7aa" : "1px solid #b91c1c",
+                  background: hasVariations ? "#fff7ed" : "linear-gradient(135deg, #dc2626 0%, #ea580c 100%)",
+                  color: hasVariations ? "#c2410c" : "#ffffff",
+                  border: hasVariations ? "1px solid #fed7aa" : "1px solid #b91c1c",
                   fontSize: "clamp(12px, 1.1vw, 13px)",
                   fontWeight: 700,
                   cursor: "pointer",
                   transition: "all 0.15s ease",
                   whiteSpace: "nowrap",
-                  boxShadow: (hasVariations || isDeal) ? "none" : "0 2px 4px rgba(220, 38, 38, 0.2)",
+                  boxShadow: hasVariations ? "none" : "0 2px 4px rgba(220, 38, 38, 0.2)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.filter = "brightness(1.08)";
@@ -338,7 +344,7 @@ export default function ProductCard({
                   e.currentTarget.style.filter = "none";
                 }}
               >
-                {(hasVariations || isDeal) ? (
+                {hasVariations ? (
                   <>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10" />

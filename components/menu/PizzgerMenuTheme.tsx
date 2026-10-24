@@ -1151,6 +1151,7 @@ function ProductCardItem({
   onQuickAdd: (e: React.MouseEvent, p: Product) => void;
 }) {
   const displayPrice = product.price ?? 0;
+  const [imgError, setImgError] = useState(false);
   const hasBadge = idx === 0 || idx === 1 || !!product.badge;
   const isBestSeller = idx === 0 || product.badge === "BESTSELLER";
   const badgeText = product.badge || (isBestSeller ? "BEST SELLER" : "NEW");
@@ -1208,9 +1209,12 @@ function ProductCardItem({
 
         <img
           src={
-            product.image_url ||
-            "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80"
+            imgError
+              ? "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80"
+              : product.image_url ||
+                "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80"
           }
+          onError={() => setImgError(true)}
           alt={product.name}
           style={{
             width: "100%",
