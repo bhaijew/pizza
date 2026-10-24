@@ -1505,6 +1505,36 @@ export default function OrdersLiveBoard({
                           </div>
                         </div>
 
+                        {/* Delivery Charges Info & Quick Admin Adjuster */}
+                        <div style={{ marginTop: 4, display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "10.5px", background: "#f8fafc", padding: "3px 6px", borderRadius: "4px", border: "1px dashed #cbd5e1" }}>
+                          <span style={{ color: "#065f46", fontWeight: 700, display: "flex", alignItems: "center", gap: 3 }}>
+                            <span>🛵 Delivery Fee:</span>
+                            <strong style={{ color: Number(order.delivery_fee || 0) > 0 ? "#059669" : "#16a34a" }}>
+                              {Number(order.delivery_fee || 0) > 0 ? `${currencySymbol}${Number(order.delivery_fee).toFixed(0)}` : "Free (Rs. 0)"}
+                            </strong>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPrintingOrder(order);
+                              setPrintTab("counter");
+                            }}
+                            style={{
+                              padding: "1px 7px",
+                              borderRadius: "3px",
+                              background: "#ecfdf5",
+                              border: "1px solid #a7f3d0",
+                              color: "#065f46",
+                              fontSize: "10px",
+                              fontWeight: 800,
+                              cursor: "pointer",
+                            }}
+                            title="Admin: Edit delivery fee and recalculate total"
+                          >
+                            ✏️ Add/Change Fee
+                          </button>
+                        </div>
+
                         {/* Modal/Inline Form to Assign Rider */}
                         {assigningRiderOrderId === order.id && (
                           <div style={{ marginTop: 6, padding: 8, background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: 6, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
