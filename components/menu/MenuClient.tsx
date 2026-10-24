@@ -187,6 +187,7 @@ function MenuInner({
           shopId={settings.shop_id}
           shopName={settings.shop_name}
           googleReviewUrl={settings.google_review_url || ""}
+          menuProducts={products}
         />
       </>
     );
@@ -735,6 +736,7 @@ function MenuInner({
         shopId={settings.shop_id}
         shopName={settings.shop_name}
         googleReviewUrl={settings.google_review_url || ""}
+        menuProducts={products}
       />
     </>
   );

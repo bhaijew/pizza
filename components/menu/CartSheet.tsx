@@ -5,7 +5,7 @@
  * Integrated with Table QR Dine-In & Counter Takeaway Token system!
  * Direct real order placement to Supabase public.orders.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useCart } from "./CartContext";
 import { placeCustomerOrder, submitCustomerOrderReview } from "@/lib/order-actions";
@@ -15,6 +15,8 @@ import {
   type PromoValidationResult,
   type CustomerLoyaltyInfo,
 } from "@/lib/promo-actions";
+import type { Product } from "@/types/menu";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 
 interface CartSheetProps {
   open: boolean;
@@ -27,6 +29,7 @@ interface CartSheetProps {
   shopId?: number | null;
   shopName?: string;
   googleReviewUrl?: string;
+  menuProducts?: Product[];
 }
 
 export default function CartSheet({
@@ -40,8 +43,20 @@ export default function CartSheet({
   shopId,
   shopName,
   googleReviewUrl,
+  menuProducts,
 }: CartSheetProps) {
-  const { items, totalItems, totalPrice, setQty, removeItem, clearCart, formatPrice, getItemKey, getUnitPrice } = useCart();
+  const {
+    items,
+    totalItems,
+    totalPrice,
+    setQty,
+    removeItem,
+    clearCart,
+    formatPrice,
+    getItemKey,
+    getUnitPrice,
+    addItem,
+  } = useCart();
 
   // Mode: "cart" | "checkout" | "confirmed"
   const [viewMode, setViewMode] = useState<"cart" | "checkout" | "confirmed">("cart");
@@ -83,6 +98,83 @@ export default function CartSheet({
   const [reviewSubmitted, setReviewSubmitted] = useState<boolean>(false);
   const [reviewSubmitting, setReviewSubmitting] = useState<boolean>(false);
   const [copiedToast, setCopiedToast] = useState<boolean>(false);
+
+  // Smart Cart Upselling (Dips, Cold Drinks, Sides)
+  const [upsellCategory, setUpsellCategory] = useState<"all" | "dips" | "drinks" | "sides">("all");
+  const [fallbackUpsellProducts, setFallbackUpsellProducts] = useState<Product[]>([]);
+  const [justAddedId, setJustAddedId] = useState<string | number | null>(null);
+
+  // If menuProducts wasn't passed directly via props, load available items dynamically
+  useEffect(() => {
+    if (menuProducts && menuProducts.length > 0) return;
+    async function fetchDynamicUpsell() {
+      try {
+        const { createClient } = await import("@/utils/supabase/client");
+        const supabase = createClient();
+        let query = supabase
+          .from("products")
+          .select("id, name, price, image_url, category_id, is_available, is_active")
+          .eq("is_available", true)
+          .eq("is_active", true);
+
+        if (shopId) {
+          query = query.eq("shop_id", shopId);
+        }
+
+        const { data } = await query.limit(50);
+        if (data && data.length > 0) {
+          setFallbackUpsellProducts(data as Product[]);
+        }
+      } catch {}
+    }
+    fetchDynamicUpsell();
+  }, [menuProducts, shopId]);
+
+  const pool = (menuProducts && menuProducts.length > 0) ? menuProducts : fallbackUpsellProducts;
+
+  const upsellItems = useMemo(() => {
+    if (!pool || pool.length === 0) return [];
+
+    return pool
+      .filter((p) => {
+        if (p.is_available === false || p.is_active === false) return false;
+        const name = (p.name || "").toLowerCase();
+
+        const isDip =
+          name.includes("sauce") ||
+          name.includes("dip") ||
+          name.includes("mayo") ||
+          name.includes("cheese special");
+
+        const isDrink =
+          name.includes("drink") ||
+          name.includes("bottle") ||
+          name.includes("water") ||
+          name.includes("coke") ||
+          name.includes("pepsi") ||
+          name.includes("sprite") ||
+          name.includes("fanta") ||
+          name.includes("dew") ||
+          name.includes("sting") ||
+          name.includes("litr") ||
+          name.includes("ltr") ||
+          name.includes("500ml");
+
+        const isSide =
+          name.includes("fries") ||
+          name.includes("wing") ||
+          name.includes("nugget") ||
+          name.includes("bread") ||
+          name.includes("stick");
+
+        if (upsellCategory === "dips") return isDip;
+        if (upsellCategory === "drinks") return isDrink;
+        if (upsellCategory === "sides") return isSide;
+
+        return isDip || isDrink || isSide;
+      })
+      .slice(0, 10);
+  }, [pool, upsellCategory]);
 
   // Sync prop changes
   useEffect(() => {
@@ -661,6 +753,223 @@ export default function CartSheet({
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {/* ─── SMART UPSELLING: Dips, Cold Drinks & Sides ─────────── */}
+              {items.length > 0 && upsellItems.length > 0 && (
+                <div
+                  style={{
+                    marginTop: 18,
+                    marginBottom: 8,
+                    padding: "14px 14px 12px",
+                    borderRadius: 8,
+                    background: "linear-gradient(135deg, #fffbeb 0%, #fff7ed 100%)",
+                    border: "1px solid #fde68a",
+                    boxShadow: "0 2px 10px rgba(245, 158, 11, 0.08)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 10,
+                      gap: 8,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 16 }}>🔥</span>
+                      <div>
+                        <h4
+                          style={{
+                            fontFamily: "var(--font-display)",
+                            fontWeight: 800,
+                            fontSize: 13,
+                            margin: 0,
+                            color: "#92400e",
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          Complete Your Meal
+                        </h4>
+                        <p style={{ fontSize: 11, color: "#b45309", margin: 0, fontWeight: 500 }}>
+                          Popular dips, cold drinks & sides
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Filter Pills */}
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {[
+                        { id: "all", label: "All" },
+                        { id: "dips", label: "🥫 Dips" },
+                        { id: "drinks", label: "🥤 Drinks" },
+                        { id: "sides", label: "🍟 Sides" },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setUpsellCategory(tab.id as any)}
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: 20,
+                            fontSize: 10,
+                            fontWeight: 700,
+                            border: upsellCategory === tab.id ? "1px solid #d97706" : "1px solid #fed7aa",
+                            background: upsellCategory === tab.id ? "#f59e0b" : "#ffffff",
+                            color: upsellCategory === tab.id ? "#ffffff" : "#9a3412",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Horizontal Scrollable Upsell Cards */}
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 10,
+                      overflowX: "auto",
+                      paddingBottom: 6,
+                      paddingTop: 2,
+                      scrollbarWidth: "none",
+                      msOverflowStyle: "none",
+                      WebkitOverflowScrolling: "touch",
+                    }}
+                  >
+                    {upsellItems.map((product) => {
+                      const inCartItem = items.find((i) => String(i.product.id) === String(product.id));
+                      const inCartQty = inCartItem?.quantity || 0;
+                      const wasJustAdded = justAddedId === product.id;
+
+                      return (
+                        <div
+                          key={product.id}
+                          style={{
+                            flex: "0 0 135px",
+                            minWidth: 135,
+                            maxWidth: 135,
+                            borderRadius: 6,
+                            background: "#ffffff",
+                            border: inCartQty > 0 ? "1px solid #86efac" : "1px solid #fed7aa",
+                            padding: "8px 8px 10px",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                            position: "relative",
+                            transition: "transform 0.15s ease, border-color 0.15s ease",
+                            transform: wasJustAdded ? "scale(1.03)" : "scale(1)",
+                          }}
+                        >
+                          {/* Image Thumbnail */}
+                          <div
+                            style={{
+                              width: "100%",
+                              height: 68,
+                              borderRadius: 4,
+                              overflow: "hidden",
+                              marginBottom: 6,
+                              background: "#f8fafc",
+                              position: "relative",
+                            }}
+                          >
+                            <OptimizedImage
+                              src={product.image_url}
+                              alt={product.name}
+                              productName={product.name}
+                              aspectRatio="1/1"
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                            {inCartQty > 0 && (
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  top: 3,
+                                  right: 3,
+                                  background: "#16a34a",
+                                  color: "#ffffff",
+                                  fontSize: 9,
+                                  fontWeight: 900,
+                                  padding: "1px 5px",
+                                  borderRadius: 10,
+                                  boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+                                }}
+                              >
+                                ✓ {inCartQty}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Product Details */}
+                          <div>
+                            <div
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: "#0f172a",
+                                lineHeight: 1.25,
+                                height: 28,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical",
+                                marginBottom: 4,
+                              }}
+                              title={product.name}
+                            >
+                              {product.name}
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 900, color: "#dc2626", marginBottom: 6 }}>
+                              {formatPrice(product.price || 0)}
+                            </div>
+                          </div>
+
+                          {/* Add to Cart Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              addItem(product);
+                              setJustAddedId(product.id);
+                              setTimeout(() => setJustAddedId(null), 1000);
+                            }}
+                            style={{
+                              width: "100%",
+                              padding: "5px 0",
+                              borderRadius: 4,
+                              fontSize: 11,
+                              fontWeight: 800,
+                              border: "none",
+                              background: inCartQty > 0 ? "#16a34a" : "#dc2626",
+                              color: "#ffffff",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 4,
+                              boxShadow: inCartQty > 0 ? "0 1px 4px rgba(22,163,74,0.25)" : "0 1px 4px rgba(220,38,38,0.25)",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.filter = "brightness(1.1)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.filter = "none";
+                            }}
+                          >
+                            {inCartQty > 0 ? `+ Add More (${inCartQty})` : `+ Add`}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
