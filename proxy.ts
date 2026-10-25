@@ -43,7 +43,11 @@ export async function proxy(request: NextRequest) {
   // Extracts shop slug from subdomains like:
   // - pizza-mafia.solewhat.store -> rewrites internally to /pizza-mafia
   // - pizza-mafia.localhost:3000 -> rewrites internally to /pizza-mafia
-  const rawHost = request.headers.get("host")?.toLowerCase() || "";
+  const rawHost = (
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    ""
+  ).toLowerCase();
   const host = rawHost.split(":")[0]; // strip port
 
   let subdomain: string | null = null;
