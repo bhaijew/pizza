@@ -1,40 +1,48 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import SoleWhatLogo from "@/components/SoleWhatLogo";
+import { BUSINESS_THEMES, BUSINESS_PRESETS, BusinessType } from "@/lib/business-themes";
+import {
+  Sparkles,
+  ArrowRight,
+  Laptop,
+  ChefHat,
+  Bike,
+  Store,
+  Layers,
+  Phone,
+  MessageSquare,
+  Copy,
+  Check,
+  Flame,
+  UtensilsCrossed,
+  ShoppingBag,
+  ExternalLink,
+  ShieldCheck,
+  Zap,
+  Globe,
+  Printer,
+  ChevronRight,
+  TrendingUp,
+  Receipt,
+  QrCode,
+} from "lucide-react";
 
 export default function HomePage() {
   const phoneNumber = "0302-5260958";
   const intlPhone = "+92 302 5260958";
   const rawPhone = "03025260958";
   const whatsappUrl = `https://wa.me/923025260958?text=${encodeURIComponent(
-    "Salam Syed Zeeshan Haider, I am interested in purchasing the Pizza POS & Online Ordering System."
+    "Salam Syed Zeeshan Haider, I am interested in SoleWhat Cloud POS & Multi-Store Ordering System."
   )}`;
   const callUrl = `tel:+923025260958`;
 
   const [copied, setCopied] = useState(false);
+  const [selectedType, setSelectedType] = useState<BusinessType>("pizza");
 
-  useEffect(() => {
-    // Strictly disable window scrolling on main page and set dark seamless background
-    const origHtml = document.documentElement.style.overflow;
-    const origBody = document.body.style.overflow;
-    const origBodyBg = document.body.style.backgroundColor;
-    const origHtmlBg = document.documentElement.style.backgroundColor;
-
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.backgroundColor = "#080706";
-    document.body.style.backgroundColor = "#080706";
-
-    return () => {
-      document.documentElement.style.overflow = origHtml;
-      document.body.style.overflow = origBody;
-      document.documentElement.style.backgroundColor = origHtmlBg;
-      document.body.style.backgroundColor = origBodyBg;
-    };
-  }, []);
-
-  const handleCopy = async () => {
+  const handleCopyPhone = async () => {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(rawPhone);
@@ -56,576 +64,712 @@ export default function HomePage() {
     }
   };
 
+  const businessTypesList: { id: BusinessType; name: string; icon: any; emoji: string }[] = [
+    { id: "pizza", name: "Pizzeria", icon: Store, emoji: "🍕" },
+    { id: "fast_food", name: "Fast Food & Burgers", icon: Flame, emoji: "🍔" },
+    { id: "restaurant", name: "Dine-In Restaurant", icon: UtensilsCrossed, emoji: "🍲" },
+    { id: "cafe", name: "Cafe & Chai Bar", icon: Flame, emoji: "☕" },
+    { id: "bakery", name: "Bakery & Sweets", icon: Sparkles, emoji: "🎂" },
+    { id: "retail", name: "Retail & Mart", icon: ShoppingBag, emoji: "🛒" },
+  ];
+
+  const activeTheme = BUSINESS_THEMES[selectedType];
+  const activePreset = BUSINESS_PRESETS[selectedType];
+
   return (
-    <main
-      className="relative w-full min-w-full min-h-[125vh] h-[125vh] overflow-hidden select-none flex flex-col justify-center items-center"
-      style={{
-        background: "#080706",
-        color: "#ffffff",
-        fontFamily: "var(--font-outfit, var(--font-inter, system-ui, sans-serif))",
-        width: "100%",
-        minWidth: "100%",
-        minHeight: "125vh",
-        height: "125vh",
-      }}
-    >
-      {/* ─── Ambient Glow Lights ─── */}
-      <div
-        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[750px] h-[380px] blur-[140px] opacity-30"
-        style={{
-          background: "radial-gradient(circle, #ea580c 0%, #dc2626 55%, transparent 80%)",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute -bottom-20 right-1/4 w-[480px] h-[300px] blur-[120px] opacity-20"
-        style={{
-          background: "radial-gradient(circle, #f97316 0%, transparent 75%)",
-        }}
-      />
-
-      {/* Cyber Grid Texture */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.035]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px)",
-          backgroundSize: "36px 36px",
-        }}
-      />
-
-      {/* ══════════════════════════════════════════════════════════════════
-          DESKTOP WORKSTATION VIEW (md:flex) — Square 5px UI
-          ══════════════════════════════════════════════════════════════════ */}
-      <div className="hidden md:flex flex-col w-full max-w-5xl mx-auto px-6 lg:px-8 relative z-10">
-        
-        {/* Top Executive Header Bar (Square 5px) */}
-        <header
-          className="w-full flex items-center justify-between px-5 py-3.5 mb-6 backdrop-blur-xl"
+    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-orange-500 selection:text-white">
+      {/* ─── Top Ambient Light Gradients ─── */}
+      <div className="absolute top-0 inset-x-0 h-96 overflow-hidden pointer-events-none -z-10">
+        <div
+          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] blur-[120px] opacity-40"
           style={{
-            background: "rgba(18, 14, 11, 0.85)",
-            border: "1px solid rgba(234, 88, 12, 0.3)",
-            borderRadius: "5px",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
+            background:
+              "radial-gradient(ellipse at center, rgba(234,88,12,0.18) 0%, rgba(99,102,241,0.12) 50%, transparent 75%)",
           }}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 flex items-center justify-center text-xl flex-shrink-0"
-              style={{
-                background: "#ea580c",
-                borderRadius: "5px",
-                boxShadow: "0 2px 10px rgba(234, 88, 12, 0.5)",
-              }}
-            >
-              🍕
-            </div>
-            <div>
-              <span className="text-sm font-black text-white tracking-tight uppercase block leading-tight">
-                PIZZA POS &amp; CLOUD SUITE
-              </span>
-              <span className="text-[11px] font-extrabold text-orange-400 uppercase tracking-wider block">
-                Engineered by Syed Zeeshan Haider
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div
-              className="flex items-center gap-2 px-3 py-1"
-              style={{
-                background: "rgba(234, 88, 12, 0.12)",
-                border: "1px solid rgba(234, 88, 12, 0.35)",
-                borderRadius: "5px",
-              }}
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[11px] font-extrabold text-orange-200 uppercase tracking-wider">
-                System Active &bull; 24/7 Support
-              </span>
-            </div>
-          </div>
-        </header>
-
-        {/* 2-Column Master Console (Square 5px) */}
-        <div className="grid grid-cols-12 gap-6 items-stretch">
-          
-          {/* Left Column: Direct Developer Contact Card */}
-          <div
-            className="col-span-7 p-7 flex flex-col justify-between backdrop-blur-2xl relative overflow-hidden"
-            style={{
-              background: "rgba(18, 14, 11, 0.88)",
-              border: "1px solid rgba(234, 88, 12, 0.32)",
-              borderRadius: "5px",
-              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-            }}
-          >
-            {/* Top Tag & Title */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span
-                  className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-orange-400"
-                  style={{
-                    background: "rgba(234, 88, 12, 0.15)",
-                    border: "1px solid rgba(234, 88, 12, 0.3)",
-                    borderRadius: "5px",
-                  }}
-                >
-                  ■ DIRECT INQUIRY &bull; SYSTEM PURCHASE
-                </span>
-                <span className="text-[11px] font-mono text-zinc-400 font-bold">
-                  {intlPhone}
-                </span>
-              </div>
-
-              <h2 className="text-xl font-black text-white tracking-tight mb-1">
-                Official Developer Contact
-              </h2>
-              <p className="text-xs text-zinc-400 leading-relaxed mb-6">
-                Get full platform setup for your brand: custom pizza ordering storefront, automated WhatsApp notifications, chef KDS, rider dispatch, and multi-branch management.
-              </p>
-            </div>
-
-            {/* Prominent Contact Number Display Box (Square 5px) */}
-            <div
-              className="p-5 mb-5 flex flex-col justify-center"
-              style={{
-                background: "rgba(26, 19, 15, 0.95)",
-                border: "1.5px solid rgba(234, 88, 12, 0.4)",
-                borderRadius: "5px",
-                boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.6)",
-              }}
-            >
-              <span className="text-[10px] font-extrabold text-orange-400/90 uppercase tracking-widest block mb-1">
-                CALL &bull; WHATSAPP &bull; SMS
-              </span>
-
-              <a
-                href={callUrl}
-                className="text-4xl lg:text-[44px] font-black tracking-tight text-white hover:text-orange-400 transition-colors no-underline block leading-none py-1"
-                title="Click to Call"
-              >
-                {phoneNumber}
-              </a>
-            </div>
-
-            {/* Action Buttons Row (Square 5px) */}
-            <div className="grid grid-cols-3 gap-3">
-              {/* Call Button */}
-              <a
-                href={callUrl}
-                className="flex items-center justify-center gap-2 py-3 px-3 text-xs font-black text-white uppercase tracking-wider transition-all no-underline active:scale-[0.98]"
-                style={{
-                  background: "#18181b",
-                  border: "1.5px solid #3f3f46",
-                  borderRadius: "5px",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.4)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#ea580c";
-                  e.currentTarget.style.background = "#27272a";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "#3f3f46";
-                  e.currentTarget.style.background = "#18181b";
-                }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                </svg>
-                <span>Direct Call</span>
-              </a>
-
-              {/* WhatsApp Button */}
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 py-3 px-3 text-xs font-black text-white uppercase tracking-wider transition-all no-underline active:scale-[0.98]"
-                style={{
-                  background: "#15803d",
-                  border: "1.5px solid #16a34a",
-                  borderRadius: "5px",
-                  boxShadow: "0 2px 8px rgba(22, 163, 74, 0.35)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#16a34a";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#15803d";
-                }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                </svg>
-                <span>WhatsApp</span>
-              </a>
-
-              {/* Copy Button */}
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="flex items-center justify-center gap-2 py-3 px-3 text-xs font-black text-white uppercase tracking-wider transition-all cursor-pointer active:scale-[0.98]"
-                style={{
-                  background: copied ? "rgba(234, 88, 12, 0.3)" : "#18181b",
-                  border: copied ? "1.5px solid #ea580c" : "1.5px solid #3f3f46",
-                  borderRadius: "5px",
-                }}
-              >
-                {copied ? (
-                  <>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span className="text-orange-400">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                    </svg>
-                    <span>Copy</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Right Column: Admin Management Gateway Card (Square 5px) */}
-          <div
-            className="col-span-5 p-7 flex flex-col justify-between backdrop-blur-2xl relative overflow-hidden"
-            style={{
-              background: "rgba(18, 14, 11, 0.88)",
-              border: "1px solid rgba(234, 88, 12, 0.32)",
-              borderRadius: "5px",
-              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-            }}
-          >
-            <div>
-              {/* Badge */}
-              <div
-                className="inline-flex items-center gap-2 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-orange-400 mb-4"
-                style={{
-                  background: "rgba(234, 88, 12, 0.15)",
-                  border: "1px solid rgba(234, 88, 12, 0.3)",
-                  borderRadius: "5px",
-                }}
-              >
-                <span>🔒 AUTHORIZED ACCESS ONLY</span>
-              </div>
-
-              {/* Shield Icon Box */}
-              <div
-                className="w-12 h-12 flex items-center justify-center text-white mb-3"
-                style={{
-                  background: "#18181b",
-                  border: "1.5px solid #ea580c",
-                  borderRadius: "5px",
-                  boxShadow: "0 4px 12px rgba(234, 88, 12, 0.25)",
-                }}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-              </div>
-
-              <h2 className="text-xl font-black text-white tracking-tight mb-1">
-                Admin Management Portal
-              </h2>
-
-              <p className="text-xs text-zinc-400 leading-relaxed mb-6">
-                Branch admin access for live orders board, kitchen display (KDS), menu pricing manager, and daily cash closing.
-              </p>
-            </div>
-
-            {/* Admin Portal CTA Button (Square 5px) */}
-            <div className="pt-2">
-              <Link
-                href="/admin/login"
-                className="group w-full py-4 px-5 flex items-center justify-between no-underline transition-all duration-200 active:scale-[0.98]"
-                style={{
-                  background: "#ea580c",
-                  border: "1.5px solid #f97316",
-                  borderRadius: "5px",
-                  boxShadow: "0 6px 20px rgba(234, 88, 12, 0.4)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#c2410c";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#ea580c";
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 flex items-center justify-center text-white"
-                    style={{
-                      background: "rgba(0, 0, 0, 0.3)",
-                      borderRadius: "5px",
-                    }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                  </div>
-                  <div className="text-left">
-                    <span className="block text-sm font-black text-white tracking-wide uppercase">
-                      Admin Portal Login
-                    </span>
-                    <span className="block text-[10px] text-orange-100 font-bold">
-                      Store Manager &bull; Branch Terminal
-                    </span>
-                  </div>
-                </div>
-
-                <div
-                  className="w-8 h-8 flex items-center justify-center text-white group-hover:translate-x-1 transition-transform duration-200"
-                  style={{
-                    background: "rgba(0, 0, 0, 0.25)",
-                    borderRadius: "5px",
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                </div>
-              </Link>
-
-              {/* Status Note */}
-              <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-zinc-500 font-bold">
-                <span>🔐 256-Bit Encrypted</span>
-                <span>&bull;</span>
-                <span>Multi-Branch Isolated Session</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom System Bar (Square 5px) */}
-        <footer
-          className="mt-6 flex items-center justify-between px-5 py-2.5 text-xs text-zinc-400"
-          style={{
-            background: "rgba(18, 14, 11, 0.6)",
-            border: "1px solid rgba(234, 88, 12, 0.2)",
-            borderRadius: "5px",
-          }}
-        >
-          <span className="font-extrabold text-zinc-300">
-            © {new Date().getFullYear()} Pizza POS Suite &bull; Commercial Handover Ready
-          </span>
-          <span className="font-mono text-[11px] text-orange-400 font-bold">
-            Direct Line: {phoneNumber}
-          </span>
-        </footer>
+        />
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          MOBILE VIEW (md:hidden) — Square 5px UI, 100dvh Zero-Scroll
-          ══════════════════════════════════════════════════════════════════ */}
-      <div className="flex md:hidden w-full min-h-[125vh] h-[125vh] overflow-hidden flex-col justify-between p-4 relative z-10">
-        
-        {/* Mobile Header Bar (Square 5px) */}
-        <div
-          className="flex items-center justify-between p-3"
-          style={{
-            background: "rgba(18, 14, 11, 0.9)",
-            border: "1px solid rgba(234, 88, 12, 0.3)",
-            borderRadius: "5px",
-          }}
-        >
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-9 h-9 flex items-center justify-center text-lg flex-shrink-0"
-              style={{
-                background: "#ea580c",
-                borderRadius: "5px",
-                boxShadow: "0 2px 8px rgba(234, 88, 12, 0.4)",
-              }}
-            >
-              🍕
-            </div>
+      {/* ─── Modern Sticky Header ─── */}
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/85 border-b border-slate-100 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 group">
+            <SoleWhatLogo size={42} variant="badge" showGlow={false} />
             <div>
-              <span className="block text-xs font-black text-white tracking-tight uppercase leading-tight">
-                PIZZA POS SUITE
-              </span>
-              <span className="block text-[10px] font-extrabold text-orange-400 uppercase tracking-wider">
-                Syed Zeeshan Haider
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xl font-extrabold tracking-tight text-slate-950 font-heading">
+                  SoleWhat
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 border border-orange-200">
+                  Cloud OS
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Universal Business & POS Operating System
+              </p>
             </div>
-          </div>
+          </Link>
 
-          <div
-            className="flex items-center gap-1.5 px-2 py-1"
-            style={{
-              background: "rgba(234, 88, 12, 0.15)",
-              border: "1px solid rgba(234, 88, 12, 0.3)",
-              borderRadius: "5px",
-            }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-black uppercase text-orange-300">
-              Online
-            </span>
+          {/* Desktop Nav Links */}
+          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+            <a href="#features" className="hover:text-orange-600 transition-colors">
+              Features
+            </a>
+            <a href="#business-types" className="hover:text-orange-600 transition-colors">
+              Industries
+            </a>
+            <a href="#live-demos" className="hover:text-orange-600 transition-colors">
+              Live Demos
+            </a>
+            <a href="#contact" className="hover:text-orange-600 transition-colors">
+              Contact & Sales
+            </a>
+          </nav>
+
+          {/* Header Action Buttons */}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/demo/pos"
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg border border-slate-200 text-slate-700 bg-slate-50 hover:bg-slate-100 hover:text-slate-900 transition-all shadow-sm"
+            >
+              <Laptop size={14} className="text-orange-600" />
+              <span>POS Demo</span>
+            </Link>
+
+            <Link
+              href="/admin/login"
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-sm hover:shadow"
+            >
+              <span>Admin Login</span>
+              <ArrowRight size={13} />
+            </Link>
           </div>
         </div>
+      </header>
 
-        {/* Mobile Center: Contact Showcase Box (Square 5px) */}
-        <div
-          className="w-full p-5 flex flex-col items-center text-center relative overflow-hidden backdrop-blur-xl"
-          style={{
-            background: "rgba(18, 14, 11, 0.95)",
-            border: "1.5px solid rgba(234, 88, 12, 0.35)",
-            borderRadius: "5px",
-            boxShadow: "0 15px 40px rgba(0, 0, 0, 0.8)",
-          }}
-        >
-          <span
-            className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-orange-400 mb-2"
-            style={{
-              background: "rgba(234, 88, 12, 0.15)",
-              border: "1px solid rgba(234, 88, 12, 0.3)",
-              borderRadius: "5px",
-            }}
-          >
-            DIRECT PHONE &bull; WHATSAPP
-          </span>
+      {/* ══════════════════════════════════════════════════════════════════════
+          HERO SECTION
+          ══════════════════════════════════════════════════════════════════════ */}
+      <section className="relative pt-12 pb-20 md:pt-20 md:pb-32 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          {/* Badge Pill */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 border border-orange-200 text-orange-700 text-xs font-bold mb-6 shadow-xs animate-fade-in">
+            <Sparkles size={14} className="text-orange-500 animate-pulse" />
+            <span>Powering Multi-Store Brands Across Pakistan & Worldwide</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+            <span className="font-extrabold text-slate-900">v2.4 Live</span>
+          </div>
 
-          <a
-            href={callUrl}
-            className="text-3xl font-black tracking-tight text-white active:text-orange-400 transition-colors my-1 no-underline block"
-          >
-            {phoneNumber}
-          </a>
+          {/* Main Title */}
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-950 max-w-5xl mx-auto leading-[1.12]">
+            The Universal Cloud POS & Ordering OS Built For{" "}
+            <span className="bg-gradient-to-r from-orange-600 via-red-600 to-amber-600 bg-clip-text text-transparent">
+              High-Growth Businesses
+            </span>
+          </h1>
 
-          <span className="text-xs font-mono text-zinc-400 tracking-wider mb-5">
-            {intlPhone}
-          </span>
+          {/* Subtitle */}
+          <p className="mt-6 text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-normal">
+            Run your restaurants, pizzerias, cafes, bakeries, and retail marts on one seamless
+            high-speed cloud platform with instant price updates, KDS kitchen dispatch, WhatsApp
+            receipts, and direct shop subdomains.
+          </p>
 
-          {/* 3 Mobile Fast Actions (Square 5px) */}
-          <div className="grid grid-cols-3 gap-2 w-full">
-            {/* Call */}
+          {/* CTA Buttons */}
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <a
-              href={callUrl}
-              className="flex items-center justify-center gap-1.5 py-3 text-xs font-black text-white uppercase tracking-wider active:scale-95 transition-all no-underline"
-              style={{
-                background: "#18181b",
-                border: "1px solid #3f3f46",
-                borderRadius: "5px",
-              }}
+              href="https://pizza-mafia.solewhat.store"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-orange-600 text-white font-bold text-sm hover:bg-orange-700 transition-all shadow-md hover:shadow-orange-200 hover:shadow-lg transform active:scale-98"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-              </svg>
-              <span>Call</span>
+              <Store size={18} />
+              <span>Explore Live Store Menu</span>
+              <ExternalLink size={14} className="opacity-75" />
             </a>
 
-            {/* WhatsApp */}
+            <Link
+              href="/demo/pos"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-all shadow-md hover:shadow-lg transform active:scale-98"
+            >
+              <Laptop size={18} className="text-orange-400" />
+              <span>Launch Live POS Demo</span>
+            </Link>
+
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 py-3 text-xs font-black text-white uppercase tracking-wider active:scale-95 transition-all no-underline"
-              style={{
-                background: "#15803d",
-                border: "1px solid #16a34a",
-                borderRadius: "5px",
-              }}
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-emerald-300 text-emerald-800 bg-emerald-50 hover:bg-emerald-100 font-bold text-sm transition-all shadow-xs"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-              </svg>
-              <span>Chat</span>
+              <MessageSquare size={18} className="text-emerald-600" />
+              <span>WhatsApp Sales</span>
+            </a>
+          </div>
+
+          {/* Key Value Prop Badges */}
+          <div className="mt-14 pt-8 border-t border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto text-left">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
+                <Zap size={20} />
+              </div>
+              <div>
+                <div className="text-sm font-extrabold text-slate-900">0.2s Dispatch</div>
+                <div className="text-xs text-slate-500">Real-Time Kitchen Sync</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                <Globe size={20} />
+              </div>
+              <div>
+                <div className="text-sm font-extrabold text-slate-900">Wildcard URLs</div>
+                <div className="text-xs text-slate-500">Direct Shop Subdomains</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                <Printer size={20} />
+              </div>
+              <div>
+                <div className="text-sm font-extrabold text-slate-900">Thermal + ESC/POS</div>
+                <div className="text-xs text-slate-500">Kitchen & Bar Printing</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <div className="text-sm font-extrabold text-slate-900">Multi-Tenant</div>
+                <div className="text-xs text-slate-500">Unlimited Store Branches</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          INTERACTIVE BUSINESS TYPES SECTION
+          ══════════════════════════════════════════════════════════════════════ */}
+      <section id="business-types" className="py-20 bg-slate-50 border-y border-slate-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-orange-600 bg-orange-100/70 border border-orange-200 px-3 py-1 rounded-full">
+              Tailored Architecture
+            </span>
+            <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
+              One Engine, Customized For Every Business Model
+            </h2>
+            <p className="mt-3 text-slate-600 text-base">
+              Click any industry preset below to see how SoleWhat adapts features, workflows, and
+              pricing structures dynamically.
+            </p>
+          </div>
+
+          {/* Industry Tabs */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5 mb-10">
+            {businessTypesList.map((item) => {
+              const isSelected = selectedType === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setSelectedType(item.id)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-slate-950 text-white shadow-md shadow-slate-950/15 scale-102"
+                      : "bg-white text-slate-700 border border-slate-200 hover:border-slate-300 hover:bg-slate-100/70"
+                  }`}
+                >
+                  <span className="text-base">{item.emoji}</span>
+                  <span>{item.name}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Dynamic Preset Showcase Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 sm:p-10 transition-all">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              {/* Left Column: Preset Overview */}
+              <div className="lg:col-span-7 space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{activeTheme.accentEmoji}</span>
+                  <div>
+                    <h3 className="text-2xl font-extrabold text-slate-950">
+                      {activePreset.title}
+                    </h3>
+                    <p className="text-sm font-medium text-slate-500">
+                      {activePreset.tagline}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Enabled Feature Badges */}
+                <div className="space-y-3">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Active System Capabilities:
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    <div
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-semibold ${
+                        activePreset.features.enable_kot
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                          : "bg-slate-50 border-slate-200 text-slate-400 opacity-60"
+                      }`}
+                    >
+                      <ChefHat size={15} />
+                      <span>Kitchen KOT / KDS</span>
+                    </div>
+
+                    <div
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-semibold ${
+                        activePreset.features.enable_tables
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                          : "bg-slate-50 border-slate-200 text-slate-400 opacity-60"
+                      }`}
+                    >
+                      <QrCode size={15} />
+                      <span>Dine-In Tables</span>
+                    </div>
+
+                    <div
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-semibold ${
+                        activePreset.features.enable_riders
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                          : "bg-slate-50 border-slate-200 text-slate-400 opacity-60"
+                      }`}
+                    >
+                      <Bike size={15} />
+                      <span>Rider Dispatch</span>
+                    </div>
+
+                    <div
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-semibold ${
+                        activePreset.features.enable_deals
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                          : "bg-slate-50 border-slate-200 text-slate-400 opacity-60"
+                      }`}
+                    >
+                      <Sparkles size={15} />
+                      <span>Combo Deals Engine</span>
+                    </div>
+
+                    <div
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-semibold ${
+                        activePreset.features.enable_barcodes
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                          : "bg-slate-50 border-slate-200 text-slate-400 opacity-60"
+                      }`}
+                    >
+                      <Receipt size={15} />
+                      <span>Barcode Scanner</span>
+                    </div>
+
+                    <div
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-semibold ${
+                        activePreset.features.enable_weight_pricing
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                          : "bg-slate-50 border-slate-200 text-slate-400 opacity-60"
+                      }`}
+                    >
+                      <TrendingUp size={15} />
+                      <span>Weight / Loose Price</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Portion Templates Preview */}
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                    Default Serving Labels ({activePreset.features.default_portion_label}):
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {activePreset.portion_templates.map((p, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200"
+                      >
+                        {p.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Theme Color & Direct Subdomain Preview */}
+              <div className="lg:col-span-5 bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-4">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Branded Experience
+                </div>
+
+                <div
+                  className="p-4 rounded-xl text-white space-y-2 shadow-sm"
+                  style={{ background: activeTheme.gradient }}
+                >
+                  <div className="text-xs uppercase tracking-wider font-extrabold opacity-90">
+                    Active Brand Accent
+                  </div>
+                  <div className="text-xl font-black">{activeTheme.name} Theme</div>
+                  <div className="text-xs opacity-80">
+                    Injected across Admin Sidebar, Order Badges, POS Highlights & Print Slips.
+                  </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                    <span>Direct Web Subdomain</span>
+                    <span className="text-emerald-600 font-extrabold">Active</span>
+                  </div>
+                  <code className="block text-xs font-mono font-extrabold text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 truncate">
+                    https://{selectedType}-branch.solewhat.store
+                  </code>
+                  <p className="text-[11px] text-slate-500">
+                    Each branch gets an isolated high-speed web address without page-load delays.
+                  </p>
+                </div>
+
+                <Link
+                  href="/admin/login"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-all"
+                >
+                  <span>Open {activeTheme.name} Management</span>
+                  <ArrowRight size={13} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          CORE FEATURES GRID
+          ══════════════════════════════════════════════════════════════════════ */}
+      <section id="features" className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-orange-600 bg-orange-50 border border-orange-200 px-3 py-1 rounded-full">
+              Full-Stack Capabilities
+            </span>
+            <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
+              Engineered For Speed, Reliability & Precision
+            </h2>
+            <p className="mt-3 text-slate-600 text-base">
+              From front-of-house customer ordering to back-of-house kitchen firing and offline
+              counter billing.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="p-8 rounded-2xl bg-white border border-slate-200 hover:border-orange-300 hover:shadow-lg hover:shadow-orange-500/5 transition-all group">
+              <div className="w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Zap size={24} />
+              </div>
+              <h3 className="text-lg font-extrabold text-slate-950 mb-2">
+                Instant Price & Catalog Sync
+              </h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Update prices or item availability from your phone or POS, and watch every live
+                customer menu update instantaneously with Supabase Realtime—zero refresh required.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="p-8 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/5 transition-all group">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Globe size={24} />
+              </div>
+              <h3 className="text-lg font-extrabold text-slate-950 mb-2">
+                Wildcard Branch Subdomains
+              </h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Every shop gets its own branded domain like{" "}
+                <code className="text-blue-600 font-bold">pizza-mafia.solewhat.store</code>.
+                Isolated menus, custom hero banners, and dedicated order dispatch.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="p-8 rounded-2xl bg-white border border-slate-200 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-500/5 transition-all group">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <ChefHat size={24} />
+              </div>
+              <h3 className="text-lg font-extrabold text-slate-950 mb-2">
+                Live Kitchen Display System (KDS)
+              </h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Replace noisy paper slips with digital touch screens. Kitchen staff mark items as
+                cooking, ready, or collected with audio chime alerts and preparation timers.
+              </p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="p-8 rounded-2xl bg-white border border-slate-200 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-500/5 transition-all group">
+              <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Laptop size={24} />
+              </div>
+              <h3 className="text-lg font-extrabold text-slate-950 mb-2">
+                Offline-Ready Cashier Terminal
+              </h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Counter billing continues uninterrupted even if local internet drops. One-click
+                offline backup and instant re-sync when connectivity restores.
+              </p>
+            </div>
+
+            {/* Feature 5 */}
+            <div className="p-8 rounded-2xl bg-white border border-slate-200 hover:border-red-300 hover:shadow-lg hover:shadow-red-500/5 transition-all group">
+              <div className="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Bike size={24} />
+              </div>
+              <h3 className="text-lg font-extrabold text-slate-950 mb-2">
+                Live Rider Dispatch & Tracking
+              </h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Assign orders to delivery riders, calculate cash-on-delivery reconciliations, and
+                give customers live order progression from baking to doorstep delivery.
+              </p>
+            </div>
+
+            {/* Feature 6 */}
+            <div className="p-8 rounded-2xl bg-white border border-slate-200 hover:border-teal-300 hover:shadow-lg hover:shadow-teal-500/5 transition-all group">
+              <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <MessageSquare size={24} />
+              </div>
+              <h3 className="text-lg font-extrabold text-slate-950 mb-2">
+                Automated WhatsApp Receipts
+              </h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Send professional digital itemized invoices and order status updates straight to
+                your customer’s WhatsApp with your store branding and tracking links.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          LIVE INTERACTIVE DEMOS SECTION
+          ══════════════════════════════════════════════════════════════════════ */}
+      <section id="live-demos" className="py-20 bg-slate-50 border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-slate-600 bg-slate-200/70 border border-slate-300 px-3 py-1 rounded-full">
+              Test It Yourself
+            </span>
+            <h2 className="mt-4 text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
+              Launch Any Live Demo With One Click
+            </h2>
+            <p className="mt-3 text-slate-600 text-base">
+              Try out the cashier POS, kitchen display, live branch menu, and rider tracker
+              directly in your browser.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Demo 1: Pizza Mafia Live Store */}
+            <a
+              href="https://pizza-mafia.solewhat.store"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white p-6 rounded-xl border border-slate-200 hover:border-orange-400 hover:shadow-md transition-all group flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold mb-4">
+                  <Store size={20} />
+                </div>
+                <div className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-1">
+                  Live Subdomain
+                </div>
+                <h4 className="text-base font-extrabold text-slate-950 mb-2">
+                  Pizza Mafia Store
+                </h4>
+                <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                  Experience customer online ordering with stone-baked pizzas, cart modifiers, and
+                  checkout.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-orange-600 group-hover:gap-2.5 transition-all">
+                <span>Open Storefront</span>
+                <ArrowRight size={13} />
+              </div>
             </a>
 
-            {/* Copy */}
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="flex items-center justify-center gap-1.5 py-3 text-xs font-black text-white uppercase tracking-wider active:scale-95 transition-all cursor-pointer"
-              style={{
-                background: copied ? "rgba(234, 88, 12, 0.3)" : "#18181b",
-                border: copied ? "1px solid #ea580c" : "1px solid #3f3f46",
-                borderRadius: "5px",
-              }}
+            {/* Demo 2: Cashier POS */}
+            <Link
+              href="/demo/pos"
+              className="bg-white p-6 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all group flex flex-col justify-between"
             >
-              {copied ? (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  <span className="text-orange-400">Copied</span>
-                </>
-              ) : (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                  </svg>
-                  <span>Copy</span>
-                </>
-              )}
-            </button>
+              <div>
+                <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold mb-4">
+                  <Laptop size={20} />
+                </div>
+                <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">
+                  High-Speed Terminal
+                </div>
+                <h4 className="text-base font-extrabold text-slate-950 mb-2">
+                  POS Cashier Screen
+                </h4>
+                <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                  Fast counter order punching, modifiers selection, cash calculations, and receipt
+                  slips.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-600 group-hover:gap-2.5 transition-all">
+                <span>Test POS Terminal</span>
+                <ArrowRight size={13} />
+              </div>
+            </Link>
+
+            {/* Demo 3: Kitchen KDS */}
+            <Link
+              href="/demo/kitchen"
+              className="bg-white p-6 rounded-xl border border-slate-200 hover:border-emerald-400 hover:shadow-md transition-all group flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold mb-4">
+                  <ChefHat size={20} />
+                </div>
+                <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">
+                  Kitchen Operations
+                </div>
+                <h4 className="text-base font-extrabold text-slate-950 mb-2">
+                  Kitchen Display (KDS)
+                </h4>
+                <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                  Real-time ticket board for chef and cook dispatch with order status updates.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 group-hover:gap-2.5 transition-all">
+                <span>View Kitchen Board</span>
+                <ArrowRight size={13} />
+              </div>
+            </Link>
+
+            {/* Demo 4: Rider Tracker */}
+            <Link
+              href="/demo/track"
+              className="bg-white p-6 rounded-xl border border-slate-200 hover:border-purple-400 hover:shadow-md transition-all group flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold mb-4">
+                  <Bike size={20} />
+                </div>
+                <div className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-1">
+                  Customer Experience
+                </div>
+                <h4 className="text-base font-extrabold text-slate-950 mb-2">
+                  Live Order Tracking
+                </h4>
+                <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                  Visual order lifecycle stepper from baking to rider assignment and delivery.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-purple-600 group-hover:gap-2.5 transition-all">
+                <span>Track Order Demo</span>
+                <ArrowRight size={13} />
+              </div>
+            </Link>
           </div>
         </div>
+      </section>
 
-        {/* Mobile Bottom: Admin Login CTA (Square 5px) */}
-        <div className="pb-2 flex flex-col gap-2">
-          <Link
-            href="/admin/login"
-            className="w-full py-3.5 px-4 flex items-center justify-between no-underline active:scale-[0.98] transition-all"
-            style={{
-              background: "#ea580c",
-              border: "1px solid #f97316",
-              borderRadius: "5px",
-              boxShadow: "0 6px 18px rgba(234, 88, 12, 0.4)",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="w-8 h-8 flex items-center justify-center text-white"
-                style={{
-                  background: "rgba(0, 0, 0, 0.3)",
-                  borderRadius: "5px",
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
+      {/* ══════════════════════════════════════════════════════════════════════
+          CONTACT & DIRECT SALES SECTION
+          ══════════════════════════════════════════════════════════════════════ */}
+      <section id="contact" className="py-24 bg-white relative">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl p-8 sm:p-14 text-white text-center relative overflow-hidden shadow-2xl">
+            {/* Background Accent Gradients */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-orange-600/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 max-w-2xl mx-auto space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-orange-400 border border-white/10 text-xs font-bold">
+                <Sparkles size={14} />
+                <span>Ready To Transform Your Food Business?</span>
               </div>
-              <div className="text-left">
-                <span className="block text-xs font-black text-white uppercase tracking-wider">
-                  Admin Portal Login
-                </span>
-                <span className="block text-[10px] text-orange-100 font-bold">
-                  Store Manager &bull; Branch Terminal
-                </span>
+
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
+                Launch SoleWhat For Your Restaurant or Retail Chain
+              </h2>
+
+              <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+                Get full hardware setup, thermal printer configuration, multi-branch subdomains,
+                and staff training. Talk directly to our technical lead.
+              </p>
+
+              {/* Direct Contact Buttons */}
+              <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-sm transition-all shadow-lg hover:shadow-emerald-500/25 transform active:scale-98"
+                >
+                  <MessageSquare size={18} />
+                  <span>Chat On WhatsApp</span>
+                </a>
+
+                <a
+                  href={callUrl}
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-sm transition-all shadow-lg transform active:scale-98"
+                >
+                  <Phone size={18} className="text-orange-600" />
+                  <span>Call: {phoneNumber}</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={handleCopyPhone}
+                  className="inline-flex items-center gap-2 px-4 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-sm border border-white/15 transition-all"
+                >
+                  {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                  <span>{copied ? "Number Copied!" : "Copy Number"}</span>
+                </button>
+              </div>
+
+              {/* Founder Tag */}
+              <div className="pt-6 border-t border-white/10 text-xs text-slate-400">
+                Founder & Technical Lead:{" "}
+                <span className="font-extrabold text-white">Syed Zeeshan Haider</span> • Direct
+                Support & Custom Integrations
               </div>
             </div>
-
-            <div
-              className="w-7 h-7 flex items-center justify-center text-white"
-              style={{
-                background: "rgba(0, 0, 0, 0.25)",
-                borderRadius: "5px",
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </div>
-          </Link>
-
-          <div className="flex items-center justify-center gap-2 text-[10px] text-zinc-500 font-bold">
-            <span>🔒 Protected System</span>
-            <span>&bull;</span>
-            <span>Enterprise Edition</span>
           </div>
         </div>
+      </section>
 
-      </div>
-    </main>
+      {/* ─── Footer ─── */}
+      <footer className="py-12 bg-white border-t border-slate-100 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <SoleWhatLogo size={28} variant="shield" showGlow={false} />
+            <span className="font-extrabold text-slate-900 text-sm">SoleWhat.store</span>
+            <span className="text-slate-300">|</span>
+            <span>Universal Cloud POS & Store Operating System</span>
+          </div>
+
+          <div className="flex items-center gap-6 font-semibold">
+            <Link href="/pizza-mafia" className="hover:text-slate-900 transition-colors">
+              Pizza Mafia Store
+            </Link>
+            <Link href="/demo/pos" className="hover:text-slate-900 transition-colors">
+              POS Terminal
+            </Link>
+            <Link href="/admin/login" className="hover:text-slate-900 transition-colors">
+              Store Admin
+            </Link>
+            <Link href="/super-admin/login" className="hover:text-slate-900 transition-colors">
+              Super Admin
+            </Link>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
