@@ -7,6 +7,7 @@ import { adminLogout, getActiveShopContext } from "@/lib/admin-actions";
 import { ShieldAlert, Store } from "@/components/admin/AdminIcons";
 import { dbCache } from "@/lib/db-cache";
 import { getShopBranding } from "@/lib/shop-branding";
+import { getShopBusinessProfile, BusinessType } from "@/lib/business-config";
 
 export const dynamic = "force-dynamic";
 
@@ -174,9 +175,10 @@ export default async function AdminLayout({
     } catch {}
   }
 
-  const [activeContext, branding] = await Promise.all([
+  const [activeContext, branding, businessProfile] = await Promise.all([
     getActiveShopContext(),
     getShopBranding(shopIdNum),
+    getShopBusinessProfile(shopIdNum),
   ]);
 
   return (
@@ -191,6 +193,7 @@ export default async function AdminLayout({
       staffName={activeContext.staffName}
       canCancelOrders={activeContext.canCancelOrders}
       logoUrl={branding.logo_url}
+      businessType={businessProfile.business_type}
     >
       {children}
     </AdminShell>

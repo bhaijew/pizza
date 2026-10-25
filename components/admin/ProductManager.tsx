@@ -3,7 +3,7 @@
 import { useState, useMemo, useTransition } from "react";
 import Link from "next/link";
 import type { Product, Category } from "@/types/menu";
-import { updateProduct, deleteProduct } from "@/lib/admin-actions";
+import { updateProduct, deleteProduct, quickUpdateProductPrice } from "@/lib/admin-actions";
 import {
   Plus,
   Search,
@@ -12,6 +12,8 @@ import {
   Trash2,
   Pizza,
   Tag,
+  Check,
+  X,
 } from "lucide-react";
 
 interface ProductManagerProps {
@@ -32,6 +34,43 @@ export default function ProductManager({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("all");
   const [availabilityFilter, setAvailabilityFilter] = useState<string>("all");
+
+  // Inline Quick Price Edit State
+  const [editingPriceId, setEditingPriceId] = useState<number | null>(null);
+  const [tempPrice, setTempPrice] = useState<string>("");
+  const [savingPriceId, setSavingPriceId] = useState<number | null>(null);
+
+  const handleStartEditPrice = (p: Product) => {
+    setEditingPriceId(Number(p.id));
+    setTempPrice(String(p.price || 0));
+  };
+
+  const handleSavePrice = async (productId: number) => {
+    const val = parseFloat(tempPrice);
+    if (isNaN(val) || val < 0) {
+      alert("Please enter a valid price.");
+      return;
+    }
+    setSavingPriceId(productId);
+    // Optimistic UI update
+    setProducts((prev) =>
+      prev.map((item) => (Number(item.id) === productId ? { ...item, price: val } : item))
+    );
+    setEditingPriceId(null);
+
+    try {
+      const res = await quickUpdateProductPrice(productId, val);
+      if (res?.error) {
+        alert(res.error);
+        window.location.reload();
+      }
+    } catch (err: any) {
+      alert(err?.message || "Failed to update price.");
+      window.location.reload();
+    } finally {
+      setSavingPriceId(null);
+    }
+  };
 
   const handleDelete = (id: string | number, name: string) => {
     if (!confirm(`Are you sure you want to permanently delete "${name}"?`)) return;
@@ -373,9 +412,93 @@ export default function ProductManager({
                       </span>
                     </td>
 
-                    {/* Price */}
-                    <td style={{ padding: "12px 16px", fontWeight: 700, color: "#dc2626" }}>
-                      {currencySymbol}{p.price != null ? Number(p.price).toFixed(2) : "0.00"}
+                    {/* Price with 1-Click Inline Edit */}
+                    <td style={{ padding: "12px 16px" }}>
+                      {editingPriceId === Number(p.id) ? (
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <span style={{ fontSize: "12px", fontWeight: 700, color: "#64748b" }}>{currencySymbol}</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={tempPrice}
+                            onChange={(e) => setTempPrice(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSavePrice(Number(p.id));
+                              if (e.key === "Escape") setEditingPriceId(null);
+                            }}
+                            autoFocus
+                            style={{
+                              width: "75px",
+                              padding: "3px 6px",
+                              borderRadius: "4px",
+                              border: "2px solid #ea580c",
+                              fontSize: "13px",
+                              fontWeight: 700,
+                              outline: "none",
+                              color: "#0f172a",
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSavePrice(Number(p.id))}
+                            disabled={savingPriceId === Number(p.id)}
+                            style={{
+                              padding: "4px",
+                              borderRadius: "4px",
+                              background: "#16a34a",
+                              color: "#fff",
+                              border: "none",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                            }}
+                            title="Save price (instant online update)"
+                          >
+                            <Check size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingPriceId(null)}
+                            style={{
+                              padding: "4px",
+                              borderRadius: "4px",
+                              background: "#f1f5f9",
+                              color: "#64748b",
+                              border: "1px solid #cbd5e1",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                            }}
+                            title="Cancel"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditPrice(p)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            background: "transparent",
+                            border: "1px solid transparent",
+                            borderRadius: "4px",
+                            padding: "3px 6px",
+                            cursor: "pointer",
+                            fontWeight: 700,
+                            color: "#dc2626",
+                            transition: "all 0.15s ease",
+                          }}
+                          className="hover:border-red-200 hover:bg-red-50"
+                          title="Click to edit price (updates customer menu live)"
+                        >
+                          <span>
+                            {currencySymbol}
+                            {p.price != null ? Number(p.price).toFixed(2) : "0.00"}
+                          </span>
+                          <Edit2 size={11} style={{ opacity: 0.6 }} />
+                        </button>
+                      )}
                     </td>
 
                     {/* Availability toggle */}

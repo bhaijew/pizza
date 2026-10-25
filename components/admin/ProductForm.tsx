@@ -213,6 +213,34 @@ export default function ProductForm({
     ]);
   };
 
+  const applyPortionSizesPreset = (customBase?: number) => {
+    const baseP = customBase !== undefined ? customBase : (parseFloat(price) || 400);
+    setVariations([
+      { id: `var-single-${Date.now()}`, name: "Single Plate", price: baseP, is_default: true },
+      { id: `var-double-${Date.now()}`, name: "Double Plate", price: Math.round(baseP * 1.8), is_default: false },
+      { id: `var-half-${Date.now()}`, name: "Half Handi / Karahi (0.5 Kg)", price: Math.round(baseP * 2.2), is_default: false },
+      { id: `var-full-${Date.now()}`, name: "Full Handi / Karahi (1.0 Kg)", price: Math.round(baseP * 4.0), is_default: false },
+    ]);
+  };
+
+  const applyCafeSizesPreset = (customBase?: number) => {
+    const baseP = customBase !== undefined ? customBase : (parseFloat(price) || 100);
+    setVariations([
+      { id: `var-cup-${Date.now()}`, name: "Regular Cup", price: baseP, is_default: true },
+      { id: `var-mug-${Date.now()}`, name: "Large Mug", price: Math.round(baseP * 1.5), is_default: false },
+      { id: `var-matka-${Date.now()}`, name: "Matka / Clay Pot", price: Math.round(baseP * 1.8), is_default: false },
+    ]);
+  };
+
+  const applyBakeryWeightPreset = (customBase?: number) => {
+    const baseP = customBase !== undefined ? customBase : (parseFloat(price) || 600);
+    setVariations([
+      { id: `var-halfkg-${Date.now()}`, name: "0.5 Kg (Half Kg)", price: baseP, is_default: true },
+      { id: `var-onekg-${Date.now()}`, name: "1.0 Kg (One Kg)", price: Math.round(baseP * 1.9), is_default: false },
+      { id: `var-twokg-${Date.now()}`, name: "2.0 Kg", price: Math.round(baseP * 3.7), is_default: false },
+    ]);
+  };
+
   // Extra Toppings handlers
   const addTopping = () => {
     setExtraToppings((prev) => [
@@ -240,6 +268,34 @@ export default function ProductForm({
       { id: "top-mushrooms", name: "Fresh Mushrooms", price: 100 },
       { id: "top-jalapenos", name: "Spicy Jalapeños", price: 80 },
       { id: "top-chicken", name: "Extra Grilled Chicken", price: 180 },
+    ]);
+  };
+
+  const applyFastFoodAddonsPreset = () => {
+    setExtraToppings([
+      { id: `top-cheese-${Date.now()}`, name: "Extra Mozzarella Slice", price: 50 },
+      { id: `top-jalapeno-${Date.now()}`, name: "Spicy Jalapeños", price: 40 },
+      { id: `top-mayo-${Date.now()}`, name: "Garlic Mayo Dip Sauce", price: 50 },
+      { id: `top-chipotle-${Date.now()}`, name: "Chipotle Dip Sauce", price: 50 },
+      { id: `top-patty-${Date.now()}`, name: "Extra Fried Patty", price: 150 },
+    ]);
+  };
+
+  const applyDesiSidesPreset = () => {
+    setExtraToppings([
+      { id: `top-raita-${Date.now()}`, name: "Zeera Raita", price: 60 },
+      { id: `top-salad-${Date.now()}`, name: "Fresh Kachumber Salad", price: 70 },
+      { id: `top-roghni-${Date.now()}`, name: "Roghni Naan", price: 70 },
+      { id: `top-garlic-${Date.now()}`, name: "Garlic Butter Naan", price: 90 },
+    ]);
+  };
+
+  const applyCafeAddonsPreset = () => {
+    setExtraToppings([
+      { id: `top-malai-${Date.now()}`, name: "Extra Malai / Cream", price: 40 },
+      { id: `top-caramel-${Date.now()}`, name: "Caramel Drizzle Shot", price: 50 },
+      { id: `top-icecream-${Date.now()}`, name: "Vanilla Ice Cream Scoop", price: 100 },
+      { id: `top-gurr-${Date.now()}`, name: "Gurr (Jaggery) Sweetener", price: 30 },
     ]);
   };
 
@@ -930,7 +986,55 @@ export default function ProductForm({
                   cursor: "pointer",
                 }}
               >
-                🥤 Drink Sizes (Regular, Large, 1.5L)
+                🥤 Drinks (Regular, Large, 1.5L)
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPortionSizesPreset()}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "5px",
+                  border: "1px solid #cbd5e1",
+                  background: "#f8fafc",
+                  color: "#0f172a",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                🍲 Desi Portions (Single, Double, Half, Full)
+              </button>
+              <button
+                type="button"
+                onClick={() => applyCafeSizesPreset()}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "5px",
+                  border: "1px solid #cbd5e1",
+                  background: "#f8fafc",
+                  color: "#0f172a",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                ☕ Cafe (Cup, Mug, Matka)
+              </button>
+              <button
+                type="button"
+                onClick={() => applyBakeryWeightPreset()}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "5px",
+                  border: "1px solid #cbd5e1",
+                  background: "#f8fafc",
+                  color: "#0f172a",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                🎂 Bakery (0.5kg, 1kg, 2kg)
               </button>
               <button
                 type="button"
@@ -1146,7 +1250,7 @@ export default function ProductForm({
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
               <button
                 type="button"
                 onClick={applyToppingsPreset}
@@ -1161,7 +1265,55 @@ export default function ProductForm({
                   cursor: "pointer",
                 }}
               >
-                ⚡ Add Pizza Toppings Preset
+                🍕 Pizza Toppings
+              </button>
+              <button
+                type="button"
+                onClick={applyFastFoodAddonsPreset}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "5px",
+                  border: "1px solid #cbd5e1",
+                  background: "#f8fafc",
+                  color: "#0f172a",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                🍔 Burger &amp; Dips Addons
+              </button>
+              <button
+                type="button"
+                onClick={applyDesiSidesPreset}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "5px",
+                  border: "1px solid #cbd5e1",
+                  background: "#f8fafc",
+                  color: "#0f172a",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                🥗 Desi Sides (Raita, Naan, Salad)
+              </button>
+              <button
+                type="button"
+                onClick={applyCafeAddonsPreset}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "5px",
+                  border: "1px solid #cbd5e1",
+                  background: "#f8fafc",
+                  color: "#0f172a",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                ☕ Cafe Extras (Cream, Gurr, Ice Cream)
               </button>
               <button
                 type="button"

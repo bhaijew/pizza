@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import NavigationProgressBar from "@/components/admin/NavigationProgressBar";
 import SoleWhatLogo from "@/components/SoleWhatLogo";
+import { BusinessType, BUSINESS_THEMES, BusinessTheme } from "@/lib/business-themes";
 
 const LayoutIcon = ({ className, size = 16 }: { className?: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -78,6 +79,7 @@ interface AdminShellProps {
   staffName?: string;
   canCancelOrders?: boolean;
   logoUrl?: string | null;
+  businessType?: BusinessType;
 }
 
 interface NavItem {
@@ -240,7 +242,10 @@ export default function AdminShell({
   staffName = "Shop Admin",
   canCancelOrders = true,
   logoUrl,
+  businessType = "fast_food",
 }: AdminShellProps) {
+  const theme: BusinessTheme =
+    BUSINESS_THEMES[businessType || "fast_food"] || BUSINESS_THEMES.fast_food;
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeBranch, setActiveBranch] = useState<string>(shopName || "Pizza Admin");
@@ -310,7 +315,10 @@ export default function AdminShell({
   }, []);
 
   const handleCopyMenu = () => {
-    const fullUrl = `${window.location.origin}${customerMenuUrl}`;
+    let fullUrl = `${window.location.origin}${customerMenuUrl}`;
+    if (shopSlug && typeof window !== "undefined" && window.location.hostname.includes("solewhat.store")) {
+      fullUrl = `https://${shopSlug}.solewhat.store`;
+    }
     navigator.clipboard.writeText(fullUrl);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
@@ -382,12 +390,26 @@ export default function AdminShell({
           ? "#0b0e17"
           : "#070e17",
         color: isLight ? "#0f172a" : "#f8fafc",
-        borderTop: isAdmin ? "3px solid #eab308" : "3px solid #10b981",
+        borderTop: `3px solid ${theme.primary}`,
         fontFamily: "var(--font-sans, system-ui, -apple-system, sans-serif)",
         transition: "background 0.25s ease",
       }}
     >
       <style>{`
+        :root {
+          --admin-theme-primary: ${theme.primary};
+          --admin-theme-hover: ${theme.primaryHover};
+          --admin-theme-glow: ${theme.primaryGlow};
+          --admin-theme-light: ${theme.primaryLight};
+          --admin-theme-border: ${theme.primaryBorder};
+          --admin-theme-dark: ${theme.primaryDark};
+          --admin-theme-gradient: ${theme.gradient};
+          --admin-theme-badge-bg: ${theme.badgeBg};
+          --admin-theme-badge-text: ${theme.badgeText};
+          --admin-theme-badge-border: ${theme.badgeBorder};
+          --admin-theme-sidebar-active: ${theme.sidebarActiveBg};
+        }
+
         @media (max-width: 767px) {
           .admin-desktop-sidebar {
             display: none !important;
@@ -451,14 +473,14 @@ export default function AdminShell({
           transform: translateX(3px);
         }
         .admin-nav-dark-default:hover .nav-icon {
-          color: #f97316 !important;
+          color: var(--admin-theme-hover) !important;
           transform: scale(1.08);
         }
         .admin-nav-dark-active {
-          color: #ffffff;
-          background: linear-gradient(90deg, rgba(239, 68, 68, 0.22) 0%, rgba(249, 115, 22, 0.08) 100%);
+          color: #ffffff !important;
+          background: var(--admin-theme-sidebar-active) !important;
           font-weight: 700;
-          box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.35);
+          box-shadow: inset 0 0 0 1px var(--admin-theme-badge-border) !important;
         }
         .admin-nav-dark-active::before {
           content: "";
@@ -468,8 +490,8 @@ export default function AdminShell({
           bottom: 6px;
           width: 3px;
           border-radius: 4px;
-          background: #ef4444;
-          box-shadow: 0 0 8px #ef4444;
+          background: var(--admin-theme-primary) !important;
+          box-shadow: 0 0 8px var(--admin-theme-primary) !important;
         }
 
         .admin-nav-light-default {
@@ -481,14 +503,14 @@ export default function AdminShell({
           transform: translateX(3px);
         }
         .admin-nav-light-default:hover .nav-icon {
-          color: #ea580c !important;
+          color: var(--admin-theme-primary) !important;
           transform: scale(1.08);
         }
         .admin-nav-light-active {
-          color: #dc2626;
-          background: #fef2f2;
+          color: var(--admin-theme-primary) !important;
+          background: var(--admin-theme-light) !important;
           font-weight: 700;
-          box-shadow: inset 0 0 0 1px #fecaca;
+          box-shadow: inset 0 0 0 1px var(--admin-theme-border) !important;
         }
         .admin-nav-light-active::before {
           content: "";
@@ -498,7 +520,7 @@ export default function AdminShell({
           bottom: 6px;
           width: 3px;
           border-radius: 4px;
-          background: #dc2626;
+          background: var(--admin-theme-primary) !important;
         }
 
         .nav-icon {
@@ -612,6 +634,27 @@ export default function AdminShell({
                 {isAdmin ? "👑 ADMIN" : "👤 STAFF"}
               </span>
             </div>
+
+            <div style={{ marginTop: "5px" }}>
+              <span
+                style={{
+                  fontSize: "9.5px",
+                  fontWeight: 800,
+                  padding: "2px 7px",
+                  borderRadius: "4px",
+                  background: theme.badgeBg,
+                  color: theme.badgeText,
+                  border: `1px solid ${theme.badgeBorder}`,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                <span>{theme.accentEmoji}</span>
+                <span>{theme.name}</span>
+              </span>
+            </div>
           </div>
         </div>
 
@@ -675,8 +718,8 @@ export default function AdminShell({
                           style={{
                             color: isActive
                               ? isLight
-                                ? "#dc2626"
-                                : "#f97316"
+                                ? theme.primary
+                                : theme.primaryHover
                               : isLight
                               ? "#64748b"
                               : "#94a3b8",
@@ -900,6 +943,27 @@ export default function AdminShell({
                 </span>
               </span>
             )}
+
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 800,
+                color: theme.badgeText,
+                background: theme.badgeBg,
+                border: `1px solid ${theme.badgeBorder}`,
+                borderRadius: "6px",
+                padding: "2px 8px",
+                marginLeft: "6px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+            >
+              <span>{theme.accentEmoji}</span>
+              <span>{theme.name}</span>
+            </span>
           </div>
 
           {/* Quick Actions & Status Tools */}
@@ -1427,6 +1491,25 @@ export default function AdminShell({
                   />
                   <span>Live Terminal</span>
                 </div>
+                <div style={{ marginTop: "3px" }}>
+                  <span
+                    style={{
+                      fontSize: "9px",
+                      fontWeight: 800,
+                      padding: "1px 6px",
+                      borderRadius: "4px",
+                      background: theme.badgeBg,
+                      color: theme.badgeText,
+                      border: `1px solid ${theme.badgeBorder}`,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "3px",
+                    }}
+                  >
+                    <span>{theme.accentEmoji}</span>
+                    <span>{theme.name}</span>
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1514,8 +1597,8 @@ export default function AdminShell({
                             style={{
                               color: isActive
                                 ? isLight
-                                  ? "#dc2626"
-                                  : "#f97316"
+                                  ? theme.primary
+                                  : theme.primaryHover
                                 : isLight
                                 ? "#64748b"
                                 : "#94a3b8",

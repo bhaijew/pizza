@@ -5,9 +5,12 @@ import { SUPER_ADMIN_COOKIE, verifySuperAdminSessionToken } from "@/lib/super-ad
 
 /**
  * Next.js 16 Proxy Convention (replaces deprecated middleware.js)
+ * Handles:
+ * 1. Super Admin & Store Manager auth session guards
+ * 2. Wildcard Subdomain Routing (e.g. pizza-mafia.solewhat.store -> /[shopSlug])
  */
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
 
   // Refresh Supabase session cookies
   const supabaseResponse = createClient(request);
@@ -36,6 +39,47 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // 3. Wildcard Subdomain Routing
+  // Extracts shop slug from subdomains like:
+  // - pizza-mafia.solewhat.store -> rewrites internally to /pizza-mafia
+  // - pizza-mafia.localhost:3000 -> rewrites internally to /pizza-mafia
+  const rawHost = request.headers.get("host")?.toLowerCase() || "";
+  const host = rawHost.split(":")[0]; // strip port
+
+  let subdomain: string | null = null;
+
+  if (host.endsWith(".solewhat.store")) {
+    const part = host.replace(".solewhat.store", "").trim();
+    if (part && part !== "www") {
+      subdomain = part;
+    }
+  } else if (host.endsWith(".localhost")) {
+    const part = host.replace(".localhost", "").trim();
+    if (part && part !== "www") {
+      subdomain = part;
+    }
+  }
+
+  if (subdomain) {
+    const isReserved =
+      pathname.startsWith("/api") ||
+      pathname.startsWith("/_next") ||
+      pathname.startsWith("/super-admin") ||
+      pathname.startsWith("/admin") ||
+      pathname.startsWith("/favicon.ico") ||
+      pathname.startsWith("/robots.txt") ||
+      pathname.startsWith("/sitemap.xml");
+
+    if (!isReserved) {
+      if (!pathname.startsWith(`/${subdomain}`)) {
+        const rewriteTarget = `/${subdomain}${pathname === "/" ? "" : pathname}${search}`;
+        return NextResponse.rewrite(new URL(rewriteTarget, request.url), {
+          headers: supabaseResponse.headers,
+        });
+      }
+    }
+  }
+
   return supabaseResponse;
 }
 
@@ -43,5 +87,14 @@ export async function proxy(request: NextRequest) {
 export const middleware = proxy;
 
 export const config = {
-  matcher: ["/admin/:path*", "/super-admin/:path*"],
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public asset extensions (.png, .jpg, .svg, etc.)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map)$).*)",
+  ],
 };

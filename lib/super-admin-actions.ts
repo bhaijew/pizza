@@ -97,6 +97,7 @@ export async function createShop(
   const notes = (formData.get("notes") as string)?.trim() || null;
   const whatsapp_session_id = (formData.get("whatsapp_session_id") as string)?.trim() || null;
   const whatsapp_api_key = (formData.get("whatsapp_api_key") as string)?.trim() || null;
+  const business_type = ((formData.get("business_type") as string)?.trim() || "fast_food") as import("@/lib/business-config").BusinessType;
 
   if (!name || !owner_name) {
     return { error: "Shop Name and Owner Name are required.", success: false };
@@ -120,6 +121,7 @@ export async function createShop(
     notes,
     whatsapp_session_id,
     whatsapp_api_key,
+    business_type,
   };
 
   let { data, error } = await db
@@ -128,9 +130,10 @@ export async function createShop(
     .select()
     .single();
 
-  if (error && (error.message.includes("whatsapp_session_id") || error.message.includes("whatsapp_api_key"))) {
+  if (error && (error.message.includes("whatsapp_session_id") || error.message.includes("whatsapp_api_key") || error.message.includes("business_type"))) {
     delete insertPayload.whatsapp_session_id;
     delete insertPayload.whatsapp_api_key;
+    delete insertPayload.business_type;
     const retry = await db.from("shops").insert(insertPayload).select().single();
     data = retry.data;
     error = retry.error;
@@ -145,6 +148,15 @@ export async function createShop(
       };
     }
     return { error: error.message, success: false };
+  }
+
+  if (data && (data as any).id) {
+    try {
+      const { saveShopBusinessProfile } = await import("@/lib/business-config");
+      await saveShopBusinessProfile((data as any).id, business_type);
+    } catch (e) {
+      console.warn("[SuperAdmin] Auto-save business profile note:", e);
+    }
   }
 
   const pos_pin = (formData.get("pos_pin") as string)?.trim() || "1234";
@@ -199,6 +211,7 @@ export async function updateShop(
   const notes = (formData.get("notes") as string)?.trim() || null;
   const whatsapp_session_id = (formData.get("whatsapp_session_id") as string)?.trim() || null;
   const whatsapp_api_key = (formData.get("whatsapp_api_key") as string)?.trim() || null;
+  const business_type = ((formData.get("business_type") as string)?.trim() || "fast_food") as import("@/lib/business-config").BusinessType;
 
   if (!name || !owner_name) {
     return { error: "Shop Name and Owner Name are required.", success: false };
@@ -217,6 +230,7 @@ export async function updateShop(
     whatsapp_session_id,
     whatsapp_api_key,
     pos_pin,
+    business_type,
     updated_at: new Date().toISOString(),
   };
 
@@ -226,15 +240,24 @@ export async function updateShop(
 
   let { error } = await db.from("shops").update(updatePayload).eq("id", id);
 
-  if (error && (error.message.includes("whatsapp_session_id") || error.message.includes("whatsapp_api_key") || error.message.includes("pos_pin"))) {
+  if (error && (error.message.includes("whatsapp_session_id") || error.message.includes("whatsapp_api_key") || error.message.includes("pos_pin") || error.message.includes("business_type"))) {
     delete updatePayload.whatsapp_session_id;
     delete updatePayload.whatsapp_api_key;
     delete updatePayload.pos_pin;
+    delete updatePayload.business_type;
     const retry = await db.from("shops").update(updatePayload).eq("id", id);
     error = retry.error;
   }
 
   if (error) return { error: error.message, success: false };
+
+  // Update business profile in local storage & notes
+  try {
+    const { saveShopBusinessProfile } = await import("@/lib/business-config");
+    await saveShopBusinessProfile(id, business_type);
+  } catch (e) {
+    console.warn("[SuperAdmin] Update business profile note:", e);
+  }
 
   // Always upsert owner in pos_staff so the PIN is permanently saved & linked
   try {

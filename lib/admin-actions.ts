@@ -700,10 +700,7 @@ export async function createProduct(
 
   if (error) return { error: error.message, success: false };
 
-  dbCache.invalidateTag("products", "deals", "menu");
-  revalidatePath("/admin/products");
-  revalidatePath("/admin/inventory");
-  revalidatePath("/");
+  invalidateAllMenuCaches();
   return { error: null, success: true };
 }
 
@@ -790,10 +787,52 @@ export async function updateProduct(
 
   if (error) return { error: error.message, success: false };
 
-  dbCache.invalidateTag("products", "deals", "menu");
-  revalidatePath("/admin/products");
-  revalidatePath("/admin/inventory");
-  revalidatePath("/");
+  invalidateAllMenuCaches();
+  return { error: null, success: true };
+}
+
+export async function invalidateAllMenuCaches() {
+  dbCache.invalidateTag("products", "deals", "menu", "categories");
+  try {
+    revalidatePath("/", "layout");
+    revalidatePath("/admin/products");
+    revalidatePath("/admin/inventory");
+  } catch (err) {
+    console.warn("[invalidateAllMenuCaches] revalidatePath skipped:", err);
+  }
+}
+
+export async function quickUpdateProductPrice(
+  productId: number,
+  newPrice: number
+): Promise<{ error: string | null; success: boolean }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, success: false };
+  }
+
+  if (isNaN(newPrice) || newPrice < 0) {
+    return { error: "Please enter a valid price.", success: false };
+  }
+
+  let query = db
+    .from("products")
+    .update({ price: newPrice, updated_at: new Date().toISOString() })
+    .eq("id", productId);
+
+  if (activeShop.shopId) {
+    query = query.eq("shop_id", activeShop.shopId);
+  }
+
+  const { error } = await query;
+  if (error) {
+    return { error: error.message, success: false };
+  }
+
+  invalidateAllMenuCaches();
   return { error: null, success: true };
 }
 
@@ -814,9 +853,7 @@ export async function deleteProduct(id: number): Promise<{ error: string | null 
   const { error } = await query;
   if (error) return { error: error.message };
 
-  dbCache.invalidateTag("products", "deals", "menu");
-  revalidatePath("/admin/products");
-  revalidatePath("/");
+  invalidateAllMenuCaches();
   return { error: null };
 }
 
@@ -1704,10 +1741,7 @@ export async function updateProductInventory(
     return { error: error.message, success: false };
   }
 
-  dbCache.invalidateTag("products", "deals", "menu");
-  revalidatePath("/admin/inventory");
-  revalidatePath("/admin/products");
-  revalidatePath("/");
+  invalidateAllMenuCaches();
   return { error: null, success: true };
 }
 
@@ -1750,10 +1784,7 @@ export async function quickRestockProduct(
   const { error } = await query;
   if (error) return { error: error.message, success: false };
 
-  dbCache.invalidateTag("products", "deals", "menu");
-  revalidatePath("/admin/inventory");
-  revalidatePath("/admin/products");
-  revalidatePath("/");
+  invalidateAllMenuCaches();
   return { error: null, success: true };
 }
 
@@ -3165,4 +3196,43 @@ export async function toggleDeliveryRiderStatus(
 ): Promise<{ success: boolean; error?: string | null }> {
   return updateDeliveryRider(id, { is_active });
 }
+
+// ─── UNIVERSAL MULTI-BUSINESS SETUP & FEATURE FLAGS ─────────────────
+
+export async function getShopBusinessProfileServer(
+  shopId?: number | null
+) {
+  const { getShopBusinessProfile, BUSINESS_PRESETS } = await import("@/lib/business-config");
+  const ctx = await getActiveShopContext();
+  const targetShopId = shopId ?? ctx.shopId;
+  const profile = await getShopBusinessProfile(targetShopId);
+  const currentPreset = BUSINESS_PRESETS[profile.business_type] || BUSINESS_PRESETS.fast_food;
+
+  return {
+    success: true,
+    data: {
+      profile,
+      preset: currentPreset,
+      all_presets: Object.values(BUSINESS_PRESETS),
+    },
+  };
+}
+
+export async function saveShopBusinessProfileServer(
+  shopId: number | null | undefined,
+  businessType: import("@/lib/business-config").BusinessType,
+  featureOverrides?: Partial<import("@/lib/business-config").BusinessFeatureFlags>
+) {
+  await requireAdmin();
+  const { saveShopBusinessProfile } = await import("@/lib/business-config");
+  const ctx = await getActiveShopContext();
+  const targetShopId = shopId ?? ctx.shopId;
+  const res = await saveShopBusinessProfile(targetShopId, businessType, featureOverrides);
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/settings");
+  return res;
+}
+
+
 

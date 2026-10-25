@@ -176,7 +176,8 @@ export interface Shop {
   theme_color?: string;
   slider_enabled?: boolean;
   slider_height_mobile?: number;
-  slider_images?: any;
+  business_type?: "fast_food" | "pizza" | "restaurant" | "cafe" | "bakery" | "retail";
+  business_config?: any;
   created_at?: string;
   updated_at?: string;
 }
@@ -303,3 +304,25 @@ export interface Deal {
   created_at?: string | null;
   updated_at?: string | null;
 }
+
+// ─── UNIVERSAL MODIFIER SYSTEM (MULTI-BUSINESS) ──────────────────────
+
+export interface UniversalModifierOption {
+  id?: string;
+  name: string;
+  price: number;
+  is_default?: boolean;
+}
+
+export interface UniversalModifierGroup {
+  id: string;
+  shop_id?: number | null;
+  name: string;
+  selection_type: "single" | "multiple"; // single (radio e.g. Patty), multiple (checkbox e.g. Extra Cheese)
+  is_required: boolean;
+  min_selection?: number;
+  max_selection?: number;
+  options: UniversalModifierOption[];
+  sort_order?: number;
+}
+

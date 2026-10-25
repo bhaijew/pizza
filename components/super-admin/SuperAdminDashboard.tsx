@@ -71,6 +71,17 @@ import {
   Download,
 } from "lucide-react";
 
+export function getBusinessBadge(type?: string) {
+  const map: Record<string, { label: string; icon: string; color: string; bg: string }> = {
+    fast_food: { label: "Fast Food", icon: "🍔", color: "#c2410c", bg: "#ffedd5" },
+    pizza: { label: "Pizzeria", icon: "🍕", color: "#b91c1c", bg: "#fee2e2" },
+    restaurant: { label: "Restaurant", icon: "🍲", color: "#15803d", bg: "#dcfce7" },
+    cafe: { label: "Cafe & Chai", icon: "☕", color: "#b45309", bg: "#fef3c7" },
+    bakery: { label: "Bakery", icon: "🎂", color: "#be185d", bg: "#fce7f3" },
+    retail: { label: "Retail Mart", icon: "🛒", color: "#6d28d9", bg: "#ede9fe" },
+  };
+  return map[type || ""] || { label: "Fast Food", icon: "🍔", color: "#c2410c", bg: "#ffedd5" };
+}
 
 interface SuperAdminDashboardProps {
   initialShops: Shop[];
@@ -250,6 +261,7 @@ export default function SuperAdminDashboard({
                 notes: (formData.get("notes") as string) || null,
                 whatsapp_session_id: (formData.get("whatsapp_session_id") as string) || null,
                 whatsapp_api_key: (formData.get("whatsapp_api_key") as string) || null,
+                business_type: (formData.get("business_type") as any) || s.business_type || "fast_food",
               };
             }
             return s;
@@ -289,7 +301,8 @@ export default function SuperAdminDashboard({
     } else {
       const res = await createShop({ error: null, success: false }, formData);
       if (res.shop) {
-        setShops((prev) => [res.shop!, ...prev]);
+        const bType = (formData.get("business_type") as any) || "fast_food";
+        setShops((prev) => [{ ...res.shop!, business_type: bType }, ...prev]);
         setMetrics((prev) => ({
           ...prev,
           totalShops: prev.totalShops + 1,
@@ -2219,8 +2232,18 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                               <h3 style={{ fontSize: "15px", fontWeight: 800, margin: 0, color: isLight ? "#0f172a" : "#ffffff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                 {shop.name}
                               </h3>
-                              <div style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8" }}>
-                                ID #{shop.id} &bull; /{shop.slug}
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}>
+                                <span style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8" }}>
+                                  ID #{shop.id} &bull; /{shop.slug}
+                                </span>
+                                {(() => {
+                                  const badge = getBusinessBadge(shop.business_type);
+                                  return (
+                                    <span style={{ fontSize: "10px", fontWeight: 800, padding: "1px 6px", borderRadius: "4px", background: badge.bg, color: badge.color }}>
+                                      {badge.icon} {badge.label}
+                                    </span>
+                                  );
+                                })()}
                               </div>
                             </div>
                           </div>
@@ -2519,8 +2542,18 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                           }}
                         >
                           <td style={{ padding: "12px 16px" }}>
-                            <div style={{ fontWeight: 800, color: isLight ? "#0f172a" : "#ffffff" }}>{shop.name}</div>
-                            <div style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8" }}>ID #{shop.id} &bull; {shop.plan}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                              <span style={{ fontWeight: 800, color: isLight ? "#0f172a" : "#ffffff" }}>{shop.name}</span>
+                              {(() => {
+                                const badge = getBusinessBadge(shop.business_type);
+                                return (
+                                  <span style={{ fontSize: "10px", fontWeight: 800, padding: "1px 6px", borderRadius: "4px", background: badge.bg, color: badge.color }}>
+                                    {badge.icon} {badge.label}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                            <div style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8", marginTop: "2px" }}>ID #{shop.id} &bull; {shop.plan}</div>
                           </td>
                           <td style={{ padding: "12px 16px" }}>
                             <div style={{ fontWeight: 700, color: isLight ? "#0f172a" : "#ffffff" }}>{shop.owner_name}</div>

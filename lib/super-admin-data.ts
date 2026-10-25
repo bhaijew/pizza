@@ -48,10 +48,26 @@ export async function fetchShops(): Promise<{ shops: Shop[]; isDatabaseConfigure
       }
     } catch {}
 
-    const mergedShops = ((data || []) as Shop[]).map((s) => ({
-      ...s,
-      pos_pin: (s as any).pos_pin || ownerPins.get(String(s.id)) || "1234",
-    }));
+    const { getShopBusinessProfile } = await import("@/lib/business-config");
+    const mergedShops = await Promise.all(
+      ((data || []) as Shop[]).map(async (s) => {
+        let bType = (s as any).business_type;
+        let bConfig: any = null;
+        try {
+          const biz = await getShopBusinessProfile(s.id);
+          bType = bType || biz.business_type || "fast_food";
+          bConfig = biz;
+        } catch {}
+
+        return {
+          ...s,
+          business_type: bType || "fast_food",
+          business_config: bConfig,
+          pos_pin: (s as any).pos_pin || ownerPins.get(String(s.id)) || "1234",
+        };
+      })
+    );
+
 
     return {
       shops: mergedShops,

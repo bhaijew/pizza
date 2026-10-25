@@ -9,6 +9,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Category, Product } from "@/types/menu";
 import type { ShopSettings } from "@/lib/menu-data";
+import { createClient } from "@/utils/supabase/client";
 
 import { CartProvider } from "./CartContext";
 import MenuHeader from "./MenuHeader";
@@ -71,6 +72,121 @@ function MenuInner({
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
 
+  // ─── Realtime Live Products (Instant Price Updates from Any System) ─
+  const [liveProducts, setLiveProducts] = useState<Product[]>(products);
+
+  useEffect(() => {
+    setLiveProducts(products);
+  }, [products]);
+
+  // Keep selectedProduct in sync if its price or details change while detail sheet is open
+  useEffect(() => {
+    if (selectedProduct) {
+      const fresh = liveProducts.find((p) => p.id === selectedProduct.id);
+      if (fresh && (fresh.price !== selectedProduct.price || fresh.is_available !== selectedProduct.is_available)) {
+        setSelectedProduct(fresh);
+      }
+    }
+  }, [liveProducts, selectedProduct]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const shopId = settings?.shop_id;
+    const targetShopId = shopId != null ? Number(shopId) : null;
+    const channelName = `customer-menu-realtime-${targetShopId ?? "all"}-${Date.now()}`;
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "products",
+        },
+        (payload) => {
+          if (payload.eventType === "UPDATE") {
+            const updated = payload.new as any;
+            const prodShopId = updated.shop_id != null ? Number(updated.shop_id) : null;
+            const isRelevant = targetShopId === null || prodShopId === null || prodShopId === targetShopId;
+
+            if (isRelevant) {
+              setLiveProducts((prev) =>
+                prev.map((item) =>
+                  Number(item.id) === Number(updated.id)
+                    ? {
+                        ...item,
+                        ...updated,
+                        price: updated.price != null ? Number(updated.price) : item.price,
+                        category: item.category || updated.category,
+                      }
+                    : item
+                )
+              );
+            }
+          } else if (payload.eventType === "INSERT") {
+            const inserted = payload.new as any;
+            const prodShopId = inserted.shop_id != null ? Number(inserted.shop_id) : null;
+            const isRelevant = targetShopId === null || prodShopId === null || prodShopId === targetShopId;
+
+            if (isRelevant) {
+              setLiveProducts((prev) => {
+                if (prev.some((p) => Number(p.id) === Number(inserted.id))) return prev;
+                return [
+                  ...prev,
+                  {
+                    ...inserted,
+                    price: inserted.price != null ? Number(inserted.price) : 0,
+                  },
+                ];
+              });
+            }
+          } else if (payload.eventType === "DELETE") {
+            const deleted = payload.old as { id?: number };
+            if (deleted?.id) {
+              setLiveProducts((prev) => prev.filter((p) => Number(p.id) !== Number(deleted.id)));
+            }
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "deals",
+        },
+        (payload) => {
+          if (payload.eventType === "UPDATE") {
+            const deal = payload.new as any;
+            setLiveProducts((prev) =>
+              prev.map((item) => {
+                const isMatch =
+                  (deal.product_id != null && Number(item.id) === Number(deal.product_id)) ||
+                  (deal.title && item.name?.toLowerCase() === deal.title.toLowerCase());
+
+                if (isMatch) {
+                  return {
+                    ...item,
+                    price: deal.deal_price != null ? Number(deal.deal_price) : item.price,
+                    original_price: deal.original_price != null ? Number(deal.original_price) : item.original_price,
+                    badge: deal.badge || item.badge,
+                    is_available: deal.is_available !== false,
+                  };
+                }
+                return item;
+              })
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [settings?.shop_id]);
+
   // Table & Order Type state
   const effectiveInitialTable = verifiedTable || initialTableNumber || urlTableParam || "";
   const [orderType, setOrderType] = useState<"dine_in" | "takeaway" | "delivery">(
@@ -88,7 +204,7 @@ function MenuInner({
 
   // Top Featured Zinger Burgers (highlighted right at the top of All Items)
   const topZingerPicks = useMemo(() => {
-    const list = products.filter((p) => {
+    const list = liveProducts.filter((p) => {
       const lower = p.name.toLowerCase();
       return (
         lower === "zinger burger" ||
@@ -102,7 +218,7 @@ function MenuInner({
 
     // If only 1 zinger found, also add Pizza Burger or Tower Burger so we have 2 top burger picks ("ak do")
     if (list.length < 2) {
-      const secondPick = products.find((p) => {
+      const secondPick = liveProducts.find((p) => {
         const lower = p.name.toLowerCase();
         return (
           (lower.includes("pizza burger") ||
@@ -115,7 +231,7 @@ function MenuInner({
     }
 
     return list.slice(0, 2);
-  }, [products]);
+  }, [liveProducts]);
 
   // When activeCategoryId is null and no search, group products by category
   const categoriesWithProducts = useMemo(() => {
@@ -123,14 +239,14 @@ function MenuInner({
 
     return categories
       .map((cat) => {
-        const catProducts = products.filter((p) => p.category_id === cat.id);
+        const catProducts = liveProducts.filter((p) => p.category_id === cat.id);
         return {
           category: cat,
           products: catProducts,
         };
       })
       .filter((group) => group.products.length > 0);
-  }, [categories, products, activeCategoryId, searchQuery]);
+  }, [categories, liveProducts, activeCategoryId, searchQuery]);
 
   const activeCategoryObj = useMemo(() => {
     if (activeCategoryId === null) return null;
@@ -139,7 +255,7 @@ function MenuInner({
 
   // Filter products by selected category AND search query
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    return liveProducts.filter((p) => {
       const matchesCategory =
         activeCategoryId === null || p.category_id === activeCategoryId;
 
@@ -151,7 +267,7 @@ function MenuInner({
 
       return matchesCategory && matchesSearch;
     });
-  }, [products, activeCategoryId, searchQuery]);
+  }, [liveProducts, activeCategoryId, searchQuery]);
 
   const tableMissing = categoriesTableMissing || productsTableMissing;
   const hasError = !!categoriesError || !!productsError;
@@ -162,7 +278,7 @@ function MenuInner({
       <>
         <PizzgerMenuTheme
           categories={categories}
-          products={products}
+          products={liveProducts}
           settings={settings}
           onSelectProduct={setSelectedProduct}
           onOpenCart={() => setCartOpen(true)}
@@ -187,7 +303,7 @@ function MenuInner({
           shopId={settings.shop_id}
           shopName={settings.shop_name}
           googleReviewUrl={settings.google_review_url || ""}
-          menuProducts={products}
+          menuProducts={liveProducts}
         />
       </>
     );
@@ -258,7 +374,7 @@ function MenuInner({
                     border: "1px solid #fde68a",
                   }}
                 >
-                  {products.length} Items
+                  {liveProducts.length} Items
                 </span>
               </div>
               <p style={{ fontSize: 13, color: "#9a3412", margin: 0, fontWeight: 500 }}>
@@ -286,7 +402,7 @@ function MenuInner({
                   onSelect={setActiveCategoryId}
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}
-                  totalCount={products.length}
+                  totalCount={liveProducts.length}
                 />
               </div>
 
@@ -736,7 +852,7 @@ function MenuInner({
         shopId={settings.shop_id}
         shopName={settings.shop_name}
         googleReviewUrl={settings.google_review_url || ""}
-        menuProducts={products}
+        menuProducts={liveProducts}
       />
     </>
   );

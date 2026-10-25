@@ -20,7 +20,13 @@ import {
   RefreshCw,
   Store,
   AlertTriangle,
+  Flame,
+  UtensilsCrossed,
+  ShoppingBag,
+  Pizza,
+  CheckCircle2,
 } from "lucide-react";
+import { BusinessType, BUSINESS_PRESETS } from "@/lib/business-themes";
 
 interface ShopModalProps {
   isOpen: boolean;
@@ -39,6 +45,9 @@ export default function ShopModal({
 }: ShopModalProps) {
   const isEditing = !!editingShop;
 
+  const [businessType, setBusinessType] = useState<BusinessType>(
+    editingShop?.business_type || "fast_food"
+  );
   const [name, setName] = useState(editingShop?.name || "");
   const [ownerName, setOwnerName] = useState(editingShop?.owner_name || "");
   const [ownerPhone, setOwnerPhone] = useState(editingShop?.owner_phone || "");
@@ -70,8 +79,10 @@ export default function ShopModal({
       setStatus(editingShop.status || "active");
       setNotes(editingShop.notes || "");
       setWhatsappSessionId(editingShop.whatsapp_session_id || "");
+      setBusinessType(editingShop.business_type || "fast_food");
       setWhatsappApiKey(editingShop.whatsapp_api_key || "");
     } else {
+      setBusinessType("fast_food");
       setName("");
       setOwnerName("");
       setOwnerPhone("");
@@ -115,6 +126,7 @@ export default function ShopModal({
     }
 
     const formData = new FormData();
+    formData.append("business_type", businessType);
     formData.append("name", name.trim());
     formData.append("owner_name", ownerName.trim());
     formData.append("owner_phone", ownerPhone.trim());
@@ -260,6 +272,156 @@ export default function ShopModal({
         )}
 
         <form onSubmit={handleSubmit}>
+          {/* Section 0: Select Business Type / Category */}
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #e2e8f0",
+              borderRadius: "10px",
+              padding: "16px",
+              marginBottom: "16px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Store size={15} className="text-amber-600" />
+                <span style={{ fontSize: "12px", fontWeight: 800, color: "#1e293b", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                  Select Business Type / Niche
+                </span>
+              </div>
+              <span style={{ fontSize: "11px", fontWeight: 700, color: "#0369a1", background: "#f0f9ff", padding: "2px 8px", borderRadius: "12px", border: "1px solid #bae6fd" }}>
+                Auto-configures POS & Features
+              </span>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "10px" }}>
+              {[
+                {
+                  id: "fast_food" as BusinessType,
+                  title: "Fast Food & Burgers",
+                  icon: "🍔",
+                  desc: "Broast, Wings, KOT & Riders",
+                },
+                {
+                  id: "pizza" as BusinessType,
+                  title: "Pizzeria & Oven",
+                  icon: "🍕",
+                  desc: "Crusts, Sizes & Toppings",
+                },
+                {
+                  id: "restaurant" as BusinessType,
+                  title: "Dine-In / Desi BBQ",
+                  icon: "🍲",
+                  desc: "Tables, Handi, Portions",
+                },
+                {
+                  id: "cafe" as BusinessType,
+                  title: "Cafe, Chai & Shakes",
+                  icon: "☕",
+                  desc: "Barista Counter, Sugar/Milk",
+                },
+                {
+                  id: "bakery" as BusinessType,
+                  title: "Bakery & Sweets",
+                  icon: "🎂",
+                  desc: "Kg/Grams, Custom Cakes",
+                },
+                {
+                  id: "retail" as BusinessType,
+                  title: "Retail Mart / Grocery",
+                  icon: "🛒",
+                  desc: "Barcode Scan, Fast POS",
+                },
+              ].map((item) => {
+                const isSelected = businessType === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setBusinessType(item.id)}
+                    style={{
+                      textAlign: "left",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: isSelected ? "2px solid #ea580c" : "1px solid #e2e8f0",
+                      background: isSelected ? "#fff7ed" : "#f8fafc",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      position: "relative",
+                    }}
+                    className={isSelected ? "shadow-sm" : "hover:bg-slate-100 hover:border-slate-300"}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                      <span style={{ fontSize: "18px" }}>{item.icon}</span>
+                      {isSelected && <CheckCircle2 size={14} className="text-orange-600" />}
+                    </div>
+                    <div style={{ fontSize: "12px", fontWeight: 800, color: isSelected ? "#9a3412" : "#1e293b", lineHeight: 1.2 }}>
+                      {item.title}
+                    </div>
+                    <div style={{ fontSize: "10px", color: isSelected ? "#c2410c" : "#64748b", marginTop: "3px" }}>
+                      {item.desc}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick feature overview pill ribbon */}
+            {BUSINESS_PRESETS[businessType] && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  flexWrap: "wrap",
+                  fontSize: "10.5px",
+                  color: "#475569",
+                  background: "#f1f5f9",
+                  padding: "6px 10px",
+                  borderRadius: "6px",
+                }}
+              >
+                <span style={{ fontWeight: 800, color: "#0f172a" }}>Enabled Modules:</span>
+                {BUSINESS_PRESETS[businessType].features.enable_kot && (
+                  <span style={{ background: "#dcfce7", color: "#15803d", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                    ✓ Kitchen KOT
+                  </span>
+                )}
+                {BUSINESS_PRESETS[businessType].features.enable_tables && (
+                  <span style={{ background: "#e0e7ff", color: "#4338ca", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                    ✓ Tables & Dine-In
+                  </span>
+                )}
+                {BUSINESS_PRESETS[businessType].features.enable_riders && (
+                  <span style={{ background: "#ffedd5", color: "#c2410c", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                    ✓ Delivery Riders
+                  </span>
+                )}
+                {BUSINESS_PRESETS[businessType].features.enable_bar_printer && (
+                  <span style={{ background: "#fef3c7", color: "#b45309", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                    ✓ Barista / Drinks Station
+                  </span>
+                )}
+                {BUSINESS_PRESETS[businessType].features.enable_barcodes && (
+                  <span style={{ background: "#ede9fe", color: "#6d28d9", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                    ✓ Barcode Scanning
+                  </span>
+                )}
+                {BUSINESS_PRESETS[businessType].features.enable_weight_pricing && (
+                  <span style={{ background: "#fce7f3", color: "#be185d", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                    ✓ Weight Pricing (Kg/g)
+                  </span>
+                )}
+                {BUSINESS_PRESETS[businessType].features.enable_deals && (
+                  <span style={{ background: "#fef9c3", color: "#a16207", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                    ✓ Combo Deals
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Section 1: Branch Details */}
           <div
             style={{
