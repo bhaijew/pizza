@@ -25,6 +25,8 @@ import {
   ShoppingBag,
   Pizza,
   CheckCircle2,
+  Globe,
+  Copy,
 } from "lucide-react";
 import { BusinessType, BUSINESS_PRESETS } from "@/lib/business-themes";
 
@@ -64,6 +66,7 @@ export default function ShopModal({
 
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copiedSubdomain, setCopiedSubdomain] = useState(false);
 
   useEffect(() => {
     if (editingShop) {
@@ -488,6 +491,63 @@ export default function ShopModal({
                 />
               </div>
             </div>
+
+            {name.trim() && (
+              <div
+                style={{
+                  background: "#eff6ff",
+                  border: "1px solid #bfdbfe",
+                  borderRadius: "8px",
+                  padding: "10px 14px",
+                  marginBottom: "14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "10px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                  <Globe size={18} className="text-blue-600 flex-shrink-0" />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#1e40af" }}>
+                      Auto-Generated Subdomain (Vercel Domains ke liye):
+                    </div>
+                    <code style={{ fontSize: "13px", fontWeight: 800, color: "#2563eb", background: "#ffffff", padding: "2px 8px", borderRadius: "4px", border: "1px solid #dbeafe" }}>
+                      {`${(editingShop?.slug || name).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "my-shop"}.solewhat.store`}
+                    </code>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const slug = (editingShop?.slug || name).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "my-shop";
+                    const subdomain = `${slug}.solewhat.store`;
+                    navigator.clipboard.writeText(subdomain);
+                    setCopiedSubdomain(true);
+                    setTimeout(() => setCopiedSubdomain(false), 2000);
+                  }}
+                  style={{
+                    background: copiedSubdomain ? "#16a34a" : "#2563eb",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "7px 14px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    whiteSpace: "nowrap",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {copiedSubdomain ? <Check size={13} /> : <Copy size={13} />}
+                  {copiedSubdomain ? "Copied!" : "Copy for Vercel"}
+                </button>
+              </div>
+            )}
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
               <div>
