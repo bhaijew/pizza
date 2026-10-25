@@ -100,43 +100,18 @@ function SheetContent({
         aria-hidden="true"
       />
 
-      {/* Bottom Sheet Container (Docked to the bottom of the screen) */}
+      {/* Modal / Sheet Container (Bottom sheet on mobile, Centered dialog on desktop) */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label={product.name}
         ref={sheetRef}
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 60,
-          display: "flex",
-          justifyContent: "center",
-          pointerEvents: "none",
-        }}
+        className="product-modal-container"
       >
-        <div
-          className="animate-slide-in-up"
-          style={{
-            pointerEvents: "auto",
-            width: "100%",
-            maxWidth: 600,
-            background: "#ffffff",
-            borderRadius: "6px 6px 0 0",
-            border: "1px solid #fed7aa",
-            borderBottom: "none",
-            boxShadow: "0 -10px 40px rgba(0, 0, 0, 0.25)",
-            maxHeight: "86dvh",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            position: "relative",
-          }}
-        >
-          {/* Top Grab Bar Indicator */}
+        <div className="product-modal-card">
+          {/* Top Grab Bar Indicator (Mobile Only) */}
           <div
+            className="md:hidden"
             style={{
               paddingTop: 10,
               paddingBottom: 6,
@@ -201,8 +176,7 @@ function SheetContent({
             <div
               style={{
                 width: "100%",
-                height: 200,
-                maxHeight: "28vh",
+                height: "clamp(200px, 26vh, 260px)",
                 background: "#fff7ed",
                 position: "relative",
                 borderBottom: "1px solid #ffedd5",

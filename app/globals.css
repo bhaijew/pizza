@@ -598,18 +598,91 @@ button, input, select, textarea, optgroup { font-family: inherit; }
 @media (hover: hover) and (pointer: fine) {
   .product-card-modern:hover {
     transform: translateY(-4px) !important;
-    box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.04) !important;
+    box-shadow: 0 16px 32px -8px rgba(234, 88, 12, 0.16), 0 4px 10px -2px rgba(15, 23, 42, 0.05) !important;
     border-color: #fdba74 !important;
   }
 
-  .product-card-modern:hover .product-card-img {
-    transform: scale(1.05);
+  .product-card-modern:hover .product-card-img img {
+    transform: scale(1.06) !important;
   }
 }
 
 .product-card-img {
+  overflow: hidden;
+}
+
+.product-card-img img {
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
+
+/* ─── Product Detail Dialog: Bottom Sheet on Mobile, Centered Modal on Desktop ─── */
+.product-modal-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.product-modal-card {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 600px;
+  background: #ffffff;
+  border-radius: 14px 14px 0 0;
+  border: 1px solid #fed7aa;
+  border-bottom: none;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25);
+  max-height: 86dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  animation: slideInUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (min-width: 768px) {
+  .product-modal-container {
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    padding: 24px;
+  }
+
+  .product-modal-card {
+    max-width: 660px;
+    border-radius: 12px;
+    border: 1px solid #fed7aa;
+    box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(254, 215, 170, 0.3);
+    max-height: 88vh;
+    animation: modalCenterScale 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes modalCenterScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ─── Category Tab Scroll Hide ─── */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 
 
 

@@ -11,7 +11,7 @@ import type { Category, Product } from "@/types/menu";
 import type { ShopSettings } from "@/lib/menu-data";
 import { createClient } from "@/utils/supabase/client";
 
-import { CartProvider } from "./CartContext";
+import { CartProvider, useCart } from "./CartContext";
 import MenuHeader from "./MenuHeader";
 import HeroSection from "./HeroSection";
 import MenuPromoSlider from "./MenuPromoSlider";
@@ -71,6 +71,7 @@ function MenuInner({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const { totalItems, totalPrice, formatPrice } = useCart();
 
   // ─── Realtime Live Products (Instant Price Updates from Any System) ─
   const [liveProducts, setLiveProducts] = useState<Product[]>(products);
@@ -325,6 +326,42 @@ function MenuInner({
           settings={settings}
         />
 
+        {/* Full-Width Sticky Category Bar on Desktop & Mobile */}
+        <nav
+          aria-label="Category Navigation"
+          className="sticky top-[64px] z-30 w-full"
+          style={{
+            background: "rgba(255, 255, 255, 0.96)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderBottom: "1px solid #fed7aa",
+            boxShadow: "0 2px 8px -2px rgba(15, 23, 42, 0.05)",
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 1380,
+              margin: "0 auto",
+              padding: "10px clamp(14px, 2.5vw, 32px)",
+            }}
+          >
+            <CategoryTabs
+              categories={categories}
+              activeId={activeCategoryId}
+              onSelect={(id) => {
+                setActiveCategoryId(id);
+                if (window.scrollY > 380) {
+                  const menuEl = document.getElementById("menu");
+                  menuEl?.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              totalCount={liveProducts.length}
+            />
+          </div>
+        </nav>
+
         {/* Menu section */}
         <section
           id="menu"
@@ -394,17 +431,6 @@ function MenuInner({
           {/* Normal state */}
           {!hasError && (
             <>
-              {/* Category tabs + Search bar */}
-              <div style={{ marginBottom: 24 }}>
-                <CategoryTabs
-                  categories={categories}
-                  activeId={activeCategoryId}
-                  onSelect={setActiveCategoryId}
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  totalCount={liveProducts.length}
-                />
-              </div>
 
               {/* Case 1: Search Query is Active */}
               {searchQuery.trim() ? (
@@ -807,7 +833,101 @@ function MenuInner({
         </footer>
       </main>
 
-      {/* Product Detail Modal (Opens at Bottom) */}
+      {/* Floating Cart Action Button on Desktop & Mobile */}
+      {totalItems > 0 && !cartOpen && (
+        <aside
+          aria-label="Floating cart action"
+          style={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            zIndex: 45,
+            animation: "slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both",
+          }}
+        >
+          <button
+            type="button"
+            id="floating-cart-pill-btn"
+            onClick={() => setCartOpen(true)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "12px 22px",
+              borderRadius: 9999,
+              background: "linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f59e0b 100%)",
+              color: "#ffffff",
+              border: "2px solid rgba(255, 255, 255, 0.4)",
+              boxShadow: "0 12px 32px -4px rgba(220, 38, 38, 0.45), 0 4px 12px rgba(0, 0, 0, 0.12)",
+              cursor: "pointer",
+              transition: "transform 0.15s ease, box-shadow 0.15s ease",
+              fontFamily: "var(--font-display)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-3px) scale(1.02)";
+              e.currentTarget.style.boxShadow = "0 18px 36px -4px rgba(220, 38, 38, 0.55)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0) scale(1)";
+              e.currentTarget.style.boxShadow = "0 12px 32px -4px rgba(220, 38, 38, 0.45), 0 4px 12px rgba(0, 0, 0, 0.12)";
+            }}
+          >
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="8" cy="21" r="1" />
+                <circle cx="19" cy="21" r="1" />
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+              </svg>
+              <span
+                style={{
+                  position: "absolute",
+                  top: -8,
+                  right: -10,
+                  background: "#ffffff",
+                  color: "#dc2626",
+                  fontSize: 11,
+                  fontWeight: 900,
+                  width: 19,
+                  height: 19,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 5px rgba(0,0,0,0.25)",
+                }}
+              >
+                {totalItems}
+              </span>
+            </div>
+
+            <div style={{ textAlign: "left", lineHeight: 1.15 }}>
+              <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", opacity: 0.92, fontWeight: 700 }}>
+                {totalItems} {totalItems === 1 ? "Item" : "Items"}
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: "-0.01em" }}>
+                {formatPrice(totalPrice)}
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                paddingLeft: 10,
+                borderLeft: "1px solid rgba(255, 255, 255, 0.35)",
+                fontSize: 13,
+                fontWeight: 800,
+              }}
+            >
+              <span>View Cart</span>
+              <span>&rarr;</span>
+            </div>
+          </button>
+        </aside>
+      )}
+
+      {/* Product Detail Modal (Opens in Center on Desktop, Bottom Sheet on Mobile) */}
       <ProductDetailSheet
         product={selectedProduct}
         onClose={() => setSelectedProduct(null)}
