@@ -58,7 +58,7 @@ export default function ProductCard({
 
   return (
     <article
-      className="card animate-fade-in-up"
+      className="card animate-fade-in-up product-card-modern group"
       style={{
         animationDelay: `${Math.min(index * 40, 240)}ms`,
         cursor: available ? "pointer" : "default",
@@ -67,7 +67,7 @@ export default function ProductCard({
         flexDirection: "column",
         background: "#ffffff",
         border: "1px solid #e2e8f0",
-        borderRadius: 5,
+        borderRadius: 8,
         overflow: "hidden",
         position: "relative",
       }}
@@ -84,6 +84,7 @@ export default function ProductCard({
     >
       {/* Square Image Box */}
       <div
+        className="product-card-img"
         style={{
           position: "relative",
           width: "100%",

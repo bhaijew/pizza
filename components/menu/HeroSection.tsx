@@ -319,7 +319,7 @@ export default function HeroSection({
 
       <div
         style={{
-          maxWidth: 1100,
+          maxWidth: 1380,
           margin: "0 auto",
           position: "relative",
           zIndex: 1,

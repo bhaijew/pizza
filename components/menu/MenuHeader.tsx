@@ -31,9 +31,9 @@ export default function MenuHeader({ onCartOpen, shopName = "Pizza Shop", verifi
       >
         <div
           style={{
-            maxWidth: 1200,
+            maxWidth: 1380,
             margin: "0 auto",
-            padding: "0 20px",
+            padding: "0 24px",
             height: 64,
             display: "flex",
             alignItems: "center",

@@ -330,9 +330,9 @@ function MenuInner({
           id="menu"
           aria-label="Menu"
           style={{
-            maxWidth: 1200,
+            maxWidth: 1380,
             margin: "0 auto",
-            padding: "clamp(16px, 2.5vw, 32px) clamp(12px, 2vw, 20px) 60px",
+            padding: "clamp(16px, 2.5vw, 32px) clamp(14px, 2.5vw, 32px) 60px",
           }}
         >
           {/* Section Heading & Category Filter Header */}
@@ -444,14 +444,7 @@ function MenuInner({
                   {filteredProducts.length === 0 ? (
                     <MenuEmptyState message={`No items matching "${searchQuery}".`} />
                   ) : (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                        gap: "clamp(12px, 2vw, 24px)",
-                      }}
-                      className="stagger-children"
-                    >
+                    <div className="menu-products-grid stagger-children">
                       {filteredProducts.map((product, idx) => (
                         <ProductCard
                           key={product.id}
@@ -540,14 +533,7 @@ function MenuInner({
                   {filteredProducts.length === 0 ? (
                     <MenuEmptyState message="No items available in this category." />
                   ) : (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                        gap: "clamp(12px, 2vw, 24px)",
-                      }}
-                      className="stagger-children"
-                    >
+                    <div className="menu-products-grid stagger-children">
                       {filteredProducts.map((product, idx) => (
                         <ProductCard
                           key={product.id}
@@ -663,13 +649,7 @@ function MenuInner({
                       </div>
 
                       {/* Top Zinger Cards Grid */}
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                          gap: "clamp(12px, 2vw, 20px)",
-                        }}
-                      >
+                      <div className="menu-spotlight-grid">
                         {topZingerPicks.map((product, idx) => (
                           <ProductCard
                             key={`top-zinger-${product.id}`}
@@ -765,15 +745,8 @@ function MenuInner({
                         </button>
                       </div>
 
-                      {/* 2 Products Per Row */}
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                          gap: "clamp(12px, 2vw, 24px)",
-                        }}
-                        className="stagger-children"
-                      >
+                      {/* Responsive Products Grid */}
+                      <div className="menu-products-grid stagger-children">
                         {catProducts.map((product, idx) => (
                           <ProductCard
                             key={product.id}
