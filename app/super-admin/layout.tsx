@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Super Admin Portal — Multi-Shop Network",
-  description: "Manage multiple pizza shop branches, owner credentials, and platform access.",
+  title: "Super Admin Portal — Multi-Store Network | SoleWhat",
+  description: "Manage multiple restaurant and retail store branches, owner credentials, and platform access.",
 };
 
 export default function SuperAdminLayout({

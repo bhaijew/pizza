@@ -22,15 +22,59 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Pizza Shop — Order Online",
+  metadataBase: new URL("https://www.solewhat.store"),
+  title: {
+    default: "SoleWhat — All-in-One Restaurant & Retail POS, WhatsApp AI Automation & Cloud Menus",
+    template: "%s | SoleWhat",
+  },
   description:
-    "Browse our menu and order fresh, made-to-order pizzas online. Fast delivery and quality ingredients.",
-  keywords: ["pizza", "order online", "pizza shop", "menu", "delivery"],
+    "SoleWhat is the modern all-in-one POS and retail management platform. Multi-branch cloud POS, automated WhatsApp AI ordering, real-time kitchen display (KDS), high-speed ESC/POS thermal printing, and branded online storefronts.",
+  keywords: [
+    "SoleWhat",
+    "SoleWhat POS",
+    "Restaurant POS System",
+    "Retail POS Software",
+    "WhatsApp AI Ordering",
+    "WhatsApp Food Ordering Bot",
+    "Kitchen Display System KDS",
+    "Thermal Printer POS ESC POS",
+    "Multi-branch Restaurant POS",
+    "Online Food Ordering System",
+    "FloDesktop POS",
+    "Cloud POS Pakistan",
+    "Table QR Ordering",
+  ],
+  authors: [{ name: "SoleWhat Technologies", url: "https://www.solewhat.store" }],
+  creator: "SoleWhat",
+  publisher: "SoleWhat",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
-    title: "Pizza Shop — Order Online",
+    title: "SoleWhat — All-in-One Restaurant & Retail POS, WhatsApp AI & Cloud Menus",
     description:
-      "Fresh, made-to-order pizzas. Browse the menu and place your order.",
+      "Modern omnichannel POS platform with automated 24/7 WhatsApp AI order taking, live kitchen display, high-speed thermal receipt printing, and dedicated cloud storefronts.",
+    url: "https://www.solewhat.store",
+    siteName: "SoleWhat",
+    locale: "en_US",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SoleWhat — Restaurant POS, WhatsApp AI & Cloud Menus",
+    description:
+      "All-in-one POS & restaurant retail operating system with automated WhatsApp AI order assistant and real-time operations.",
+  },
+  alternates: {
+    canonical: "https://www.solewhat.store",
   },
 };
 

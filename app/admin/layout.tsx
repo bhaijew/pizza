@@ -12,8 +12,8 @@ import { getShopBusinessProfile, BusinessType } from "@/lib/business-config";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Pizza Admin Management",
-  description: "Pizza Shop store and menu administration portal",
+  title: "Store Admin Backoffice | SoleWhat",
+  description: "Store, menu, deals and POS administration portal",
   robots: { index: false, follow: false },
 };
 
@@ -25,7 +25,7 @@ export default async function AdminLayout({
   const cookieStore = await cookies();
   const shopIdStr = cookieStore.get(ADMIN_SHOP_COOKIE)?.value;
 
-  let shopName = "Pizza Admin";
+  let shopName = "Store Admin";
   let shopStatus: "active" | "suspended" | "master" = "master";
   let ownerName = "";
   let shopSlug: string | undefined = undefined;

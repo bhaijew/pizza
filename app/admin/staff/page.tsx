@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Staff & Sub-Admins Management | Pizza Admin",
+  title: "Staff & Sub-Admins Management | Store Admin",
   description: "Manage branch sub-admins, cashiers, chefs, and staff access control.",
 };
 

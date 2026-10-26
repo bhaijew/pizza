@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import SoleWhatLogo from "@/components/SoleWhatLogo";
 import { BUSINESS_THEMES, BUSINESS_PRESETS, BusinessType } from "@/lib/business-themes";
@@ -74,6 +74,10 @@ export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<BusinessType>("pizza");
 
+  useEffect(() => {
+    document.title = "SoleWhat — All-in-One Restaurant & Retail POS, WhatsApp AI Automation & Cloud Menus";
+  }, []);
+
   const handleCopyPhone = async () => {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -123,6 +127,44 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-orange-500 selection:text-white">
+      {/* ─── Schema.org Structured Data for SEO ─── */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "SoftwareApplication",
+                "name": "SoleWhat",
+                "applicationCategory": "BusinessApplication",
+                "operatingSystem": "Web, Windows, Android, iOS",
+                "url": "https://www.solewhat.store",
+                "description":
+                  "SoleWhat is the modern all-in-one restaurant and retail POS platform with automated WhatsApp AI ordering, KDS, thermal receipt printing, and multi-branch management.",
+                "offers": {
+                  "@type": "Offer",
+                  "price": "0",
+                  "priceCurrency": "PKR",
+                },
+              },
+              {
+                "@type": "Organization",
+                "name": "SoleWhat",
+                "url": "https://www.solewhat.store",
+                "logo": "https://www.solewhat.store/favicon.ico",
+                "contactPoint": {
+                  "@type": "ContactPoint",
+                  "telephone": "+92-302-5260958",
+                  "contactType": "sales",
+                  "availableLanguage": ["English", "Urdu"],
+                },
+              },
+            ],
+          }),
+        }}
+      />
+
       {/* ─── Top Ambient Light Gradients ─── */}
       <div className="absolute top-0 inset-x-0 h-96 overflow-hidden pointer-events-none -z-10">
         <div
@@ -1005,36 +1047,34 @@ export default function HomePage() {
               </a>
             </div>
 
-            {/* Demo 3: Pizza Mafia Live Store */}
+            {/* Demo 3: WhatsApp AI Order Automation */}
             <a
-              href="https://pizza-mafia.solewhat.store"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white p-6 rounded-2xl border border-slate-200 hover:border-orange-400 hover:shadow-lg transition-all group flex flex-col justify-between"
+              href="#whatsapp-automation"
+              className="bg-white p-6 rounded-2xl border border-slate-200 hover:border-emerald-400 hover:shadow-lg transition-all group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center font-bold">
-                    <Flame size={24} />
+                  <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                    <MessageSquare size={24} />
                   </div>
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                    FLAGSHIP CLIENT
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    24/7 AI BOT
                   </span>
                 </div>
-                <div className="text-xs font-bold text-red-600 uppercase tracking-wider mb-1">
-                  Artisan Pizzeria
+                <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">
+                  WhatsApp Automation
                 </div>
                 <h4 className="text-lg font-extrabold text-slate-950 mb-2">
-                  Pizza Mafia Live Store
+                  AI Order Taking & Invoicing
                 </h4>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
-                  Live stone-baked pizza menu with combo deals, pizza burgers, loaded sides, and
-                  seamless dine-in QR ordering.
+                  Autonomous conversational bot that captures customer food orders on WhatsApp, sends PDF
+                  invoices with live tracking links, and routes directly to POS.
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-extrabold text-red-600 group-hover:gap-2.5 transition-all">
-                <span>View Pizza Mafia Store</span>
-                <ExternalLink size={13} />
+              <div className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 group-hover:gap-2.5 transition-all">
+                <span>Explore WhatsApp Automation</span>
+                <ArrowRight size={13} />
               </div>
             </a>
 
