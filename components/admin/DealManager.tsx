@@ -16,6 +16,13 @@ import {
   ShoppingBag,
   ExternalLink,
 } from "lucide-react";
+import {
+  WEEK_DAYS,
+  parseDealDays,
+  formatDealDaysBadge,
+  isDealAvailableOnDay,
+  type WeekDay,
+} from "@/lib/deal-days-helper";
 
 interface DealManagerProps {
   initialDeals: Deal[];
@@ -42,6 +49,7 @@ export default function DealManager({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTab, setFilterTab] = useState<"all" | "active" | "inactive">("all");
+  const [selectedDayFilter, setSelectedDayFilter] = useState<WeekDay | "all">("all");
 
   const filteredDeals = deals.filter((deal) => {
     const matchesSearch =
@@ -50,8 +58,13 @@ export default function DealManager({
       (deal.badge && deal.badge.toLowerCase().includes(searchQuery.toLowerCase()));
 
     if (!matchesSearch) return false;
-    if (filterTab === "active") return deal.is_available === true;
-    if (filterTab === "inactive") return deal.is_available === false;
+    if (filterTab === "active" && !deal.is_available) return false;
+    if (filterTab === "inactive" && deal.is_available) return false;
+
+    if (selectedDayFilter !== "all") {
+      if (!isDealAvailableOnDay(deal, selectedDayFilter)) return false;
+    }
+
     return true;
   });
 
@@ -338,6 +351,71 @@ export default function DealManager({
             Sold Out ({hiddenCount})
           </button>
         </div>
+
+        {/* 📅 Day Deals (Monday to Sunday) Tabs */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            overflowX: "auto",
+            width: "100%",
+            paddingTop: "10px",
+            borderTop: "1px dashed #e2e8f0",
+          }}
+        >
+          <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", whiteSpace: "nowrap" }}>
+            📅 Filter by Day:
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setSelectedDayFilter("all")}
+            style={{
+              padding: "4px 10px",
+              borderRadius: "4px",
+              fontSize: "11px",
+              fontWeight: 700,
+              cursor: "pointer",
+              border: "1px solid",
+              background: selectedDayFilter === "all" ? "#ea580c" : "#ffffff",
+              color: selectedDayFilter === "all" ? "#ffffff" : "#475569",
+              borderColor: selectedDayFilter === "all" ? "#ea580c" : "#cbd5e1",
+              whiteSpace: "nowrap",
+            }}
+          >
+            All Days
+          </button>
+
+          {WEEK_DAYS.map((d) => {
+            const isSelected = selectedDayFilter === d.key;
+            return (
+              <button
+                key={d.key}
+                type="button"
+                onClick={() => setSelectedDayFilter(d.key)}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: "4px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  border: "1px solid",
+                  background: isSelected ? "#ea580c" : "#ffffff",
+                  color: isSelected ? "#ffffff" : "#334155",
+                  borderColor: isSelected ? "#ea580c" : "#cbd5e1",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <span>{d.emoji}</span>
+                <span>{d.short}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Deals Grid */}
@@ -433,6 +511,9 @@ export default function DealManager({
               : typeof deal.items_included === "string"
               ? (deal.items_included as string).split(",").map((s) => s.trim())
               : [];
+
+            const dealDays = parseDealDays(deal);
+            const daysBadge = formatDealDaysBadge(dealDays);
 
             return (
               <div
@@ -540,6 +621,28 @@ export default function DealManager({
                           </div>
                         )}
                       </div>
+                    </div>
+
+                    {/* Day Badge */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          padding: "2px 7px",
+                          borderRadius: "4px",
+                          background: dealDays === "all" ? "#f1f5f9" : "#ffedd5",
+                          color: dealDays === "all" ? "#64748b" : "#c2410c",
+                          border: "1px solid",
+                          borderColor: dealDays === "all" ? "#e2e8f0" : "#fed7aa",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <span>📅</span>
+                        <span>{daysBadge}</span>
+                      </span>
                     </div>
 
                     {deal.description && (

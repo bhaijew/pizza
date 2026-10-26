@@ -22,6 +22,7 @@ import CartSheet from "./CartSheet";
 import MenuEmptyState from "./MenuEmptyState";
 import MenuErrorState from "./MenuErrorState";
 import PizzgerMenuTheme from "./PizzgerMenuTheme";
+import DailyDealsSpotlight from "./DailyDealsSpotlight";
 
 interface MenuClientProps {
   categories: Category[];
@@ -572,9 +573,17 @@ function MenuInner({
                   )}
                 </div>
               ) : (
-                /* Case 3: "All Items" Tab (Category-Wise Grouped + Top Zinger Spotlight) */
+                /* Case 3: "All Items" Tab (Daily Deals from Mon-Sun + Category-Wise Grouped + Top Zinger Spotlight) */
                 <div>
-                  {/* TOP SPOTLIGHT: 1-2 Featured Zinger Burgers */}
+                  {/* TOP SPOTLIGHT 1: Monday to Sunday Daily Deals Showcase */}
+                  <DailyDealsSpotlight
+                    products={liveProducts}
+                    onSelectProduct={setSelectedProduct}
+                    currencySymbol={settings?.currency_symbol}
+                    themeColor={settings?.theme_color}
+                  />
+
+                  {/* TOP SPOTLIGHT 2: 1-2 Featured Zinger Burgers */}
                   {topZingerPicks.length > 0 && (
                     <div
                       style={{

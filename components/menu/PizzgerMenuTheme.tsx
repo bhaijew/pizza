@@ -17,6 +17,7 @@ import {
   Check,
   ChevronRight,
 } from "lucide-react";
+import DailyDealsSpotlight from "./DailyDealsSpotlight";
 
 // ─── Native Crisp SVG Icons (Zero missing module errors) ───────────
 function PizzaSliceLogo({ size = 36 }: { size?: number }) {
@@ -676,6 +677,16 @@ export default function PizzgerMenuTheme({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ─── 3.5 DAILY DEALS SPOTLIGHT (Monday to Sunday) ─── */}
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "16px 16px 0" }}>
+        <DailyDealsSpotlight
+          products={products}
+          onSelectProduct={onSelectProduct}
+          currencySymbol={displayCurrency}
+          themeColor={settings?.theme_color}
+        />
       </div>
 
       {/* ─── 4. POPULAR PIZZAS & CATEGORY MENU SECTION (Image 2 + Requirement 5) ─── */}

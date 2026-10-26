@@ -21,6 +21,12 @@ import {
   AlertCircle,
   Eye,
 } from "lucide-react";
+import {
+  WEEK_DAYS,
+  parseDealDays,
+  formatDealDaysBadge,
+  type WeekDay,
+} from "@/lib/deal-days-helper";
 
 interface ComboItem {
   id: string;
@@ -87,6 +93,47 @@ export default function DealForm({
   const [selectedShopId, setSelectedShopId] = useState<string>(
     initialDeal?.shop_id != null ? String(initialDeal.shop_id) : (currentShopId ? String(currentShopId) : "")
   );
+
+  // Available Days State (Monday to Sunday)
+  const [dealDays, setDealDays] = useState<WeekDay[] | "all">(() => parseDealDays(initialDeal));
+
+  const toggleDay = (dayKey: WeekDay) => {
+    if (dealDays === "all") {
+      setDealDays([dayKey]);
+      const info = WEEK_DAYS.find((w) => w.key === dayKey);
+      if (info) {
+        setBadge(`📅 ${info.label} Deal`);
+      }
+    } else {
+      if (dealDays.includes(dayKey)) {
+        const next = dealDays.filter((d) => d !== dayKey);
+        if (next.length === 0) {
+          setDealDays("all");
+          setBadge("🔥 Hot Deal");
+        } else {
+          setDealDays(next);
+        }
+      } else {
+        const next = [...dealDays, dayKey];
+        if (next.length === 7) {
+          setDealDays("all");
+        } else {
+          setDealDays(next);
+        }
+      }
+    }
+  };
+
+  const applyDayPreset = (dayKey: WeekDay) => {
+    setDealDays([dayKey]);
+    const info = WEEK_DAYS.find((w) => w.key === dayKey);
+    if (info) {
+      setBadge(`📅 ${info.label} Deal`);
+      if (!title || title.toLowerCase().includes("deal")) {
+        setTitle(`${info.label} Special Deal`);
+      }
+    }
+  };
 
   // Included Combo Items State
   const [comboItems, setComboItems] = useState<ComboItem[]>(() => {
@@ -279,11 +326,17 @@ export default function DealForm({
       return `${qtyStr}${item.name}${varStr}`;
     });
 
+    // Clean and append day tags if specific days are selected
+    let cleanDesc = description.replace(/\s*\[days?:[^\]]+\]/gi, "").trim();
+    if (dealDays !== "all" && Array.isArray(dealDays) && dealDays.length > 0 && dealDays.length < 7) {
+      cleanDesc = cleanDesc ? `${cleanDesc} [days:${dealDays.join(",")}]` : `[days:${dealDays.join(",")}]`;
+    }
+
     const formData = new FormData();
     formData.set("title", title);
     formData.set("slug", slug || title.toLowerCase().replace(/\s+/g, "-"));
     formData.set("badge", customBadge.trim() ? customBadge.trim() : badge);
-    formData.set("description", description);
+    formData.set("description", cleanDesc);
     formData.set("deal_price", dealPrice);
     if (originalPrice.trim()) {
       formData.set("original_price", originalPrice);
@@ -488,6 +541,141 @@ export default function DealForm({
                       outline: "none",
                     }}
                   />
+                </div>
+
+                {/* 📅 Available Days (Monday to Sunday) */}
+                <div
+                  style={{
+                    background: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "6px",
+                    padding: "12px 14px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "8px",
+                      flexWrap: "wrap",
+                      gap: 6,
+                    }}
+                  >
+                    <div>
+                      <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
+                        📅 Deal Schedule (Monday to Sunday)
+                      </label>
+                      <span style={{ fontSize: "11px", color: "#64748b" }}>
+                        Choose which day(s) this deal is active and featured on the customer menu.
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 800,
+                        padding: "3px 8px",
+                        borderRadius: "4px",
+                        background: dealDays === "all" ? "#f1f5f9" : "#ffedd5",
+                        color: dealDays === "all" ? "#475569" : "#c2410c",
+                        border: "1px solid #fed7aa",
+                      }}
+                    >
+                      {formatDealDaysBadge(dealDays)}
+                    </span>
+                  </div>
+
+                  {/* Day Toggle Buttons */}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setDealDays("all")}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: "4px",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        border: "1px solid",
+                        background: dealDays === "all" ? "#0f172a" : "#ffffff",
+                        color: dealDays === "all" ? "#ffffff" : "#475569",
+                        borderColor: dealDays === "all" ? "#0f172a" : "#cbd5e1",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      ⚡ Everyday (All Week)
+                    </button>
+
+                    {WEEK_DAYS.map((d) => {
+                      const isSelected = dealDays !== "all" && dealDays.includes(d.key);
+                      return (
+                        <button
+                          key={d.key}
+                          type="button"
+                          onClick={() => toggleDay(d.key)}
+                          style={{
+                            padding: "6px 11px",
+                            borderRadius: "4px",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            border: "1px solid",
+                            background: isSelected ? "#ea580c" : "#ffffff",
+                            color: isSelected ? "#ffffff" : "#334155",
+                            borderColor: isSelected ? "#ea580c" : "#cbd5e1",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            boxShadow: isSelected ? "0 2px 5px rgba(234, 88, 12, 0.25)" : "none",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <span>{d.emoji}</span>
+                          <span>{d.short}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Quick 1-Click Day Deal Presets */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      flexWrap: "wrap",
+                      paddingTop: "8px",
+                      borderTop: "1px dashed #e2e8f0",
+                    }}
+                  >
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b" }}>
+                      1-Click Day Deal Presets:
+                    </span>
+                    {WEEK_DAYS.map((d) => (
+                      <button
+                        key={`preset-${d.key}`}
+                        type="button"
+                        onClick={() => applyDayPreset(d.key)}
+                        style={{
+                          background: "#ffffff",
+                          border: "1px solid #cbd5e1",
+                          borderRadius: "3px",
+                          padding: "2px 7px",
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          color: "#334155",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px",
+                        }}
+                        className="hover:border-orange-500"
+                      >
+                        <span>{d.emoji}</span>
+                        <span>{d.label} Special</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Description */}
