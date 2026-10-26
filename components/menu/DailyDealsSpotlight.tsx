@@ -48,31 +48,30 @@ export default function DailyDealsSpotlight({
     });
   }, [products]);
 
+  // Check if store admin has created any day-specific deals (Monday - Sunday)
+  const hasAnyDaySpecificDeals = useMemo(() => {
+    return allDeals.some((d) => {
+      const days = parseDealDays(d);
+      return Array.isArray(days) && days.length > 0 && days.length < 7;
+    });
+  }, [allDeals]);
+
   // Filter deals available for the currently selected day
   const displayedDeals = useMemo(() => {
-    if (selectedDay === "all") return allDeals;
+    if (selectedDay === "all") {
+      // When viewing "All Deals", show day deals first then others
+      return allDeals;
+    }
 
-    // First try finding deals specifically targeted for this day
-    const daySpecific = allDeals.filter((d) => {
+    // Only show deals specifically assigned to this day
+    return allDeals.filter((d) => {
       const days = parseDealDays(d);
       return Array.isArray(days) && days.includes(selectedDay);
     });
-
-    // Also get everyday deals (valid all days)
-    const everydayDeals = allDeals.filter((d) => {
-      const days = parseDealDays(d);
-      return days === "all";
-    });
-
-    if (daySpecific.length > 0) {
-      // Prioritize day-specific deals first, then append everyday deals
-      return [...daySpecific, ...everydayDeals];
-    }
-
-    return everydayDeals;
   }, [allDeals, selectedDay]);
 
-  if (allDeals.length === 0) {
+  // If no day-specific deals exist yet, don't show the banner at all (keep menu 100% original)
+  if (!hasAnyDaySpecificDeals || allDeals.length === 0) {
     return null;
   }
 
