@@ -26,7 +26,6 @@ const RESERVED_SLUGS = new Set([
   "shop",
   "menu",
   "delivery",
-  "demo",
   "todos",
   "riders",
   "favicon.ico",
@@ -43,12 +42,12 @@ export async function generateMetadata({
   params,
 }: DynamicShopPageProps): Promise<Metadata> {
   const { shopSlug } = await params;
-  if (RESERVED_SLUGS.has(shopSlug.toLowerCase())) {
-    return { title: "Not Found" };
-  }
-
   const shop = await fetchShopBySlugOrId(shopSlug);
+
   if (!shop) {
+    if (RESERVED_SLUGS.has(shopSlug.toLowerCase())) {
+      return { title: "Not Found" };
+    }
     return { title: "Shop Not Found" };
   }
 
@@ -65,13 +64,13 @@ export default async function DynamicShopMenuPage({
   const { shopSlug } = await params;
   const { table, type } = await searchParams;
 
-  // If slug matches a known reserved system route, defer to notFound()
-  if (RESERVED_SLUGS.has(shopSlug.toLowerCase())) {
-    notFound();
-  }
-
   // 1. Fetch shop by slug
   const shop = await fetchShopBySlugOrId(shopSlug);
+
+  // If slug matches a known reserved system route and no shop exists, defer to notFound()
+  if (!shop && RESERVED_SLUGS.has(shopSlug.toLowerCase())) {
+    notFound();
+  }
 
   // 2. If shop does not exist in DB
   if (!shop) {

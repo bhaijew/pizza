@@ -104,8 +104,15 @@ export async function createShop(
   }
 
   const baseSlug = slugify(name);
-  const randomSuffix = Math.floor(100 + Math.random() * 900);
-  const slug = `${baseSlug}-${randomSuffix}`;
+  // Check if baseSlug already exists in shops table
+  const { data: existingShop } = await db
+    .from("shops")
+    .select("id")
+    .eq("slug", baseSlug)
+    .maybeSingle();
+
+  // If already taken, append unique random number, otherwise keep clean subdomain slug
+  const slug = existingShop ? `${baseSlug}-${Math.floor(100 + Math.random() * 900)}` : baseSlug;
 
   const insertPayload: Record<string, any> = {
     name,
