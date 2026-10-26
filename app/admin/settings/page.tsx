@@ -1,4 +1,4 @@
-import { getActiveShopContext } from "@/lib/admin-actions";
+﻿import { getActiveShopContext } from "@/lib/admin-actions";
 import { fetchSettings } from "@/lib/menu-data";
 import SettingsForm from "@/components/admin/SettingsForm";
 
@@ -14,6 +14,7 @@ export default async function AdminSettingsPage() {
         initialSettings={settings}
         shopSlug={activeShop.shopSlug || undefined}
         shopName={activeShop.shopName || undefined}
+        shopId={activeShop.shopId ?? undefined}
       />
     </div>
   );

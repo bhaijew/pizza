@@ -33,6 +33,7 @@ interface SettingsFormProps {
   initialSettings: ShopSettings;
   shopSlug?: string;
   shopName?: string;
+  shopId?: number;
 }
 
 const CURRENCY_PRESETS = [
@@ -62,7 +63,11 @@ export default function SettingsForm({
   initialSettings,
   shopSlug = "menu",
   shopName: propShopName,
+  shopId,
 }: SettingsFormProps) {
+  const effectiveShopId = shopId || (initialSettings as any)?.shop_id || 7;
+  const aiPairingCode = `PZ-${effectiveShopId}`;
+  const [copiedCode, setCopiedCode] = useState(false);
   const [state, formAction, isPending] = useActionState(updateSettings, {
     error: null,
     success: false,
@@ -1197,6 +1202,124 @@ export default function SettingsForm({
                 </>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* 🍕 CARD 6.5: WhatsApp AI Auto-Responder Pairing Code */}
+        <div
+          style={{
+            border: "1px solid #fed7aa",
+            borderRadius: "5px",
+            padding: "20px 22px",
+            boxShadow: "0 1px 3px rgba(234, 88, 12, 0.05)",
+            background: "linear-gradient(180deg, #fffbeb 0%, #ffffff 100%)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", marginBottom: "14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "5px",
+                  background: "#ffedd5",
+                  color: "#ea580c",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "1px solid #fed7aa",
+                  fontSize: "18px",
+                }}
+              >
+                🍕
+              </div>
+              <div>
+                <h2 style={{ fontSize: "15px", fontWeight: 800, margin: 0, color: "#9a3412" }}>
+                  WhatsApp AI Auto-Responder Pairing Code
+                </h2>
+                <p style={{ margin: 0, fontSize: "11px", color: "#78350f" }}>
+                  Connect your branch deals, menu, and prices directly to WhatsApp AI customer support.
+                </p>
+              </div>
+            </div>
+
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "4px 10px",
+                borderRadius: "999px",
+                background: "#fef3c7",
+                color: "#92400e",
+                fontSize: "11px",
+                fontWeight: 700,
+                border: "1px solid #fde68a",
+              }}
+            >
+              Shop #{effectiveShopId} &bull; {shopName}
+            </span>
+          </div>
+
+          <div
+            style={{
+              padding: "16px",
+              borderRadius: "5px",
+              background: "#ffffff",
+              border: "1px solid #e2e8f0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "12px",
+            }}
+          >
+            <div>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                AI Pairing Code
+              </div>
+              <div
+                style={{
+                  fontSize: "22px",
+                  fontWeight: 900,
+                  fontFamily: "monospace",
+                  color: "#ea580c",
+                  letterSpacing: "2px",
+                  marginTop: "2px",
+                }}
+              >
+                {aiPairingCode}
+              </div>
+              <p style={{ fontSize: "11px", color: "#64748b", margin: "4px 0 0 0" }}>
+                Sole-What Dashboard &rarr; AI Bot &rarr; <b>Pizza Management Integration</b> mein enter karein.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(aiPairingCode);
+                setCopiedCode(true);
+                setTimeout(() => setCopiedCode(false), 2500);
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "9px 18px",
+                borderRadius: "5px",
+                background: copiedCode ? "#16a34a" : "#ea580c",
+                color: "#ffffff",
+                fontSize: "13px",
+                fontWeight: 800,
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+            >
+              {copiedCode ? <Check size={16} /> : <Sparkles size={16} />}
+              <span>{copiedCode ? "Copied to Clipboard!" : "Copy Pairing Code"}</span>
+            </button>
           </div>
         </div>
 
