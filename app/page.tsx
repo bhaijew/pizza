@@ -1225,47 +1225,164 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── Footer ─── */}
-      <footer className="py-12 bg-white border-t border-slate-100 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
-          <div className="flex items-center gap-2.5">
-            <SoleWhatLogo size={28} variant="shield" showGlow={false} />
-            <span className="font-extrabold text-slate-900 text-sm">SoleWhat.store</span>
-            <span className="text-slate-300">|</span>
-            <span>Universal Cloud POS &amp; Store Operating System</span>
+      {/* ─── Modern Branded Footer ─── */}
+      <footer className="bg-slate-950 text-slate-400 text-xs border-t border-slate-900 pt-16 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-slate-900">
+            {/* Col 1: Brand & Bio */}
+            <div className="lg:col-span-2 space-y-4">
+              <Link href="/" className="inline-flex items-center gap-3 group">
+                <SoleWhatLogo size={44} variant="badge" showGlow={true} />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xl font-black tracking-tight text-white font-heading">
+                      SoleWhat
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                      Cloud OS
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    Smart Restaurant POS &amp; WhatsApp AI Platform
+                  </p>
+                </div>
+              </Link>
+              <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
+                Next-generation cloud operating system powering multi-branch restaurants, fast-food chains, cafes, and retail stores across Pakistan with autonomous WhatsApp AI order taking, real-time kitchen KDS, and raw thermal printing.
+              </p>
+              <div className="flex items-center gap-2 pt-1 text-xs text-slate-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Enterprise Cloud Systems • Islamabad, Pakistan</span>
+              </div>
+            </div>
+
+            {/* Col 2: Live Demos */}
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-white mb-4">
+                Interactive Demos
+              </h4>
+              <ul className="space-y-2.5 font-medium">
+                <li>
+                  <a
+                    href="https://demo.solewhat.store"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-orange-400 transition-colors flex items-center gap-1.5"
+                  >
+                    <span>Demo Storefront</span>
+                    <span className="text-[9px] px-1.5 py-0.5 bg-emerald-950 text-emerald-400 rounded border border-emerald-800">Live</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://demo.solewhat.store/admin"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Demo Admin (Pass: demo)
+                  </a>
+                </li>
+                <li>
+                  <Link href="/demo/pos" className="hover:text-orange-400 transition-colors">
+                    Cashier POS Terminal
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/demo/kitchen" className="hover:text-orange-400 transition-colors">
+                    Kitchen KDS Board
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/demo/track" className="hover:text-orange-400 transition-colors">
+                    Live Rider Tracker
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 3: Platform Features */}
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-white mb-4">
+                POS Capabilities
+              </h4>
+              <ul className="space-y-2.5 font-medium">
+                <li>
+                  <a href="#whatsapp-automation" className="hover:text-orange-400 transition-colors">
+                    WhatsApp AI Order Bot
+                  </a>
+                </li>
+                <li>
+                  <a href="#pos-features" className="hover:text-orange-400 transition-colors">
+                    FloDesktop Windows App
+                  </a>
+                </li>
+                <li>
+                  <a href="#pos-features" className="hover:text-orange-400 transition-colors">
+                    ESC/POS 80mm/58mm Thermal
+                  </a>
+                </li>
+                <li>
+                  <a href="#business-types" className="hover:text-orange-400 transition-colors">
+                    Monday–Sunday Day Deals
+                  </a>
+                </li>
+                <li>
+                  <Link href="/super-admin/login" className="hover:text-orange-400 transition-colors">
+                    Super Admin Network
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 4: Contact & Sales */}
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-white mb-4">
+                Founder &amp; Sales
+              </h4>
+              <ul className="space-y-2.5 font-medium">
+                <li className="text-slate-300 font-bold">
+                  Syed Zeeshan Haider
+                </li>
+                <li>
+                  <a
+                    href="tel:+923025260958"
+                    className="hover:text-orange-400 transition-colors font-mono"
+                  >
+                    0302-5260958
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors"
+                  >
+                    <MessageSquare size={13} />
+                    <span>WhatsApp Inquiry</span>
+                  </a>
+                </li>
+                <li className="text-slate-400 pt-2">
+                  Daily 24/7 Setup &amp; Cloud Onboarding
+                </li>
+              </ul>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 font-semibold">
-            <a
-              href="https://demo.solewhat.store"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-orange-600 transition-colors"
-            >
-              Demo Store
-            </a>
-            <a
-              href="https://demo.solewhat.store/admin"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-orange-600 transition-colors"
-            >
-              Demo Admin (Pass: demo)
-            </a>
-            <a
-              href="https://pizza-mafia.solewhat.store"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-orange-600 transition-colors"
-            >
-              Pizza Mafia Store
-            </a>
-            <Link href="/demo/pos" className="hover:text-slate-900 transition-colors">
-              POS Terminal
-            </Link>
-            <Link href="/super-admin/login" className="hover:text-slate-900 transition-colors">
-              Super Admin
-            </Link>
+          {/* Bottom Bar */}
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-slate-500">
+            <div className="flex items-center gap-3">
+              <SoleWhatLogo size={24} variant="iconOnly" showGlow={false} />
+              <p>
+                &copy; {new Date().getFullYear()} SoleWhat Technologies. All rights reserved.
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-xs font-semibold">
+              <a href="#" className="hover:text-slate-300 transition-colors">
+                Back to top ↑
+              </a>
+            </div>
           </div>
         </div>
       </footer>
