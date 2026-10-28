@@ -17,6 +17,9 @@ import {
   Search,
   CheckCircle2,
   AlertCircle,
+  User,
+  Phone,
+  MapPin,
 } from "lucide-react";
 
 export interface RecreateItemState {
@@ -65,6 +68,11 @@ export default function OrderRecreateModal({
   const [notesInput, setNotesInput] = useState<string>("");
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
 
+  // Customer & Delivery info state
+  const [customerName, setCustomerName] = useState<string>("");
+  const [customerPhone, setCustomerPhone] = useState<string>("");
+  const [deliveryAddress, setDeliveryAddress] = useState<string>("");
+
   // Quick Add Product state
   const [addMode, setAddMode] = useState<"menu" | "custom">("menu");
   const [productSearch, setProductSearch] = useState("");
@@ -101,6 +109,16 @@ export default function OrderRecreateModal({
     setAddQty(1);
     setCustomName("");
     setCustomPrice("");
+
+    // Initialize Customer Info
+    let initialAddress = order.delivery_address || "";
+    if (!initialAddress && order.notes?.includes("[DELIVERY:")) {
+      const match = order.notes.match(/\[DELIVERY:\s*Address:\s*([^|]+)/i);
+      if (match) initialAddress = match[1].trim();
+    }
+    setCustomerName(order.customer_name || "");
+    setCustomerPhone(order.customer_phone || "");
+    setDeliveryAddress(initialAddress);
   }, [order]);
 
   // Load menu products if not provided
@@ -240,6 +258,9 @@ export default function OrderRecreateModal({
           })),
           total: grandTotal,
           deliveryFee: Number(deliveryFee) || 0,
+          customerName: customerName.trim() || undefined,
+          customerPhone: customerPhone.trim() || undefined,
+          deliveryAddress: deliveryAddress.trim() || undefined,
           status,
           notes: notesInput.trim() || undefined,
           resetTime,
@@ -452,6 +473,117 @@ export default function OrderRecreateModal({
               />
               <span>Reset Time to Now (Active)</span>
             </label>
+          </div>
+
+          {/* ─── CUSTOMER & DELIVERY DETAILS ─────────────────────── */}
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #fed7aa",
+              borderRadius: "8px",
+              padding: "12px 14px",
+              marginBottom: "18px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "10px",
+                paddingBottom: "8px",
+                borderBottom: "1px solid #ffedd5",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <User size={15} style={{ color: "#ea580c" }} />
+                <span style={{ fontSize: "12px", fontWeight: 800, color: "#9a3412", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Customer Details &amp; Address
+                </span>
+              </div>
+              <span style={{ fontSize: "10.5px", color: "#9a3412", fontWeight: 600 }}>
+                Editable: Name, Number &amp; Address
+              </span>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px", marginBottom: "10px" }}>
+              {/* Customer Name */}
+              <div>
+                <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 800, color: "#475569", marginBottom: "4px" }}>
+                  <User size={12} style={{ color: "#ea580c" }} />
+                  CUSTOMER NAME:
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ali Khan"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: "#0f172a",
+                    background: "#ffffff",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              {/* Customer Phone */}
+              <div>
+                <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 800, color: "#475569", marginBottom: "4px" }}>
+                  <Phone size={12} style={{ color: "#ea580c" }} />
+                  PHONE / WHATSAPP NUMBER:
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 03001234567"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    fontFamily: "monospace",
+                    color: "#0f172a",
+                    background: "#ffffff",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Delivery Address */}
+            <div>
+              <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 800, color: "#475569", marginBottom: "4px" }}>
+                <MapPin size={12} style={{ color: "#ea580c" }} />
+                DELIVERY ADDRESS:
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. House 14, Street 2, Sector G-10/4, Islamabad"
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "8px 10px",
+                  borderRadius: "6px",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  color: "#0f172a",
+                  background: "#ffffff",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
           </div>
 
           {/* ─── ITEMS LIST ───────────────────────────────────────── */}

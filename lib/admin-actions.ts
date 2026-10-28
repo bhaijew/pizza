@@ -1281,6 +1281,118 @@ export async function updateOrderDeliveryDetails(
   return { success: true, error: null };
 }
 
+/**
+ * Directly update customer details (name, phone number, delivery address) for an existing order.
+ * Automatically synchronizes order columns and internal notes metadata (e.g. [DELIVERY:...]).
+ */
+export async function updateOrderCustomerDetails(params: {
+  orderId: number;
+  customerName?: string;
+  customerPhone?: string;
+  deliveryAddress?: string;
+}): Promise<{
+  success: boolean;
+  error: string | null;
+  order?: any;
+}> {
+  await requireAdmin();
+  if (!isServiceRoleConfigured()) {
+    return { success: false, error: SERVICE_ROLE_ERROR };
+  }
+
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  const { data: currentOrder, error: fetchErr } = await db
+    .from("orders")
+    .select("*")
+    .eq("id", params.orderId)
+    .maybeSingle();
+
+  if (fetchErr || !currentOrder) {
+    return { success: false, error: fetchErr?.message || "Order not found." };
+  }
+
+  if (activeShop.shopId && currentOrder.shop_id && Number(currentOrder.shop_id) !== Number(activeShop.shopId)) {
+    return { success: false, error: "Unauthorized: this order belongs to another branch." };
+  }
+
+  const nowIso = new Date().toISOString();
+  const updatePayload: Record<string, any> = {
+    updated_at: nowIso,
+  };
+
+  if (params.customerName !== undefined) {
+    updatePayload.customer_name = params.customerName.trim() || null;
+  }
+  if (params.customerPhone !== undefined) {
+    updatePayload.customer_phone = params.customerPhone.trim() || null;
+  }
+  if (params.deliveryAddress !== undefined) {
+    updatePayload.delivery_address = params.deliveryAddress.trim() || null;
+  }
+
+  // Synchronize [DELIVERY: Address: ... | Phone: ... | Fee: ...] in notes if present
+  let existingNotes = currentOrder.notes || "";
+  if (existingNotes.includes("[DELIVERY:")) {
+    existingNotes = existingNotes.replace(/\[DELIVERY:[^\]]*\]/gi, (match: string) => {
+      const feeMatch = match.match(/Fee:\s*([0-9.]+)/i);
+      const existingFee = feeMatch ? feeMatch[1] : "0";
+
+      const addrMatch = match.match(/Address:\s*([^|]+)/i);
+      const existingAddr = addrMatch ? addrMatch[1].trim() : "";
+      const addr = params.deliveryAddress !== undefined ? params.deliveryAddress.trim() : existingAddr;
+
+      const phoneMatch = match.match(/Phone:\s*([^|]+)/i);
+      const existingPhone = phoneMatch ? phoneMatch[1].trim() : "";
+      const phone = params.customerPhone !== undefined ? params.customerPhone.trim() : existingPhone;
+
+      return `[DELIVERY: Address: ${addr} | Phone: ${phone} | Fee: ${existingFee}]`;
+    });
+    updatePayload.notes = existingNotes;
+  }
+
+  let { data: updatedOrder, error: updateErr } = await db
+    .from("orders")
+    .update(updatePayload)
+    .eq("id", params.orderId)
+    .select()
+    .single();
+
+  if (updateErr && (updateErr.message.includes("delivery_address") || updateErr.message.includes("customer_name") || updateErr.message.includes("customer_phone"))) {
+    const fallbackPayload: Record<string, any> = {
+      updated_at: nowIso,
+    };
+    if (updatePayload.customer_name !== undefined) fallbackPayload.customer_name = updatePayload.customer_name;
+    if (updatePayload.customer_phone !== undefined) fallbackPayload.customer_phone = updatePayload.customer_phone;
+    if (updatePayload.notes !== undefined) fallbackPayload.notes = updatePayload.notes;
+
+    const retry = await db
+      .from("orders")
+      .update(fallbackPayload)
+      .eq("id", params.orderId)
+      .select()
+      .single();
+    updateErr = retry.error;
+    updatedOrder = retry.data;
+  }
+
+  if (updateErr) {
+    return { success: false, error: updateErr.message };
+  }
+
+  dbCache.invalidateTag("orders");
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/kitchen");
+  revalidatePath("/kitchen");
+  revalidatePath("/admin");
+  if (currentOrder.order_number) {
+    revalidatePath(`/track/${encodeURIComponent(currentOrder.order_number)}`);
+  }
+
+  return { success: true, error: null, order: updatedOrder };
+}
+
 export async function deleteOrder(
   id: number
 ): Promise<{ error: string | null }> {
@@ -1559,9 +1671,30 @@ export async function recreateOrder(params: RecreateOrderParams): Promise<{
   const existingNotes = currentOrder.notes || "";
   const auditReason = params.notes?.trim() ? `: ${params.notes.trim()}` : "";
   const recreateAuditTag = `[RECREATED ${timeFormatted}${auditReason}]`;
-  const updatedNotes = existingNotes
+  let updatedNotes = existingNotes
     ? `${existingNotes} ${recreateAuditTag}`.trim()
     : recreateAuditTag;
+
+  // Synchronize [DELIVERY: Address: ... | Phone: ... | Fee: ...] in notes if present
+  if (params.deliveryAddress !== undefined || params.customerPhone !== undefined || params.deliveryFee !== undefined) {
+    if (updatedNotes.includes("[DELIVERY:")) {
+      updatedNotes = updatedNotes.replace(/\[DELIVERY:[^\]]*\]/gi, (match: string) => {
+        const feeMatch = match.match(/Fee:\s*([0-9.]+)/i);
+        const existingFee = feeMatch ? feeMatch[1] : "0";
+        const fee = params.deliveryFee !== undefined ? params.deliveryFee : existingFee;
+
+        const addrMatch = match.match(/Address:\s*([^|]+)/i);
+        const existingAddr = addrMatch ? addrMatch[1].trim() : "";
+        const addr = params.deliveryAddress !== undefined ? params.deliveryAddress.trim() : existingAddr;
+
+        const phoneMatch = match.match(/Phone:\s*([^|]+)/i);
+        const existingPhone = phoneMatch ? phoneMatch[1].trim() : "";
+        const phone = params.customerPhone !== undefined ? params.customerPhone.trim() : existingPhone;
+
+        return `[DELIVERY: Address: ${addr} | Phone: ${phone} | Fee: ${fee}]`;
+      });
+    }
+  }
 
   // 4. Build update payload — PRESERVING id and order_number
   const updatePayload: Record<string, any> = {
@@ -1578,14 +1711,14 @@ export async function recreateOrder(params: RecreateOrderParams): Promise<{
     updatePayload.created_at = nowIso;
   }
 
-  if (params.customerName?.trim()) {
-    updatePayload.customer_name = params.customerName.trim();
+  if (params.customerName !== undefined) {
+    updatePayload.customer_name = params.customerName.trim() || null;
   }
-  if (params.customerPhone?.trim()) {
-    updatePayload.customer_phone = params.customerPhone.trim();
+  if (params.customerPhone !== undefined) {
+    updatePayload.customer_phone = params.customerPhone.trim() || null;
   }
   if (params.deliveryAddress !== undefined) {
-    updatePayload.delivery_address = params.deliveryAddress?.trim() || null;
+    updatePayload.delivery_address = params.deliveryAddress.trim() || null;
   }
   if (params.deliveryFee !== undefined) {
     updatePayload.delivery_fee = Number(params.deliveryFee) || 0;

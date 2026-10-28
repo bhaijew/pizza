@@ -75,14 +75,7 @@ export default function ProductForm({
           .replace(/[^\w\s-]/g, "")
           .replace(/\s+/g, "-")
       );
-      // Auto-populate variations if not already set
-      if (variations.length === 0) {
-        if (val.toLowerCase().includes("pizza")) {
-          applyPizzaSizesPreset();
-        } else if (val.toLowerCase().includes("burger")) {
-          applyBurgerSizesPreset();
-        }
-      }
+      // Note: Variations are only added manually via preset buttons below
     }
   };
 
@@ -98,14 +91,6 @@ export default function ProductForm({
           .replace(/[^\w\s-]/g, "")
           .replace(/\s+/g, "-")
       );
-    }
-    // Auto-populate variations if empty
-    if (!initialProduct && variations.length === 0) {
-      if (preset.category === "Pizza" || preset.name.toLowerCase().includes("pizza")) {
-        applyPizzaSizesPreset();
-      } else if (preset.category === "Burger" || preset.name.toLowerCase().includes("burger")) {
-        applyBurgerSizesPreset();
-      }
     }
   };
 
@@ -493,21 +478,7 @@ export default function ProductForm({
                 <select
                   required
                   value={categoryId}
-                  onChange={(e) => {
-                    const newCatId = e.target.value;
-                    setCategoryId(newCatId);
-                    if (!initialProduct && variations.length === 0) {
-                      const matchedCat = categories.find((c) => String(c.id) === String(newCatId));
-                      if (matchedCat) {
-                        const cname = (matchedCat.name || "").toLowerCase();
-                        if (cname.includes("pizza")) {
-                          applyPizzaSizesPreset();
-                        } else if (cname.includes("burger")) {
-                          applyBurgerSizesPreset();
-                        }
-                      }
-                    }
-                  }}
+                  onChange={(e) => setCategoryId(e.target.value)}
                   style={{
                     width: "100%",
                     padding: "10px 12px",

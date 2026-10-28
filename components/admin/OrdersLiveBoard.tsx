@@ -29,8 +29,10 @@ import {
   Copy,
   Check,
   Trash2,
+  Edit2,
 } from "lucide-react";
 import OrderRecreateModal from "@/components/admin/OrderRecreateModal";
+import OrderCustomerEditModal from "@/components/admin/OrderCustomerEditModal";
 import ThermalDualPrintModal from "@/components/admin/ThermalDualPrintModal";
 import type { DeliveryRider } from "@/lib/admin-actions";
 import AudioNotificationController, {
@@ -198,6 +200,7 @@ export default function OrdersLiveBoard({
   const [realtimeActive, setRealtimeActive] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [recreatingOrder, setRecreatingOrder] = useState<Order | null>(null);
+  const [editingCustomerOrder, setEditingCustomerOrder] = useState<Order | null>(null);
 
   // Keep saved delivery riders fresh
   useEffect(() => {
@@ -1367,7 +1370,53 @@ export default function OrdersLiveBoard({
                               </a>
                             );
                           })()}
+                          <button
+                            type="button"
+                            onClick={() => setEditingCustomerOrder(order)}
+                            title="Edit customer name, phone number, or delivery address"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px",
+                              padding: "1px 6px",
+                              borderRadius: "4px",
+                              background: "#f1f5f9",
+                              border: "1px solid #cbd5e1",
+                              color: "#334155",
+                              fontSize: "9.5px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                            className="hover:bg-slate-200 transition-colors"
+                          >
+                            <Edit2 size={9} />
+                            <span>Edit</span>
+                          </button>
                         </div>
+                      )}
+                      {!order.customer_phone && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingCustomerOrder(order)}
+                          title="Add customer name, phone number, or delivery address"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            background: "#f1f5f9",
+                            border: "1px solid #cbd5e1",
+                            color: "#334155",
+                            fontSize: "9.5px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                          className="hover:bg-slate-200 transition-colors"
+                        >
+                          <Edit2 size={9} />
+                          <span>+ Add Info</span>
+                        </button>
                       )}
                     </div>
                   )}
@@ -1400,11 +1449,35 @@ export default function OrdersLiveBoard({
                                 {info.deliveryAddress}
                               </span>
                             </div>
-                            {info.deliveryFee !== null && (
-                              <span style={{ fontSize: "10px", color: "#047857", fontWeight: 700, flexShrink: 0, background: "#ecfdf5", padding: "1px 5px", borderRadius: "3px" }}>
-                                Fee: {currencySymbol}{info.deliveryFee}
-                              </span>
-                            )}
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                              {info.deliveryFee !== null && (
+                                <span style={{ fontSize: "10px", color: "#047857", fontWeight: 700, background: "#ecfdf5", padding: "1px 5px", borderRadius: "3px" }}>
+                                  Fee: {currencySymbol}{info.deliveryFee}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setEditingCustomerOrder(order)}
+                                title="Edit delivery address or phone"
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "2px",
+                                  padding: "1px 5px",
+                                  borderRadius: "3px",
+                                  background: "#e2e8f0",
+                                  border: "none",
+                                  color: "#334155",
+                                  fontSize: "9px",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                }}
+                                className="hover:bg-slate-300 transition-colors"
+                              >
+                                <Edit2 size={8} />
+                                <span>Edit</span>
+                              </button>
+                            </div>
                           </div>
                         )}
 
@@ -1982,22 +2055,43 @@ export default function OrdersLiveBoard({
                       )}
                     </div>
 
-                    {/* ROW 2: Utility Toolbelt (Recreate, Cancel, Delete) */}
+                    {/* ROW 2: Utility Toolbelt (Edit Info, Recreate, Cancel, Delete) */}
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns:
-                          canCancelOrders
-                            ? order.status !== "cancelled" && order.status !== "delivered"
-                              ? "repeat(3, 1fr)"
-                              : "repeat(2, 1fr)"
-                            : order.status !== "cancelled" && order.status !== "delivered"
-                            ? "repeat(2, 1fr)"
-                            : "1fr",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(65px, 1fr))",
                         gap: "5px",
                         width: "100%",
                       }}
                     >
+                      {/* Quick Edit Customer / Address Button */}
+                      <button
+                        type="button"
+                        onClick={() => setEditingCustomerOrder(order)}
+                        style={{
+                          height: "28px",
+                          borderRadius: "5px",
+                          background: "#f8fafc",
+                          color: "#334155",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          border: "1px solid #cbd5e1",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "4px",
+                          whiteSpace: "nowrap",
+                          padding: "0 4px",
+                          transition: "all 0.15s ease",
+                        }}
+                        className="hover:bg-slate-100 hover:border-slate-300"
+                        title="Edit Customer Name, Phone Number, or Delivery Address"
+                      >
+                        <Edit2 size={11} style={{ flexShrink: 0 }} />
+                        <span>Edit Info</span>
+                      </button>
+
                       {/* Recreate / Modify Order Button */}
                       <button
                         type="button"
@@ -2137,6 +2231,18 @@ export default function OrdersLiveBoard({
             return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
           });
           playPosOrderChime();
+        }}
+      />
+
+      {/* ─── ORDER CUSTOMER DETAILS EDIT MODAL ───────────────── */}
+      <OrderCustomerEditModal
+        isOpen={!!editingCustomerOrder}
+        onClose={() => setEditingCustomerOrder(null)}
+        order={editingCustomerOrder}
+        onSuccess={(updatedOrder) => {
+          setOrders((prev) =>
+            prev.map((o) => (o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o))
+          );
         }}
       />
 

@@ -23,7 +23,9 @@ import {
   MapPin,
   CreditCard,
   User,
+  Edit2,
 } from "lucide-react";
+import OrderCustomerEditModal from "@/components/admin/OrderCustomerEditModal";
 
 interface OrderSearchLookupProps {
   initialOrders: Order[];
@@ -55,6 +57,7 @@ export default function OrderSearchLookup({
   const [printTab, setPrintTab] = useState<"counter" | "kitchen" | "dual">("counter");
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
+  const [editingCustomerOrder, setEditingCustomerOrder] = useState<Order | null>(null);
 
   // Trigger search with server action
   const handleSearch = (term: string) => {
@@ -527,6 +530,15 @@ export default function OrderSearchLookup({
                   </div>
 
                   <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingCustomerOrder(selectedOrder)}
+                      className="px-2 py-1 bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 rounded-[5px] font-bold text-[11px] flex items-center gap-1 transition-colors"
+                      title="Edit customer name, phone number, or delivery address"
+                    >
+                      <Edit2 size={11} />
+                      <span>Edit Info</span>
+                    </button>
                     {selectedOrder.customer_phone && (
                       <>
                         <a
@@ -730,6 +742,17 @@ export default function OrderSearchLookup({
           defaultTab={printTab}
         />
       )}
+
+      {/* ─── ORDER CUSTOMER DETAILS EDIT MODAL ───────────────── */}
+      <OrderCustomerEditModal
+        isOpen={!!editingCustomerOrder}
+        onClose={() => setEditingCustomerOrder(null)}
+        order={editingCustomerOrder}
+        onSuccess={(updated) => {
+          setOrders((prev) => prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o)));
+          setSelectedOrder((prev) => (prev?.id === updated.id ? { ...prev, ...updated } : prev));
+        }}
+      />
     </div>
   );
 }
