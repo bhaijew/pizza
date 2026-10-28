@@ -152,7 +152,7 @@ export default function HomePage() {
                 "@type": "Organization",
                 "name": "SoleWhat",
                 "url": "https://www.solewhat.store",
-                "logo": "https://www.solewhat.store/favicon.ico",
+                "logo": "https://www.solewhat.store/images/solewhat-logo.png",
                 "contactPoint": {
                   "@type": "ContactPoint",
                   "telephone": "+92-302-5260958",
@@ -181,7 +181,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <SoleWhatLogo size={40} variant="badge" showGlow={false} />
+            <SoleWhatLogo size={44} variant="badge" showGlow={false} />
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xl font-black tracking-tight text-slate-950 font-heading">

@@ -73,6 +73,16 @@ export const metadata: Metadata = {
     description:
       "All-in-one POS & restaurant retail operating system with automated WhatsApp AI order assistant and real-time operations.",
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/images/solewhat-icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/images/solewhat-icon.png",
+    apple: [
+      { url: "/images/solewhat-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
   alternates: {
     canonical: "https://www.solewhat.store",
   },
