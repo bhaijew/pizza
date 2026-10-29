@@ -804,8 +804,8 @@ export default function AdminShell({
         >
           {/* Direct POS App Download (No Popup) */}
           <a
-            href="/release/Sole-What-Setup-1.6.8.exe"
-            download="Sole-What-Setup-1.6.8.exe"
+            href="/release/Sole-What-Setup-1.6.9.exe"
+            download="Sole-What-Setup-1.6.9.exe"
             style={{
               width: "100%",
               display: "flex",
@@ -1613,8 +1613,8 @@ export default function AdminShell({
           >
             {/* Direct POS App Download (No Popup) */}
             <a
-              href="/release/Sole-What-Setup-1.6.8.exe"
-              download="Sole-What-Setup-1.6.8.exe"
+              href="/release/Sole-What-Setup-1.6.9.exe"
+              download="Sole-What-Setup-1.6.9.exe"
               style={{
                 width: "100%",
                 display: "flex",

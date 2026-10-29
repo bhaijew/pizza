@@ -1388,8 +1388,8 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
 
             {/* Direct POS Download (No Popup) */}
             <a
-              href="/release/Sole-What-Setup-1.6.8.exe"
-              download="Sole-What-Setup-1.6.8.exe"
+              href="/release/Sole-What-Setup-1.6.9.exe"
+              download="Sole-What-Setup-1.6.9.exe"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -3434,8 +3434,8 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                   </button>
 
                   <a
-                    href="/release/Sole-What-Setup-1.6.8.exe"
-                    download="Sole-What-Setup-1.6.8.exe"
+                    href="/release/Sole-What-Setup-1.6.9.exe"
+                    download="Sole-What-Setup-1.6.9.exe"
                     style={{
                       display: "inline-flex",
                       alignItems: "center",

@@ -45,7 +45,7 @@ export default function DownloadPosModal({
       setDownloadStarted(true);
       const a = document.createElement("a");
       a.href = "/api/download-pos";
-      a.download = "Sole-What-Setup-1.6.8.exe";
+      a.download = "Sole-What-Setup-1.6.9.exe";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -58,7 +58,7 @@ export default function DownloadPosModal({
     setIsDownloading(true);
     const a = document.createElement("a");
     a.href = "/api/download-pos";
-    a.download = "Sole-What-Setup-1.6.8.exe";
+    a.download = "Sole-What-Setup-1.6.9.exe";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -283,7 +283,7 @@ exit
                     Download automatically started:
                   </span>
                   <span style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", background: "rgba(0,0,0,0.3)", padding: "1px 6px", borderRadius: "4px" }}>
-                    Sole-What-Setup-1.6.8.exe (~85 MB)
+                    Sole-What-Setup-1.6.9.exe (~85 MB)
                   </span>
                 </div>
                 <span style={{ fontSize: "11px", color: "#94a3b8" }}>
@@ -483,7 +483,7 @@ exit
                   <div style={{ background: "rgba(0,0,0,0.35)", padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
                     <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>Source File</div>
                     <div style={{ fontSize: "12px", color: "#f8fafc", fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      Sole-What-Setup-1.6.8.exe
+                      Sole-What-Setup-1.6.9.exe
                     </div>
                   </div>
                   <div style={{ background: "rgba(0,0,0,0.35)", padding: "10px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -504,7 +504,7 @@ exit
                 <div style={{ display: "flex", gap: "10px", marginTop: "4px", flexWrap: "wrap" }}>
                   <a
                     href="/api/download-pos"
-                    download="Sole-What-Setup-1.6.8.exe"
+                    download="Sole-What-Setup-1.6.9.exe"
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
