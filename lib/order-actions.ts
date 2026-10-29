@@ -655,7 +655,9 @@ export async function findRecentOrdersByPhone(phone: string): Promise<{
 export async function confirmDeliveryByRider(
   orderNumber: string,
   riderName?: string,
-  deliveryNote?: string
+  deliveryNote?: string,
+  paymentMethod: "Cash" | "Card" = "Cash",
+  transactionId?: string
 ): Promise<{ success: boolean; order?: any; error?: string; alreadyDelivered?: boolean }> {
   try {
     const cleanNumber = orderNumber.trim();
@@ -688,18 +690,47 @@ export async function confirmDeliveryByRider(
 
     const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const riderTag = riderName ? ` by ${riderName}` : "";
-    const noteEntry = `[DELIVERED & CONFIRMED${riderTag} at ${nowStr}${deliveryNote ? ` | ${deliveryNote.trim()}` : ""}]`;
+    const cleanTxn = transactionId?.trim() || "";
+    const payModeTag = paymentMethod === "Card"
+      ? `Payment: Card / Online${cleanTxn ? ` (TXN: ${cleanTxn})` : ""}`
+      : "Payment: Cash";
+
+    const noteEntry = `[DELIVERED & CONFIRMED${riderTag} at ${nowStr} | ${payModeTag}${deliveryNote?.trim() ? ` | Note: ${deliveryNote.trim()}` : ""}]`;
     const updatedNotes = order.notes ? `${order.notes} ${noteEntry}` : noteEntry;
 
-    const { data: updated, error: updateErr } = await supabase
+    const formattedPaymentMethod = paymentMethod === "Card"
+      ? (cleanTxn ? `Card / Online (TXN: ${cleanTxn})` : "Card / Online Transfer")
+      : "Cash on Delivery";
+
+    const updatePayload: Record<string, any> = {
+      status: "delivered",
+      notes: updatedNotes,
+      payment_method: formattedPaymentMethod,
+      payment_status: "paid",
+    };
+    if (cleanTxn) {
+      updatePayload.transaction_id = cleanTxn;
+    }
+
+    let { data: updated, error: updateErr } = await supabase
       .from("orders")
-      .update({
-        status: "delivered",
-        notes: updatedNotes,
-      })
+      .update(updatePayload)
       .eq("id", order.id)
       .select()
       .single();
+
+    // Fallback if transaction_id column does not exist yet in remote schema
+    if (updateErr && cleanTxn && updateErr.message?.includes("transaction_id")) {
+      delete updatePayload.transaction_id;
+      const retryRes = await supabase
+        .from("orders")
+        .update(updatePayload)
+        .eq("id", order.id)
+        .select()
+        .single();
+      updated = retryRes.data;
+      updateErr = retryRes.error;
+    }
 
     if (updateErr) {
       return { success: false, error: updateErr.message };

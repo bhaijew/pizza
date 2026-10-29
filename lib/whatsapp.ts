@@ -68,6 +68,7 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
   apiKey: string;
   shopName: string;
   currencySymbol: string;
+  shopSlug: string | null;
 }> {
   const cacheKey = `wa_creds:${shopId ?? "main"}`;
 
@@ -80,6 +81,7 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
       let apiKey = defaultApiKey;
       let shopName = "Pizza Shop";
       let currencySymbol = "Rs.";
+      let shopSlug: string | null = null;
 
       if (isServiceRoleConfigured()) {
         try {
@@ -89,13 +91,14 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
             // Query branch shop credentials STRICTLY for this specific shop
             const { data: shop } = await db
               .from("shops")
-              .select("name, currency_symbol, whatsapp_session_id, whatsapp_api_key")
+              .select("name, currency_symbol, whatsapp_session_id, whatsapp_api_key, slug")
               .eq("id", shopId)
               .maybeSingle();
 
             if (shop) {
               if (shop.name) shopName = shop.name;
               if (shop.currency_symbol) currencySymbol = shop.currency_symbol;
+              if (shop.slug) shopSlug = shop.slug;
               // Only use if this specific shop configured it
               if (shop.whatsapp_session_id?.trim()) {
                 sessionId = shop.whatsapp_session_id.trim();
@@ -133,7 +136,7 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
         apiKey = defaultApiKey;
       }
 
-      return { sessionId, apiKey, shopName, currencySymbol };
+      return { sessionId, apiKey, shopName, currencySymbol, shopSlug };
     },
     { ttlSeconds: 300, tags: ["settings", "shops"] }
   );
@@ -281,6 +284,7 @@ export interface SendWhatsAppRiderAlertInput {
   customerPhone?: string | null;
   total: string | number;
   shopId?: number | null;
+  shopSlug?: string | null;
   currencySymbol?: string;
 }
 
@@ -296,6 +300,7 @@ export async function sendWhatsAppRiderAlert({
   customerPhone,
   total,
   shopId,
+  shopSlug,
   currencySymbol,
 }: SendWhatsAppRiderAlertInput): Promise<{
   success: boolean;
@@ -304,8 +309,14 @@ export async function sendWhatsAppRiderAlert({
 }> {
   const curr = currencySymbol || "Rs.";
   const formattedTotal = String(total).includes(curr) ? String(total) : `${curr} ${total}`;
-  const appBaseUrl = getAppBaseUrl();
-  const deliveryPortalLink = `${appBaseUrl}/delivery/${orderNumber}`;
+
+  // Resolve shop subdomain for multi-tenant delivery link (e.g. pizza-mafia.solewhat.store)
+  const creds = await getShopWhatsAppCredentials(shopId);
+  const resolvedSlug = (shopSlug || creds.shopSlug || "").trim().toLowerCase();
+
+  const deliveryPortalLink = resolvedSlug
+    ? `https://${resolvedSlug}.solewhat.store/delivery/${encodeURIComponent(orderNumber)}`
+    : `https://pizza-mafia.solewhat.store/delivery/${encodeURIComponent(orderNumber)}`;
 
   const message = `Salam ${riderName || "Rider"}! 🛵
 New Delivery Order Assigned: #${orderNumber}

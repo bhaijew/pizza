@@ -104,6 +104,7 @@ export interface Order {
   shop_id?: number | null;
   payment_method?: string | null;
   payment_status?: string | null;
+  transaction_id?: string | null;
   subtotal?: number | null;
   discount?: number | null;
 }

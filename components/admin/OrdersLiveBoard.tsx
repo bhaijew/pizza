@@ -1901,6 +1901,67 @@ export default function OrdersLiveBoard({
 
                 {/* Bottom Total & Status Progress Buttons */}
                 <div>
+                  {/* Payment Mode & Transaction ID badge (Cash vs Card + Ref #) */}
+                  {(() => {
+                    const method = order.payment_method || "";
+                    const notes = order.notes || "";
+                    const isCard =
+                      method.toLowerCase().includes("card") ||
+                      method.toLowerCase().includes("online") ||
+                      notes.includes("Payment: Card");
+                    const isCash =
+                      method.toLowerCase().includes("cash") ||
+                      notes.includes("Payment: Cash");
+                    const txn =
+                      order.transaction_id ||
+                      notes.match(/TXN:\s*([^)\],|]+)/i)?.[1]?.trim() ||
+                      method.match(/TXN:\s*([^)\],|]+)/i)?.[1]?.trim();
+
+                    if (!isCard && !isCash && !txn && order.status !== "delivered") return null;
+
+                    return (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "3px 7px",
+                          borderRadius: "4px",
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          background: isCard ? "#eff6ff" : "#f0fdf4",
+                          border: `1px solid ${isCard ? "#bfdbfe" : "#bbf7d0"}`,
+                          color: isCard ? "#1d4ed8" : "#15803d",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          {isCard ? "💳 Card / Online" : "💵 Cash on Delivery"}
+                        </span>
+                        {txn ? (
+                          <span
+                            style={{
+                              fontFamily: "monospace",
+                              fontSize: "9.5px",
+                              background: "#ffffff",
+                              padding: "1px 5px",
+                              borderRadius: "3px",
+                              border: "1px solid rgba(0,0,0,0.12)",
+                              color: "#0f172a",
+                            }}
+                            title={`Transaction Reference: ${txn}`}
+                          >
+                            Ref: {txn}
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: "9px", opacity: 0.9, fontWeight: 800 }}>
+                            {order.payment_status === "paid" || order.status === "delivered" ? "PAID ✓" : "DUE"}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   <div
                     style={{
                       display: "flex",

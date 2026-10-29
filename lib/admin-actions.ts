@@ -1951,6 +1951,13 @@ export async function triggerRiderWhatsAppAlert(orderId: number): Promise<{
     order.notes?.match(/\[DELIVERY:\s*Address:\s*([^|]+)/i)?.[1]?.trim() ||
     "Delivery address provided on order ticket";
 
+  let targetShopSlug = activeShop.shopSlug;
+  const targetShopId = order.shop_id || activeShop.shopId;
+  if (!targetShopSlug && targetShopId) {
+    const { data: s } = await db.from("shops").select("slug").eq("id", targetShopId).maybeSingle();
+    if (s?.slug) targetShopSlug = s.slug;
+  }
+
   return sendWhatsAppRiderAlert({
     riderPhone: riderPhone.trim(),
     riderName: riderName.trim(),
@@ -1959,7 +1966,8 @@ export async function triggerRiderWhatsAppAlert(orderId: number): Promise<{
     customerName: order.customer_name,
     customerPhone: order.customer_phone,
     total: order.total,
-    shopId: activeShop.shopId,
+    shopId: targetShopId,
+    shopSlug: targetShopSlug,
   });
 }
 
