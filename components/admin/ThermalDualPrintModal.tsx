@@ -24,6 +24,7 @@ export interface ThermalPrintItem {
   price: number;
   variation?: string | null;
   toppings?: string[] | null;
+  dealItems?: string[] | null;
   notes?: string | null;
 }
 
@@ -142,12 +143,57 @@ export function normalizeOrderForPrint(
       toppings = [it.selectedToppings.trim()];
     }
 
+    // Extract deal items if combo / bumper / deal
+    let dealItems: string[] = [];
+    const rawDeal = it.dealItems || it.deal_items || it.items_included || it.included_items;
+    if (Array.isArray(rawDeal) && rawDeal.length > 0) {
+      dealItems = rawDeal.map((x: any) => String(x).trim()).filter(Boolean);
+    } else if (typeof rawDeal === "string" && rawDeal.trim()) {
+      try {
+        const parsed = JSON.parse(rawDeal);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          dealItems = parsed.map((x: any) => String(x).trim()).filter(Boolean);
+        }
+      } catch {}
+      if (dealItems.length === 0) {
+        dealItems = rawDeal.split(/[\r\n,•·+]+/).map((s: string) => s.trim()).filter(Boolean);
+      }
+    }
+    if (dealItems.length === 0) {
+      const desc = it.description || it.product?.description || "";
+      const nameLower = (it.name || it.title || "").toLowerCase();
+      const isDeal =
+        nameLower.includes("deal") ||
+        nameLower.includes("combo") ||
+        nameLower.includes("bumper") ||
+        nameLower.includes("super") ||
+        (it.category && String(it.category).toLowerCase().includes("deal"));
+      if (isDeal && typeof desc === "string" && desc.trim()) {
+        try {
+          const parsed = JSON.parse(desc);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            dealItems = parsed.map((x: any) => String(x).trim()).filter(Boolean);
+          }
+        } catch {}
+        if (dealItems.length === 0) {
+          const lines = desc.split(/[\r\n]+/).map((l: string) => l.replace(/^[•\-\*\d+\.\s]+/, "").trim()).filter(Boolean);
+          if (lines.length > 1) {
+            dealItems = lines;
+          } else {
+            const plusParts = desc.split(/[\+•]+/).map((s: string) => s.trim()).filter(Boolean);
+            if (plusParts.length > 1) dealItems = plusParts;
+          }
+        }
+      }
+    }
+
     return {
       name: it.name || it.title || it.product_name || "Item",
       qty: Number(it.quantity || it.qty) || 1,
       price: Number(it.price || it.subtotal || it.unit_price) || 0,
       variation,
       toppings: toppings.length > 0 ? toppings : null,
+      dealItems: dealItems.length > 0 ? dealItems : null,
       notes: it.notes || it.instructions || null,
     };
   });
@@ -777,6 +823,14 @@ function CounterSlipContent({
                   + {it.toppings.join(", ")}
                 </div>
               )}
+              {it.dealItems && it.dealItems.length > 0 && (
+                <div className="text-[9px] pl-3 text-black/90 font-medium">
+                  <span className="font-bold underline">Includes:</span>
+                  {it.dealItems.map((d, dIdx) => (
+                    <div key={dIdx} className="pl-1.5">• {d}</div>
+                  ))}
+                </div>
+              )}
               {it.notes && (
                 <div className="text-[9px] pl-3 font-semibold text-black/90">
                   Note: {it.notes}
@@ -918,6 +972,15 @@ function KitchenKotContent({
                   {it.toppings && it.toppings.length > 0 && (
                     <div className="text-[10px] font-bold text-black mt-0.5 pl-1">
                       ➔ TOPPINGS: {it.toppings.join(", ")}
+                    </div>
+                  )}
+
+                  {it.dealItems && it.dealItems.length > 0 && (
+                    <div className="text-[10px] pl-2 font-bold text-black border-l-2 border-black/70 my-1 bg-black/5 py-1 rounded-xs">
+                      <span className="underline font-black">DEAL PREP ITEMS:</span>
+                      {it.dealItems.map((d, dIdx) => (
+                        <div key={dIdx} className="font-mono text-[10px]">[ ] {d.toUpperCase()}</div>
+                      ))}
                     </div>
                   )}
 
