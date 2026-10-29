@@ -935,7 +935,7 @@ function KitchenKotContent({
 
       {/* Service details for Cook */}
       <div className="pb-1.5 text-[10px] border-b border-dashed border-black font-semibold flex justify-between">
-        <span>Type: <strong className="uppercase">{data.orderType}</strong></span>
+        <span>Type: <strong className="uppercase">{data.orderType}</strong> ({data.paymentMethod?.toUpperCase() || "CASH"})</span>
         <span>Guest: {data.customerName?.slice(0, 15)}</span>
       </div>
 
