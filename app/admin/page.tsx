@@ -69,7 +69,7 @@ export default async function AdminDashboardPage() {
   let shopName =
     activeShop.shopName && activeShop.shopName !== "Master Store"
       ? activeShop.shopName
-      : settings.shop_name || "Soule What Management";
+      : settings.shop_name || "SoleWhat POS & Cloud Operations";
 
   try {
     const cacheKey = `dashboard:daily:${activeShop.shopId ?? "master"}:${businessDate}`;

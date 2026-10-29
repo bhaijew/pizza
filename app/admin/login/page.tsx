@@ -7,8 +7,8 @@ import AdminLoginClient from "./AdminLoginClient";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Soule What Management | POS Login",
-  description: "Secure administrative access to Soule What Management and store POS operations.",
+  title: "SoleWhat POS & Cloud Operations | POS Login",
+  description: "Secure administrative access to SoleWhat POS & Cloud Operations and store POS operations.",
 };
 
 export default async function AdminLoginPage() {
@@ -19,7 +19,8 @@ export default async function AdminLoginPage() {
   }
 
   const settings = await fetchSettings(null).catch(() => null);
-  const setupName = settings?.shop_name?.trim() || "Soule What Management";
+  const rawName = settings?.shop_name?.trim() || "SoleWhat POS & Cloud Operations";
+  const setupName = rawName.replace(/Soule\s*What(\s*Management)?/gi, "SoleWhat POS & Cloud Operations");
 
   return <AdminLoginClient setupName={setupName} />;
 }

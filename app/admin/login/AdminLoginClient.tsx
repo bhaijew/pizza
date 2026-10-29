@@ -25,7 +25,7 @@ interface AdminLoginClientProps {
 }
 
 export default function AdminLoginClient({
-  setupName = "Soule What Management",
+  setupName = "SoleWhat POS & Cloud Operations",
 }: AdminLoginClientProps) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -77,9 +77,13 @@ export default function AdminLoginClient({
     );
   }
 
-  const rawName = setupName?.trim() || "Soule What Management";
-  const hasManagement = rawName.toLowerCase().includes("management");
-  const headlineTitle = hasManagement ? rawName : `${rawName} Management`;
+  const rawName = (setupName?.trim() || "SoleWhat POS & Cloud Operations").replace(
+    /Soule\s*What(\s*Management)?/gi,
+    "SoleWhat POS & Cloud Operations"
+  );
+  const hasSuffix =
+    rawName.toLowerCase().includes("management") || rawName.toLowerCase().includes("operations");
+  const headlineTitle = hasSuffix ? rawName : `${rawName} Operations`;
 
   return (
     <div
