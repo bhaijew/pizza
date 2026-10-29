@@ -120,6 +120,13 @@ const NAV_GROUPS: NavGroup[] = [
         icon: ShoppingBag,
       },
       {
+        label: "Verify Orders",
+        href: "/admin/verify",
+        badge: "NEW",
+        badgeColor: "#f59e0b",
+        icon: ShieldCheck,
+      },
+      {
         label: "Kitchen Display (KDS)",
         href: "/admin/kitchen",
         badge: "KDS",

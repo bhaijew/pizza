@@ -243,6 +243,8 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
 
     // Build base notes with metadata
     let enrichedNotes = input.notes?.trim() || "";
+    enrichedNotes = `[ONLINE_MENU: AWAITING_VERIFICATION] ${enrichedNotes}`.trim();
+
     if (input.order_type === "dine_in" && tableNumber) {
       enrichedNotes = `[DINE-IN: Table ${tableNumber} | VERIFY TOKEN: ${tokenNumber}] ${enrichedNotes}`.trim();
     } else if (input.order_type === "takeaway" && tokenNumber) {
@@ -268,6 +270,8 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       discount_amount: discountAmount,
       promo_code: input.promo_code || null,
       points_redeemed: input.points_redeemed || 0,
+      is_verified: false,
+      source: "online_menu",
     };
 
     // Attempt insertion with up to 3 automatic concurrency conflict retries
@@ -279,7 +283,7 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       error = insertRes.error;
 
       // Fallback if newly migrated columns don't exist in Supabase yet
-      if (error && (error.message?.includes("delivery_address") || error.message?.includes("delivery_fee") || error.message?.includes("order_type") || error.message?.includes("table_number") || error.message?.includes("token_number") || error.message?.includes("shop_id") || error.message?.includes("discount_amount") || error.message?.includes("promo_code"))) {
+      if (error && (error.message?.includes("is_verified") || error.message?.includes("source") || error.message?.includes("delivery_address") || error.message?.includes("delivery_fee") || error.message?.includes("order_type") || error.message?.includes("table_number") || error.message?.includes("token_number") || error.message?.includes("shop_id") || error.message?.includes("discount_amount") || error.message?.includes("promo_code"))) {
         const fallbackPayload: Record<string, any> = {
           order_number: orderPayload.order_number,
           status: "pending",

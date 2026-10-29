@@ -27,6 +27,11 @@ export default async function AdminKitchenPage() {
     fetchSettings(),
   ]);
 
+  // Hold back unverified online menu orders from KDS until admin approves them
+  const verifiedKitchenOrders = (orders || []).filter(
+    (o: any) => o.is_verified !== false && !o.notes?.includes("[ONLINE_MENU: AWAITING_VERIFICATION]")
+  );
+
   const kdsUrl = activeShop.shopSlug
     ? `/${activeShop.shopSlug}/kitchen`
     : activeShop.shopId
@@ -58,7 +63,7 @@ export default async function AdminKitchenPage() {
       </div>
 
       <KitchenDisplay
-        initialOrders={(orders as Order[]) || []}
+        initialOrders={(verifiedKitchenOrders as Order[]) || []}
         shopName={activeShop.shopName || settings.shop_name || "Pizza Kitchen"}
         shopId={activeShop.shopId ? Number(activeShop.shopId) : null}
         shopSlug={activeShop.shopSlug}

@@ -40,6 +40,7 @@ import {
   getPakistanNow,
   formatDateStr,
 } from "@/lib/business-hours";
+import type { Order } from "@/types/menu";
 
 // ─── Auth helper ─────────────────────────────────────────────────
 async function requireAdmin() {
@@ -3801,6 +3802,160 @@ export async function saveShopBusinessProfileServer(
   revalidatePath("/admin");
   revalidatePath("/admin/settings");
   return res;
+}
+
+// ─── ONLINE MENU ORDER VERIFICATION ENGINE ─────────────────────────
+
+export async function fetchUnverifiedMenuOrders(shopId?: number | null): Promise<Order[]> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+  const targetShopId = shopId !== undefined ? shopId : activeShop.shopId;
+
+  let query = db
+    .from("orders")
+    .select("*")
+    .or("is_verified.eq.false,notes.ilike.%[ONLINE_MENU: AWAITING_VERIFICATION]%")
+    .neq("status", "cancelled")
+    .neq("status", "delivered")
+    .order("created_at", { ascending: false });
+
+  if (targetShopId) {
+    query = query.eq("shop_id", targetShopId);
+  } else {
+    query = query.is("shop_id", null);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.warn("[fetchUnverifiedMenuOrders error]", error);
+    return [];
+  }
+  return (data as Order[]) || [];
+}
+
+export async function verifyMenuOrder(
+  orderId: number,
+  options?: { sendToKitchen?: boolean; cashierName?: string }
+): Promise<{ success: boolean; order?: Order; error?: string }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  const { data: order, error: fetchErr } = await db
+    .from("orders")
+    .select("*")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (fetchErr || !order) {
+    return { success: false, error: "Order not found." };
+  }
+
+  const nowIso = new Date().toISOString();
+  const staff = options?.cashierName || activeShop.staffName || "Admin";
+  const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  let updatedNotes = order.notes || "";
+  updatedNotes = updatedNotes.replace(/\[ONLINE_MENU:\s*AWAITING_VERIFICATION\]\s*/gi, "");
+  updatedNotes = `[VERIFIED & ACCEPTED by ${staff} at ${nowStr} - Sent to Live Orders] ${updatedNotes}`.trim();
+
+  const nextStatus = options?.sendToKitchen ? "preparing" : "pending";
+
+  const updatePayload: Record<string, any> = {
+    is_verified: true,
+    status: nextStatus,
+    verified_at: nowIso,
+    verified_by: staff,
+    notes: updatedNotes,
+  };
+
+  let { data: updated, error: updateErr } = await db
+    .from("orders")
+    .update(updatePayload)
+    .eq("id", orderId)
+    .select()
+    .single();
+
+  if (updateErr && updateErr.message?.includes("is_verified")) {
+    delete updatePayload.is_verified;
+    delete updatePayload.verified_at;
+    delete updatePayload.verified_by;
+    const retry = await db
+      .from("orders")
+      .update(updatePayload)
+      .eq("id", orderId)
+      .select()
+      .single();
+    updated = retry.data;
+    updateErr = retry.error;
+  }
+
+  if (updateErr) {
+    return { success: false, error: updateErr.message };
+  }
+
+  revalidatePath("/admin/verify");
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/kitchen");
+  revalidatePath("/admin");
+
+  return { success: true, order: updated as Order };
+}
+
+export async function rejectMenuOrder(
+  orderId: number,
+  reason: string,
+  cashierName?: string
+): Promise<{ success: boolean; error?: string }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  const { data: order, error: fetchErr } = await db
+    .from("orders")
+    .select("*")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (fetchErr || !order) {
+    return { success: false, error: "Order not found." };
+  }
+
+  const staff = cashierName || activeShop.staffName || "Admin";
+  const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const cleanReason = reason?.trim() || "Unverified / Prank / Cancelled by Shop";
+
+  let updatedNotes = order.notes || "";
+  updatedNotes = updatedNotes.replace(/\[ONLINE_MENU:\s*AWAITING_VERIFICATION\]\s*/gi, "");
+  updatedNotes = `[REJECTED/CANCELLED by ${staff} at ${nowStr} | Reason: ${cleanReason}] ${updatedNotes}`.trim();
+
+  const updatePayload: Record<string, any> = {
+    status: "cancelled",
+    is_verified: false,
+    notes: updatedNotes,
+  };
+
+  let { error: updateErr } = await db
+    .from("orders")
+    .update(updatePayload)
+    .eq("id", orderId);
+
+  if (updateErr && updateErr.message?.includes("is_verified")) {
+    delete updatePayload.is_verified;
+    const retry = await db.from("orders").update(updatePayload).eq("id", orderId);
+    updateErr = retry.error;
+  }
+
+  if (updateErr) {
+    return { success: false, error: updateErr.message };
+  }
+
+  revalidatePath("/admin/verify");
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin");
+
+  return { success: true };
 }
 
 

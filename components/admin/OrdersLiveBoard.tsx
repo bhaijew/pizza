@@ -36,6 +36,7 @@ import {
   Check,
   Trash2,
   Edit2,
+  ShieldCheck,
 } from "lucide-react";
 import OrderRecreateModal from "@/components/admin/OrderRecreateModal";
 import OrderCustomerEditModal from "@/components/admin/OrderCustomerEditModal";
@@ -519,6 +520,12 @@ export default function OrdersLiveBoard({
         return false;
       }
 
+      // Hold back unverified online menu orders until verified by admin at /admin/verify
+      const isUnverified = (order as any).is_verified === false || (order.notes?.includes("[ONLINE_MENU: AWAITING_VERIFICATION]"));
+      if (isUnverified) {
+        return false;
+      }
+
       const info = getOrderServiceInfo(order);
 
       if (activeTab === "active") {
@@ -566,6 +573,13 @@ export default function OrdersLiveBoard({
       return true;
     }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [orders, activeTab, searchQuery, openingTime, closingTime]);
+
+  const unverifiedMenuOrders = useMemo(() => {
+    return orders.filter((o) => {
+      if (o.status === "cancelled" || o.status === "delivered") return false;
+      return (o as any).is_verified === false || o.notes?.includes("[ONLINE_MENU: AWAITING_VERIFICATION]");
+    });
+  }, [orders]);
 
   const activeCount = orders.filter(
     (o) => o.status !== "delivered" && o.status !== "cancelled"
@@ -896,6 +910,71 @@ export default function OrdersLiveBoard({
           >
             Clear Search
           </button>
+        </div>
+      )}
+
+      {/* ─── UNVERIFIED ONLINE MENU ORDERS NOTIFICATION BANNER ─── */}
+      {unverifiedMenuOrders.length > 0 && (
+        <div
+          style={{
+            background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+            border: "1.5px solid #f59e0b",
+            borderRadius: "5px",
+            padding: "12px 16px",
+            marginBottom: "16px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            boxShadow: "0 2px 8px rgba(245, 158, 11, 0.15)",
+            flexWrap: "wrap",
+            gap: "10px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div
+              style={{
+                width: "34px",
+                height: "34px",
+                borderRadius: "5px",
+                background: "#f59e0b",
+                color: "#ffffff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <ShieldCheck size={20} />
+            </div>
+            <div>
+              <strong style={{ fontSize: "14px", color: "#92400e", display: "block" }}>
+                ⚠️ {unverifiedMenuOrders.length} New Online Menu Order{unverifiedMenuOrders.length > 1 ? "s" : ""} Awaiting Admin Verification!
+              </strong>
+              <span style={{ fontSize: "12px", color: "#b45309" }}>
+                Orders placed from the website/menu are held here until verified to protect against fake orders and prevent kitchen wastage.
+              </span>
+            </div>
+          </div>
+          <a
+            href="/admin/verify"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              background: "#d97706",
+              color: "#ffffff",
+              fontSize: "12.5px",
+              fontWeight: 800,
+              padding: "8px 16px",
+              borderRadius: "5px",
+              textDecoration: "none",
+              boxShadow: "0 2px 6px rgba(217, 119, 6, 0.3)",
+            }}
+            className="hover:brightness-110 transition-all"
+          >
+            <span>Review & Verify Orders ({unverifiedMenuOrders.length})</span>
+            <span>→</span>
+          </a>
         </div>
       )}
 

@@ -105,6 +105,10 @@ export interface Order {
   payment_method?: string | null;
   payment_status?: string | null;
   transaction_id?: string | null;
+  is_verified?: boolean | null;
+  source?: "pos" | "online_menu" | string | null;
+  verified_at?: string | null;
+  verified_by?: string | null;
   subtotal?: number | null;
   discount?: number | null;
 }
