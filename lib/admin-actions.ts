@@ -2977,29 +2977,31 @@ export async function checkAndPerformAutoClosing(shopId?: number | null): Promis
 
     const pktNow = getPakistanNow();
     const currentBusinessDate = getCurrentBusinessDate(openingTime, closingTime);
-    const yesterdayDate = formatDateStr(new Date(pktNow.getTime() - 24 * 3600000));
 
-    // Candidates to auto-close: yesterday's shift if unclosed
-    const datesToCheck = [yesterdayDate];
+    // Previous business shift date (strictly the cycle before current business date)
+    const [cy, cm, cd] = currentBusinessDate.split("-").map(Number);
+    const prevDateObj = new Date(Date.UTC(cy, cm - 1, cd - 1));
+    const previousBusinessDate = formatDateStr(prevDateObj);
 
-    // If current business date's closing time has also elapsed
-    const [closeHStr, closeMStr] = closingTime.split(":");
-    const closeH = parseInt(closeHStr || "1", 10);
-    const closeM = parseInt(closeMStr || "0", 10);
-    const [openHStr, openMStr] = openingTime.split(":");
-    const openH = parseInt(openHStr || "11", 10);
-    const openM = parseInt(openMStr || "0", 10);
-    const currentMins = pktNow.getHours() * 60 + pktNow.getMinutes();
-    const closeMins = closeH * 60 + closeM;
-    const isCrossMidnight = closeH < openH || (closeH === openH && closeM <= openM);
+    // Current shift window
+    const currentShift = getBusinessShiftUtcRange(currentBusinessDate, openingTime, closingTime);
+    const currentShiftEndEpoch = new Date(currentShift.endUtc).getTime();
 
-    if (!isCrossMidnight && currentMins >= closeMins) {
-      if (!datesToCheck.includes(currentBusinessDate)) {
-        datesToCheck.push(currentBusinessDate);
-      }
+    // Candidates to auto-close:
+    const datesToCheck: string[] = [previousBusinessDate];
+
+    // CRITICAL: Current business shift must ONLY be auto-closed AFTER its scheduled closing time has elapsed!
+    // E.g. If closing_time is 01:00 AM, at 12:00 AM midnight the shift is STILL ACTIVE and MUST NOT be closed!
+    if (Date.now() >= currentShiftEndEpoch) {
+      datesToCheck.push(currentBusinessDate);
     }
 
     for (const checkDate of datesToCheck) {
+      // Safety guard: Never auto-close a date if its shift endUtc is in the future
+      const targetShift = getBusinessShiftUtcRange(checkDate, openingTime, closingTime);
+      if (Date.now() < new Date(targetShift.endUtc).getTime()) {
+        continue;
+      }
       let q = db
         .from("daily_closings")
         .select("id")
