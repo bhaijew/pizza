@@ -569,28 +569,6 @@ function POSContent() {
               <span>{isSimulating ? "⏳ Creating..." : "➕ Simulate Branch Order"}</span>
             </button>
 
-            <a
-              href={activeShop ? `/display?shop=${encodeURIComponent(activeShop.slug)}` : "/display"}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                background: "#27272a",
-                color: "#22c55e",
-                border: "1px solid #3f3f46",
-                borderRadius: 4,
-                padding: "8px 12px",
-                fontSize: 12,
-                fontWeight: 800,
-                textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-              title="Open Customer-Facing Dual Screen Pole Display on secondary tablet or monitor"
-            >
-              <span>🖥️ Pole Display</span>
-            </a>
-
             <Link
               href={activeShop ? `/demo/kitchen?shop=${encodeURIComponent(activeShop.slug)}` : "/demo/kitchen"}
               style={{

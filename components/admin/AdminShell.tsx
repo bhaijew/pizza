@@ -127,13 +127,6 @@ const NAV_GROUPS: NavGroup[] = [
         icon: ChefHat,
       },
       {
-        label: "Counter Pole Display",
-        href: "/display",
-        badge: "2-SCREEN",
-        badgeColor: "#3b82f6",
-        icon: MonitorIcon,
-      },
-      {
         label: "Sole-What",
         href: "/admin/sole-what",
         badge: "WA BOT",
@@ -1046,35 +1039,6 @@ export default function AdminShell({
                 </span>
               </div>
             </div>
-
-            {/* Open Counter Pole Display button */}
-            <Link
-              href={shopSlug ? `/display?shop=${encodeURIComponent(shopSlug)}` : "/display"}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "5px 11px",
-                borderRadius: "5px",
-                background: isLight ? "#eff6ff" : "rgba(59, 130, 246, 0.15)",
-                border: isLight ? "1px solid #bfdbfe" : "1px solid rgba(59, 130, 246, 0.3)",
-                fontSize: "11.5px",
-                fontWeight: 700,
-                color: isLight ? "#1d4ed8" : "#93c5fd",
-                textDecoration: "none",
-                transition: "all 0.15s ease",
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-              }}
-              className="hover:scale-105"
-              title="Open Customer-Facing Counter Dual Screen (Pole Display)"
-            >
-              <MonitorIcon size={13} />
-              <span>Pole Display</span>
-              <ExternalLink size={10} style={{ opacity: 0.7 }} />
-            </Link>
 
             {/* Quick Kitchen Display button */}
             <Link
