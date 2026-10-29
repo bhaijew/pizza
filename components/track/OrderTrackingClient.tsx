@@ -612,6 +612,57 @@ export default function OrderTrackingClient({
               Refresh
             </button>
           </div>
+
+          {/* 5-Star Review Prompt Card when Order is Fulfilled / Delivered */}
+          {(status === "delivered" || (status as string) === "completed") && (
+            <div
+              style={{
+                marginTop: 18,
+                background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+                border: "2px solid #f59e0b",
+                borderRadius: 6,
+                padding: "16px 20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                boxShadow: "0 4px 14px rgba(245, 158, 11, 0.2)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontSize: 28 }}>🌟</div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: "#92400e" }}>
+                    How was your food and experience today?
+                  </h3>
+                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "#b45309" }}>
+                    Leave your quick 1-tap rating to help us serve you better!
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href={`/review/${encodeURIComponent(order.order_number)}`}
+                style={{
+                  background: "#ea580c",
+                  color: "#ffffff",
+                  textDecoration: "none",
+                  fontSize: 13,
+                  fontWeight: 900,
+                  padding: "10px 18px",
+                  borderRadius: 5,
+                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  boxShadow: "0 2px 6px rgba(234, 88, 12, 0.4)",
+                }}
+              >
+                <span>⭐ Rate Your Meal (Takes 10s)</span>
+                <span>➔</span>
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Delivery / Rider Assignment Card (If Delivery) */}

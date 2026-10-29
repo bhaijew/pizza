@@ -42,8 +42,10 @@ export async function proxy(request: NextRequest) {
   // 3. Path-based shop prefix normalization for global utility routes
   // e.g. /pizza-mafia/scan/T1 -> /scan/T1?shopSlug=pizza-mafia
   // e.g. /pizza-mafia/table/T1 -> /table/T1?shopSlug=pizza-mafia
+  // e.g. /pizza-mafia/display -> /display?shopSlug=pizza-mafia
+  // e.g. /pizza-mafia/review/ORD-001 -> /review/ORD-001?shopSlug=pizza-mafia
   const prefixedGlobalMatch = pathname.match(
-    /^\/([^/]+)\/(scan|table|track|delivery)(\/.*)?$/i
+    /^\/([^/]+)\/(scan|table|track|delivery|display|review)(\/.*)?$/i
   );
   if (prefixedGlobalMatch) {
     const possibleSlug = prefixedGlobalMatch[1].toLowerCase();
@@ -58,6 +60,8 @@ export async function proxy(request: NextRequest) {
       "table",
       "track",
       "delivery",
+      "display",
+      "review",
       "menu",
       "menu2",
       "shop",
@@ -111,7 +115,7 @@ export async function proxy(request: NextRequest) {
       pathname.startsWith("/robots.txt") ||
       pathname.startsWith("/sitemap.xml");
 
-    // Global customer routes that live at root app/ level (/scan, /table, /track, /delivery, /menu2, /demo, /todos)
+    // Global customer routes that live at root app/ level (/scan, /table, /track, /delivery, /display, /review, /menu2, /demo, /todos)
     const isGlobalCustomerRoute =
       pathname === "/scan" ||
       pathname.startsWith("/scan/") ||
@@ -121,6 +125,10 @@ export async function proxy(request: NextRequest) {
       pathname.startsWith("/track/") ||
       pathname === "/delivery" ||
       pathname.startsWith("/delivery/") ||
+      pathname === "/display" ||
+      pathname.startsWith("/display/") ||
+      pathname === "/review" ||
+      pathname.startsWith("/review/") ||
       pathname === "/menu2" ||
       pathname.startsWith("/menu2/") ||
       pathname === "/demo" ||

@@ -8,6 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 import OrderRecreateModal from "@/components/admin/OrderRecreateModal";
 import ThermalDualPrintModal from "@/components/admin/ThermalDualPrintModal";
 import type { Order } from "@/types/menu";
+import { broadcastPoleDisplay } from "@/lib/pole-display";
 
 
 interface POSOrder {
@@ -158,6 +159,30 @@ function POSContent() {
       shop_id: ord.shopId || activeShop?.id || null,
     };
     setRecreatingOrder(rawOrder);
+
+    // Broadcast active order to Customer Pole Display Screen
+    try {
+      broadcastPoleDisplay(
+        {
+          status: "active",
+          shopId: activeShop?.id || null,
+          shopName: activeShop?.name || "SoleWhat Store",
+          orderNumber: ord.orderNumber,
+          customerName: ord.customerName,
+          orderType: ord.orderType,
+          tableNumber: ord.tableNumber ? ord.tableNumber.replace("Table #", "").trim() : null,
+          items: ord.items.map((it) => ({
+            name: it.name,
+            qty: it.qty,
+            price: it.price,
+            detail: it.detail,
+          })),
+          subtotal: ord.total,
+          total: ord.total,
+        },
+        supabase
+      );
+    } catch {}
   };
 
   const supabase = useMemo(() => createClient(), []);
@@ -543,6 +568,28 @@ function POSContent() {
             >
               <span>{isSimulating ? "⏳ Creating..." : "➕ Simulate Branch Order"}</span>
             </button>
+
+            <a
+              href={activeShop ? `/display?shop=${encodeURIComponent(activeShop.slug)}` : "/display"}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: "#27272a",
+                color: "#22c55e",
+                border: "1px solid #3f3f46",
+                borderRadius: 4,
+                padding: "8px 12px",
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+              title="Open Customer-Facing Dual Screen Pole Display on secondary tablet or monitor"
+            >
+              <span>🖥️ Pole Display</span>
+            </a>
 
             <Link
               href={activeShop ? `/demo/kitchen?shop=${encodeURIComponent(activeShop.slug)}` : "/demo/kitchen"}

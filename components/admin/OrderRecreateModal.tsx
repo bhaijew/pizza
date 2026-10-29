@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo, useTransition } from "react";
 import type { Order } from "@/types/menu";
-import { recreateOrder, getShopMenuProducts } from "@/lib/admin-actions";
+import { recreateOrder, getShopMenuProducts, type ShopMenuProduct } from "@/lib/admin-actions";
+import { broadcastPoleDisplay } from "@/lib/pole-display";
 import {
   X,
   Plus,
@@ -20,6 +21,10 @@ import {
   User,
   Phone,
   MapPin,
+  Pizza,
+  Layers,
+  ChevronRight,
+  SlidersHorizontal,
 } from "lucide-react";
 
 export interface RecreateItemState {
@@ -37,13 +42,7 @@ export interface OrderRecreateModalProps {
   order: Order | null;
   currencySymbol?: string;
   shopId?: number | null;
-  initialProducts?: {
-    id: number;
-    name: string;
-    price: number;
-    category_name?: string;
-    is_available?: boolean;
-  }[];
+  initialProducts?: ShopMenuProduct[];
   onSuccess?: (updatedOrder: Order) => void;
 }
 
@@ -57,7 +56,7 @@ export default function OrderRecreateModal({
   onSuccess,
 }: OrderRecreateModalProps) {
   const [items, setItems] = useState<RecreateItemState[]>([]);
-  const [availableProducts, setAvailableProducts] = useState(initialProducts);
+  const [availableProducts, setAvailableProducts] = useState<ShopMenuProduct[]>(initialProducts);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -72,14 +71,17 @@ export default function OrderRecreateModal({
   const [customerName, setCustomerName] = useState<string>("");
   const [customerPhone, setCustomerPhone] = useState<string>("");
   const [deliveryAddress, setDeliveryAddress] = useState<string>("");
+  const [showCustomerDetails, setShowCustomerDetails] = useState<boolean>(false);
 
-  // Quick Add Product state
-  const [addMode, setAddMode] = useState<"menu" | "custom">("menu");
+  // Menu Search & Category Filter state
   const [productSearch, setProductSearch] = useState("");
-  const [selectedProductId, setSelectedProductId] = useState<number | "">("");
-  const [addQty, setAddQty] = useState<number>(1);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [activeCatalogTab, setActiveCatalogTab] = useState<"menu" | "custom">("menu");
+
+  // Custom Item Form state
   const [customName, setCustomName] = useState("");
   const [customPrice, setCustomPrice] = useState<number | "">("");
+  const [customQty, setCustomQty] = useState<number>(1);
 
   // Initialize items from current order when opened
   useEffect(() => {
@@ -105,10 +107,8 @@ export default function OrderRecreateModal({
     setNotesInput("");
     setErrorMsg(null);
     setResetTime(true);
-    setSelectedProductId("");
-    setAddQty(1);
-    setCustomName("");
-    setCustomPrice("");
+    setProductSearch("");
+    setSelectedCategory("all");
 
     // Initialize Customer Info
     let initialAddress = order.delivery_address || "";
@@ -121,14 +121,13 @@ export default function OrderRecreateModal({
     setDeliveryAddress(initialAddress);
   }, [order]);
 
-  // Load menu products if not provided
+  // Load menu products with variations
   useEffect(() => {
     if (!isOpen) return;
-    if (availableProducts.length > 0) return;
 
     let mounted = true;
     setLoadingProducts(true);
-    getShopMenuProducts(shopId)
+    getShopMenuProducts(shopId || order?.shop_id)
       .then((data) => {
         if (mounted && data) {
           setAvailableProducts(data);
@@ -142,18 +141,36 @@ export default function OrderRecreateModal({
     return () => {
       mounted = false;
     };
-  }, [isOpen, shopId, availableProducts.length]);
+  }, [isOpen, shopId, order?.shop_id]);
 
-  // Filter products for dropdown
+  // Extract unique category names
+  const categoriesList = useMemo(() => {
+    const set = new Set<string>();
+    availableProducts.forEach((p) => {
+      if (p.category_name && p.category_name.trim()) {
+        set.add(p.category_name.trim());
+      }
+    });
+    return Array.from(set).sort();
+  }, [availableProducts]);
+
+  // Filter products by search and category
   const filteredProducts = useMemo(() => {
-    if (!productSearch.trim()) return availableProducts;
     const q = productSearch.toLowerCase().trim();
-    return availableProducts.filter(
-      (p) =>
+    return availableProducts.filter((p) => {
+      const matchesCategory =
+        selectedCategory === "all" ||
+        (p.category_name && p.category_name.toLowerCase() === selectedCategory.toLowerCase());
+
+      if (!matchesCategory) return false;
+
+      if (!q) return true;
+      return (
         p.name.toLowerCase().includes(q) ||
         (p.category_name && p.category_name.toLowerCase().includes(q))
-    );
-  }, [availableProducts, productSearch]);
+      );
+    });
+  }, [availableProducts, productSearch, selectedCategory]);
 
   // Calculate live totals
   const itemsSubtotal = useMemo(() => {
@@ -163,6 +180,29 @@ export default function OrderRecreateModal({
   const grandTotal = useMemo(() => {
     return Math.max(0, itemsSubtotal + (Number(deliveryFee) || 0));
   }, [itemsSubtotal, deliveryFee]);
+
+  // Real-time broadcast to Counter Pole Display screen
+  useEffect(() => {
+    if (!isOpen || !order) return;
+    try {
+      broadcastPoleDisplay({
+        status: "active",
+        shopId: shopId || order.shop_id || null,
+        orderNumber: order.order_number,
+        customerName: customerName || order.customer_name || undefined,
+        orderType: (order.order_type as any) || "takeaway",
+        items: items.map((it) => ({
+          name: it.name,
+          qty: it.qty,
+          price: it.price,
+          detail: it.detail,
+        })),
+        subtotal: itemsSubtotal,
+        deliveryFee: Number(deliveryFee) || 0,
+        total: grandTotal,
+      });
+    } catch {}
+  }, [isOpen, order, items, itemsSubtotal, deliveryFee, grandTotal, shopId, customerName]);
 
   if (!isOpen || !order) return null;
 
@@ -189,31 +229,34 @@ export default function OrderRecreateModal({
     );
   };
 
-  // Add Product from Menu
-  const handleAddMenuProduct = () => {
-    if (!selectedProductId) return;
-    const prod = availableProducts.find((p) => p.id === Number(selectedProductId));
-    if (!prod) return;
+  // Add Product from Catalog (With or Without Variation)
+  const handleAddProductItem = (
+    product: ShopMenuProduct,
+    variation?: { name: string; price: number; id?: string }
+  ) => {
+    const itemPrice = variation ? Number(variation.price) : Number(product.price);
+    const variationName = variation ? variation.name : undefined;
 
-    const existingIndex = items.findIndex((it) => it.id === prod.id && !it.detail);
+    // Check if identical item (same ID and same variation) is already in cart
+    const existingIndex = items.findIndex(
+      (it) => it.id === product.id && it.detail === variationName
+    );
+
     if (existingIndex >= 0) {
-      // Increase existing item quantity
-      handleUpdateQty(existingIndex, addQty);
+      handleUpdateQty(existingIndex, 1);
     } else {
       setItems((prev) => [
         ...prev,
         {
-          id: prod.id,
-          name: prod.name,
-          price: prod.price,
-          qty: addQty,
+          id: product.id,
+          name: product.name,
+          price: itemPrice,
+          qty: 1,
+          detail: variationName,
+          selected_variation: variation ? { name: variation.name, price: itemPrice } : null,
         },
       ]);
     }
-
-    setSelectedProductId("");
-    setAddQty(1);
-    setProductSearch("");
   };
 
   // Add Custom Item
@@ -226,13 +269,13 @@ export default function OrderRecreateModal({
       {
         name: customName.trim(),
         price: priceVal,
-        qty: addQty,
+        qty: Math.max(1, customQty),
       },
     ]);
 
     setCustomName("");
     setCustomPrice("");
-    setAddQty(1);
+    setCustomQty(1);
   };
 
   // Submit Recreated Order
@@ -275,7 +318,7 @@ export default function OrderRecreateModal({
           setErrorMsg(res.error || "Failed to recreate order.");
         }
       } catch (err: any) {
-        setErrorMsg(err?.message || "An unexpected error occurred.");
+        setErrorMsg(err?.message || "Failed to recreate order.");
       }
     });
   };
@@ -285,849 +328,1042 @@ export default function OrderRecreateModal({
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 9999,
-        background: "rgba(15, 23, 42, 0.75)",
-        backdropFilter: "blur(4px)",
+        zIndex: 99999,
+        background: "rgba(9, 9, 11, 0.88)",
+        backdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "16px",
+        padding: "10px",
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget && !isPending) onClose();
       }}
     >
+      {/* ── FULL WINDOW CONTAINER ────────────────────────────────────────── */}
       <div
         style={{
           background: "#ffffff",
-          borderRadius: "12px",
-          width: "100%",
-          maxWidth: "680px",
-          maxHeight: "92vh",
+          borderRadius: "8px",
+          width: "98vw",
+          maxWidth: "1520px",
+          height: "96vh",
+          maxHeight: "96vh",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          border: "1px solid #e2e8f0",
+          boxShadow: "0 25px 60px rgba(0, 0, 0, 0.45)",
+          border: "1px solid #cbd5e1",
           overflow: "hidden",
+          fontFamily: "system-ui, -apple-system, sans-serif",
         }}
       >
-        {/* ─── MODAL HEADER ─────────────────────────────────────── */}
+        {/* ── TOP HEADER BAR ──────────────────────────────────────────────── */}
         <div
           style={{
-            padding: "16px 20px",
+            padding: "12px 20px",
             borderBottom: "1px solid #e2e8f0",
-            background: "#f8fafc",
+            background: "#0f172a",
+            color: "#ffffff",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            flexShrink: 0,
           }}
         >
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  padding: "3px 8px",
-                  borderRadius: "4px",
-                  background: "#ea580c",
-                  color: "#ffffff",
-                  fontSize: "11px",
-                  fontWeight: 900,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.03em",
-                }}
-              >
-                <RefreshCw size={12} />
-                Order Recreate System
-              </span>
-
-              {/* Locked Order ID Badge */}
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  padding: "3px 9px",
-                  borderRadius: "4px",
-                  background: "#ecfdf5",
-                  color: "#065f46",
-                  border: "1px solid #a7f3d0",
-                  fontSize: "12px",
-                  fontWeight: 800,
-                  fontFamily: "monospace",
-                }}
-                title="Order ID & Tracking Number are strictly preserved"
-              >
-                <Lock size={12} />
-                <span>{order.order_number}</span>
-                <span style={{ fontSize: "10px", color: "#047857" }}>(ID KEPT SAME)</span>
-              </span>
-            </div>
-
-            <h2
-              style={{
-                margin: "6px 0 0",
-                fontSize: "17px",
-                fontWeight: 800,
-                color: "#0f172a",
-                letterSpacing: "-0.01em",
-              }}
-            >
-              Recreate &amp; Modify Customer Order
-            </h2>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isPending}
-            style={{
-              background: "#ffffff",
-              border: "1px solid #cbd5e1",
-              borderRadius: "6px",
-              padding: "6px",
-              color: "#64748b",
-              cursor: isPending ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* ─── MODAL SCROLLABLE BODY ────────────────────────────── */}
-        <div style={{ padding: "20px", overflowY: "auto", flex: 1 }}>
-          {errorMsg && (
+          {/* Left Title & Locked ID */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div
               style={{
-                marginBottom: "16px",
-                padding: "10px 14px",
-                background: "#fef2f2",
-                border: "1px solid #fecaca",
-                borderRadius: "6px",
-                color: "#dc2626",
-                fontSize: "12px",
+                width: 38,
+                height: 38,
+                borderRadius: "5px",
+                background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
+                justifyContent: "center",
+                color: "#ffffff",
+                boxShadow: "0 2px 8px rgba(234, 88, 12, 0.4)",
               }}
             >
-              <AlertCircle size={16} className="flex-shrink-0" />
-              <span>{errorMsg}</span>
+              <RefreshCw size={20} />
             </div>
-          )}
 
-          {/* Time & Customer Info Banner */}
-          <div
-            style={{
-              background: "#fff7ed",
-              border: "1px solid #fed7aa",
-              borderRadius: "8px",
-              padding: "12px 14px",
-              marginBottom: "18px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "10px",
-            }}
-          >
             <div>
-              <div style={{ fontSize: "12px", fontWeight: 800, color: "#9a3412" }}>
-                Customer: {order.customer_name || "Guest Customer"} •{" "}
-                <span style={{ color: "#c2410c" }}>{order.customer_phone || "No phone"}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <h2 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.2px" }}>
+                  Order Recreate &amp; Modify Terminal
+                </h2>
+
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                    background: "#22c55e",
+                    color: "#000000",
+                    fontSize: 11,
+                    fontWeight: 900,
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  <Lock size={11} />
+                  ORDER #{order.order_number} (ID KEPT SAME)
+                </span>
               </div>
-              <div style={{ fontSize: "11px", color: "#ea580c", marginTop: "2px" }}>
-                Original Time: {new Date(order.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                {" ➔ "}
-                <strong>
-                  New Time: {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} (Refreshes to NOW)
-                </strong>
-              </div>
+              <p style={{ margin: "2px 0 0", fontSize: 12, color: "#94a3b8" }}>
+                Add items, select sizes (Small, Medium, Large), or modify customer details with instant kitchen sync.
+              </p>
+            </div>
+          </div>
+
+          {/* Right Controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Status Selector */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#1e293b", padding: "4px 8px", borderRadius: "5px", border: "1px solid #334155" }}>
+              <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700 }}>STATUS:</span>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                style={{
+                  background: "#0f172a",
+                  color: "#ffffff",
+                  border: "1px solid #ea580c",
+                  borderRadius: "4px",
+                  padding: "4px 8px",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  outline: "none",
+                  cursor: "pointer",
+                }}
+              >
+                <option value="preparing">🍳 Preparing (Kitchen)</option>
+                <option value="ready">Ready (Pickup/Dispatch)</option>
+                <option value="delivered">✅ Delivered / Served</option>
+                <option value="pending">⏳ Pending Queue</option>
+              </select>
             </div>
 
+            {/* Reset 30-Min Timer Toggle */}
             <label
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                background: "#ffffff",
-                padding: "5px 10px",
-                borderRadius: "6px",
-                border: "1px solid #fdba74",
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#9a3412",
+                gap: 6,
+                background: resetTime ? "#14532d" : "#1e293b",
+                border: `1px solid ${resetTime ? "#22c55e" : "#334155"}`,
+                borderRadius: "5px",
+                padding: "6px 10px",
                 cursor: "pointer",
+                fontSize: 12,
+                fontWeight: 800,
+                color: resetTime ? "#86efac" : "#94a3b8",
               }}
+              title="Reset the 30-minute kitchen timer so kitchen prepares fresh"
             >
               <input
                 type="checkbox"
                 checked={resetTime}
                 onChange={(e) => setResetTime(e.target.checked)}
-                style={{ accentColor: "#ea580c" }}
+                style={{ accentColor: "#22c55e", cursor: "pointer" }}
               />
-              <span>Reset Time to Now (Active)</span>
+              <Clock size={13} />
+              <span>Reset 30m Timer</span>
             </label>
-          </div>
 
-          {/* ─── CUSTOMER & DELIVERY DETAILS ─────────────────────── */}
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isPending}
+              style={{
+                background: "#334155",
+                border: "1px solid #475569",
+                borderRadius: "5px",
+                padding: "6px 10px",
+                color: "#ffffff",
+                cursor: isPending ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              title="Close Recreate Terminal"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Error Banner */}
+        {errorMsg && (
           <div
             style={{
-              background: "#ffffff",
-              border: "1px solid #fed7aa",
-              borderRadius: "8px",
-              padding: "12px 14px",
-              marginBottom: "18px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+              padding: "10px 18px",
+              background: "#fef2f2",
+              borderBottom: "1px solid #fecaca",
+              color: "#dc2626",
+              fontSize: 12,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "10px",
-                paddingBottom: "8px",
-                borderBottom: "1px solid #ffedd5",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <User size={15} style={{ color: "#ea580c" }} />
-                <span style={{ fontSize: "12px", fontWeight: 800, color: "#9a3412", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  Customer Details &amp; Address
-                </span>
-              </div>
-              <span style={{ fontSize: "10.5px", color: "#9a3412", fontWeight: 600 }}>
-                Editable: Name, Number &amp; Address
-              </span>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px", marginBottom: "10px" }}>
-              {/* Customer Name */}
-              <div>
-                <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 800, color: "#475569", marginBottom: "4px" }}>
-                  <User size={12} style={{ color: "#ea580c" }} />
-                  CUSTOMER NAME:
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Ali Khan"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    color: "#0f172a",
-                    background: "#ffffff",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-
-              {/* Customer Phone */}
-              <div>
-                <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 800, color: "#475569", marginBottom: "4px" }}>
-                  <Phone size={12} style={{ color: "#ea580c" }} />
-                  PHONE / WHATSAPP NUMBER:
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 03001234567"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    fontFamily: "monospace",
-                    color: "#0f172a",
-                    background: "#ffffff",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Delivery Address */}
-            <div>
-              <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 800, color: "#475569", marginBottom: "4px" }}>
-                <MapPin size={12} style={{ color: "#ea580c" }} />
-                DELIVERY ADDRESS:
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. House 14, Street 2, Sector G-10/4, Islamabad"
-                value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "8px 10px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "#0f172a",
-                  background: "#ffffff",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
+            <AlertCircle size={16} />
+            <span>{errorMsg}</span>
           </div>
+        )}
 
-          {/* ─── ITEMS LIST ───────────────────────────────────────── */}
-          <div style={{ marginBottom: "18px" }}>
+        {/* ── TWO-COLUMN SPLIT POS BODY ───────────────────────────────────── */}
+        <div
+          style={{
+            flex: 1,
+            display: "grid",
+            gridTemplateColumns: "1.15fr 0.85fr",
+            overflow: "hidden",
+            background: "#f8fafc",
+          }}
+        >
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* LEFT PANEL: PRODUCT SEARCH, CATEGORY TABS & MENU VARIATIONS CATALOG */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          <div
+            style={{
+              borderRight: "1px solid #e2e8f0",
+              display: "flex",
+              flexDirection: "column",
+              background: "#ffffff",
+              overflow: "hidden",
+            }}
+          >
+            {/* Top Search & Catalog Tabs Bar */}
             <div
               style={{
+                padding: "14px 18px",
+                borderBottom: "1px solid #e2e8f0",
+                background: "#f8fafc",
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "8px",
+                flexDirection: "column",
+                gap: 10,
               }}
             >
-              <h3 style={{ fontSize: "13px", fontWeight: 800, color: "#1e293b", margin: 0 }}>
-                Order Items ({items.reduce((s, it) => s + it.qty, 0)} items)
-              </h3>
-              <span style={{ fontSize: "11px", color: "#64748b" }}>
-                Adjust quantities or remove items below
-              </span>
-            </div>
-
-            <div
-              style={{
-                border: "1px solid #e2e8f0",
-                borderRadius: "8px",
-                background: "#ffffff",
-                overflow: "hidden",
-              }}
-            >
-              {items.length === 0 ? (
-                <div style={{ padding: "20px", textAlign: "center", color: "#94a3b8", fontSize: "12px" }}>
-                  No items in order. Add items from the menu below.
-                </div>
-              ) : (
-                items.map((item, idx) => (
-                  <div
-                    key={idx}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {/* Search Input */}
+                <div
+                  style={{
+                    flex: 1,
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <Search
+                    size={16}
+                    color="#94a3b8"
+                    style={{ position: "absolute", left: 12 }}
+                  />
+                  <input
+                    type="text"
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder="Search menu (e.g. Tikka, Fajita, Supreme, Wings, Burger, Coke...)"
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "10px 12px",
-                      borderBottom: idx === items.length - 1 ? "none" : "1px solid #f1f5f9",
-                      background: idx % 2 === 0 ? "#ffffff" : "#fbfcfe",
-                      gap: "8px",
+                      width: "100%",
+                      padding: "9px 12px 9px 36px",
+                      borderRadius: "5px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#0f172a",
+                      outline: "none",
+                      boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
                     }}
-                  >
-                    {/* Item Name & Variation */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>
-                        {item.name}
-                      </div>
-                      {item.detail && (
-                        <span
-                          style={{
-                            display: "inline-block",
-                            fontSize: "10px",
-                            fontWeight: 700,
-                            background: "#fee2e2",
-                            color: "#dc2626",
-                            padding: "1px 5px",
-                            borderRadius: "3px",
-                            marginTop: "2px",
-                          }}
-                        >
-                          {item.detail}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Quantity Stepper */}
-                    <div
+                  />
+                  {productSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setProductSearch("")}
                       style={{
+                        position: "absolute",
+                        right: 8,
+                        background: "#e2e8f0",
+                        border: "none",
+                        borderRadius: "50%",
+                        width: 18,
+                        height: 18,
                         display: "flex",
                         alignItems: "center",
-                        gap: "4px",
-                        background: "#f1f5f9",
-                        padding: "3px 6px",
-                        borderRadius: "6px",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        color: "#64748b",
                       }}
                     >
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateQty(idx, -1)}
-                        style={{
-                          width: "22px",
-                          height: "22px",
-                          borderRadius: "4px",
-                          border: "none",
-                          background: "#ffffff",
-                          color: "#334155",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          cursor: "pointer",
-                          fontWeight: 900,
-                        }}
-                      >
-                        <span style={{ fontSize: "16px", lineHeight: "1", fontWeight: 900 }}>−</span>
-                      </button>
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
 
-                      <span
+                {/* Mode Selector */}
+                <div style={{ display: "flex", gap: 4, background: "#e2e8f0", padding: 3, borderRadius: "5px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveCatalogTab("menu")}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "4px",
+                      border: "none",
+                      background: activeCatalogTab === "menu" ? "#0f172a" : "transparent",
+                      color: activeCatalogTab === "menu" ? "#ffffff" : "#64748b",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
+                  >
+                    <Pizza size={13} />
+                    <span>Store Menu</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveCatalogTab("custom")}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "4px",
+                      border: "none",
+                      background: activeCatalogTab === "custom" ? "#0f172a" : "transparent",
+                      color: activeCatalogTab === "custom" ? "#ffffff" : "#64748b",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
+                  >
+                    <Plus size={13} />
+                    <span>Custom Item</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Category Pills Slider (Only in Menu mode) */}
+              {activeCatalogTab === "menu" && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    overflowX: "auto",
+                    paddingBottom: 4,
+                  }}
+                  className="hide-scrollbar"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategory("all")}
+                    style={{
+                      padding: "5px 12px",
+                      borderRadius: "5px",
+                      border: "1px solid",
+                      borderColor: selectedCategory === "all" ? "#ea580c" : "#cbd5e1",
+                      background: selectedCategory === "all" ? "#ea580c" : "#ffffff",
+                      color: selectedCategory === "all" ? "#ffffff" : "#475569",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    All Items ({availableProducts.length})
+                  </button>
+
+                  {categoriesList.map((cat) => {
+                    const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
+                    const count = availableProducts.filter(
+                      (p) => p.category_name?.toLowerCase() === cat.toLowerCase()
+                    ).length;
+
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setSelectedCategory(cat)}
                         style={{
-                          width: "24px",
-                          textAlign: "center",
-                          fontSize: "12px",
+                          padding: "5px 12px",
+                          borderRadius: "5px",
+                          border: "1px solid",
+                          borderColor: isSelected ? "#ea580c" : "#cbd5e1",
+                          background: isSelected ? "#ea580c" : "#ffffff",
+                          color: isSelected ? "#ffffff" : "#475569",
+                          fontSize: 12,
                           fontWeight: 800,
-                          color: "#0f172a",
-                        }}
-                      >
-                        {item.qty}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateQty(idx, 1)}
-                        style={{
-                          width: "22px",
-                          height: "22px",
-                          borderRadius: "4px",
-                          border: "none",
-                          background: "#ffffff",
-                          color: "#334155",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
                           cursor: "pointer",
-                          fontWeight: 900,
+                          whiteSpace: "nowrap",
                         }}
                       >
-                        <Plus size={12} />
+                        {cat} ({count})
                       </button>
-                    </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
-                    {/* Price per unit input */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                      <span style={{ fontSize: "11px", color: "#64748b" }}>@</span>
+            {/* Menu Items Catalog Scrollable Grid */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "16px 18px",
+              }}
+            >
+              {activeCatalogTab === "menu" ? (
+                loadingProducts ? (
+                  <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
+                    <RefreshCw size={24} className="animate-spin" style={{ margin: "0 auto 8px" }} />
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>Loading shop menu products...</p>
+                  </div>
+                ) : filteredProducts.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>No products matched your search.</p>
+                    <p style={{ margin: "4px 0 0", fontSize: 12 }}>Try another keyword or switch category.</p>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                      gap: 12,
+                    }}
+                  >
+                    {filteredProducts.map((prod) => {
+                      const hasVariations = prod.variations && prod.variations.length > 0;
+
+                      return (
+                        <div
+                          key={prod.id}
+                          style={{
+                            background: "#ffffff",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "6px",
+                            padding: "12px 14px",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <div>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 6 }}>
+                              <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#0f172a", lineHeight: 1.3 }}>
+                                {prod.name}
+                              </h4>
+                              {prod.category_name && (
+                                <span
+                                  style={{
+                                    fontSize: 9.5,
+                                    fontWeight: 800,
+                                    background: "#f1f5f9",
+                                    color: "#64748b",
+                                    padding: "2px 6px",
+                                    borderRadius: "4px",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {prod.category_name}
+                                </span>
+                              )}
+                            </div>
+
+                            <div style={{ margin: "4px 0 10px", fontSize: 12, color: "#64748b" }}>
+                              Base Price: <strong style={{ color: "#0f172a" }}>{currencySymbol} {Number(prod.price).toLocaleString()}</strong>
+                            </div>
+                          </div>
+
+                          {/* ── VARIATIONS SELECTION (Small, Medium, Large, etc.) ── */}
+                          {hasVariations ? (
+                            <div style={{ marginTop: 6 }}>
+                              <span style={{ fontSize: 10, fontWeight: 800, color: "#ea580c", textTransform: "uppercase", display: "block", marginBottom: 5 }}>
+                                Select Size / Variation:
+                              </span>
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(80px, 1fr))", gap: 5 }}>
+                                {prod.variations!.map((v, vIdx) => (
+                                  <button
+                                    key={vIdx}
+                                    type="button"
+                                    onClick={() => handleAddProductItem(prod, v)}
+                                    style={{
+                                      padding: "6px 4px",
+                                      borderRadius: "4px",
+                                      background: "#fff7ed",
+                                      border: "1px solid #fed7aa",
+                                      color: "#c2410c",
+                                      cursor: "pointer",
+                                      textAlign: "center",
+                                      transition: "all 0.12s ease",
+                                    }}
+                                    title={`Add ${prod.name} (${v.name})`}
+                                    className="hover:scale-105"
+                                  >
+                                    <div style={{ fontSize: 11, fontWeight: 900, textTransform: "capitalize" }}>
+                                      {v.name}
+                                    </div>
+                                    <div style={{ fontSize: 10, fontWeight: 700, color: "#9a3412", marginTop: 1 }}>
+                                      {currencySymbol}{Number(v.price).toLocaleString()}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            /* Single Item Direct Add */
+                            <button
+                              type="button"
+                              onClick={() => handleAddProductItem(prod)}
+                              style={{
+                                width: "100%",
+                                padding: "7px 10px",
+                                borderRadius: "4px",
+                                background: "#0f172a",
+                                color: "#ffffff",
+                                border: "none",
+                                fontSize: 12,
+                                fontWeight: 800,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 6,
+                              }}
+                              className="hover:scale-[1.02]"
+                            >
+                              <Plus size={14} />
+                              <span>Add to Order ({currencySymbol}{Number(prod.price).toLocaleString()})</span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              ) : (
+                /* Custom Open Item Form */
+                <div
+                  style={{
+                    maxWidth: 480,
+                    margin: "20px auto",
+                    background: "#ffffff",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: "8px",
+                    padding: "20px 24px",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 900, color: "#0f172a" }}>
+                    ➕ Add Custom / Open Item
+                  </h3>
+                  <p style={{ margin: "0 0 16px", fontSize: 12, color: "#64748b" }}>
+                    Punch special customer requests, off-menu dishes, or custom fees.
+                  </p>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: 11, fontWeight: 800, color: "#475569", marginBottom: 4 }}>
+                        ITEM NAME / DESCRIPTION:
+                      </label>
                       <input
-                        type="number"
-                        min="0"
-                        value={item.price}
-                        onChange={(e) => handleUpdatePrice(idx, Number(e.target.value) || 0)}
+                        type="text"
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        placeholder="e.g. Extra Cheese Slice, Custom Sauce, Dip..."
                         style={{
-                          width: "70px",
-                          padding: "4px 6px",
-                          fontSize: "12px",
-                          fontWeight: 700,
+                          width: "100%",
+                          padding: "8px 12px",
+                          borderRadius: "5px",
                           border: "1px solid #cbd5e1",
-                          borderRadius: "4px",
-                          textAlign: "right",
+                          fontSize: 13,
+                          outline: "none",
+                          boxSizing: "border-box",
                         }}
                       />
                     </div>
 
-                    {/* Line Total */}
-                    <div
-                      style={{
-                        width: "80px",
-                        textAlign: "right",
-                        fontSize: "13px",
-                        fontWeight: 800,
-                        color: "#0f172a",
-                      }}
-                    >
-                      {currencySymbol}
-                      {(item.price * item.qty).toLocaleString()}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <div>
+                        <label style={{ display: "block", fontSize: 11, fontWeight: 800, color: "#475569", marginBottom: 4 }}>
+                          PRICE ({currencySymbol}):
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={customPrice}
+                          onChange={(e) => setCustomPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                          placeholder="e.g. 150"
+                          style={{
+                            width: "100%",
+                            padding: "8px 12px",
+                            borderRadius: "5px",
+                            border: "1px solid #cbd5e1",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            outline: "none",
+                            boxSizing: "border-box",
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: "block", fontSize: 11, fontWeight: 800, color: "#475569", marginBottom: 4 }}>
+                          QUANTITY:
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={customQty}
+                          onChange={(e) => setCustomQty(Math.max(1, Number(e.target.value) || 1))}
+                          style={{
+                            width: "100%",
+                            padding: "8px 12px",
+                            borderRadius: "5px",
+                            border: "1px solid #cbd5e1",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            outline: "none",
+                            boxSizing: "border-box",
+                          }}
+                        />
+                      </div>
                     </div>
 
-                    {/* Delete Item */}
                     <button
                       type="button"
-                      onClick={() => handleRemoveItem(idx)}
-                      title="Remove item from order"
+                      onClick={handleAddCustomItem}
+                      disabled={!customName.trim()}
                       style={{
-                        background: "transparent",
+                        marginTop: 6,
+                        padding: "10px",
+                        borderRadius: "5px",
+                        background: "#ea580c",
+                        color: "#ffffff",
                         border: "none",
-                        color: "#94a3b8",
-                        cursor: "pointer",
-                        padding: "4px",
+                        fontSize: 13,
+                        fontWeight: 900,
+                        cursor: !customName.trim() ? "not-allowed" : "pointer",
                       }}
-                      onMouseEnter={(e) => ((e.currentTarget as any).style.color = "#ef4444")}
-                      onMouseLeave={(e) => ((e.currentTarget as any).style.color = "#94a3b8")}
                     >
-                      <Trash2 size={15} />
+                      ➕ Add Custom Item To Order
                     </button>
                   </div>
-                ))
+                </div>
               )}
             </div>
           </div>
 
-          {/* ─── ADD MORE PRODUCTS / BURGER / PIZZA ───────────────── */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* RIGHT PANEL: ACTIVE ORDER ITEMS LIST & CUSTOMER BILLING SUMMARY   */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
           <div
             style={{
-              background: "#f8fafc",
-              border: "1px dashed #cbd5e1",
-              borderRadius: "8px",
-              padding: "14px",
-              marginBottom: "18px",
+              display: "flex",
+              flexDirection: "column",
+              background: "#ffffff",
+              overflow: "hidden",
             }}
           >
+            {/* Customer Details Bar / Accordion */}
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "10px",
-                flexWrap: "wrap",
-                gap: "8px",
+                padding: "12px 18px",
+                borderBottom: "1px solid #e2e8f0",
+                background: "#f8fafc",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <Plus size={14} className="text-orange-600" />
-                <span style={{ fontSize: "12px", fontWeight: 800, color: "#0f172a" }}>
-                  Add Product to Order (e.g. +1 Burger, Drink, Pizza)
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <User size={15} color="#ea580c" />
+                  <span style={{ fontSize: 13, fontWeight: 800, color: "#0f172a" }}>
+                    {customerName || "Customer Guest"}
+                  </span>
+                  {customerPhone && (
+                    <span style={{ fontSize: 12, color: "#64748b" }}>({customerPhone})</span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowCustomerDetails(!showCustomerDetails)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#ea580c",
+                    fontSize: 11,
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  <SlidersHorizontal size={12} />
+                  <span>{showCustomerDetails ? "Hide Info" : "Edit Customer Info"}</span>
+                </button>
+              </div>
+
+              {/* Editable Customer Info Drawer */}
+              {showCustomerDetails && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: 10,
+                    background: "#ffffff",
+                    borderRadius: "5px",
+                    border: "1px solid #cbd5e1",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Customer Name"
+                      style={{ padding: "6px 8px", fontSize: 12, borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                    />
+                    <input
+                      type="text"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="Mobile / WhatsApp Phone"
+                      style={{ padding: "6px 8px", fontSize: 12, borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    placeholder="Delivery Destination Address"
+                    style={{ padding: "6px 8px", fontSize: 12, borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                  />
+                  <input
+                    type="text"
+                    value={notesInput}
+                    onChange={(e) => setNotesInput(e.target.value)}
+                    placeholder="Special Kitchen / Preparation Notes"
+                    style={{ padding: "6px 8px", fontSize: 12, borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Cart Items List Header */}
+            <div
+              style={{
+                padding: "8px 18px",
+                background: "#f1f5f9",
+                borderBottom: "1px solid #e2e8f0",
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 11,
+                fontWeight: 800,
+                color: "#64748b",
+                textTransform: "uppercase",
+              }}
+            >
+              <span>Items in Order ({items.length})</span>
+              <span>Subtotal: {currencySymbol}{itemsSubtotal.toLocaleString()}</span>
+            </div>
+
+            {/* Scrollable Items Container */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "12px 18px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
+            >
+              {items.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+                  <ShoppingBag size={28} style={{ margin: "0 auto 8px" }} />
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>Your order cart is empty.</p>
+                  <p style={{ margin: "4px 0 0", fontSize: 12 }}>Click any product or variation from the left menu to add.</p>
+                </div>
+              ) : (
+                items.map((it, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "6px",
+                      padding: "10px 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                    }}
+                  >
+                    {/* Item Name & Variation Detail */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: "#0f172a" }}>
+                          {it.name}
+                        </span>
+                        {it.detail && (
+                          <span
+                            style={{
+                              background: "#ffedd5",
+                              color: "#c2410c",
+                              fontSize: 10,
+                              fontWeight: 900,
+                              padding: "1px 6px",
+                              borderRadius: "3px",
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            ✨ {it.detail}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Editable Price */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
+                        <span style={{ fontSize: 11, color: "#64748b" }}>Rate: {currencySymbol}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={it.price}
+                          onChange={(e) => handleUpdatePrice(idx, Number(e.target.value) || 0)}
+                          style={{
+                            width: 70,
+                            padding: "2px 4px",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            borderRadius: "3px",
+                            border: "1px solid #cbd5e1",
+                            color: "#0f172a",
+                          }}
+                          title="Custom unit rate override"
+                        />
+                        <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                          × {it.qty} = <strong style={{ color: "#0f172a" }}>{currencySymbol}{(it.price * it.qty).toLocaleString()}</strong>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Quantity Stepper & Delete */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          border: "1px solid #cbd5e1",
+                          borderRadius: "4px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateQty(idx, -1)}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            background: "#f1f5f9",
+                            border: "none",
+                            color: "#0f172a",
+                            fontWeight: 900,
+                            cursor: "pointer",
+                            fontSize: 14,
+                          }}
+                        >
+                          -
+                        </button>
+                        <span
+                          style={{
+                            width: 32,
+                            textAlign: "center",
+                            fontSize: 12,
+                            fontWeight: 800,
+                            color: "#0f172a",
+                          }}
+                        >
+                          {it.qty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateQty(idx, 1)}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            background: "#f1f5f9",
+                            border: "none",
+                            color: "#0f172a",
+                            fontWeight: 900,
+                            cursor: "pointer",
+                            fontSize: 14,
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(idx)}
+                        style={{
+                          background: "#fee2e2",
+                          border: "none",
+                          borderRadius: "4px",
+                          padding: "6px",
+                          color: "#dc2626",
+                          cursor: "pointer",
+                        }}
+                        title="Delete item"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* ── FINANCIAL BILLING FOOTER ───────────────────────────────── */}
+            <div
+              style={{
+                borderTop: "2px solid #e2e8f0",
+                background: "#f8fafc",
+                padding: "16px 20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13, color: "#64748b", fontWeight: 600 }}>Items Subtotal:</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#0f172a" }}>
+                  {currencySymbol} {itemsSubtotal.toLocaleString()}
                 </span>
               </div>
 
-              {/* Toggle Mode: Menu vs Custom */}
-              <div style={{ display: "flex", gap: "4px", background: "#e2e8f0", padding: "2px", borderRadius: "5px" }}>
-                <button
-                  type="button"
-                  onClick={() => setAddMode("menu")}
-                  style={{
-                    padding: "3px 8px",
-                    borderRadius: "4px",
-                    border: "none",
-                    background: addMode === "menu" ? "#ffffff" : "transparent",
-                    color: addMode === "menu" ? "#0f172a" : "#64748b",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  From Menu
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAddMode("custom")}
-                  style={{
-                    padding: "3px 8px",
-                    borderRadius: "4px",
-                    border: "none",
-                    background: addMode === "custom" ? "#ffffff" : "transparent",
-                    color: addMode === "custom" ? "#0f172a" : "#64748b",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  Custom Item
-                </button>
-              </div>
-            </div>
-
-            {addMode === "menu" ? (
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-                {/* Search / Select Product */}
-                <div style={{ flex: "2 1 220px", position: "relative" }}>
-                  <select
-                    value={selectedProductId}
-                    onChange={(e) => setSelectedProductId(e.target.value ? Number(e.target.value) : "")}
-                    style={{
-                      width: "100%",
-                      padding: "8px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid #cbd5e1",
-                      background: "#ffffff",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      color: "#0f172a",
-                      outline: "none",
-                    }}
-                  >
-                    <option value="">-- Select Product from Menu --</option>
-                    {filteredProducts.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} — {currencySymbol}
-                        {p.price} ({p.category_name || "Food"})
-                      </option>
-                    ))}
-                  </select>
+              {/* Delivery Fee Input */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <Bike size={14} color="#ea580c" />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#475569" }}>Delivery Surcharge:</span>
                 </div>
-
-                {/* Quantity */}
-                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                  <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>Qty:</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontSize: 12, color: "#64748b" }}>{currencySymbol}</span>
                   <input
                     type="number"
-                    min="1"
-                    value={addQty}
-                    onChange={(e) => setAddQty(Math.max(1, Number(e.target.value) || 1))}
+                    min="0"
+                    value={deliveryFee}
+                    onChange={(e) => setDeliveryFee(Math.max(0, Number(e.target.value) || 0))}
                     style={{
-                      width: "55px",
-                      padding: "7px 6px",
-                      borderRadius: "6px",
+                      width: 80,
+                      padding: "4px 8px",
+                      borderRadius: "4px",
                       border: "1px solid #cbd5e1",
-                      fontSize: "12px",
-                      fontWeight: 700,
-                      textAlign: "center",
+                      fontSize: 13,
+                      fontWeight: 800,
+                      color: "#0f172a",
+                      textAlign: "right",
                     }}
                   />
                 </div>
-
-                {/* Add Button */}
-                <button
-                  type="button"
-                  disabled={!selectedProductId}
-                  onClick={handleAddMenuProduct}
-                  style={{
-                    padding: "8px 14px",
-                    borderRadius: "6px",
-                    background: selectedProductId ? "#ea580c" : "#cbd5e1",
-                    color: "#ffffff",
-                    fontSize: "12px",
-                    fontWeight: 800,
-                    border: "none",
-                    cursor: selectedProductId ? "pointer" : "not-allowed",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <Plus size={14} />
-                  <span>Add Item</span>
-                </button>
               </div>
-            ) : (
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-                <input
-                  type="text"
-                  placeholder="Custom item name (e.g. Zinger Burger)"
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  style={{
-                    flex: "2 1 180px",
-                    padding: "8px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "12px",
-                  }}
-                />
-                <input
-                  type="number"
-                  placeholder="Price"
-                  value={customPrice}
-                  onChange={(e) => setCustomPrice(e.target.value === "" ? "" : Number(e.target.value))}
-                  style={{
-                    width: "80px",
-                    padding: "8px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "12px",
-                  }}
-                />
-                <input
-                  type="number"
-                  min="1"
-                  value={addQty}
-                  onChange={(e) => setAddQty(Math.max(1, Number(e.target.value) || 1))}
-                  style={{
-                    width: "55px",
-                    padding: "8px 6px",
-                    borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "12px",
-                    textAlign: "center",
-                  }}
-                />
-                <button
-                  type="button"
-                  disabled={!customName.trim()}
-                  onClick={handleAddCustomItem}
-                  style={{
-                    padding: "8px 14px",
-                    borderRadius: "6px",
-                    background: customName.trim() ? "#ea580c" : "#cbd5e1",
-                    color: "#ffffff",
-                    fontSize: "12px",
-                    fontWeight: 800,
-                    border: "none",
-                    cursor: customName.trim() ? "pointer" : "not-allowed",
-                  }}
-                >
-                  Add Custom
-                </button>
-              </div>
-            )}
-          </div>
 
-          {/* ─── RECREATE STATUS & REASON SETTINGS ─────────────────── */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: "12px",
-              marginBottom: "18px",
-            }}
-          >
-            {/* Status Selection */}
-            <div>
-              <label style={{ display: "block", fontSize: "11px", fontWeight: 800, color: "#475569", marginBottom: "4px" }}>
-                STATUS AFTER RECREATE:
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
+              {/* Grand Total Bar */}
+              <div
                 style={{
-                  width: "100%",
-                  padding: "8px 10px",
+                  padding: "12px 14px",
+                  background: "#0f172a",
                   borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  color: "#0f172a",
-                  background: "#ffffff",
+                  color: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
                 }}
               >
-                <option value="preparing">In Oven / Preparing (Send to Kitchen) [Recommended]</option>
-                <option value="pending">Pending Approval</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="ready">Ready for Pickup / Dispatch</option>
-                <option value="delivered">Delivered / Completed</option>
-              </select>
-            </div>
-
-            {/* Audit / Recreate Reason */}
-            <div>
-              <label style={{ display: "block", fontSize: "11px", fontWeight: 800, color: "#475569", marginBottom: "4px" }}>
-                REASON / CUSTOMER REQUEST:
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Customer called to add 1 burger"
-                value={notesInput}
-                onChange={(e) => setNotesInput(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "8px 10px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "12px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* ─── BILL BREAKDOWN TOTALS ────────────────────────────── */}
-          <div
-            style={{
-              background: "#f1f5f9",
-              borderRadius: "8px",
-              padding: "12px 16px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "12px",
-            }}
-          >
-            <div>
-              <div style={{ fontSize: "12px", color: "#64748b" }}>
-                Items Subtotal: <strong>{currencySymbol}{itemsSubtotal.toLocaleString()}</strong>
-                {order.order_type === "delivery" && (
-                  <span style={{ marginLeft: "8px" }}>
-                    • Delivery:{" "}
-                    <input
-                      type="number"
-                      min="0"
-                      value={deliveryFee}
-                      onChange={(e) => setDeliveryFee(Number(e.target.value) || 0)}
-                      style={{ width: "50px", padding: "2px 4px", fontSize: "11px", borderRadius: "3px", border: "1px solid #cbd5e1" }}
-                    />
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 900, color: "#f97316", textTransform: "uppercase", display: "block" }}>
+                    TOTAL RECREATED BILL
                   </span>
-                )}
-              </div>
-              <div style={{ fontSize: "11px", color: "#059669", fontWeight: 700, marginTop: "2px" }}>
-                ✓ Order ID <strong>#{order.order_number}</strong> is preserved for customer tracking.
-              </div>
-            </div>
+                  <span style={{ fontSize: 11, color: "#94a3b8" }}>{items.length} Line Items</span>
+                </div>
 
-            <div style={{ textAlign: "right" }}>
-              <span style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", fontWeight: 800 }}>
-                Total Bill Amount:
-              </span>
-              <div style={{ fontSize: "20px", fontWeight: 900, color: "#0f172a" }}>
-                {currencySymbol}{grandTotal.toLocaleString()}
+                <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: "-0.5px" }}>
+                  {currencySymbol} {grandTotal.toLocaleString()}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={isPending}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    borderRadius: "5px",
+                    background: "#e2e8f0",
+                    color: "#475569",
+                    border: "none",
+                    fontSize: 13,
+                    fontWeight: 800,
+                    cursor: isPending ? "not-allowed" : "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveRecreatedOrder}
+                  disabled={isPending || items.length === 0}
+                  style={{
+                    flex: 2,
+                    padding: "12px",
+                    borderRadius: "5px",
+                    background: isPending ? "#78350f" : "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
+                    color: "#ffffff",
+                    border: "none",
+                    fontSize: 14,
+                    fontWeight: 900,
+                    cursor: isPending || items.length === 0 ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    boxShadow: "0 4px 14px rgba(234, 88, 12, 0.4)",
+                  }}
+                >
+                  {isPending ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      <span>Saving &amp; Recreating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={16} />
+                      <span>Save &amp; Recreate Order Now</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* ─── FOOTER ACTIONS ───────────────────────────────────── */}
-        <div
-          style={{
-            padding: "14px 20px",
-            borderTop: "1px solid #e2e8f0",
-            background: "#f8fafc",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "10px",
-          }}
-        >
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isPending}
-            style={{
-              padding: "9px 16px",
-              borderRadius: "6px",
-              border: "1px solid #cbd5e1",
-              background: "#ffffff",
-              color: "#64748b",
-              fontSize: "12px",
-              fontWeight: 700,
-              cursor: isPending ? "not-allowed" : "pointer",
-            }}
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            disabled={isPending || items.length === 0}
-            onClick={handleSaveRecreatedOrder}
-            style={{
-              padding: "9px 20px",
-              borderRadius: "6px",
-              border: "none",
-              background: isPending ? "#cbd5e1" : "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
-              color: "#ffffff",
-              fontSize: "13px",
-              fontWeight: 800,
-              cursor: isPending || items.length === 0 ? "not-allowed" : "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              boxShadow: "0 2px 6px rgba(234, 88, 12, 0.3)",
-            }}
-          >
-            <RefreshCw size={15} className={isPending ? "animate-spin" : ""} />
-            <span>{isPending ? "Recreating Order..." : "Save & Recreate Order"}</span>
-          </button>
         </div>
       </div>
     </div>

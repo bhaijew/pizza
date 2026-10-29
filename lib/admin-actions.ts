@@ -32,6 +32,7 @@ import {
   sendWhatsAppRiderAlert,
   sendWhatsAppCustomerDispatchedAlert,
   sendWhatsAppDailyClosingAlert,
+  sendWhatsAppReviewPrompt,
 } from "@/lib/whatsapp";
 import {
   getCurrentBusinessDate,
@@ -1546,6 +1547,30 @@ export async function updateOrderStatus(
 
   if (error) return { error: error.message };
 
+  // Automated Post-Order Review Prompt via WhatsApp when marked delivered
+  if (status === "delivered") {
+    try {
+      const { data: ord } = await db
+        .from("orders")
+        .select("order_number, customer_name, customer_phone, shop_id, notes")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (ord && ord.customer_phone && !ord.notes?.includes("[REVIEW_PROMPT_SENT]")) {
+        const updatedNotes = ord.notes ? `${ord.notes} [REVIEW_PROMPT_SENT]` : "[REVIEW_PROMPT_SENT]";
+        await db.from("orders").update({ notes: updatedNotes }).eq("id", id);
+        sendWhatsAppReviewPrompt({
+          customerPhone: ord.customer_phone,
+          customerName: ord.customer_name,
+          orderNumber: ord.order_number,
+          shopId: ord.shop_id,
+        }).catch((e) => console.warn("[Auto Review Prompt Error]:", e));
+      }
+    } catch (e) {
+      console.warn("[Auto Review Prompt Check Exception]:", e);
+    }
+  }
+
   dbCache.invalidateTag("orders");
   revalidatePath("/admin/orders");
   revalidatePath("/admin/kitchen");
@@ -2148,53 +2173,88 @@ export async function recreateOrder(params: RecreateOrderParams): Promise<{
 /**
  * Fetch available shop products for adding to recreated orders.
  */
-export async function getShopMenuProducts(shopId?: number | null): Promise<{
+export interface ShopMenuProduct {
   id: number;
   name: string;
   price: number;
   category_name?: string;
-  is_available: boolean;
-}[]> {
+  category_id?: number | null;
+  is_available?: boolean;
+  image_url?: string | null;
+  variations?: { id?: string; name: string; price: number; is_default?: boolean }[] | null;
+}
+
+export async function getShopMenuProducts(shopId?: number | null): Promise<ShopMenuProduct[]> {
   try {
     const db = createAdminClient();
     let query = db
       .from("products")
-      .select("id, name, price, is_available, category:categories(name)")
+      .select("id, name, price, is_available, variations, image_url, category:categories(id, name)")
       .eq("is_available", true)
       .order("name", { ascending: true });
 
     if (shopId) {
-      query = query.eq("shop_id", shopId);
-    } else {
-      query = query.is("shop_id", null);
+      query = query.or(`shop_id.eq.${shopId},shop_id.is.null`);
     }
 
     const { data, error } = await query;
-    if (error || !data) {
+    if (error || !data || data.length === 0) {
       // Fallback without category join
-      const { data: fallbackData } = await db
+      let fallbackQuery = db
         .from("products")
-        .select("id, name, price, is_available")
+        .select("id, name, price, is_available, variations, image_url")
         .eq("is_available", true)
         .order("name", { ascending: true });
+
+      if (shopId) {
+        fallbackQuery = fallbackQuery.or(`shop_id.eq.${shopId},shop_id.is.null`);
+      }
+
+      const { data: fallbackData } = await fallbackQuery;
       return (
-        fallbackData?.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          price: Number(p.price) || 0,
-          category_name: "General",
-          is_available: p.is_available,
-        })) || []
+        fallbackData?.map((p: any) => {
+          let parsedVars: any[] = [];
+          if (Array.isArray(p.variations)) {
+            parsedVars = p.variations;
+          } else if (typeof p.variations === "string") {
+            try {
+              parsedVars = JSON.parse(p.variations);
+            } catch {}
+          }
+          return {
+            id: p.id,
+            name: p.name,
+            price: Number(p.price) || 0,
+            category_name: "General",
+            category_id: null,
+            is_available: p.is_available,
+            image_url: p.image_url || null,
+            variations: parsedVars,
+          };
+        }) || []
       );
     }
 
-    return data.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      price: Number(p.price) || 0,
-      category_name: p.category?.name || "General",
-      is_available: p.is_available,
-    }));
+    return data.map((p: any) => {
+      let parsedVars: any[] = [];
+      if (Array.isArray(p.variations)) {
+        parsedVars = p.variations;
+      } else if (typeof p.variations === "string") {
+        try {
+          parsedVars = JSON.parse(p.variations);
+        } catch {}
+      }
+      return {
+        id: p.id,
+        name: p.name,
+        price: Number(p.price) || 0,
+        category_name: p.category?.name || "General",
+        category_id: p.category?.id || null,
+        is_available: p.is_available,
+        image_url: p.image_url || null,
+        variations: parsedVars,
+      };
+    });
   } catch {
     return [];
   }

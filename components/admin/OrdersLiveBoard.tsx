@@ -2,7 +2,13 @@
 
 import { useState, useEffect, useMemo, useTransition, useCallback } from "react";
 import type { Order } from "@/types/menu";
-import { updateOrderStatus, assignOrderRider, triggerRiderWhatsAppAlert, deleteOrder } from "@/lib/admin-actions";
+import {
+  updateOrderStatus,
+  assignOrderRider,
+  triggerRiderWhatsAppAlert,
+  deleteOrder,
+  type ShopMenuProduct,
+} from "@/lib/admin-actions";
 import { createClient } from "@/utils/supabase/client";
 import { isOrderInTodayShift } from "@/lib/business-hours";
 import {
@@ -50,13 +56,7 @@ interface OrdersLiveBoardProps {
   shopName?: string;
   shopAddress?: string | null;
   shopPhone?: string | null;
-  availableProducts?: {
-    id: number;
-    name: string;
-    price: number;
-    category_name?: string;
-    is_available?: boolean;
-  }[];
+  availableProducts?: ShopMenuProduct[];
   userRole?: "admin" | "sub_admin" | "staff";
   canCancelOrders?: boolean;
   openingTime?: string;
@@ -1920,29 +1920,68 @@ export default function OrdersLiveBoard({
                     {/* ROW 1: Primary Order Status Workflow */}
                     <div style={{ display: "flex", gap: "5px", width: "100%" }}>
                       {order.status === "delivered" ? (
-                        <div
-                          style={{
-                            width: "100%",
-                            height: "32px",
-                            padding: "0 8px",
-                            borderRadius: "6px",
-                            background: "#f0fdf4",
-                            border: "1px solid #bbf7d0",
-                            color: "#166534",
-                            fontSize: "11.5px",
-                            fontWeight: 800,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "5px",
-                          }}
-                        >
-                          <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-                          <span>
-                            {getOrderServiceInfo(order).tableNumber
-                              ? `Delivered & Verified at Table #${getOrderServiceInfo(order).tableNumber} ✓`
-                              : "Delivered & Verified ✓"}
-                          </span>
+                        <div style={{ display: "flex", gap: "5px", width: "100%" }}>
+                          <div
+                            style={{
+                              flex: 1,
+                              height: "32px",
+                              padding: "0 8px",
+                              borderRadius: "6px",
+                              background: "#f0fdf4",
+                              border: "1px solid #bbf7d0",
+                              color: "#166534",
+                              fontSize: "11px",
+                              fontWeight: 800,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "5px",
+                            }}
+                          >
+                            <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
+                            <span>
+                              {getOrderServiceInfo(order).tableNumber
+                                ? `Delivered Table #${getOrderServiceInfo(order).tableNumber}`
+                                : "Delivered & Verified ✓"}
+                            </span>
+                          </div>
+
+                          {order.customer_phone && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  const { dispatchReviewPromptAlert } = await import("@/lib/review-actions");
+                                  const res = await dispatchReviewPromptAlert(order.order_number);
+                                  if (res.success) {
+                                    alert(`⭐ WhatsApp 5-Star Review Prompt sent to ${order.customer_phone}!`);
+                                  } else {
+                                    alert(res.error || "Could not send WhatsApp alert.");
+                                  }
+                                } catch (e: any) {
+                                  alert(e?.message || "Error dispatching alert");
+                                }
+                              }}
+                              style={{
+                                height: "32px",
+                                padding: "0 8px",
+                                borderRadius: "6px",
+                                background: "#fffbeb",
+                                border: "1px solid #fde68a",
+                                color: "#b45309",
+                                fontSize: "11px",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                whiteSpace: "nowrap",
+                              }}
+                              title="Send 5-Star Google Review Prompt to Customer WhatsApp"
+                            >
+                              <span>⭐ Review WA</span>
+                            </button>
+                          )}
                         </div>
                       ) : order.status === "cancelled" ? (
                         <div

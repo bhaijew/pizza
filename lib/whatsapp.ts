@@ -456,3 +456,111 @@ export async function sendWhatsAppDailyClosingAlert(input: SendWhatsAppDailyClos
     whatsappUrl,
   };
 }
+
+export interface SendWhatsAppReviewPromptInput {
+  customerPhone: string;
+  customerName?: string | null;
+  orderNumber: string;
+  shopId?: number | null;
+  shopSlug?: string | null;
+}
+
+/**
+ * Dispatch automated post-delivery review prompt invitation to customer
+ */
+export async function sendWhatsAppReviewPrompt({
+  customerPhone,
+  customerName,
+  orderNumber,
+  shopId,
+}: SendWhatsAppReviewPromptInput): Promise<{
+  success: boolean;
+  messageId?: string;
+  error?: string;
+  reviewUrl?: string;
+}> {
+  const appBaseUrl = getAppBaseUrl();
+  const reviewUrl = `${appBaseUrl}/review/${encodeURIComponent(orderNumber)}`;
+  const creds = await getShopWhatsAppCredentials(shopId);
+  const shopName = creds.shopName || "Pizza Store";
+
+  const message = `Salam ${customerName || "Valued Customer"}! 🍕
+We hope you enjoyed your order #${orderNumber} from ${shopName}!
+
+🌟 How was your food and experience today?
+Please tap below to leave your quick 1-tap rating:
+${reviewUrl}
+
+Your feedback directly helps us serve you better. Thank you!`;
+
+  const res = await sendWhatsAppOrderAlert({
+    phone: customerPhone,
+    customerName,
+    orderId: orderNumber,
+    total: 0,
+    shopId,
+    customMessage: message,
+  });
+
+  return {
+    ...res,
+    reviewUrl,
+  };
+}
+
+export interface SendWhatsAppManagerComplaintAlertInput {
+  managerPhone: string;
+  orderNumber: string;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  rating: number;
+  tags?: string[];
+  feedback?: string | null;
+  shopId?: number | null;
+  shopName?: string;
+}
+
+/**
+ * Dispatch private Red Alert to Store Manager when customer rates 1-3 stars
+ * Prevents damaging negative public reviews on Google Maps
+ */
+export async function sendWhatsAppManagerComplaintAlert({
+  managerPhone,
+  orderNumber,
+  customerName,
+  customerPhone,
+  rating,
+  tags = [],
+  feedback,
+  shopId,
+  shopName = "SoleWhat Store",
+}: SendWhatsAppManagerComplaintAlertInput): Promise<{
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}> {
+  const stars = "⭐".repeat(Math.max(1, Math.min(5, rating)));
+  const tagList = tags.length > 0 ? tags.join(", ") : "Customer dissatisfaction";
+  const feedbackText = feedback?.trim() ? `\n📝 *Customer Note:*\n"${feedback.trim()}"` : "";
+
+  const alertMessage = `🚨 *CUSTOMER COMPLAINT RED ALERT* 🚨
+🏪 Store: *${shopName}*
+🧾 Order: *#${orderNumber}*
+👤 Customer: *${customerName || "Valued Customer"}* (${customerPhone || "N/A"})
+⚠️ Rating: *${rating}/5 Stars* (${stars})
+🚩 Issues Flagged: *${tagList}*${feedbackText}
+
+🛡️ *REPUTATION GUARD ACTIVE:*
+The customer was NOT redirected to Google Maps. This review was kept private.
+📲 *Immediate Action:* Please call the customer now to resolve the issue and save store reputation!`;
+
+  return sendWhatsAppOrderAlert({
+    phone: managerPhone,
+    customerName: "Store Manager",
+    orderId: `ALERT-${orderNumber}`,
+    total: 0,
+    shopId,
+    customMessage: alertMessage,
+  });
+}
+

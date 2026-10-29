@@ -45,6 +45,14 @@ import NavigationProgressBar from "@/components/admin/NavigationProgressBar";
 import SoleWhatLogo from "@/components/SoleWhatLogo";
 import { BusinessType, BUSINESS_THEMES, BusinessTheme } from "@/lib/business-themes";
 
+const MonitorIcon = ({ className, size = 16 }: { className?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect width="20" height="14" x="2" y="3" rx="2" />
+    <line x1="8" x2="16" y1="21" y2="21" />
+    <line x1="12" x2="12" y1="17" y2="21" />
+  </svg>
+);
+
 const LayoutIcon = ({ className, size = 16 }: { className?: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <rect width="18" height="18" x="3" y="3" rx="2" />
@@ -117,6 +125,13 @@ const NAV_GROUPS: NavGroup[] = [
         badge: "KDS",
         badgeColor: "#f97316",
         icon: ChefHat,
+      },
+      {
+        label: "Counter Pole Display",
+        href: "/display",
+        badge: "2-SCREEN",
+        badgeColor: "#3b82f6",
+        icon: MonitorIcon,
       },
       {
         label: "Sole-What",
@@ -1031,6 +1046,35 @@ export default function AdminShell({
                 </span>
               </div>
             </div>
+
+            {/* Open Counter Pole Display button */}
+            <Link
+              href={shopSlug ? `/display?shop=${encodeURIComponent(shopSlug)}` : "/display"}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "5px 11px",
+                borderRadius: "5px",
+                background: isLight ? "#eff6ff" : "rgba(59, 130, 246, 0.15)",
+                border: isLight ? "1px solid #bfdbfe" : "1px solid rgba(59, 130, 246, 0.3)",
+                fontSize: "11.5px",
+                fontWeight: 700,
+                color: isLight ? "#1d4ed8" : "#93c5fd",
+                textDecoration: "none",
+                transition: "all 0.15s ease",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
+              }}
+              className="hover:scale-105"
+              title="Open Customer-Facing Counter Dual Screen (Pole Display)"
+            >
+              <MonitorIcon size={13} />
+              <span>Pole Display</span>
+              <ExternalLink size={10} style={{ opacity: 0.7 }} />
+            </Link>
 
             {/* Quick Kitchen Display button */}
             <Link

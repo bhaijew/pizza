@@ -11,7 +11,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { getTableScanSession } from "@/lib/table-session";
 import { ProductVariation, ExtraTopping } from "@/types/menu";
-import { sendWhatsAppOrderAlert } from "@/lib/whatsapp";
+import { sendWhatsAppOrderAlert, sendWhatsAppReviewPrompt } from "@/lib/whatsapp";
 import { processLoyaltyPoints } from "@/lib/promo-actions";
 import { syncCustomerFromOrder } from "@/lib/customer-actions";
 import { dbCache } from "@/lib/db-cache";
@@ -703,6 +703,16 @@ export async function confirmDeliveryByRider(
 
     if (updateErr) {
       return { success: false, error: updateErr.message };
+    }
+
+    // Automated WhatsApp Review Prompt on Rider Delivery
+    if (order.customer_phone && !order.notes?.includes("[REVIEW_PROMPT_SENT]")) {
+      sendWhatsAppReviewPrompt({
+        customerPhone: order.customer_phone,
+        customerName: order.customer_name,
+        orderNumber: order.order_number,
+        shopId: order.shop_id,
+      }).catch((e) => console.warn("[Rider Confirm Review Prompt Error]:", e));
     }
 
     // Revalidate live feeds
