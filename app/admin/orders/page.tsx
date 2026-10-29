@@ -15,8 +15,8 @@ export default async function AdminOrdersPage() {
   let ordersQuery = db
     .from("orders")
     .select("*")
-    .gte("created_at", shiftBoundary.activeShiftStartUtc)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(120);
 
   if (activeShop.shopId) {
     ordersQuery = ordersQuery.eq("shop_id", activeShop.shopId);

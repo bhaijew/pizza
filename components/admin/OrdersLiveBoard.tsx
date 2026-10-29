@@ -515,9 +515,11 @@ export default function OrdersLiveBoard({
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      // Exclude orders from closed previous shifts
-      if (currentLastClosedAt && new Date(order.created_at).getTime() <= new Date(currentLastClosedAt).getTime()) {
-        return false;
+      // Exclude orders from closed previous shifts on active/today filters (allow viewing all on 'all' tab)
+      if (activeTab !== "all") {
+        if (currentLastClosedAt && new Date(order.created_at).getTime() <= new Date(currentLastClosedAt).getTime()) {
+          return false;
+        }
       }
 
       // Hold back unverified online menu orders until verified by admin at /admin/verify

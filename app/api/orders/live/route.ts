@@ -41,17 +41,15 @@ export async function GET(request: NextRequest) {
 
   let query = db.from("orders").select("*");
 
-  // Only show orders belonging to current active shift (after previous shift closing)
-  if (shiftBoundary.activeShiftStartUtc) {
-    query = query.gte("created_at", shiftBoundary.activeShiftStartUtc);
-  }
-
   if (isKitchen) {
-    // Kitchen shows pending (new tickets), confirmed, and preparing orders
-    query = query.in("status", ["pending", "confirmed", "preparing"]);
+    // Kitchen shows active tickets for current open shift
+    if (shiftBoundary.activeShiftStartUtc) {
+      query = query.gte("created_at", shiftBoundary.activeShiftStartUtc);
+    }
+    query = query.in("status", ["pending", "confirmed", "preparing"]).order("created_at", { ascending: true });
   } else {
-    // Admin orders board: recent active pipeline orders for the shift
-    query = query.order("created_at", { ascending: false }).limit(100);
+    // Admin orders board: always fetch latest pipeline orders so all tabs (Active, Today, All) remain fast and populated
+    query = query.order("created_at", { ascending: false }).limit(120);
   }
 
   if (parsedShopId !== null) {
