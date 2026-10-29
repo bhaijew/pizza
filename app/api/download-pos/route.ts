@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request: NextRequest) {
   const downloadUrl = new URL(
-    "/release/Sole%20What%20Setup%201.6.2.exe",
+    "/release/Sole-What-Setup-1.6.7.exe",
     request.url
   );
   return NextResponse.redirect(downloadUrl, 307);
