@@ -990,7 +990,7 @@ export default function AdminShell({
                 alignItems: "center",
                 gap: "7px",
                 padding: "5px 12px",
-                borderRadius: "20px",
+                borderRadius: "5px",
                 background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.06)",
                 border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
                 color: isLight ? "#0f172a" : "#ffffff",
@@ -1031,55 +1031,6 @@ export default function AdminShell({
                 </span>
               </div>
             </div>
-
-            {/* Live Audio Status Pill */}
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "5px 10px",
-                borderRadius: "5px",
-                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.12)",
-                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.3)",
-                fontSize: "11.5px",
-                fontWeight: 700,
-                color: isLight ? "#16a34a" : "#34d399",
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-              }}
-              title="Real-time order sound alerts active"
-            >
-              <Volume2 size={13} className="text-emerald-500" style={{ flexShrink: 0 }} />
-              <span>Audio Active</span>
-            </div>
-
-            {/* Direct Download FloDesktop POS Setup Button (No Popup) */}
-            <a
-              href="/release/Sole%20What%20Setup%201.6.2.exe"
-              download="Sole What Setup 1.6.2.exe"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "5px 11px",
-                borderRadius: "5px",
-                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
-                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.35)",
-                fontSize: "11.5px",
-                fontWeight: 800,
-                color: isLight ? "#16a34a" : "#34d399",
-                textDecoration: "none",
-                transition: "all 0.15s ease",
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-              }}
-              className="hover:scale-105"
-              title="Download FloDesktop POS Setup 1.6.2.exe (Direct Download)"
-            >
-              <Download size={13} style={{ flexShrink: 0 }} />
-              <span>Download POS</span>
-            </a>
 
             {/* Quick Kitchen Display button */}
             <Link
@@ -1147,7 +1098,7 @@ export default function AdminShell({
                     alignItems: "center",
                     background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.08)",
                     padding: "2px",
-                    borderRadius: "8px",
+                    borderRadius: "5px",
                     border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
                     flexShrink: 0,
                   }}
@@ -1159,7 +1110,7 @@ export default function AdminShell({
                     onClick={() => handleRoleSwitch("admin")}
                     style={{
                       padding: "3px 8px",
-                      borderRadius: "6px",
+                      borderRadius: "5px",
                       fontSize: "11px",
                       fontWeight: 800,
                       cursor: "pointer",
@@ -1182,7 +1133,7 @@ export default function AdminShell({
                     onClick={() => handleRoleSwitch("staff")}
                     style={{
                       padding: "3px 8px",
-                      borderRadius: "6px",
+                      borderRadius: "5px",
                       fontSize: "11px",
                       fontWeight: 800,
                       cursor: "pointer",
@@ -1209,7 +1160,7 @@ export default function AdminShell({
                   alignItems: "center",
                   gap: "7px",
                   padding: "4px 10px 4px 4px",
-                  borderRadius: "20px",
+                  borderRadius: "5px",
                   background: isAdmin
                     ? isLight ? "#fffbeb" : "rgba(245, 158, 11, 0.12)"
                     : isLight ? "#ecfdf5" : "rgba(16, 185, 129, 0.12)",
@@ -1224,7 +1175,7 @@ export default function AdminShell({
                   style={{
                     width: "26px",
                     height: "26px",
-                    borderRadius: "50%",
+                    borderRadius: "5px",
                     background: isAdmin
                       ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
                       : "linear-gradient(135deg, #10b981 0%, #047857 100%)",
@@ -1328,7 +1279,7 @@ export default function AdminShell({
                 alignItems: "center",
                 gap: "5px",
                 padding: "4px 8px",
-                borderRadius: "14px",
+                borderRadius: "5px",
                 background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.08)",
                 border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.14)",
                 color: isLight ? "#0f172a" : "#ffffff",
@@ -1363,29 +1314,6 @@ export default function AdminShell({
                 PKT
               </span>
             </div>
-
-            {/* Mobile Direct POS Download Button */}
-            <a
-              href="/release/Sole%20What%20Setup%201.6.2.exe"
-              download="Sole What Setup 1.6.2.exe"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-                padding: "5px 9px",
-                borderRadius: "6px",
-                background: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.15)",
-                border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(16, 185, 129, 0.35)",
-                color: isLight ? "#16a34a" : "#34d399",
-                fontSize: "11px",
-                fontWeight: 800,
-                textDecoration: "none",
-              }}
-              title="Download FloDesktop POS Setup 1.6.2.exe"
-            >
-              <Download size={13} />
-              <span>POS</span>
-            </a>
 
             {/* Mobile Slider / Menu Open Button */}
             <button
