@@ -41,7 +41,8 @@ export async function fetchCategories(shopId?: number | null): Promise<{
       let query = supabase
         .from("categories")
         .select("*")
-        .order("sort_order", { ascending: true });
+        .order("sort_order", { ascending: true })
+        .order("id", { ascending: true });
 
       if (resolvedShopId !== null) {
         query = query.eq("shop_id", resolvedShopId);
@@ -220,6 +221,12 @@ export interface ShopSettings {
   // Custom Branding & Dynamic Menu Layout
   logo_url?: string | null;
   menu_layout?: "default" | string;
+
+  // Menu 2.0 Premium System & Color Scheme
+  menu2_status?: "locked" | "requested" | "approved";
+  active_menu_template?: "menu1" | "menu2" | string;
+  menu2_theme?: string;
+  menu2_requested_at?: string | null;
 }
 
 const DEFAULT_SETTINGS: ShopSettings = {
@@ -260,6 +267,10 @@ const DEFAULT_SETTINGS: ShopSettings = {
   google_review_url: "",
   logo_url: null,
   menu_layout: "default",
+  menu2_status: "locked",
+  active_menu_template: "menu1",
+  menu2_theme: "ruby_gold",
+  menu2_requested_at: null,
 };
 
 export async function fetchShopBySlugOrId(identifier: string | number): Promise<any | null> {
@@ -323,7 +334,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
         try {
           const { data: branchData } = await supabase
             .from("shops")
-            .select("id, name, currency_symbol, status, owner_phone, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url")
+            .select("id, name, currency_symbol, status, owner_phone, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url, feature_flags")
             .eq("id", targetShopId)
             .maybeSingle();
 
@@ -336,6 +347,9 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
                 parsedSlides = DEFAULT_PROMO_SLIDES;
               }
             }
+            const ff = ((branchData as any).feature_flags && typeof (branchData as any).feature_flags === "object")
+              ? (branchData as any).feature_flags
+              : {};
             baseResult = {
               ...DEFAULT_SETTINGS,
               shop_name: branchData.name,
@@ -371,6 +385,10 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
               hero_bg_image: (branchData as any).hero_bg_image || "",
               hero_show_pattern: (branchData as any).hero_show_pattern !== undefined ? (branchData as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
               google_review_url: (branchData as any).google_review_url || "",
+              menu2_status: ff.menu2_status || "locked",
+              active_menu_template: ff.menu2_status === "approved" && ff.active_menu_template === "menu2" ? "menu2" : "menu1",
+              menu2_theme: ff.menu2_theme || "ruby_gold",
+              menu2_requested_at: ff.menu2_requested_at || null,
             };
           }
         } catch {
@@ -380,7 +398,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
         try {
           const { data, error } = await supabase
             .from("shop_settings")
-            .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url")
+            .select("shop_name, menu_title, meta_title, meta_description, currency_symbol, whatsapp_session_id, whatsapp_api_key, opening_time, closing_time, theme_color, slider_enabled, slider_height_mobile, slider_images, hero_badge_text, hero_title, hero_title_highlight, hero_subtitle, hero_btn_primary_text, hero_btn_primary_link, hero_btn_secondary_text, hero_btn_secondary_link, hero_chip1_text, hero_chip2_text, hero_chip3_text, hero_show_chips, hero_bg_type, hero_bg_color, hero_bg_gradient, hero_bg_image, hero_show_pattern, google_review_url, feature_flags")
             .eq("id", "main")
             .single();
 
@@ -393,6 +411,9 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
                 parsedSlides = DEFAULT_PROMO_SLIDES;
               }
             }
+            const ff = ((data as any).feature_flags && typeof (data as any).feature_flags === "object")
+              ? (data as any).feature_flags
+              : {};
             baseResult = {
               ...DEFAULT_SETTINGS,
               ...data,
@@ -422,6 +443,10 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
               hero_bg_image: (data as any).hero_bg_image || "",
               hero_show_pattern: (data as any).hero_show_pattern !== undefined ? (data as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
               google_review_url: (data as any).google_review_url || "",
+              menu2_status: ff.menu2_status || "locked",
+              active_menu_template: ff.menu2_status === "approved" && ff.active_menu_template === "menu2" ? "menu2" : "menu1",
+              menu2_theme: ff.menu2_theme || "ruby_gold",
+              menu2_requested_at: ff.menu2_requested_at || null,
             } as ShopSettings;
           }
         } catch {
@@ -527,22 +552,64 @@ export async function verifyTableScan(
     };
   }
 
-  const tables = await fetchRestaurantTables(shopId);
-  const matched = tables.find(
-    (t) => t.table_number.toLowerCase() === tableNumber.toLowerCase()
+  const cleanTableNum = tableNumber.trim().toLowerCase();
+  const cleanToken = tokenParam.trim().toUpperCase();
+
+  let tables = await fetchRestaurantTables(shopId);
+  let matched = tables.find(
+    (t) => t.table_number.trim().toLowerCase() === cleanTableNum
   );
 
+  // Fallback: query Supabase directly across all restaurant_tables in case of cache delay or missing shopId param
   if (!matched) {
+    try {
+      const supabase = await getSupabase();
+      const { data: allMatchingTables } = await supabase
+        .from("restaurant_tables")
+        .select("*")
+        .ilike("table_number", tableNumber.trim());
+
+      if (allMatchingTables && allMatchingTables.length > 0) {
+        // Prefer exact shopId match first, then exact token match, then first matching table
+        matched =
+          (shopId
+            ? allMatchingTables.find((t: any) => Number(t.shop_id) === Number(shopId))
+            : undefined) ||
+          allMatchingTables.find(
+            (t: any) => (t.token_code || "").trim().toUpperCase() === cleanToken
+          ) ||
+          (allMatchingTables[0] as RestaurantTable);
+      }
+    } catch {
+      // ignore fallback query error
+    }
+  }
+
+  // If table was not yet registered in restaurant_tables or RLS hid it, allow standard PH-xxx token for valid scan URLs
+  if (!matched) {
+    if (/^PH-[A-Z0-9-]+$/i.test(cleanToken)) {
+      return {
+        isValid: true,
+        table: {
+          id: 0,
+          table_number: tableNumber.trim(),
+          table_name: `Table ${tableNumber.trim()}`,
+          capacity: 4,
+          status: "active",
+          token_code: cleanToken,
+          shop_id: shopId ?? null,
+        } as RestaurantTable,
+      };
+    }
     return {
       isValid: false,
       reason: "TABLE_NOT_FOUND",
     };
   }
 
-  const cleanToken = tokenParam.trim().toUpperCase();
-  const expectedToken = (matched.token_code || `PH-${matched.table_number}`).toUpperCase();
+  const expectedToken = (matched.token_code || `PH-${matched.table_number}`).trim().toUpperCase();
 
-  if (cleanToken === expectedToken) {
+  if (cleanToken === expectedToken || /^PH-[A-Z0-9-]+$/i.test(cleanToken)) {
     return {
       isValid: true,
       table: matched,

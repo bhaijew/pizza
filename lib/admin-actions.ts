@@ -613,6 +613,49 @@ export async function deleteCategory(id: number): Promise<{ error: string | null
   return { error: null };
 }
 
+/**
+ * Bulk updates category display order (sort_order = 0, 1, 2...) so the Admin
+ * can control which category appears 1st, 2nd, 3rd on the live customer menu.
+ */
+export async function reorderCategories(
+  orderedCategoryIds: number[]
+): Promise<{ error: string | null; success: boolean }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, success: false };
+  }
+
+  try {
+    await Promise.all(
+      orderedCategoryIds.map((catId, index) => {
+        let q = db
+          .from("categories")
+          .update({ sort_order: index })
+          .eq("id", Number(catId));
+        if (activeShop.shopId) {
+          q = q.eq("shop_id", activeShop.shopId);
+        }
+        return q;
+      })
+    );
+
+    dbCache.invalidateTag("categories", "menu");
+    revalidatePath("/admin/categories");
+    revalidatePath("/admin/products");
+    revalidatePath("/");
+    revalidatePath("/menu2");
+    if (activeShop.shopSlug) {
+      revalidatePath(`/${activeShop.shopSlug}`);
+    }
+    return { error: null, success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to update category order", success: false };
+  }
+}
+
 // ─── PRODUCT ACTIONS ──────────────────────────────────────────────
 
 export async function createProduct(
@@ -1112,6 +1155,8 @@ export async function updateMenuUiSettings(input: {
   heroBgType?: string;
   heroBgGradient?: string;
   heroBgImage?: string;
+  activeMenuTemplate?: "menu1" | "menu2";
+  menu2Theme?: string;
 }): Promise<{ error: string | null; success: boolean }> {
   await requireAdmin();
   const db = createAdminClient();
@@ -1142,24 +1187,72 @@ export async function updateMenuUiSettings(input: {
 
   try {
     if (activeShop.shopId) {
+      if (input.menu2Theme !== undefined || input.activeMenuTemplate !== undefined) {
+        const { data: shopRow } = await db
+          .from("shops")
+          .select("feature_flags")
+          .eq("id", activeShop.shopId)
+          .maybeSingle();
+        const existingFlags =
+          shopRow && typeof (shopRow as any).feature_flags === "object" && (shopRow as any).feature_flags
+            ? { ...(shopRow as any).feature_flags }
+            : {};
+        if (input.menu2Theme) {
+          existingFlags.menu2_theme = input.menu2Theme;
+        }
+        if (input.activeMenuTemplate) {
+          existingFlags.active_menu_template =
+            existingFlags.menu2_status === "approved" && input.activeMenuTemplate === "menu2"
+              ? "menu2"
+              : "menu1";
+        }
+        payload.feature_flags = existingFlags;
+      }
+
       const { error } = await db.from("shops").update(payload).eq("id", activeShop.shopId);
       if (error) {
-        await db.from("shops").update({
+        const fallbackPayload: Record<string, any> = {
           theme_color: input.themeColor,
           slider_enabled: input.sliderEnabled,
           slider_height_mobile: input.sliderHeightMobile,
           slider_images: input.sliderImages,
-        }).eq("id", activeShop.shopId);
+        };
+        if (payload.feature_flags) fallbackPayload.feature_flags = payload.feature_flags;
+        await db.from("shops").update(fallbackPayload).eq("id", activeShop.shopId);
       }
     } else {
+      if (input.menu2Theme !== undefined || input.activeMenuTemplate !== undefined) {
+        const { data: settingsRow } = await db
+          .from("shop_settings")
+          .select("feature_flags")
+          .eq("id", "main")
+          .maybeSingle();
+        const existingFlags =
+          settingsRow && typeof (settingsRow as any).feature_flags === "object" && (settingsRow as any).feature_flags
+            ? { ...(settingsRow as any).feature_flags }
+            : {};
+        if (input.menu2Theme) {
+          existingFlags.menu2_theme = input.menu2Theme;
+        }
+        if (input.activeMenuTemplate) {
+          existingFlags.active_menu_template =
+            existingFlags.menu2_status === "approved" && input.activeMenuTemplate === "menu2"
+              ? "menu2"
+              : "menu1";
+        }
+        payload.feature_flags = existingFlags;
+      }
+
       const { error } = await db.from("shop_settings").update(payload).eq("id", "main");
       if (error) {
-        await db.from("shop_settings").update({
+        const fallbackPayload: Record<string, any> = {
           theme_color: input.themeColor,
           slider_enabled: input.sliderEnabled,
           slider_height_mobile: input.sliderHeightMobile,
           slider_images: input.sliderImages,
-        }).eq("id", "main");
+        };
+        if (payload.feature_flags) fallbackPayload.feature_flags = payload.feature_flags;
+        await db.from("shop_settings").update(fallbackPayload).eq("id", "main");
       }
     }
 
@@ -1167,10 +1260,90 @@ export async function updateMenuUiSettings(input: {
     revalidatePath("/admin/menu-ui");
     revalidatePath("/admin/settings");
     revalidatePath("/");
+    revalidatePath("/menu2");
     revalidatePath("/demo/menu");
+    if (activeShop.shopSlug) {
+      revalidatePath(`/${activeShop.shopSlug}`);
+    }
     return { error: null, success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to save UI & Theme settings", success: false };
+  }
+}
+
+/**
+ * Allows a Shop Admin to request Super Admin approval to unlock Premium Menu 2.0
+ */
+export async function requestMenu2Unlock(
+  preferredTheme: string = "ruby_gold"
+): Promise<{ error: string | null; success: boolean; status?: "requested" | "approved" }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, success: false };
+  }
+
+  try {
+    const targetShopId = activeShop.shopId;
+    if (targetShopId) {
+      const { data: shopRow } = await db
+        .from("shops")
+        .select("id, slug, feature_flags")
+        .eq("id", targetShopId)
+        .maybeSingle();
+
+      const existingFlags =
+        shopRow && typeof (shopRow as any).feature_flags === "object" && (shopRow as any).feature_flags
+          ? { ...(shopRow as any).feature_flags }
+          : {};
+
+      const nextStatus = existingFlags.menu2_status === "approved" ? "approved" : "requested";
+      const updatedFlags = {
+        ...existingFlags,
+        menu2_status: nextStatus,
+        menu2_theme: preferredTheme || existingFlags.menu2_theme || "ruby_gold",
+        menu2_requested_at: new Date().toISOString(),
+      };
+
+      const { error } = await db
+        .from("shops")
+        .update({ feature_flags: updatedFlags })
+        .eq("id", targetShopId);
+
+      if (error) return { error: error.message, success: false };
+    } else {
+      // Fallback: if no cookie shopId, update first shop + main shop_settings
+      const { data: firstShop } = await db
+        .from("shops")
+        .select("id, feature_flags")
+        .order("id", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (firstShop) {
+        const existingFlags =
+          typeof (firstShop as any).feature_flags === "object" && (firstShop as any).feature_flags
+            ? { ...(firstShop as any).feature_flags }
+            : {};
+        const updatedFlags = {
+          ...existingFlags,
+          menu2_status: existingFlags.menu2_status === "approved" ? "approved" : "requested",
+          menu2_theme: preferredTheme || existingFlags.menu2_theme || "ruby_gold",
+          menu2_requested_at: new Date().toISOString(),
+        };
+        await db.from("shops").update({ feature_flags: updatedFlags }).eq("id", firstShop.id);
+      }
+    }
+
+    dbCache.invalidateTag("settings", "shops");
+    revalidatePath("/admin/menu-ui");
+    revalidatePath("/super-admin");
+    revalidatePath("/menu2");
+    return { error: null, success: true, status: "requested" };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to send Menu 2.0 unlock request", success: false };
   }
 }
 
@@ -1955,7 +2128,7 @@ export async function quickRestockProduct(
 export async function createRestaurantTable(
   _prev: { error: string | null; success: boolean },
   formData: FormData
-): Promise<{ error: string | null; success: boolean }> {
+): Promise<{ error: string | null; success: boolean; table?: any }> {
   await requireAdmin();
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
@@ -1975,14 +2148,18 @@ export async function createRestaurantTable(
 
   const token_code = `PH-${Math.floor(100 + Math.random() * 900)}`;
 
-  const { error } = await db.from("restaurant_tables").insert({
-    table_number,
-    table_name,
-    capacity,
-    status,
-    token_code,
-    shop_id: activeShop.shopId || null,
-  });
+  const { data: insertedRow, error } = await db
+    .from("restaurant_tables")
+    .insert({
+      table_number,
+      table_name,
+      capacity,
+      status,
+      token_code,
+      shop_id: activeShop.shopId || null,
+    })
+    .select("*")
+    .single();
 
   if (error) {
     if (error.code === "23505") {
@@ -1994,7 +2171,7 @@ export async function createRestaurantTable(
   dbCache.invalidateTag("tables");
   revalidatePath("/admin/tables");
   revalidatePath("/table");
-  return { error: null, success: true };
+  return { error: null, success: true, table: insertedRow };
 }
 
 export async function deleteRestaurantTable(id: string | number): Promise<{ error: string | null }> {

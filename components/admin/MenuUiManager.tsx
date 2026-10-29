@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition, useMemo } from "react";
-import { updateMenuUiSettings } from "@/lib/admin-actions";
+import { updateMenuUiSettings, requestMenu2Unlock } from "@/lib/admin-actions";
 import type { ShopSettings } from "@/lib/menu-data";
 import { DEFAULT_PROMO_SLIDES, type PromoSlide, PRESET_FOOD_IMAGES } from "@/lib/preset-images";
+import { MENU2_THEMES, type Menu2ThemeId } from "@/components/menu/menu2-themes";
 import {
   Smartphone,
   Sparkles,
@@ -19,6 +20,10 @@ import {
   ShoppingBag,
   Layers,
   CheckCircle2,
+  Lock,
+  Crown,
+  ExternalLink,
+  Clock,
 } from "lucide-react";
 
 const ChevronUp = ({ size = 12 }: { size?: number }) => (
@@ -85,6 +90,22 @@ export default function MenuUiManager({
 
   // ─── THEME & COLOR STATE ───────────────────────────────────────
   const [themeColor, setThemeColor] = useState(initialSettings.theme_color || "#7c3aed");
+
+  // ─── MENU 2.0 PREMIUM SYSTEM & COLOR SCHEME STATE ──────────────
+  const [menu2Status, setMenu2Status] = useState<"locked" | "requested" | "approved">(
+    initialSettings.menu2_status || "locked"
+  );
+  const [activeMenuTemplate, setActiveMenuTemplate] = useState<"menu1" | "menu2">(
+    initialSettings.menu2_status === "approved" && initialSettings.active_menu_template === "menu2"
+      ? "menu2"
+      : "menu1"
+  );
+  const [menu2Theme, setMenu2Theme] = useState<Menu2ThemeId>(
+    (initialSettings.menu2_theme as Menu2ThemeId) && MENU2_THEMES[initialSettings.menu2_theme as Menu2ThemeId]
+      ? (initialSettings.menu2_theme as Menu2ThemeId)
+      : "ruby_gold"
+  );
+  const [isRequestingUnlock, setIsRequestingUnlock] = useState(false);
 
   // ─── SLIDER STATE ──────────────────────────────────────────────
   const [sliderEnabled, setSliderEnabled] = useState(initialSettings.slider_enabled !== false);
@@ -181,15 +202,35 @@ export default function MenuUiManager({
         heroBgType,
         heroBgGradient,
         heroBgImage,
+        activeMenuTemplate,
+        menu2Theme,
       });
 
       if (res.success) {
-        setSaveNotice("✓ Menu UI and theme settings saved successfully!");
+        setSaveNotice("✓ Menu UI, active menu template, and color scheme saved successfully!");
         setTimeout(() => setSaveNotice(null), 4000);
       } else {
         setSaveNotice(`⚠️ Error: ${res.error || "Failed to save settings"}`);
       }
     });
+  };
+
+  const handleRequestMenu2 = async () => {
+    setIsRequestingUnlock(true);
+    setSaveNotice(null);
+    try {
+      const res = await requestMenu2Unlock(menu2Theme);
+      if (res.success) {
+        setMenu2Status("requested");
+        setSaveNotice(
+          "✓ Request sent to Super Admin! Once Super Admin approves your request, Premium Menu 2.0 will automatically be unlocked and applied to your live storefront."
+        );
+      } else {
+        setSaveNotice(`⚠️ Error: ${res.error || "Could not send unlock request"}`);
+      }
+    } finally {
+      setIsRequestingUnlock(false);
+    }
   };
 
   const activeSlidesList = useMemo(() => slides.filter((s) => s.is_active !== false), [slides]);
@@ -292,6 +333,396 @@ export default function MenuUiManager({
             LEFT COLUMN: UI SETTINGS & CONTROLS
         ════════════════════════════════════════════════════════ */}
         <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          {/* ─── CARD 0: STOREFRONT MENU SYSTEM & PREMIUM MENU 2.0 (SQUARE LUXE) ─── */}
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #e2e8f0",
+              borderRadius: "7px",
+              padding: "20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              boxShadow: "0 2px 8px rgba(15, 23, 42, 0.05)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Crown size={18} style={{ color: "#d97706" }} />
+                <h2 style={{ fontSize: "14px", fontWeight: 900, margin: 0, color: "#0f172a" }}>
+                  Storefront Menu Template &amp; Premium Menu 2.0
+                </h2>
+              </div>
+
+              {menu2Status === "approved" ? (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    background: "#dcfce7",
+                    border: "1px solid #86efac",
+                    color: "#15803d",
+                    fontSize: "11px",
+                    fontWeight: 900,
+                  }}
+                >
+                  <CheckCircle2 size={13} />
+                  <span>Premium Menu 2.0 Unlocked</span>
+                </span>
+              ) : menu2Status === "requested" ? (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    background: "#fef3c7",
+                    border: "1px solid #fcd34d",
+                    color: "#b45309",
+                    fontSize: "11px",
+                    fontWeight: 900,
+                  }}
+                >
+                  <Clock size={13} />
+                  <span>Waiting for Super Admin Approval</span>
+                </span>
+              ) : (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    background: "#f1f5f9",
+                    border: "1px solid #cbd5e1",
+                    color: "#475569",
+                    fontSize: "11px",
+                    fontWeight: 900,
+                  }}
+                >
+                  <Lock size={12} />
+                  <span>Premium Locked (Super Admin Approval Required)</span>
+                </span>
+              )}
+            </div>
+
+            <p style={{ margin: 0, fontSize: "12px", color: "#64748b", lineHeight: 1.45 }}>
+              Select your live storefront menu style and customize the <strong>Menu 2.0 (Square Luxe)</strong> color scheme. Menu 2.0 is a premium storefront layout — send an unlock request below and once Super Admin approves, it will automatically apply to your live shop.
+            </p>
+
+            {/* Menu 1.0 vs Menu 2.0 Selector Cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
+              {/* Standard Menu 1.0 */}
+              <div
+                onClick={() => setActiveMenuTemplate("menu1")}
+                style={{
+                  border: activeMenuTemplate === "menu1" ? `2px solid ${themeColor}` : "1px solid #cbd5e1",
+                  background: activeMenuTemplate === "menu1" ? `${themeColor}08` : "#f8fafc",
+                  borderRadius: "7px",
+                  padding: "14px",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: "13px", fontWeight: 900, color: "#0f172a" }}>
+                    Menu 1.0 — Classic Menu
+                  </span>
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: "5px",
+                      fontSize: "10px",
+                      fontWeight: 800,
+                      background: activeMenuTemplate === "menu1" ? themeColor : "#e2e8f0",
+                      color: activeMenuTemplate === "menu1" ? "#ffffff" : "#475569",
+                    }}
+                  >
+                    {activeMenuTemplate === "menu1" ? "ACTIVE" : "Standard"}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: "11px", color: "#64748b", lineHeight: 1.4 }}>
+                  Default classic restaurant menu with standard category tabs and quick cart drawer.
+                </p>
+              </div>
+
+              {/* Premium Menu 2.0 */}
+              <div
+                onClick={() => {
+                  if (menu2Status === "approved") {
+                    setActiveMenuTemplate("menu2");
+                  }
+                }}
+                style={{
+                  border:
+                    activeMenuTemplate === "menu2"
+                      ? "2px solid #d97706"
+                      : menu2Status === "approved"
+                        ? "1px solid #fcd34d"
+                        : "1px dashed #cbd5e1",
+                  background:
+                    activeMenuTemplate === "menu2"
+                      ? "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)"
+                      : "#fffdf7",
+                  borderRadius: "7px",
+                  padding: "14px",
+                  cursor: menu2Status === "approved" ? "pointer" : "default",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  position: "relative",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
+                  <span style={{ fontSize: "13px", fontWeight: 900, color: "#0f172a", display: "flex", alignItems: "center", gap: "5px" }}>
+                    {menu2Status !== "approved" && <Lock size={13} style={{ color: "#d97706" }} />}
+                    <span>Menu 2.0 — Square Luxe</span>
+                  </span>
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: "5px",
+                      fontSize: "10px",
+                      fontWeight: 900,
+                      background:
+                        activeMenuTemplate === "menu2"
+                          ? "#d97706"
+                          : menu2Status === "approved"
+                            ? "#dcfce7"
+                            : menu2Status === "requested"
+                              ? "#fef3c7"
+                              : "#1e293b",
+                      color:
+                        activeMenuTemplate === "menu2"
+                          ? "#ffffff"
+                          : menu2Status === "approved"
+                            ? "#15803d"
+                            : menu2Status === "requested"
+                              ? "#b45309"
+                              : "#fbbf24",
+                    }}
+                  >
+                    {activeMenuTemplate === "menu2"
+                      ? "ACTIVE LIVE"
+                      : menu2Status === "approved"
+                        ? "UNLOCKED"
+                        : menu2Status === "requested"
+                          ? "REQUESTED"
+                          : "🔒 PREMIUM"}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: "11px", color: "#64748b", lineHeight: 1.4 }}>
+                  7px square-luxe header, auto-playing hero slider, inline pizza size selector cards &amp; 3-step slide-over checkout.
+                </p>
+              </div>
+            </div>
+
+            {/* Menu 2.0 Color Scheme Picker (Admin Controlled — Removed from Customer Header) */}
+            <div
+              style={{
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "7px",
+                padding: "14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
+                <div>
+                  <div style={{ fontSize: "12px", fontWeight: 900, color: "#0f172a" }}>
+                    Menu 2.0 Color Scheme (Admin Controlled)
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#64748b" }}>
+                    Select the color palette for Menu 2.0. Customers will see this theme on your storefront without any public switcher bar.
+                  </div>
+                </div>
+                <a
+                  href={shopSlug && shopSlug !== "main" ? `/menu2?shop=${shopSlug}` : "/menu2"}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "6px 10px",
+                    borderRadius: "6px",
+                    background: "#0f172a",
+                    color: "#ffffff",
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    textDecoration: "none",
+                  }}
+                >
+                  <span>Preview Menu 2.0</span>
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "8px" }}>
+                {Object.values(MENU2_THEMES).map((t) => {
+                  const selected = menu2Theme === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setMenu2Theme(t.id)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "9px 11px",
+                        borderRadius: "7px",
+                        background: selected ? "#ffffff" : "#f1f5f9",
+                        border: selected ? `2px solid ${t.swatch}` : "1px solid #cbd5e1",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        boxShadow: selected ? "0 2px 8px rgba(0,0,0,0.06)" : "none",
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "5px",
+                          background: t.swatch,
+                          flexShrink: 0,
+                          border: "1px solid rgba(0,0,0,0.15)",
+                        }}
+                      />
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: "11px", fontWeight: 900, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {t.label}
+                        </div>
+                        <div style={{ fontSize: "9.5px", color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {t.tagline}
+                        </div>
+                      </div>
+                      {selected && <Check size={13} style={{ color: t.swatch, flexShrink: 0 }} />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Lock / Request / Approved Action Strip */}
+            {menu2Status === "locked" && (
+              <div
+                style={{
+                  background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+                  borderRadius: "7px",
+                  padding: "14px 16px",
+                  color: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "12px",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: "12px", fontWeight: 900, color: "#fbbf24", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Lock size={13} />
+                    <span>Menu 2.0 is Locked (Premium Storefront)</span>
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#cbd5e1", marginTop: "2px" }}>
+                    Want to activate Menu 2.0 on your shop? Send an unlock request to the Super Admin. Once accepted, it will be applied automatically.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRequestMenu2}
+                  disabled={isRequestingUnlock}
+                  style={{
+                    padding: "9px 16px",
+                    borderRadius: "7px",
+                    background: "linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)",
+                    color: "#ffffff",
+                    border: "none",
+                    fontSize: "12px",
+                    fontWeight: 900,
+                    cursor: isRequestingUnlock ? "not-allowed" : "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 4px 12px rgba(234, 88, 12, 0.35)",
+                  }}
+                >
+                  <Crown size={14} />
+                  <span>{isRequestingUnlock ? "Sending Request..." : "Request Super Admin to Unlock Menu 2.0"}</span>
+                </button>
+              </div>
+            )}
+
+            {menu2Status === "requested" && (
+              <div
+                style={{
+                  background: "#fffbeb",
+                  border: "1px solid #fcd34d",
+                  borderRadius: "7px",
+                  padding: "12px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                }}
+              >
+                <div style={{ fontSize: "12px", color: "#92400e", fontWeight: 700 }}>
+                  ⏳ <strong>Unlock Request Pending:</strong> Your request for <strong>Menu 2.0 ({MENU2_THEMES[menu2Theme]?.label})</strong> has been sent to the Super Admin. As soon as Super Admin accepts, Menu 2.0 will go live on your shop!
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isPending}
+                  style={{
+                    padding: "7px 12px",
+                    borderRadius: "6px",
+                    background: "#d97706",
+                    color: "#ffffff",
+                    border: "none",
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  Save Color Scheme
+                </button>
+              </div>
+            )}
+
+            {menu2Status === "approved" && (
+              <div
+                style={{
+                  background: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  borderRadius: "7px",
+                  padding: "12px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                }}
+              >
+                <div style={{ fontSize: "12px", color: "#166534", fontWeight: 700 }}>
+                  ✓ <strong>Approved by Super Admin:</strong> Currently active menu is{" "}
+                  <strong>{activeMenuTemplate === "menu2" ? `Menu 2.0 (${MENU2_THEMES[menu2Theme]?.label})` : "Menu 1.0 (Classic)"}</strong>. Click <strong>Save Menu &amp; UI Settings</strong> after changing template or color scheme.
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* ─── CARD 1: MENU THEME & ACCENT COLOR ─── */}
           <div
             style={{

@@ -3,6 +3,7 @@ import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/adm
 import { fetchSettings } from "@/lib/menu-data";
 import { getActiveShopContext } from "@/lib/admin-actions";
 import CommandCenterHero from "@/components/admin/CommandCenterHero";
+import AdminLiveCharts from "@/components/admin/AdminLiveCharts";
 import { dbCache } from "@/lib/db-cache";
 import { getCurrentBusinessDate, getBusinessShiftUtcRange } from "@/lib/business-hours";
 import type { Order } from "@/types/menu";
@@ -64,6 +65,7 @@ export default async function AdminDashboardPage() {
   let pendingOrders = 0;
   let todayOrders: Order[] = [];
   let recentOrders: Order[] = [];
+  let chartOrders: Order[] = [];
   let todayNetSales = 0;
   let currencySymbol = settings.currency_symbol || "Rs.";
   let shopName =
@@ -93,7 +95,7 @@ export default async function AdminDashboardPage() {
           .from("orders")
           .select("*")
           .order("created_at", { ascending: false })
-          .limit(8);
+          .limit(250);
 
         if (activeShop.shopId) {
           prodQuery = prodQuery.eq("shop_id", activeShop.shopId);
@@ -122,6 +124,7 @@ export default async function AdminDashboardPage() {
           ]);
 
         const fetchedToday = (todayRes.data as Order[]) || [];
+        const allFetchedRecent = (recentRes.data as Order[]) || [];
         const validSales = fetchedToday
           .filter((o) => o.status !== "cancelled")
           .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
@@ -132,7 +135,8 @@ export default async function AdminDashboardPage() {
           allTimeOrderCount: totalCountRes.count ?? 0,
           pendingOrders: pendingCountRes.count ?? 0,
           todayOrders: fetchedToday,
-          recentOrders: (recentRes.data as Order[]) || [],
+          recentOrders: allFetchedRecent.slice(0, 8),
+          chartOrders: allFetchedRecent,
           todayNetSales: validSales,
         };
       },
@@ -145,6 +149,7 @@ export default async function AdminDashboardPage() {
     pendingOrders = metrics.pendingOrders;
     todayOrders = metrics.todayOrders;
     recentOrders = metrics.recentOrders;
+    chartOrders = metrics.chartOrders;
     todayNetSales = metrics.todayNetSales;
   } catch (_) {}
 
@@ -211,7 +216,7 @@ export default async function AdminDashboardPage() {
         }
       />
 
-      {/* ─── Metric KPI Cards Grid (Modern Elevated Unique Squircles) ─── */}
+      {/* ─── Metric KPI Cards Grid (5px Square UI) ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-7 sm:mb-9">
         {/* KPI 1: Active Orders */}
         <Link
@@ -222,7 +227,7 @@ export default async function AdminDashboardPage() {
               ? "linear-gradient(135deg, #ffffff 0%, #fff7ed 100%)"
               : "#ffffff",
             border: pendingOrders > 0 ? "1.5px solid #fdba74" : "1px solid #e8edf2",
-            borderRadius: 16,
+            borderRadius: 5,
             padding: "24px 22px",
             display: "flex",
             flexDirection: "column",
@@ -250,7 +255,7 @@ export default async function AdminDashboardPage() {
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 12,
+                borderRadius: 5,
                 background: pendingOrders > 0 ? "linear-gradient(135deg, #ea580c 0%, #dc2626 100%)" : "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
                 color: pendingOrders > 0 ? "#ffffff" : "#ea580c",
                 display: "flex",
@@ -302,7 +307,7 @@ export default async function AdminDashboardPage() {
             textDecoration: "none",
             background: "#ffffff",
             border: "1px solid #e8edf2",
-            borderRadius: 16,
+            borderRadius: 5,
             padding: "24px 22px",
             display: "flex",
             flexDirection: "column",
@@ -328,7 +333,7 @@ export default async function AdminDashboardPage() {
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 12,
+                borderRadius: 5,
                 background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
                 color: "#dc2626",
                 display: "flex",
@@ -371,7 +376,7 @@ export default async function AdminDashboardPage() {
             textDecoration: "none",
             background: "#ffffff",
             border: "1px solid #e8edf2",
-            borderRadius: 16,
+            borderRadius: 5,
             padding: "24px 22px",
             display: "flex",
             flexDirection: "column",
@@ -397,7 +402,7 @@ export default async function AdminDashboardPage() {
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 12,
+                borderRadius: 5,
                 background: "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)",
                 color: "#2563eb",
                 display: "flex",
@@ -454,7 +459,7 @@ export default async function AdminDashboardPage() {
             textDecoration: "none",
             background: "#ffffff",
             border: "1px solid #e8edf2",
-            borderRadius: 16,
+            borderRadius: 5,
             padding: "24px 22px",
             display: "flex",
             flexDirection: "column",
@@ -480,7 +485,7 @@ export default async function AdminDashboardPage() {
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: 12,
+                borderRadius: 5,
                 background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
                 color: "#059669",
                 display: "flex",
@@ -517,6 +522,16 @@ export default async function AdminDashboardPage() {
         </Link>
       </div>
 
+      {/* ─── LIVE RUSH HOUR, SELLING & MENU PERFORMANCE CHARTS ─── */}
+      <AdminLiveCharts
+        initialOrders={chartOrders}
+        todayOrders={todayOrders}
+        currencySymbol={currencySymbol}
+        shopId={activeShop.shopId}
+        openingTime={openingTime}
+        closingTime={closingTime}
+      />
+
       {/* ─── Operations Grid: Recent Orders + Quick Management ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-7">
         
@@ -525,7 +540,7 @@ export default async function AdminDashboardPage() {
           style={{
             background: "#ffffff",
             border: "1px solid #e8edf2",
-            borderRadius: 16,
+            borderRadius: 5,
             padding: "26px 24px",
             boxShadow: "0 10px 30px -8px rgba(15, 23, 42, 0.05), 0 0 1px 1px rgba(0, 0, 0, 0.03)",
           }}
@@ -561,7 +576,7 @@ export default async function AdminDashboardPage() {
                     fontSize: 10,
                     fontWeight: 800,
                     padding: "2px 8px",
-                    borderRadius: 20,
+                    borderRadius: 5,
                     background: "#dcfce7",
                     color: "#15803d",
                     border: "1px solid #bbf7d0",
@@ -588,7 +603,7 @@ export default async function AdminDashboardPage() {
                 alignItems: "center",
                 gap: 5,
                 padding: "6px 12px",
-                borderRadius: 8,
+                borderRadius: 5,
                 background: "#fff7ed",
                 transition: "all 0.18s ease",
               }}
@@ -607,7 +622,7 @@ export default async function AdminDashboardPage() {
               justifyContent: "space-between",
               background: "#f8fafc",
               border: "1px solid #edf2f7",
-              borderRadius: 10,
+              borderRadius: 5,
               padding: "10px 14px",
               marginBottom: 16,
               fontSize: 12,
@@ -640,7 +655,7 @@ export default async function AdminDashboardPage() {
                   color: "#64748b",
                   fontSize: 14,
                   background: "#fdfefe",
-                  borderRadius: 12,
+                  borderRadius: 5,
                   border: "1px dashed #cbd5e1",
                   marginBottom: recentOrders.length > 0 ? 16 : 0,
                 }}
@@ -649,7 +664,7 @@ export default async function AdminDashboardPage() {
                   style={{
                     width: "52px",
                     height: "52px",
-                    borderRadius: 14,
+                    borderRadius: 5,
                     background: "#fff7ed",
                     color: "#ea580c",
                     display: "inline-flex",
@@ -709,7 +724,7 @@ export default async function AdminDashboardPage() {
                             background: "#f8fafc",
                             border: "1px solid #edf2f7",
                             borderLeft: `4px solid ${isDelivery ? "#3b82f6" : isDineIn ? "#f97316" : "#eab308"}`,
-                            borderRadius: 12,
+                            borderRadius: 5,
                             gap: 12,
                             transition: "all 0.18s ease",
                           }}
@@ -725,7 +740,7 @@ export default async function AdminDashboardPage() {
                                   color: "#0f172a",
                                   background: "#ffffff",
                                   padding: "2px 7px",
-                                  borderRadius: 6,
+                                  borderRadius: 5,
                                   border: "1px solid #e2e8f0",
                                 }}
                               >
@@ -736,7 +751,7 @@ export default async function AdminDashboardPage() {
                                   fontSize: 11,
                                   fontWeight: 800,
                                   padding: "2px 8px",
-                                  borderRadius: 6,
+                                  borderRadius: 5,
                                   background: isDelivery ? "#eff6ff" : isDineIn ? "#fff7ed" : "#fefce8",
                                   color: isDelivery ? "#1d4ed8" : isDineIn ? "#c2410c" : "#a16207",
                                   border: `1px solid ${
@@ -781,7 +796,7 @@ export default async function AdminDashboardPage() {
                                 alignItems: "center",
                                 gap: 5,
                                 padding: "5px 10px",
-                                borderRadius: 8,
+                                borderRadius: 5,
                                 fontSize: 11,
                                 fontWeight: 700,
                                 background: s.bg,
@@ -798,7 +813,7 @@ export default async function AdminDashboardPage() {
                               target="_blank"
                               style={{
                                 padding: "5px 10px",
-                                borderRadius: 8,
+                                borderRadius: 5,
                                 background: "#ffffff",
                                 border: "1px solid #cbd5e1",
                                 color: "#334155",
@@ -849,7 +864,7 @@ export default async function AdminDashboardPage() {
                       background: "#f8fafc",
                       border: "1px solid #edf2f7",
                       borderLeft: `4px solid ${isDelivery ? "#3b82f6" : isDineIn ? "#f97316" : "#eab308"}`,
-                      borderRadius: 12,
+                      borderRadius: 5,
                       gap: 12,
                       transition: "all 0.18s ease",
                     }}
@@ -865,7 +880,7 @@ export default async function AdminDashboardPage() {
                             color: "#0f172a",
                             background: "#ffffff",
                             padding: "2px 7px",
-                            borderRadius: 6,
+                            borderRadius: 5,
                             border: "1px solid #e2e8f0",
                           }}
                         >
@@ -876,7 +891,7 @@ export default async function AdminDashboardPage() {
                             fontSize: 11,
                             fontWeight: 800,
                             padding: "2px 8px",
-                            borderRadius: 6,
+                            borderRadius: 5,
                             background: isDelivery ? "#eff6ff" : isDineIn ? "#fff7ed" : "#fefce8",
                             color: isDelivery ? "#1d4ed8" : isDineIn ? "#c2410c" : "#a16207",
                             border: `1px solid ${
@@ -921,7 +936,7 @@ export default async function AdminDashboardPage() {
                           alignItems: "center",
                           gap: 5,
                           padding: "5px 10px",
-                          borderRadius: 8,
+                          borderRadius: 5,
                           fontSize: 11,
                           fontWeight: 700,
                           background: s.bg,
@@ -938,7 +953,7 @@ export default async function AdminDashboardPage() {
                         target="_blank"
                         style={{
                           padding: "5px 10px",
-                          borderRadius: 8,
+                          borderRadius: 5,
                           background: "#ffffff",
                           border: "1px solid #cbd5e1",
                           color: "#334155",
@@ -972,7 +987,7 @@ export default async function AdminDashboardPage() {
             style={{
               background: "#ffffff",
               border: "1px solid #e8edf2",
-              borderRadius: 16,
+              borderRadius: 5,
               padding: "26px 24px",
               boxShadow: "0 10px 30px -8px rgba(15, 23, 42, 0.05), 0 0 1px 1px rgba(0, 0, 0, 0.03)",
             }}
@@ -1026,7 +1041,7 @@ export default async function AdminDashboardPage() {
                     href={item.href}
                     style={{
                       padding: "16px 15px",
-                      borderRadius: 12,
+                      borderRadius: 5,
                       background: "#f8fafc",
                       border: "1px solid #e8edf2",
                       textDecoration: "none",
@@ -1041,7 +1056,7 @@ export default async function AdminDashboardPage() {
                       style={{
                         width: 38,
                         height: 38,
-                        borderRadius: 10,
+                        borderRadius: 5,
                         background: item.bg,
                         color: item.color,
                         display: "flex",
@@ -1067,7 +1082,7 @@ export default async function AdminDashboardPage() {
             style={{
               background: "linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%)",
               border: "1px solid #bbf7d0",
-              borderRadius: 16,
+              borderRadius: 5,
               padding: "22px 24px",
               boxShadow: "0 8px 24px -6px rgba(16, 185, 129, 0.08)",
             }}
@@ -1077,7 +1092,7 @@ export default async function AdminDashboardPage() {
                 style={{
                   width: 38,
                   height: 38,
-                  borderRadius: 10,
+                  borderRadius: 5,
                   background: "#dcfce7",
                   color: "#059669",
                   display: "flex",
@@ -1105,7 +1120,7 @@ export default async function AdminDashboardPage() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   padding: "8px 12px",
-                  borderRadius: 8,
+                  borderRadius: 5,
                   background: "rgba(255, 255, 255, 0.7)",
                   border: "1px solid rgba(187, 247, 208, 0.6)",
                 }}
@@ -1123,7 +1138,7 @@ export default async function AdminDashboardPage() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   padding: "8px 12px",
-                  borderRadius: 8,
+                  borderRadius: 5,
                   background: "rgba(255, 255, 255, 0.7)",
                   border: "1px solid rgba(187, 247, 208, 0.6)",
                 }}
@@ -1141,7 +1156,7 @@ export default async function AdminDashboardPage() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   padding: "8px 12px",
-                  borderRadius: 8,
+                  borderRadius: 5,
                   background: "rgba(255, 255, 255, 0.7)",
                   border: "1px solid rgba(187, 247, 208, 0.6)",
                 }}
@@ -1159,7 +1174,7 @@ export default async function AdminDashboardPage() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   padding: "8px 12px",
-                  borderRadius: 8,
+                  borderRadius: 5,
                   background: "rgba(255, 255, 255, 0.7)",
                   border: "1px solid rgba(187, 247, 208, 0.6)",
                 }}

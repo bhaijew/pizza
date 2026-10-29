@@ -9,6 +9,7 @@ import {
 } from "@/lib/menu-data";
 import { getShopBranding } from "@/lib/shop-branding";
 import MenuClient from "@/components/menu/MenuClient";
+import Menu2Client from "@/components/menu/Menu2Client";
 import MenuSkeleton from "@/components/menu/MenuSkeleton";
 import Link from "next/link";
 
@@ -25,6 +26,7 @@ const RESERVED_SLUGS = new Set([
   "api",
   "shop",
   "menu",
+  "menu2",
   "delivery",
   "todos",
   "riders",
@@ -272,7 +274,17 @@ export default async function DynamicShopMenuPage({
     logo_url: branding.logo_url || (shop as any).logo_url || baseSettings.logo_url,
     menu_layout: "default",
     shop_id: shop.id,
+    menu2_status: (shop as any).feature_flags?.menu2_status || baseSettings.menu2_status || "locked",
+    active_menu_template:
+      ((shop as any).feature_flags?.menu2_status || baseSettings.menu2_status) === "approved" &&
+        ((shop as any).feature_flags?.active_menu_template || baseSettings.active_menu_template) === "menu2"
+        ? "menu2"
+        : "menu1",
+    menu2_theme: (shop as any).feature_flags?.menu2_theme || baseSettings.menu2_theme || "ruby_gold",
   };
+
+  const useMenu2 =
+    shopSettings.menu2_status === "approved" && shopSettings.active_menu_template === "menu2";
 
   return (
     <Suspense
@@ -282,18 +294,29 @@ export default async function DynamicShopMenuPage({
         </div>
       }
     >
-      <MenuClient
-        categories={categoriesResult.data ?? []}
-        products={productsResult.data ?? []}
-        categoriesError={categoriesResult.error}
-        productsError={productsResult.error}
-        categoriesTableMissing={categoriesResult.tableMissing}
-        productsTableMissing={productsResult.tableMissing}
-        settings={shopSettings}
-        initialTableNumber={table}
-        initialOrderType={type}
-        verifiedTable={table}
-      />
+      {useMenu2 ? (
+        <Menu2Client
+          categories={categoriesResult.data ?? []}
+          products={productsResult.data ?? []}
+          settings={shopSettings}
+          activeShopSlug={shop.slug}
+          initialTableNumber={table}
+          initialOrderType={type}
+        />
+      ) : (
+        <MenuClient
+          categories={categoriesResult.data ?? []}
+          products={productsResult.data ?? []}
+          categoriesError={categoriesResult.error}
+          productsError={productsResult.error}
+          categoriesTableMissing={categoriesResult.tableMissing}
+          productsTableMissing={productsResult.tableMissing}
+          settings={shopSettings}
+          initialTableNumber={table}
+          initialOrderType={type}
+          verifiedTable={table}
+        />
+      )}
     </Suspense>
   );
 }

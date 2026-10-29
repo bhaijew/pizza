@@ -39,7 +39,44 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 3. Wildcard Subdomain Routing
+  // 3. Path-based shop prefix normalization for global utility routes
+  // e.g. /pizza-mafia/scan/T1 -> /scan/T1?shopSlug=pizza-mafia
+  // e.g. /pizza-mafia/table/T1 -> /table/T1?shopSlug=pizza-mafia
+  const prefixedGlobalMatch = pathname.match(
+    /^\/([^/]+)\/(scan|table|track|delivery)(\/.*)?$/i
+  );
+  if (prefixedGlobalMatch) {
+    const possibleSlug = prefixedGlobalMatch[1].toLowerCase();
+    const globalRoute = prefixedGlobalMatch[2].toLowerCase();
+    const restPath = prefixedGlobalMatch[3] || "";
+    const topLevelReserved = new Set([
+      "api",
+      "_next",
+      "super-admin",
+      "admin",
+      "scan",
+      "table",
+      "track",
+      "delivery",
+      "menu",
+      "menu2",
+      "shop",
+      "demo",
+      "todos",
+      "kitchen",
+    ]);
+    if (!topLevelReserved.has(possibleSlug)) {
+      const targetUrl = new URL(`/${globalRoute}${restPath}${search}`, request.url);
+      if (!targetUrl.searchParams.has("shopSlug")) {
+        targetUrl.searchParams.set("shopSlug", possibleSlug);
+      }
+      return NextResponse.rewrite(targetUrl, {
+        headers: supabaseResponse.headers,
+      });
+    }
+  }
+
+  // 4. Wildcard Subdomain Routing
   // Extracts shop slug from subdomains like:
   // - pizza-mafia.solewhat.store -> rewrites internally to /pizza-mafia
   // - pizza-mafia.localhost:3000 -> rewrites internally to /pizza-mafia
@@ -65,7 +102,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (subdomain) {
-    const isReserved =
+    const isSystemReserved =
       pathname.startsWith("/api") ||
       pathname.startsWith("/_next") ||
       pathname.startsWith("/super-admin") ||
@@ -74,7 +111,35 @@ export async function proxy(request: NextRequest) {
       pathname.startsWith("/robots.txt") ||
       pathname.startsWith("/sitemap.xml");
 
-    if (!isReserved) {
+    // Global customer routes that live at root app/ level (/scan, /table, /track, /delivery, /menu2, /demo, /todos)
+    const isGlobalCustomerRoute =
+      pathname === "/scan" ||
+      pathname.startsWith("/scan/") ||
+      pathname === "/table" ||
+      pathname.startsWith("/table/") ||
+      pathname === "/track" ||
+      pathname.startsWith("/track/") ||
+      pathname === "/delivery" ||
+      pathname.startsWith("/delivery/") ||
+      pathname === "/menu2" ||
+      pathname.startsWith("/menu2/") ||
+      pathname === "/demo" ||
+      pathname.startsWith("/demo/") ||
+      pathname === "/todos" ||
+      pathname.startsWith("/todos/");
+
+    if (isGlobalCustomerRoute) {
+      // Keep global route path intact (/scan/T1, /table/T1, etc.) and pass subdomain as shopSlug if not present
+      const targetUrl = new URL(`${pathname}${search}`, request.url);
+      if (!targetUrl.searchParams.has("shopSlug")) {
+        targetUrl.searchParams.set("shopSlug", subdomain);
+      }
+      return NextResponse.rewrite(targetUrl, {
+        headers: supabaseResponse.headers,
+      });
+    }
+
+    if (!isSystemReserved) {
       if (!pathname.startsWith(`/${subdomain}`)) {
         const rewriteTarget = `/${subdomain}${pathname === "/" ? "" : pathname}${search}`;
         return NextResponse.rewrite(new URL(rewriteTarget, request.url), {

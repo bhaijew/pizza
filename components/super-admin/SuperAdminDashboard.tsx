@@ -17,7 +17,9 @@ import {
   deleteStaff,
   seedMasterBranch,
   verifyCloudSyncHealth,
+  manageShopMenu2Access,
 } from "@/lib/super-admin-actions";
+import { MENU2_THEMES, type Menu2ThemeId } from "@/components/menu/menu2-themes";
 import ShopModal from "./ShopModal";
 import StaffModal from "./StaffModal";
 import BrandLogo from "@/components/BrandLogo";
@@ -208,6 +210,37 @@ export default function SuperAdminDashboard({
 
     return matchesSearch && matchesStatus;
   });
+
+  const pendingMenu2Shops = shops.filter(
+    (s) => ((s as any).feature_flags?.menu2_status || "locked") === "requested"
+  );
+
+  const handleManageMenu2 = async (
+    shop: Shop,
+    action: "approve" | "reject" | "lock",
+    themeId?: string
+  ) => {
+    const res = await manageShopMenu2Access(shop.id, action, themeId);
+    if (res.success && res.updatedFlags) {
+      setShops((prev) =>
+        prev.map((item) =>
+          item.id === shop.id
+            ? ({ ...item, feature_flags: res.updatedFlags } as Shop)
+            : item
+        )
+      );
+      if (action === "approve") {
+        setSyncFeedback(
+          `✓ Premium Menu 2.0 approved & applied live for ${shop.name} (/${shop.slug})!`
+        );
+      } else {
+        setSyncFeedback(`Menu 2.0 locked for ${shop.name} — reverted to Classic Menu 1.0.`);
+      }
+      setTimeout(() => setSyncFeedback(null), 5000);
+    } else if (res.error) {
+      setSyncFeedback(`⚠️ Error: ${res.error}`);
+    }
+  };
 
   // Filtered staff
   const filteredStaff = staffList.filter((st) => {
@@ -1420,6 +1453,171 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
           className="p-3.5 sm:p-5 md:p-7 max-w-[1400px] w-full mx-auto box-border"
         >
           {/* ═══════════════════════════════════════════════════════════════════
+              PENDING PREMIUM MENU 2.0 UNLOCK REQUESTS BANNER (HQ OVERVIEW & BRANCHES)
+          ═══════════════════════════════════════════════════════════════════ */}
+          {pendingMenu2Shops.length > 0 && (
+            <div
+              style={{
+                background: isLight
+                  ? "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)"
+                  : "linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(217, 119, 6, 0.1) 100%)",
+                border: "2px solid #f59e0b",
+                borderRadius: "14px",
+                padding: "18px 22px",
+                marginBottom: "22px",
+                boxShadow: "0 4px 20px rgba(245, 158, 11, 0.15)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "12px",
+                  marginBottom: "12px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: 10,
+                      background: "#d97706",
+                      color: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Crown size={20} />
+                  </div>
+                  <div>
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: "15px",
+                        fontWeight: 900,
+                        color: isLight ? "#78350f" : "#fbbf24",
+                      }}
+                    >
+                      Pending Premium Menu 2.0 Unlock Requests ({pendingMenu2Shops.length})
+                    </h3>
+                    <p
+                      style={{
+                        margin: "2px 0 0",
+                        fontSize: "12px",
+                        color: isLight ? "#92400e" : "#fcd34d",
+                      }}
+                    >
+                      The following branches requested to unlock &amp; activate Menu 2.0 (Square Luxe). Click Accept to unlock and automatically apply Menu 2.0 to their live storefront.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {pendingMenu2Shops.map((reqShop) => {
+                  const ff = (reqShop as any).feature_flags || {};
+                  const chosenThemeId = (ff.menu2_theme as Menu2ThemeId) || "ruby_gold";
+                  const chosenTheme = MENU2_THEMES[chosenThemeId] || MENU2_THEMES.ruby_gold;
+                  return (
+                    <div
+                      key={reqShop.id}
+                      style={{
+                        background: isLight ? "#ffffff" : "#0e1526",
+                        border: isLight ? "1px solid #fde68a" : "1px solid rgba(251, 191, 36, 0.3)",
+                        borderRadius: "10px",
+                        padding: "12px 16px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: "12px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                        <div>
+                          <div style={{ fontSize: "14px", fontWeight: 900, color: isLight ? "#0f172a" : "#ffffff" }}>
+                            {reqShop.name}{" "}
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#64748b" }}>
+                              (/{reqShop.slug})
+                            </span>
+                          </div>
+                          <div style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8", marginTop: "2px" }}>
+                            Owner: <strong>{reqShop.owner_name}</strong> &bull; Requested Color Scheme:{" "}
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                fontWeight: 800,
+                                color: isLight ? "#0f172a" : "#ffffff",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: 10,
+                                  height: 10,
+                                  borderRadius: "50%",
+                                  background: chosenTheme.swatch,
+                                  display: "inline-block",
+                                }}
+                              />
+                              {chosenTheme.label}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <button
+                          type="button"
+                          onClick={() => handleManageMenu2(reqShop, "approve", chosenTheme.id)}
+                          style={{
+                            padding: "8px 16px",
+                            borderRadius: "8px",
+                            background: "linear-gradient(135deg, #16a34a 0%, #059669 100%)",
+                            color: "#ffffff",
+                            border: "none",
+                            fontSize: "12px",
+                            fontWeight: 900,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            boxShadow: "0 3px 10px rgba(22, 163, 74, 0.3)",
+                          }}
+                        >
+                          <CheckCircle2 size={14} />
+                          <span>Accept &amp; Apply Menu 2.0</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleManageMenu2(reqShop, "reject")}
+                          style={{
+                            padding: "8px 12px",
+                            borderRadius: "8px",
+                            background: "#fee2e2",
+                            color: "#dc2626",
+                            border: "1px solid #fecaca",
+                            fontSize: "12px",
+                            fontWeight: 800,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════════════
               TAB 1: HQ OVERVIEW
           ═══════════════════════════════════════════════════════════════════ */}
           {activeTab === "overview" && (
@@ -2418,6 +2616,120 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                                       {copiedId === `pin-${shop.id}` ? <Check size={13} /> : <Copy size={13} />}
                                     </button>
                                   </div>
+                                </div>
+                              );
+                            })()}
+
+                            {/* Premium Menu 2.0 Access Strip */}
+                            {(() => {
+                              const ff = (shop as any).feature_flags || {};
+                              const m2Status = ff.menu2_status || "locked";
+                              const m2Active = m2Status === "approved" && ff.active_menu_template === "menu2";
+                              const m2ThemeId = (ff.menu2_theme as Menu2ThemeId) || "ruby_gold";
+                              const m2Theme = MENU2_THEMES[m2ThemeId] || MENU2_THEMES.ruby_gold;
+
+                              return (
+                                <div
+                                  style={{
+                                    background:
+                                      m2Status === "approved"
+                                        ? isLight
+                                          ? "#eff6ff"
+                                          : "rgba(59, 130, 246, 0.1)"
+                                        : m2Status === "requested"
+                                          ? isLight
+                                            ? "#fffbeb"
+                                            : "rgba(245, 158, 11, 0.12)"
+                                          : isLight
+                                            ? "#f8fafc"
+                                            : "rgba(255, 255, 255, 0.03)",
+                                    borderRadius: "8px",
+                                    padding: "7px 10px",
+                                    border:
+                                      m2Status === "approved"
+                                        ? "1px solid #bfdbfe"
+                                        : m2Status === "requested"
+                                          ? "1px solid #fde68a"
+                                          : isLight
+                                            ? "1px solid #e2e8f0"
+                                            : "1px solid rgba(255, 255, 255, 0.08)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: "8px",
+                                    flexWrap: "wrap",
+                                  }}
+                                >
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    <Crown size={12} className="text-amber-500" />
+                                    <span style={{ fontSize: "11px", fontWeight: 800, color: isLight ? "#0f172a" : "#ffffff" }}>
+                                      Menu 2.0:
+                                    </span>
+                                    <span
+                                      style={{
+                                        fontSize: "10px",
+                                        fontWeight: 900,
+                                        padding: "1px 6px",
+                                        borderRadius: "4px",
+                                        background:
+                                          m2Status === "approved"
+                                            ? "#dbeafe"
+                                            : m2Status === "requested"
+                                              ? "#fef3c7"
+                                              : "#e2e8f0",
+                                        color:
+                                          m2Status === "approved"
+                                            ? "#1d4ed8"
+                                            : m2Status === "requested"
+                                              ? "#b45309"
+                                              : "#475569",
+                                      }}
+                                    >
+                                      {m2Active
+                                        ? `✓ LIVE (${m2Theme.label})`
+                                        : m2Status === "approved"
+                                          ? "✓ UNLOCKED"
+                                          : m2Status === "requested"
+                                            ? "⏳ REQUESTED"
+                                            : "🔒 LOCKED"}
+                                    </span>
+                                  </div>
+
+                                  {m2Status === "approved" ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleManageMenu2(shop, "lock")}
+                                      style={{
+                                        padding: "3px 8px",
+                                        borderRadius: "5px",
+                                        background: "#fee2e2",
+                                        color: "#dc2626",
+                                        border: "none",
+                                        fontSize: "10px",
+                                        fontWeight: 800,
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      Lock Menu 2.0
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleManageMenu2(shop, "approve", m2Theme.id)}
+                                      style={{
+                                        padding: "3px 9px",
+                                        borderRadius: "5px",
+                                        background: "linear-gradient(135deg, #16a34a 0%, #059669 100%)",
+                                        color: "#ffffff",
+                                        border: "none",
+                                        fontSize: "10px",
+                                        fontWeight: 800,
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      {m2Status === "requested" ? "✓ Accept & Apply" : "Unlock & Apply"}
+                                    </button>
+                                  )}
                                 </div>
                               );
                             })()}

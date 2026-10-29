@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import type { Category } from "@/types/menu";
-import { createCategory, updateCategory, deleteCategory } from "@/lib/admin-actions";
+import { createCategory, updateCategory, deleteCategory, reorderCategories } from "@/lib/admin-actions";
 import {
   Plus,
   Tags,
@@ -14,6 +14,8 @@ import {
   X,
   Layers,
   Lock,
+  CheckCircle2,
+  Crown,
 } from "lucide-react";
 
 interface CategoryManagerProps {
@@ -39,7 +41,36 @@ export default function CategoryManager({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [orderNotice, setOrderNotice] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  const handleMoveCategoryToIndex = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex || toIndex < 0 || toIndex >= categories.length) return;
+    const nextList = [...categories];
+    const [moved] = nextList.splice(fromIndex, 1);
+    nextList.splice(toIndex, 0, moved);
+
+    const normalized = nextList.map((c, idx) => ({
+      ...c,
+      sort_order: idx,
+    }));
+
+    setCategories(normalized);
+    setOrderNotice(null);
+
+    startTransition(async () => {
+      const res = await reorderCategories(normalized.map((c) => Number(c.id)));
+      if (res.success) {
+        setOrderNotice(
+          `✓ Category sequence updated! "${normalized[0]?.name}" is now #1 (First on Menu).`
+        );
+        setTimeout(() => setOrderNotice(null), 3500);
+        router.refresh();
+      } else {
+        setOrderNotice(`⚠️ ${res.error || "Failed to save category order"}`);
+      }
+    });
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -226,6 +257,27 @@ export default function CategoryManager({
         </button>
       </div>
 
+      {orderNotice && (
+        <div
+          style={{
+            marginBottom: "14px",
+            padding: "10px 14px",
+            borderRadius: "5px",
+            background: orderNotice.startsWith("✓") ? "#f0fdf4" : "#fef2f2",
+            border: orderNotice.startsWith("✓") ? "1px solid #bbf7d0" : "1px solid #fecaca",
+            color: orderNotice.startsWith("✓") ? "#15803d" : "#b91c1c",
+            fontSize: "12.5px",
+            fontWeight: 800,
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <CheckCircle2 size={15} />
+          <span>{orderNotice}</span>
+        </div>
+      )}
+
       {/* Category List */}
       {categories.length === 0 ? (
         <div
@@ -293,26 +345,152 @@ export default function CategoryManager({
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
-                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: 700 }}>Category</th>
-                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: 700 }}>Slug</th>
-                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: 700 }}>Order</th>
-                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: 700 }}>Products</th>
-                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: 700 }}>Status</th>
-                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: 700, textAlign: "right" }}>Actions</th>
+                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: 800 }}>
+                  Menu Position (Show First / Sequence)
+                </th>
+                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: 800 }}>Category</th>
+                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: 800 }}>Slug</th>
+                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: 800 }}>Products</th>
+                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: 800 }}>Status</th>
+                <th style={{ padding: "12px 16px", color: "#475569", fontWeight: 800, textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {categories.map((cat) => {
+              {categories.map((cat, idx) => {
                 const count = productCounts[cat.id] || 0;
+                const isFirst = idx === 0;
                 return (
                   <tr
                     key={cat.id}
                     style={{
                       borderBottom: "1px solid #f1f5f9",
+                      background: isFirst ? "#fffbeb" : "#ffffff",
                     }}
                   >
                     <td style={{ padding: "12px 16px" }}>
-                      <div style={{ fontWeight: 600, color: "#0f172a" }}>{cat.name}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        {/* Position Dropdown (1st, 2nd, 3rd...) */}
+                        <select
+                          value={idx}
+                          disabled={isPending}
+                          onChange={(e) => handleMoveCategoryToIndex(idx, Number(e.target.value))}
+                          style={{
+                            padding: "5px 8px",
+                            borderRadius: "5px",
+                            border: isFirst ? "1.5px solid #f59e0b" : "1px solid #cbd5e1",
+                            background: isFirst ? "#fef3c7" : "#f8fafc",
+                            color: isFirst ? "#b45309" : "#0f172a",
+                            fontSize: "12px",
+                            fontWeight: 900,
+                            cursor: "pointer",
+                            outline: "none",
+                          }}
+                          title="Choose exact position on storefront menu"
+                        >
+                          {categories.map((_, posIdx) => (
+                            <option key={posIdx} value={posIdx}>
+                              {posIdx === 0
+                                ? "#1 — Show First"
+                                : posIdx === 1
+                                  ? "#2 — Second"
+                                  : posIdx === 2
+                                    ? "#3 — Third"
+                                    : `#${posIdx + 1} Position`}
+                            </option>
+                          ))}
+                        </select>
+
+                        {/* Up / Down Move Buttons */}
+                        <div style={{ display: "inline-flex", gap: "4px" }}>
+                          <button
+                            type="button"
+                            disabled={idx === 0 || isPending}
+                            onClick={() => handleMoveCategoryToIndex(idx, idx - 1)}
+                            style={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: "5px",
+                              border: "1px solid #cbd5e1",
+                              background: idx === 0 ? "#f8fafc" : "#ffffff",
+                              color: idx === 0 ? "#cbd5e1" : "#334155",
+                              fontWeight: 900,
+                              fontSize: "12px",
+                              cursor: idx === 0 ? "not-allowed" : "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                            title="Move category up"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            disabled={idx === categories.length - 1 || isPending}
+                            onClick={() => handleMoveCategoryToIndex(idx, idx + 1)}
+                            style={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: "5px",
+                              border: "1px solid #cbd5e1",
+                              background: idx === categories.length - 1 ? "#f8fafc" : "#ffffff",
+                              color: idx === categories.length - 1 ? "#cbd5e1" : "#334155",
+                              fontWeight: 900,
+                              fontSize: "12px",
+                              cursor: idx === categories.length - 1 ? "not-allowed" : "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                            title="Move category down"
+                          >
+                            ↓
+                          </button>
+                        </div>
+
+                        {/* 1-Click "Set First" Button if not already #1 */}
+                        {isFirst ? (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "3px 8px",
+                              borderRadius: "5px",
+                              background: "linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)",
+                              color: "#ffffff",
+                              fontSize: "10px",
+                              fontWeight: 900,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            <Crown size={11} />
+                            <span>1st on Menu</span>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={isPending}
+                            onClick={() => handleMoveCategoryToIndex(idx, 0)}
+                            style={{
+                              padding: "4px 8px",
+                              borderRadius: "5px",
+                              border: "1px solid #fed7aa",
+                              background: "#fff7ed",
+                              color: "#ea580c",
+                              fontSize: "11px",
+                              fontWeight: 800,
+                              cursor: "pointer",
+                            }}
+                            title="Show this category first on the customer menu"
+                          >
+                            ★ Show 1st
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ padding: "12px 16px" }}>
+                      <div style={{ fontWeight: 800, color: "#0f172a" }}>{cat.name}</div>
                       {cat.description && (
                         <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
                           {cat.description}
@@ -321,9 +499,6 @@ export default function CategoryManager({
                     </td>
                     <td style={{ padding: "12px 16px", color: "#64748b", fontFamily: "monospace", fontSize: "12px" }}>
                       {cat.slug}
-                    </td>
-                    <td style={{ padding: "12px 16px", color: "#334155" }}>
-                      #{cat.sort_order ?? 0}
                     </td>
                     <td style={{ padding: "12px 16px" }}>
                       <span

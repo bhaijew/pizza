@@ -66,8 +66,8 @@ export default function TableQRManager({
           setFormError(res.error);
         }
       } else {
-        // Optimistically add to state
-        const newTable: RestaurantTable = {
+        // Use the exact inserted row from Supabase (so token_code and shop_id match 100%)
+        const newTable: RestaurantTable = res.table || {
           id: Date.now(),
           table_number: tableNumber.trim(),
           table_name: tableName.trim() || null,

@@ -60,7 +60,7 @@ export default function CommandCenterHero({
   return (
     <div
       style={{
-        borderRadius: 16,
+        borderRadius: 5,
         color: "#ffffff",
         marginBottom: 26,
         display: "flex",

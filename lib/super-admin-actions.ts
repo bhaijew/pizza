@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
+import { dbCache } from "@/lib/db-cache";
 import {
   SUPER_ADMIN_COOKIE,
   SUPER_ADMIN_COOKIE_MAX_AGE,
@@ -635,6 +636,89 @@ export async function verifyCloudSyncHealth(): Promise<{
       message: err?.message || String(err),
       totalStaff: 0,
       totalShops: 0,
+    };
+  }
+}
+
+/**
+ * Super Admin Action: Approve, Reject, or Lock Premium Menu 2.0 for a specific shop branch.
+ * When approved, automatically sets active_menu_template = "menu2" so Menu 2.0 is applied immediately.
+ */
+export async function manageShopMenu2Access(
+  shopId: number | string,
+  action: "approve" | "reject" | "lock",
+  themeId?: string
+): Promise<{
+  success: boolean;
+  error: string | null;
+  updatedFlags?: Record<string, any>;
+}> {
+  await requireSuperAdmin();
+  const db = createAdminClient();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, success: false };
+  }
+
+  try {
+    const { data: shopRow, error: fetchErr } = await db
+      .from("shops")
+      .select("id, slug, feature_flags")
+      .eq("id", shopId)
+      .maybeSingle();
+
+    if (fetchErr || !shopRow) {
+      return { error: fetchErr?.message || "Shop not found", success: false };
+    }
+
+    const existingFlags =
+      typeof (shopRow as any).feature_flags === "object" && (shopRow as any).feature_flags
+        ? { ...(shopRow as any).feature_flags }
+        : {};
+
+    const updatedFlags: Record<string, any> = {
+      ...existingFlags,
+    };
+
+    if (action === "approve") {
+      updatedFlags.menu2_status = "approved";
+      updatedFlags.active_menu_template = "menu2";
+      updatedFlags.menu2_theme = themeId || existingFlags.menu2_theme || "ruby_gold";
+      updatedFlags.menu2_approved_at = new Date().toISOString();
+    } else {
+      updatedFlags.menu2_status = "locked";
+      updatedFlags.active_menu_template = "menu1";
+    }
+
+    const { error: updateErr } = await db
+      .from("shops")
+      .update({
+        feature_flags: updatedFlags,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", shopId);
+
+    if (updateErr) {
+      return { error: updateErr.message, success: false };
+    }
+
+    dbCache.invalidateTag("settings", "shops");
+    revalidatePath("/super-admin");
+    revalidatePath("/admin/menu-ui");
+    revalidatePath("/menu2");
+    if ((shopRow as any).slug) {
+      revalidatePath(`/${(shopRow as any).slug}`);
+    }
+
+    return {
+      success: true,
+      error: null,
+      updatedFlags,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.message || "Failed to update Menu 2.0 access",
     };
   }
 }

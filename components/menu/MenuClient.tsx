@@ -235,11 +235,18 @@ function MenuInner({
     return list.slice(0, 2);
   }, [liveProducts]);
 
+  // Sorted active categories respecting Admin sort_order
+  const sortedCategories = useMemo(() => {
+    return [...categories]
+      .filter((cat) => cat.is_active !== false)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  }, [categories]);
+
   // When activeCategoryId is null and no search, group products by category
   const categoriesWithProducts = useMemo(() => {
     if (activeCategoryId !== null || searchQuery.trim()) return [];
 
-    return categories
+    return sortedCategories
       .map((cat) => {
         const catProducts = liveProducts.filter((p) => p.category_id === cat.id);
         return {
@@ -248,7 +255,7 @@ function MenuInner({
         };
       })
       .filter((group) => group.products.length > 0);
-  }, [categories, liveProducts, activeCategoryId, searchQuery]);
+  }, [sortedCategories, liveProducts, activeCategoryId, searchQuery]);
 
   const activeCategoryObj = useMemo(() => {
     if (activeCategoryId === null) return null;
@@ -347,7 +354,7 @@ function MenuInner({
             }}
           >
             <CategoryTabs
-              categories={categories}
+              categories={sortedCategories}
               activeId={activeCategoryId}
               onSelect={(id) => {
                 setActiveCategoryId(id);
