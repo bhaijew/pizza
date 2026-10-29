@@ -12,6 +12,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { dbCache } from "@/lib/db-cache";
+import { syncCustomerFromOrder } from "@/lib/customer-actions";
 import {
   ADMIN_COOKIE,
   ADMIN_SHOP_COOKIE,
@@ -1381,8 +1382,22 @@ export async function updateOrderCustomerDetails(params: {
     return { success: false, error: updateErr.message };
   }
 
+  // Sync updated customer name, phone, and address to Customer Info directory
+  const resolvedPhone = params.customerPhone?.trim() || currentOrder.customer_phone || "";
+  if (resolvedPhone) {
+    await syncCustomerFromOrder({
+      phone: resolvedPhone,
+      customerName: params.customerName !== undefined ? params.customerName : currentOrder.customer_name,
+      deliveryAddress: params.deliveryAddress !== undefined ? params.deliveryAddress : currentOrder.delivery_address,
+      orderTotal: Number(currentOrder.total) || 0,
+      shopId: currentOrder.shop_id ?? activeShop.shopId,
+      isNewOrder: false,
+    }).catch(() => {});
+  }
+
   dbCache.invalidateTag("orders");
   revalidatePath("/admin/orders");
+  revalidatePath("/admin/customers");
   revalidatePath("/admin/kitchen");
   revalidatePath("/kitchen");
   revalidatePath("/admin");
@@ -1770,7 +1785,21 @@ export async function recreateOrder(params: RecreateOrderParams): Promise<{
     return { success: false, error: updateErr.message };
   }
 
+  // Sync updated customer details to Customer Info directory
+  const recPhone = params.customerPhone?.trim() || currentOrder.customer_phone || "";
+  if (recPhone) {
+    await syncCustomerFromOrder({
+      phone: recPhone,
+      customerName: params.customerName !== undefined ? params.customerName : currentOrder.customer_name,
+      deliveryAddress: params.deliveryAddress !== undefined ? params.deliveryAddress : currentOrder.delivery_address,
+      orderTotal: Number(params.total) || 0,
+      shopId: currentOrder.shop_id ?? activeShop.shopId,
+      isNewOrder: false,
+    }).catch(() => {});
+  }
+
   revalidatePath("/admin/orders");
+  revalidatePath("/admin/customers");
   revalidatePath("/admin/kitchen");
   revalidatePath("/kitchen");
   revalidatePath("/admin");

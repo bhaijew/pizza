@@ -132,6 +132,13 @@ const NAV_GROUPS: NavGroup[] = [
         badgeColor: "#059669",
         icon: Bike,
       },
+      {
+        label: "Customer Info",
+        href: "/admin/customers",
+        badge: "CRM",
+        badgeColor: "#ea580c",
+        icon: Users,
+      },
     ],
   },
   {

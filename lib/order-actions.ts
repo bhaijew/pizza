@@ -13,6 +13,7 @@ import { getTableScanSession } from "@/lib/table-session";
 import { ProductVariation, ExtraTopping } from "@/types/menu";
 import { sendWhatsAppOrderAlert } from "@/lib/whatsapp";
 import { processLoyaltyPoints } from "@/lib/promo-actions";
+import { syncCustomerFromOrder } from "@/lib/customer-actions";
 import { dbCache } from "@/lib/db-cache";
 
 export interface CreateOrderItem {
@@ -511,8 +512,20 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       }
     }
 
-    // Process Customer Loyalty Points (Feature 5: 1 point per Rs. 50 spent)
+    // Process Customer Loyalty Points & Save Customer Info (Name, Phone, Delivery Address)
     if (input.customer_phone?.trim()) {
+      await syncCustomerFromOrder({
+        phone: input.customer_phone.trim(),
+        customerName: input.customer_name?.trim() || "Customer",
+        deliveryAddress: input.delivery_address?.trim() || "",
+        orderTotal: finalTotal,
+        pointsRedeemed: input.points_redeemed || 0,
+        shopId: targetShopId,
+        isNewOrder: true,
+      }).catch((crmErr) => {
+        console.warn("[Customer CRM sync non-blocking error]", crmErr);
+      });
+
       processLoyaltyPoints(
         input.customer_phone.trim(),
         input.customer_name?.trim() || "Customer",

@@ -16,6 +16,7 @@ export interface PromoValidationResult {
 export interface CustomerLoyaltyInfo {
   phone: string;
   customerName?: string;
+  deliveryAddress?: string;
   pointsBalance: number;
   rupeeValue: number;
   totalOrders: number;
@@ -142,33 +143,82 @@ export async function validatePromoCode(
 }
 
 /**
- * Look up customer loyalty points balance by phone number
+ * Look up customer loyalty points balance and saved address by phone number
  */
 export async function lookupCustomerLoyalty(
   rawPhone: string,
   shopId?: number | null
 ): Promise<CustomerLoyaltyInfo | null> {
   const cleanPhone = formatWhatsAppPhone(rawPhone);
+  const digits = (rawPhone || "").replace(/\D/g, "");
+  const localPhone =
+    digits.startsWith("92") && digits.length >= 11
+      ? "0" + digits.slice(2)
+      : digits.startsWith("3") && digits.length === 10
+      ? "0" + digits
+      : digits;
+
   if (!cleanPhone || cleanPhone.length < 10) return null;
 
   if (isServiceRoleConfigured()) {
     try {
       const db = createAdminClient();
-      let query = db.from("customer_loyalty").select("*").eq("phone", cleanPhone);
+      const phoneCandidates = Array.from(new Set([cleanPhone, localPhone].filter(Boolean)));
+      let query = db.from("customer_loyalty").select("*").in("phone", phoneCandidates);
       if (shopId) {
         query = query.or(`shop_id.eq.${shopId},shop_id.is.null`);
       }
 
-      const { data: record, error } = await query.maybeSingle();
-      if (!error && record) {
-        const points = Number(record.points_balance) || 0;
+      const { data: rows } = await query;
+      const record = rows && rows.length > 0 ? rows[0] : null;
+
+      // Also check latest order for delivery_address and customer_name
+      let ordQuery = db
+        .from("orders")
+        .select("customer_name, delivery_address, notes")
+        .in("customer_phone", phoneCandidates)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (shopId) {
+        ordQuery = ordQuery.eq("shop_id", shopId);
+      }
+      const { data: recentOrders } = await ordQuery;
+      let latestAddress = (record as any)?.delivery_address || "";
+      let latestName = record?.customer_name || "";
+
+      if (Array.isArray(recentOrders)) {
+        for (const o of recentOrders) {
+          if (
+            !latestName &&
+            o.customer_name &&
+            o.customer_name.toLowerCase() !== "walk-in customer" &&
+            o.customer_name.toLowerCase() !== "customer"
+          ) {
+            latestName = o.customer_name.trim();
+          }
+          if (!latestAddress) {
+            if (o.delivery_address && o.delivery_address.trim()) {
+              latestAddress = o.delivery_address.trim();
+            } else if (typeof o.notes === "string") {
+              const m = o.notes.match(/\[DELIVERY:\s*Address:\s*([^|\]]+)/i);
+              if (m && m[1] && m[1].trim().toLowerCase() !== "n/a") {
+                latestAddress = m[1].trim();
+              }
+            }
+          }
+        }
+      }
+
+      if (record || latestName || latestAddress) {
+        const points = Number(record?.points_balance) || 0;
         return {
-          phone: cleanPhone,
-          customerName: record.customer_name || "Valued Customer",
+          phone: localPhone || cleanPhone,
+          customerName: latestName || "Valued Customer",
+          deliveryAddress: latestAddress || undefined,
           pointsBalance: points,
           rupeeValue: points, // 1 point = Rs. 1
-          totalOrders: Number(record.total_orders) || 0,
-          totalSpent: Number(record.total_spent) || 0,
+          totalOrders: Number(record?.total_orders) || (recentOrders?.length ?? 0),
+          totalSpent: Number(record?.total_spent) || 0,
         };
       }
     } catch {

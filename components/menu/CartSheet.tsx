@@ -221,6 +221,18 @@ export default function CartSheet({
         .then((info) => {
           setLoyaltyInfo(info);
           if (!info || info.pointsBalance <= 0) setRedeemLoyalty(false);
+          if (info) {
+            if (
+              info.customerName &&
+              info.customerName !== "Valued Customer" &&
+              info.customerName !== "Walk-in Customer"
+            ) {
+              setCustomerName((prev) => (prev.trim() ? prev : info.customerName!));
+            }
+            if (info.deliveryAddress) {
+              setDeliveryAddress((prev) => (prev.trim() ? prev : info.deliveryAddress!));
+            }
+          }
         })
         .catch(() => {});
     } else {

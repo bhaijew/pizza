@@ -1327,11 +1327,6 @@ export default function HomePage() {
                     Monday–Sunday Day Deals
                   </a>
                 </li>
-                <li>
-                  <Link href="/super-admin/login" className="hover:text-orange-400 transition-colors">
-                    Super Admin Network
-                  </Link>
-                </li>
               </ul>
             </div>
 
