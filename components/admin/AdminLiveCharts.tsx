@@ -16,11 +16,14 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { updateShopAnalyticsStartDate } from "@/lib/admin-actions";
+
 interface AdminLiveChartsProps {
   initialOrders: Order[];
   todayOrders: Order[];
   currencySymbol?: string;
   shopId?: number | null;
+  shopCreatedAt?: string | null;
   openingTime?: string;
   closingTime?: string;
 }
@@ -62,23 +65,62 @@ function getPakistaniDateKey(isoString?: string): string {
   }
 }
 
+function formatShortDateFromKey(dateKey: string): string {
+  try {
+    const [y, m, d] = dateKey.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString("en-PK", {
+      day: "numeric",
+      month: "short",
+    });
+  } catch {
+    return dateKey;
+  }
+}
+
 export default function AdminLiveCharts({
   initialOrders,
   todayOrders,
   currencySymbol = "Rs.",
   shopId = null,
+  shopCreatedAt = null,
 }: AdminLiveChartsProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [range, setRange] = useState<TimeRange>("30d");
   const [rushMetric, setRushMetric] = useState<RushMetric>("orders");
-  const [salesChartStyle, setSalesChartStyle] = useState<SalesChartStyle>("area");
+  const [salesChartStyle, setSalesChartStyle] = useState<SalesChartStyle>("bars");
   const [hoveredHour, setHoveredHour] = useState<number | null>(null);
   const [hoveredDayIdx, setHoveredDayIdx] = useState<number | null>(null);
   const [livePulse, setLivePulse] = useState(false);
+  const [activeSinceIso, setActiveSinceIso] = useState<string | null>(shopCreatedAt);
+  const [savingStartDate, setSavingStartDate] = useState(false);
+
+  const todayDateKey = useMemo(() => getPakistaniDateKey(new Date().toISOString()), []);
 
   useEffect(() => {
     setOrders(initialOrders);
   }, [initialOrders]);
+
+  useEffect(() => {
+    setActiveSinceIso(shopCreatedAt);
+  }, [shopCreatedAt]);
+
+  const handleSetStartFromToday = async () => {
+    setSavingStartDate(true);
+    const nowStart = new Date();
+    nowStart.setHours(0, 0, 0, 0);
+    const iso = nowStart.toISOString();
+    setActiveSinceIso(iso);
+    await updateShopAnalyticsStartDate(iso);
+    setSavingStartDate(false);
+  };
+
+  const handleResetActiveDate = async () => {
+    setSavingStartDate(true);
+    setActiveSinceIso(null);
+    await updateShopAnalyticsStartDate(null);
+    setSavingStartDate(false);
+  };
 
   // Real-time Supabase subscription for instant live chart updates
   useEffect(() => {
@@ -123,24 +165,37 @@ export default function AdminLiveCharts({
     };
   }, [shopId]);
 
+  // Orders strictly on or after the shop's activation date on SoleWhat
+  const activationFilteredOrders = useMemo(() => {
+    if (!activeSinceIso) return orders;
+    const minTs = new Date(activeSinceIso).getTime();
+    if (Number.isNaN(minTs)) return orders;
+    return orders.filter((o) => new Date(o.created_at || 0).getTime() >= minTs);
+  }, [orders, activeSinceIso]);
+
   // Filter orders by selected range
   const filteredOrders = useMemo(() => {
     const now = Date.now();
     if (range === "today") {
       if (todayOrders.length > 0) return todayOrders;
-      const todayKey = getPakistaniDateKey(new Date().toISOString());
-      return orders.filter((o) => getPakistaniDateKey(o.created_at) === todayKey);
+      return activationFilteredOrders.filter(
+        (o) => getPakistaniDateKey(o.created_at) === todayDateKey
+      );
     }
     if (range === "7d") {
       const cutoff = now - 7 * 24 * 60 * 60 * 1000;
-      return orders.filter((o) => new Date(o.created_at || 0).getTime() >= cutoff);
+      return activationFilteredOrders.filter(
+        (o) => new Date(o.created_at || 0).getTime() >= cutoff
+      );
     }
     if (range === "30d") {
       const cutoff = now - 30 * 24 * 60 * 60 * 1000;
-      return orders.filter((o) => new Date(o.created_at || 0).getTime() >= cutoff);
+      return activationFilteredOrders.filter(
+        (o) => new Date(o.created_at || 0).getTime() >= cutoff
+      );
     }
-    return orders;
-  }, [orders, todayOrders, range]);
+    return activationFilteredOrders;
+  }, [activationFilteredOrders, todayOrders, range, todayDateKey]);
 
   const validOrders = useMemo(
     () => filteredOrders.filter((o) => o.status !== "cancelled"),
@@ -156,7 +211,7 @@ export default function AdminLiveCharts({
     return { totalRev, count, aov, deliveredCount };
   }, [validOrders]);
 
-  // ─── 1. RUSH HOUR CHART DATA (11:00 AM to 2:00 AM + Full 24h) ────────────────
+  // ─── 1. RUSH HOUR CHART DATA (Only Active Shift Hours) ──────────────────────
   const rushHourSlots = useMemo(() => {
     const shiftHours = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2];
     const buckets: Record<
@@ -204,42 +259,68 @@ export default function AdminLiveCharts({
     return { list, peakSlot, maxVal };
   }, [validOrders, rushMetric]);
 
-  // ─── 2. SELLING & REVENUE TREND CHART (Last 10 Days / Daily Trend) ──────────
+  // ─── 2. SELLING & REVENUE TREND CHART (Only Active Days on SoleWhat) ────────
   const dailySalesTrend = useMemo(() => {
-    const daysCount = range === "7d" ? 7 : 10;
+    const maxDaysLimit = range === "today" ? 1 : range === "7d" ? 7 : range === "30d" ? 30 : 60;
+    const now = Date.now();
+    const cutoffMs =
+      range === "today"
+        ? 0
+        : range === "all"
+          ? 0
+          : now - maxDaysLimit * 24 * 60 * 60 * 1000;
+
     const dayMap: Record<
       string,
       { dateKey: string; shortLabel: string; revenue: number; orders: number }
     > = {};
 
-    const now = new Date();
-    for (let i = daysCount - 1; i >= 0; i--) {
-      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      const key = getPakistaniDateKey(d.toISOString());
-      const shortLabel = d.toLocaleDateString("en-PK", {
-        timeZone: "Asia/Karachi",
-        day: "numeric",
-        month: "short",
-      });
-      dayMap[key] = { dateKey: key, shortLabel, revenue: 0, orders: 0 };
-    }
-
-    orders
+    // Aggregate ONLY actual orders placed on or after shop activation date
+    activationFilteredOrders
       .filter((o) => o.status !== "cancelled")
       .forEach((o) => {
+        const ts = new Date(o.created_at || 0).getTime();
+        if (cutoffMs > 0 && ts < cutoffMs) return;
         const key = getPakistaniDateKey(o.created_at);
-        if (dayMap[key]) {
-          dayMap[key].revenue += Number(o.total) || 0;
-          dayMap[key].orders += 1;
+        if (!key) return;
+        if (range === "today" && key !== todayDateKey) return;
+
+        if (!dayMap[key]) {
+          dayMap[key] = {
+            dateKey: key,
+            shortLabel: key === todayDateKey ? "Today" : formatShortDateFromKey(key),
+            revenue: 0,
+            orders: 0,
+          };
         }
+        dayMap[key].revenue += Number(o.total) || 0;
+        dayMap[key].orders += 1;
       });
 
-    const points = Object.values(dayMap);
+    // Only keep days where the site was genuinely active (orders > 0)
+    const activePoints = Object.values(dayMap)
+      .filter((pt) => pt.orders > 0 && pt.revenue > 0)
+      .sort((a, b) => a.dateKey.localeCompare(b.dateKey))
+      .slice(-12);
+
+    // If no active days yet (e.g. brand new shop activated today), show single Today entry
+    const points =
+      activePoints.length > 0
+        ? activePoints
+        : [
+            {
+              dateKey: todayDateKey,
+              shortLabel: "Today",
+              revenue: 0,
+              orders: 0,
+            },
+          ];
+
     const maxRevenue = Math.max(100, ...points.map((p) => p.revenue));
     const maxOrders = Math.max(1, ...points.map((p) => p.orders));
 
-    return { points, maxRevenue, maxOrders };
-  }, [orders, range]);
+    return { points, maxRevenue, maxOrders, activeDaysCount: activePoints.length };
+  }, [activationFilteredOrders, range, todayDateKey]);
 
   // ─── 3. TOP BEST-SELLING ITEMS CHART ────────────────────────────────────────
   const topSellingItems = useMemo(() => {
@@ -418,46 +499,78 @@ export default function AdminLiveCharts({
             </div>
           </div>
 
-          {/* Period Filter Buttons */}
-          <div
-            style={{
-              display: "inline-flex",
-              background: "#1e293b",
-              padding: 3,
-              borderRadius: 5,
-              border: "1px solid #334155",
-            }}
-          >
-            {(
-              [
-                { id: "today", label: "Today's Shift" },
-                { id: "7d", label: "Last 7 Days" },
-                { id: "30d", label: "Last 30 Days" },
-                { id: "all", label: "All Time" },
-              ] as { id: TimeRange; label: string }[]
-            ).map((tab) => {
-              const active = range === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setRange(tab.id)}
-                  style={{
-                    padding: "5px 12px",
-                    borderRadius: 5,
-                    border: "none",
-                    background: active ? "#ea580c" : "transparent",
-                    color: active ? "#ffffff" : "#cbd5e1",
-                    fontSize: 11,
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
+          {/* Period Filter Buttons + Site Active Date Control */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              disabled={savingStartDate}
+              onClick={
+                activeSinceIso && getPakistaniDateKey(activeSinceIso) === todayDateKey
+                  ? handleResetActiveDate
+                  : handleSetStartFromToday
+              }
+              title="Set chart to start fresh from Today (hides earlier test orders) or restore all shop history"
+              style={{
+                padding: "5px 10px",
+                borderRadius: 5,
+                border: "1px solid #334155",
+                background:
+                  activeSinceIso && getPakistaniDateKey(activeSinceIso) === todayDateKey
+                    ? "#059669"
+                    : "#1e293b",
+                color: "#ffffff",
+                fontSize: 10.5,
+                fontWeight: 800,
+                cursor: savingStartDate ? "wait" : "pointer",
+              }}
+            >
+              {savingStartDate
+                ? "Saving..."
+                : activeSinceIso && getPakistaniDateKey(activeSinceIso) === todayDateKey
+                  ? "✓ Active From Today (Click to Show All)"
+                  : "📅 Start Fresh From Today"}
+            </button>
+
+            <div
+              style={{
+                display: "inline-flex",
+                background: "#1e293b",
+                padding: 3,
+                borderRadius: 5,
+                border: "1px solid #334155",
+              }}
+            >
+              {(
+                [
+                  { id: "today", label: "Today's Shift" },
+                  { id: "7d", label: "Last 7 Days" },
+                  { id: "30d", label: "Last 30 Days" },
+                  { id: "all", label: "All Time" },
+                ] as { id: TimeRange; label: string }[]
+              ).map((tab) => {
+                const active = range === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setRange(tab.id)}
+                    style={{
+                      padding: "5px 12px",
+                      borderRadius: 5,
+                      border: "none",
+                      background: active ? "#ea580c" : "transparent",
+                      color: active ? "#ffffff" : "#cbd5e1",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -805,7 +918,7 @@ export default function AdminLiveCharts({
                   Selling &amp; Revenue Performance Curve
                 </h3>
                 <p style={{ margin: 0, fontSize: 11, color: "#64748b" }}>
-                  Daily net sales ({currencySymbol}) &amp; order volume trajectory
+                  Showing only active operational days on SoleWhat ({dailySalesTrend.activeDaysCount} active {dailySalesTrend.activeDaysCount === 1 ? "day" : "days"})
                 </p>
               </div>
             </div>
@@ -905,7 +1018,7 @@ export default function AdminLiveCharts({
                   {/* Data Nodes & Labels */}
                   {svgChart.coords.map(({ x, y, pt, idx }) => {
                     const isHovered = hoveredDayIdx === idx;
-                    const isLast = idx === svgChart.coords.length - 1;
+                    const isToday = pt.dateKey === todayDateKey;
                     return (
                       <g
                         key={pt.dateKey}
@@ -916,8 +1029,8 @@ export default function AdminLiveCharts({
                         <circle
                           cx={x}
                           cy={y}
-                          r={isHovered ? 6 : isLast ? 5 : 4}
-                          fill={isLast ? "#059669" : "#ffffff"}
+                          r={isHovered ? 6 : isToday ? 5 : 4}
+                          fill={isToday ? "#059669" : "#ffffff"}
                           stroke="#059669"
                           strokeWidth={2.5}
                         />
@@ -940,10 +1053,10 @@ export default function AdminLiveCharts({
                           y={svgChart.H - 4}
                           textAnchor="middle"
                           fontSize={10}
-                          fontWeight={isLast ? 900 : 700}
-                          fill={isLast ? "#059669" : "#64748b"}
+                          fontWeight={isToday ? 900 : 700}
+                          fill={isToday ? "#059669" : "#64748b"}
                         >
-                          {isLast ? "Today" : pt.shortLabel}
+                          {pt.shortLabel}
                         </text>
                       </g>
                     );
@@ -976,10 +1089,10 @@ export default function AdminLiveCharts({
                     gap: 10,
                   }}
                 >
-                  {dailySalesTrend.points.map((pt, idx) => {
+                  {dailySalesTrend.points.map((pt) => {
                     const ratio = pt.revenue / dailySalesTrend.maxRevenue;
                     const barPx = pt.revenue === 0 ? 4 : Math.max(12, Math.round(ratio * 150));
-                    const isToday = idx === dailySalesTrend.points.length - 1;
+                    const isToday = pt.dateKey === todayDateKey;
                     return (
                       <div
                         key={pt.dateKey}
@@ -1000,7 +1113,7 @@ export default function AdminLiveCharts({
                         <div
                           style={{
                             width: "100%",
-                            maxWidth: 32,
+                            maxWidth: 38,
                             height: `${barPx}px`,
                             borderRadius: "4px 4px 0 0",
                             background:
@@ -1019,7 +1132,7 @@ export default function AdminLiveCharts({
                             color: isToday ? "#059669" : "#475569",
                           }}
                         >
-                          {isToday ? "Today" : pt.shortLabel}
+                          {pt.shortLabel}
                         </span>
                       </div>
                     );

@@ -8,7 +8,7 @@
 import fs from "fs";
 import path from "path";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { dbCache } from "@/lib/db-cache";
@@ -53,6 +53,7 @@ export async function getActiveShopContext(): Promise<{
   shopId: number | null;
   shopName: string;
   shopSlug: string | null;
+  shopCreatedAt: string | null;
   isMasterAdmin: boolean;
   role: "admin" | "sub_admin" | "staff";
   staffName: string;
@@ -62,32 +63,121 @@ export async function getActiveShopContext(): Promise<{
   const token = cookieStore.get(ADMIN_COOKIE)?.value;
   const verifiedClaims = token ? await verifyAdminSession(token) : null;
 
+  let shopId: number | null = null;
+  let shopName = "Master Store";
+  let shopSlug: string | null = null;
+  let isMasterAdmin = false;
+  let role: "admin" | "sub_admin" | "staff" = "admin";
+  let staffName = "Shop Admin";
+
   if (verifiedClaims) {
-    return {
-      shopId: verifiedClaims.shopId,
-      shopName: verifiedClaims.shopName || "Master Store",
-      shopSlug: verifiedClaims.shopSlug || null,
-      isMasterAdmin: verifiedClaims.isMaster === true,
-      role: verifiedClaims.role || "admin",
-      staffName: verifiedClaims.staffName || (verifiedClaims.role === "admin" ? "Shop Admin" : "Staff Member"),
-      canCancelOrders: verifiedClaims.role === "admin",
-    };
+    shopId = verifiedClaims.shopId;
+    shopName = verifiedClaims.shopName || "Master Store";
+    shopSlug = verifiedClaims.shopSlug || null;
+    isMasterAdmin = verifiedClaims.isMaster === true;
+    role = verifiedClaims.role || "admin";
+    staffName =
+      verifiedClaims.staffName || (verifiedClaims.role === "admin" ? "Shop Admin" : "Staff Member");
+  } else {
+    // Fallback for legacy unsigned cookies (during transition)
+    const shopIdStr = cookieStore.get(ADMIN_SHOP_COOKIE)?.value;
+    shopName = cookieStore.get(ADMIN_SHOP_NAME_COOKIE)?.value || "Master Store";
+    shopSlug = cookieStore.get(ADMIN_SHOP_SLUG_COOKIE)?.value || null;
+    role = (cookieStore.get(ADMIN_ROLE_COOKIE)?.value as any) || "admin";
+    staffName =
+      cookieStore.get(ADMIN_STAFF_NAME_COOKIE)?.value ||
+      (role === "admin" ? "Shop Admin" : "Staff Member");
+    const parsed = shopIdStr ? parseInt(shopIdStr, 10) : null;
+    shopId = parsed !== null && !isNaN(parsed) ? parsed : null;
   }
 
-  // Fallback for legacy unsigned cookies (during transition)
-  const shopIdStr = cookieStore.get(ADMIN_SHOP_COOKIE)?.value;
-  const shopName = cookieStore.get(ADMIN_SHOP_NAME_COOKIE)?.value || "Master Store";
-  const shopSlug = cookieStore.get(ADMIN_SHOP_SLUG_COOKIE)?.value || null;
-  const role = (cookieStore.get(ADMIN_ROLE_COOKIE)?.value as any) || "admin";
-  const staffName =
-    cookieStore.get(ADMIN_STAFF_NAME_COOKIE)?.value || (role === "admin" ? "Shop Admin" : "Staff Member");
-  const shopId = shopIdStr ? parseInt(shopIdStr, 10) : null;
+  // If on a subdomain (e.g. pizza-mafia.solewhat.store/admin) and shopId was null, resolve shop from subdomain
+  if (!shopId) {
+    try {
+      const hdrs = await headers();
+      const host = (hdrs.get("x-forwarded-host") || hdrs.get("host") || "")
+        .toLowerCase()
+        .split(":")[0];
+      let sub = "";
+      if (host.endsWith(".solewhat.store")) {
+        const part = host.replace(".solewhat.store", "").trim();
+        if (part && part !== "www") sub = part;
+      } else if (host.endsWith(".localhost")) {
+        const part = host.replace(".localhost", "").trim();
+        if (part && part !== "www") sub = part;
+      }
+      if (sub && isServiceRoleConfigured()) {
+        const db = createAdminClient();
+        const { data: subShop } = await db
+          .from("shops")
+          .select("id, name, slug, created_at, feature_flags")
+          .eq("slug", sub)
+          .maybeSingle();
+        if (subShop) {
+          shopId = subShop.id;
+          shopName = subShop.name;
+          shopSlug = subShop.slug;
+          const customActiveSince = (subShop as any).feature_flags?.analytics_start_date;
+          return {
+            shopId,
+            shopName,
+            shopSlug,
+            shopCreatedAt: customActiveSince || subShop.created_at || null,
+            isMasterAdmin,
+            role,
+            staffName,
+            canCancelOrders: role === "admin",
+          };
+        }
+      }
+    } catch {
+      // ignore header lookup error
+    }
+  }
+
+  let shopCreatedAt: string | null = null;
+  if (shopId && isServiceRoleConfigured()) {
+    try {
+      const db = createAdminClient();
+      const { data: shopRow } = await db
+        .from("shops")
+        .select("created_at, feature_flags")
+        .eq("id", shopId)
+        .maybeSingle();
+      if (shopRow) {
+        shopCreatedAt =
+          (shopRow as any).feature_flags?.analytics_start_date ||
+          (shopRow as any).created_at ||
+          null;
+      }
+    } catch {
+      // ignore
+    }
+  } else if (!shopId && isServiceRoleConfigured()) {
+    try {
+      const db = createAdminClient();
+      const { data: mainSettings } = await db
+        .from("shop_settings")
+        .select("feature_flags, updated_at")
+        .eq("id", "main")
+        .maybeSingle();
+      if (mainSettings) {
+        shopCreatedAt =
+          (mainSettings as any).feature_flags?.analytics_start_date ||
+          (mainSettings as any).updated_at ||
+          null;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   return {
-    shopId: isNaN(shopId as number) ? null : shopId,
+    shopId,
     shopName,
     shopSlug,
-    // CRITICAL SECURITY FIX: Never treat as Master Admin simply because shopId is empty or absent
-    isMasterAdmin: false,
+    shopCreatedAt,
+    isMasterAdmin,
     role,
     staffName,
     canCancelOrders: role === "admin",
@@ -653,6 +743,78 @@ export async function reorderCategories(
     return { error: null, success: true };
   } catch (err: any) {
     return { error: err?.message || "Failed to update category order", success: false };
+  }
+}
+
+/**
+ * Sets or resets the official activation / live start date (`analytics_start_date`)
+ * for the shop's dashboard & analytics charts so pre-launch / test orders are excluded.
+ */
+export async function updateShopAnalyticsStartDate(
+  startDateIso: string | null
+): Promise<{ error: string | null; success: boolean }> {
+  await requireAdmin();
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  if (!isServiceRoleConfigured()) {
+    return { error: SERVICE_ROLE_ERROR, success: false };
+  }
+
+  try {
+    if (activeShop.shopId) {
+      const { data: shopRow } = await db
+        .from("shops")
+        .select("feature_flags")
+        .eq("id", activeShop.shopId)
+        .maybeSingle();
+
+      const existingFlags =
+        shopRow && typeof (shopRow as any).feature_flags === "object" && (shopRow as any).feature_flags
+          ? { ...(shopRow as any).feature_flags }
+          : {};
+
+      if (startDateIso) {
+        existingFlags.analytics_start_date = startDateIso;
+      } else {
+        delete existingFlags.analytics_start_date;
+      }
+
+      const { error } = await db
+        .from("shops")
+        .update({ feature_flags: existingFlags })
+        .eq("id", activeShop.shopId);
+
+      if (error) return { error: error.message, success: false };
+    } else {
+      const { data: mainSettings } = await db
+        .from("shop_settings")
+        .select("feature_flags")
+        .eq("id", "main")
+        .maybeSingle();
+
+      const existingFlags =
+        mainSettings &&
+        typeof (mainSettings as any).feature_flags === "object" &&
+        (mainSettings as any).feature_flags
+          ? { ...(mainSettings as any).feature_flags }
+          : {};
+
+      if (startDateIso) {
+        existingFlags.analytics_start_date = startDateIso;
+      } else {
+        delete existingFlags.analytics_start_date;
+      }
+
+      await db.from("shop_settings").update({ feature_flags: existingFlags }).eq("id", "main");
+    }
+
+    dbCache.invalidateTag("orders", "settings", "shops");
+    revalidatePath("/admin");
+    revalidatePath("/admin/analytics");
+    return { error: null, success: true };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to update active date", success: false };
   }
 }
 

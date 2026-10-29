@@ -113,6 +113,11 @@ export default async function AdminDashboardPage() {
           recentQuery = recentQuery.is("shop_id", null);
         }
 
+        if (activeShop.shopCreatedAt) {
+          totalCountQuery = totalCountQuery.gte("created_at", activeShop.shopCreatedAt);
+          recentQuery = recentQuery.gte("created_at", activeShop.shopCreatedAt);
+        }
+
         const [prodRes, catRes, totalCountRes, pendingCountRes, todayRes, recentRes] =
           await Promise.all([
             prodQuery,
@@ -528,6 +533,7 @@ export default async function AdminDashboardPage() {
         todayOrders={todayOrders}
         currencySymbol={currencySymbol}
         shopId={activeShop.shopId}
+        shopCreatedAt={activeShop.shopCreatedAt}
         openingTime={openingTime}
         closingTime={closingTime}
       />

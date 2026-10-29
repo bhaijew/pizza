@@ -104,32 +104,48 @@ export default function AnalyticsDashboard({
     };
   }, [filteredOrders]);
 
-  // Daily Trend Data (Last 7 or 14 points)
+  // Daily Trend Data — Only Active Days on SoleWhat (No fake/empty 0-order calendar days)
   const chartData = useMemo(() => {
-    const daysCount = dateRange === "30d" ? 14 : 7;
-    const points: { dateStr: string; label: string; revenue: number; ordersCount: number }[] = [];
-
-    const now = new Date();
-    for (let i = daysCount - 1; i >= 0; i--) {
-      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      const dateStr = d.toISOString().slice(0, 10);
-      const label = d.toLocaleDateString("en-US", { weekday: "short", day: "numeric" });
-      points.push({ dateStr, label, revenue: 0, ordersCount: 0 });
-    }
+    const dayMap = new Map<
+      string,
+      { dateStr: string; label: string; revenue: number; ordersCount: number }
+    >();
 
     for (const ord of filteredOrders) {
       if (ord.status === "cancelled") continue;
       const dStr = ord.created_at?.slice(0, 10);
-      const point = points.find((p) => p.dateStr === dStr);
-      if (point) {
-        point.revenue += Number(ord.total) || 0;
-        point.ordersCount += 1;
+      if (!dStr) continue;
+      let point = dayMap.get(dStr);
+      if (!point) {
+        const d = new Date(ord.created_at);
+        const label = d.toLocaleDateString("en-PK", { day: "numeric", month: "short" });
+        point = { dateStr: dStr, label, revenue: 0, ordersCount: 0 };
+        dayMap.set(dStr, point);
       }
+      point.revenue += Number(ord.total) || 0;
+      point.ordersCount += 1;
     }
+
+    const activePoints = Array.from(dayMap.values())
+      .filter((p) => p.ordersCount > 0 && p.revenue > 0)
+      .sort((a, b) => a.dateStr.localeCompare(b.dateStr))
+      .slice(-14);
+
+    const points =
+      activePoints.length > 0
+        ? activePoints
+        : [
+            {
+              dateStr: new Date().toISOString().slice(0, 10),
+              label: "Today",
+              revenue: 0,
+              ordersCount: 0,
+            },
+          ];
 
     const maxRev = Math.max(...points.map((p) => p.revenue), 100);
     return { points, maxRev };
-  }, [filteredOrders, dateRange]);
+  }, [filteredOrders]);
 
   // 1-Click CSV Export Function
   const handleExportCSV = () => {

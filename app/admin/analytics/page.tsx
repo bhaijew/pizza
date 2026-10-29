@@ -26,6 +26,10 @@ export default async function AdminAnalyticsPage() {
     ordersQuery = ordersQuery.is("shop_id", null);
   }
 
+  if (activeShop.shopCreatedAt) {
+    ordersQuery = ordersQuery.gte("created_at", activeShop.shopCreatedAt);
+  }
+
   const [{ data: orders }, settings] = await Promise.all([
     ordersQuery,
     fetchSettings(),
