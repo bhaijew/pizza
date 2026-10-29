@@ -18,6 +18,10 @@ export default async function AdminOrdersPage() {
     .order("created_at", { ascending: false })
     .limit(120);
 
+  if (shiftBoundary.activeShiftStartUtc) {
+    ordersQuery = ordersQuery.gte("created_at", shiftBoundary.activeShiftStartUtc);
+  }
+
   if (activeShop.shopId) {
     ordersQuery = ordersQuery.eq("shop_id", activeShop.shopId);
   } else {

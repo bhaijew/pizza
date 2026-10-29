@@ -515,11 +515,9 @@ export default function OrdersLiveBoard({
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      // Exclude orders from closed previous shifts on active/today filters (allow viewing all on 'all' tab)
-      if (activeTab !== "all") {
-        if (currentLastClosedAt && new Date(order.created_at).getTime() <= new Date(currentLastClosedAt).getTime()) {
-          return false;
-        }
+      // Exclude orders from closed previous shifts so only current shift's real orders are shown
+      if (currentLastClosedAt && new Date(order.created_at).getTime() <= new Date(currentLastClosedAt).getTime()) {
+        return false;
       }
 
       // Hold back unverified online menu orders until verified by admin at /admin/verify
@@ -577,13 +575,13 @@ export default function OrdersLiveBoard({
   }, [orders, activeTab, searchQuery, openingTime, closingTime]);
 
   const unverifiedMenuOrders = useMemo(() => {
-    return orders.filter((o) => {
+    return todayOrders.filter((o) => {
       if (o.status === "cancelled" || o.status === "delivered") return false;
       return (o as any).is_verified === false || o.notes?.includes("[ONLINE_MENU: AWAITING_VERIFICATION]");
     });
-  }, [orders]);
+  }, [todayOrders]);
 
-  const activeCount = orders.filter(
+  const activeCount = todayOrders.filter(
     (o) => o.status !== "delivered" && o.status !== "cancelled"
   ).length;
 
@@ -683,7 +681,7 @@ export default function OrdersLiveBoard({
             </div>
           </div>
           <div style={{ fontSize: "11px", marginTop: "6px", color: "#9a3412" }}>
-            {orders.filter(o => o.status === "pending").length} Pending • {orders.filter(o => o.status === "preparing").length} In Oven
+            {todayOrders.filter(o => o.status === "pending").length} Pending • {todayOrders.filter(o => o.status === "preparing").length} In Oven
           </div>
         </div>
 
@@ -1054,7 +1052,7 @@ export default function OrdersLiveBoard({
           }}
         >
           <Bike size={14} />
-          <span>Delivery ({orders.filter((o) => getOrderServiceInfo(o).type === "delivery").length})</span>
+          <span>Delivery ({todayOrders.filter((o) => getOrderServiceInfo(o).type === "delivery").length})</span>
         </button>
 
         {/* All Orders tab */}
@@ -1076,7 +1074,7 @@ export default function OrdersLiveBoard({
           }}
         >
           <ShoppingBag size={14} />
-          <span>All Orders ({orders.length})</span>
+          <span>All Orders ({todayOrders.length})</span>
         </button>
 
         <button
@@ -1097,7 +1095,7 @@ export default function OrdersLiveBoard({
           }}
         >
           <UtensilsCrossed size={14} />
-          <span>Tables ({orders.filter(o => getOrderServiceInfo(o).type === "dine_in").length})</span>
+          <span>Tables ({todayOrders.filter(o => getOrderServiceInfo(o).type === "dine_in").length})</span>
         </button>
 
         <button
@@ -1118,7 +1116,7 @@ export default function OrdersLiveBoard({
           }}
         >
           <Key size={14} />
-          <span>Tokens ({orders.filter(o => getOrderServiceInfo(o).type === "takeaway").length})</span>
+          <span>Tokens ({todayOrders.filter(o => getOrderServiceInfo(o).type === "takeaway").length})</span>
         </button>
 
         <button

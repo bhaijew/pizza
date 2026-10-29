@@ -48,7 +48,10 @@ export async function GET(request: NextRequest) {
     }
     query = query.in("status", ["pending", "confirmed", "preparing"]).order("created_at", { ascending: true });
   } else {
-    // Admin orders board: always fetch latest pipeline orders so all tabs (Active, Today, All) remain fast and populated
+    // Admin orders board: fetch current open shift orders
+    if (shiftBoundary.activeShiftStartUtc) {
+      query = query.gte("created_at", shiftBoundary.activeShiftStartUtc);
+    }
     query = query.order("created_at", { ascending: false }).limit(120);
   }
 
