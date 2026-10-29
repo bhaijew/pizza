@@ -3860,7 +3860,8 @@ export async function verifyMenuOrder(
   updatedNotes = updatedNotes.replace(/\[ONLINE_MENU:\s*AWAITING_VERIFICATION\]\s*/gi, "");
   updatedNotes = `[VERIFIED & ACCEPTED by ${staff} at ${nowStr} - Sent to Live Orders] ${updatedNotes}`.trim();
 
-  const nextStatus = options?.sendToKitchen ? "preparing" : "pending";
+  // Release order as 'pending' so the POS printer script detects it and auto-prints immediately
+  const nextStatus = "pending";
 
   const updatePayload: Record<string, any> = {
     is_verified: true,

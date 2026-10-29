@@ -120,9 +120,9 @@ export default function OrderTrackingClient({
   const status = order?.status || "pending";
   const orderType = order?.order_type || "takeaway";
 
-  // Compute active step index: 0 = pending/confirmed, 1 = preparing, 2 = ready/dispatched, 3 = delivered
+  // Compute active step index: 0 = unverified/pending/confirmed, 1 = preparing, 2 = ready/dispatched, 3 = delivered
   const getStepIndex = (st: OrderStatus): number => {
-    if (st === "pending" || st === "confirmed") return 0;
+    if (st === "unverified" || st === "pending" || st === "confirmed") return 0;
     if (st === "preparing") return 1;
     if (st === "ready") return 2;
     if (st === "delivered" || (st as string) === "completed") return 3;

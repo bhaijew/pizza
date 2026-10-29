@@ -16,7 +16,7 @@ export interface Category {
   shop_id?: number | null;
 }
 
-export type OrderStatus = "pending" | "confirmed" | "preparing" | "ready" | "delivered" | "cancelled";
+export type OrderStatus = "unverified" | "pending" | "confirmed" | "preparing" | "ready" | "delivered" | "cancelled";
 
 export interface ProductVariation {
   id?: string;

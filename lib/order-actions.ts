@@ -255,7 +255,7 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
 
     const orderPayload: Record<string, any> = {
       order_number: orderNumber,
-      status: "pending",
+      status: "unverified",
       customer_name: input.customer_name.trim(),
       customer_phone: input.customer_phone?.trim() || null,
       notes: enrichedNotes || null,
@@ -286,7 +286,7 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       if (error && (error.message?.includes("is_verified") || error.message?.includes("source") || error.message?.includes("delivery_address") || error.message?.includes("delivery_fee") || error.message?.includes("order_type") || error.message?.includes("table_number") || error.message?.includes("token_number") || error.message?.includes("shop_id") || error.message?.includes("discount_amount") || error.message?.includes("promo_code"))) {
         const fallbackPayload: Record<string, any> = {
           order_number: orderPayload.order_number,
-          status: "pending",
+          status: "unverified",
           customer_name: input.customer_name.trim(),
           customer_phone: input.customer_phone?.trim() || null,
           notes: enrichedNotes || null,
