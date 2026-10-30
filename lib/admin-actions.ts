@@ -2655,10 +2655,13 @@ export async function getShopActiveShiftBoundary(shopId?: number | null): Promis
       activeBusinessDate = nextBusinessDate;
     }
 
-    // Active shift start is strictly from the last completed closing:
-    // Any order created after that closing belongs to the current open shift
-    if (lastClosedAt) {
+    // Active shift start is whichever is more recent:
+    // If closing was completed recently today (after normalStartUtc), orders for the new active shift MUST have been placed AFTER that closing!
+    // But if closing was from yesterday or earlier, today's shift starts at normalStartUtc!
+    if (lastClosedAt && new Date(lastClosedAt).getTime() > new Date(normalStartUtc).getTime()) {
       activeShiftStartUtc = lastClosedAt;
+    } else {
+      activeShiftStartUtc = normalStartUtc;
     }
   }
 

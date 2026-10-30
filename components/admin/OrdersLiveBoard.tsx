@@ -235,15 +235,18 @@ export default function OrdersLiveBoard({
   };
 
 
-  // Today's shift orders (Filtered strictly to exclude any orders prior to last daily closing)
+  // Today's shift orders (Filtered strictly to today's business shift and post-closing)
   const todayOrders = useMemo(() => {
     return orders.filter((o) => {
+      if (!isOrderInTodayShift(o.created_at, openingTime, closingTime)) {
+        return false;
+      }
       if (currentLastClosedAt && new Date(o.created_at).getTime() <= new Date(currentLastClosedAt).getTime()) {
         return false;
       }
       return true;
     });
-  }, [orders, currentLastClosedAt]);
+  }, [orders, currentLastClosedAt, openingTime, closingTime]);
 
   // Real-Time live sales metrics updated via Supabase websocket stream
   const salesStats = useMemo(() => {
@@ -518,6 +521,13 @@ export default function OrdersLiveBoard({
       // Exclude orders from closed previous shifts so only current shift's real orders are shown
       if (currentLastClosedAt && new Date(order.created_at).getTime() <= new Date(currentLastClosedAt).getTime()) {
         return false;
+      }
+
+      // Live tabs (active, today, delivery, tables, tokens, etc) strictly show today's operational shift orders
+      if (activeTab !== "all") {
+        if (!isOrderInTodayShift(order.created_at, openingTime, closingTime)) {
+          return false;
+        }
       }
 
       // Hold back unverified online menu orders until verified by admin at /admin/verify
