@@ -2,8 +2,13 @@
 
 /**
  * ExpenseManager — Modern Restaurant Cost & Outgoings Tracking for Sole What.
- * Manages daily shop outgoings (Ingredients, Utilities, Wages, Packaging, Rent, Misc,
- * plus custom user-defined categories like Fuel, Delivery, Marketing, Repairs).
+ * Manages daily shop outgoings with user-defined & standard categories:
+ * Ingredients, Utilities, Wages, Packaging, Rent, Fuel, Delivery, Maintenance, etc.
+ * Features:
+ * - Direct Custom Category entry: user can type ANY category name directly
+ * - 1-Click Quick Category Preset Pills
+ * - Dynamic Category Filter Pills in the Table
+ * - Financial KPIs & Daily Closing Integration
  */
 import { useState, useTransition, useMemo } from "react";
 import type { Expense, ExpenseCategory } from "@/types/menu";
@@ -56,11 +61,46 @@ const STANDARD_CATEGORIES: Record<
     border: "border-purple-200",
   },
   maintenance: {
-    label: "Maintenance",
+    label: "Maintenance & Repair",
     icon: "🔧",
     bg: "bg-cyan-50",
     text: "text-cyan-800",
     border: "border-cyan-200",
+  },
+  fuel: {
+    label: "Fuel / Petrol",
+    icon: "⛽",
+    bg: "bg-yellow-50",
+    text: "text-yellow-800",
+    border: "border-yellow-200",
+  },
+  delivery: {
+    label: "Delivery / Bike",
+    icon: "🛵",
+    bg: "bg-emerald-50",
+    text: "text-emerald-800",
+    border: "border-emerald-200",
+  },
+  cleaning: {
+    label: "Cleaning & Supplies",
+    icon: "🧹",
+    bg: "bg-teal-50",
+    text: "text-teal-800",
+    border: "border-teal-200",
+  },
+  grocery: {
+    label: "Grocery",
+    icon: "🛒",
+    bg: "bg-lime-50",
+    text: "text-lime-800",
+    border: "border-lime-200",
+  },
+  marketing: {
+    label: "Marketing & Ads",
+    icon: "📢",
+    bg: "bg-pink-50",
+    text: "text-pink-800",
+    border: "border-pink-200",
   },
   misc: {
     label: "Miscellaneous",
@@ -80,17 +120,34 @@ const STANDARD_CATEGORIES: Record<
 
 /** Format category key into a friendly label and icon (standard or custom) */
 function getCategoryInfo(categoryKey: string) {
-  const key = (categoryKey || "misc").toLowerCase().trim();
-  if (STANDARD_CATEGORIES[key]) {
-    return STANDARD_CATEGORIES[key];
+  const raw = (categoryKey || "misc").trim();
+  const lower = raw.toLowerCase();
+
+  if (STANDARD_CATEGORIES[lower]) {
+    return STANDARD_CATEGORIES[lower];
   }
-  // Custom user-defined category
-  const formatted = key
+
+  // Keyword-based emoji matching for custom categories
+  let icon = "🏷️";
+  if (lower.includes("ingredient") || lower.includes("cheese") || lower.includes("sauce") || lower.includes("flour") || lower.includes("meat")) icon = "🍅";
+  else if (lower.includes("electric") || lower.includes("utility") || lower.includes("gas") || lower.includes("water") || lower.includes("bill")) icon = "⚡";
+  else if (lower.includes("wage") || lower.includes("salary") || lower.includes("staff") || lower.includes("worker") || lower.includes("cook")) icon = "👨‍🍳";
+  else if (lower.includes("pack") || lower.includes("box")) icon = "📦";
+  else if (lower.includes("rent")) icon = "🏢";
+  else if (lower.includes("fuel") || lower.includes("petrol") || lower.includes("diesel")) icon = "⛽";
+  else if (lower.includes("bike") || lower.includes("rider") || lower.includes("delivery")) icon = "🛵";
+  else if (lower.includes("repair") || lower.includes("maintenance")) icon = "🔧";
+  else if (lower.includes("clean")) icon = "🧹";
+  else if (lower.includes("market") || lower.includes("ad")) icon = "📢";
+  else if (lower.includes("grocery") || lower.includes("sabzi") || lower.includes("dahi")) icon = "🛒";
+
+  const formatted = raw
     .replace(/[_-]/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
+
   return {
     label: formatted,
-    icon: "🏷️",
+    icon,
     bg: "bg-rose-50",
     text: "text-rose-700",
     border: "border-rose-200",
@@ -99,7 +156,7 @@ function getCategoryInfo(categoryKey: string) {
 
 export default function ExpenseManager({
   initialExpenses,
-  currencySymbol = "$",
+  currencySymbol = "Rs.",
   shopId,
   shopName,
 }: ExpenseManagerProps) {
@@ -110,27 +167,25 @@ export default function ExpenseManager({
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Custom Category State
-  const [isCustomMode, setIsCustomMode] = useState(false);
-  const [customCategoryInput, setCustomCategoryInput] = useState("");
+  // Category Input state: directly typed or chosen by user
+  const [categoryInput, setCategoryInput] = useState("Ingredients");
 
   // Form state
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
   const [formData, setFormData] = useState({
     title: "",
     amount: "",
-    category: "ingredients" as ExpenseCategory,
     expense_date: todayStr,
     notes: "",
   });
 
-  // Extract all distinct custom categories that have been recorded
+  // Extract all distinct custom categories logged in expenses
   const customCategoriesList = useMemo(() => {
     const standardKeys = new Set(Object.keys(STANDARD_CATEGORIES));
     const set = new Set<string>();
     for (const exp of expenses) {
       const cat = (exp.category || "").trim();
-      if (cat && !standardKeys.has(cat.toLowerCase()) && cat !== "other") {
+      if (cat && !standardKeys.has(cat.toLowerCase()) && cat.toLowerCase() !== "other") {
         set.add(cat);
       }
     }
@@ -140,7 +195,7 @@ export default function ExpenseManager({
   // KPI Calculations
   const metrics = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
-    const currentMonth = today.slice(0, 7); // "YYYY-MM"
+    const currentMonth = today.slice(0, 7);
 
     let todayTotal = 0;
     let monthTotal = 0;
@@ -162,7 +217,6 @@ export default function ExpenseManager({
       catTotals[catKey] = (catTotals[catKey] || 0) + amt;
     }
 
-    // Top category
     let topCat = "None";
     let topCatAmt = 0;
     for (const [cat, amt] of Object.entries(catTotals)) {
@@ -208,12 +262,10 @@ export default function ExpenseManager({
   // Open Modal with clean reset
   const handleOpenAddModal = () => {
     setFormError(null);
-    setIsCustomMode(false);
-    setCustomCategoryInput("");
+    setCategoryInput("Ingredients");
     setFormData({
       title: "",
       amount: "",
-      category: "ingredients",
       expense_date: todayStr,
       notes: "",
     });
@@ -235,16 +287,7 @@ export default function ExpenseManager({
       return;
     }
 
-    // Determine final category (custom vs standard)
-    let finalCategory = formData.category;
-    if (isCustomMode) {
-      const customTrimmed = customCategoryInput.trim();
-      if (!customTrimmed) {
-        setFormError("Please enter a custom category name (e.g. Fuel, Delivery, Repairs).");
-        return;
-      }
-      finalCategory = customTrimmed;
-    }
+    const finalCategory = categoryInput.trim() || "Miscellaneous";
 
     startTransition(async () => {
       const fd = new FormData();
@@ -259,7 +302,7 @@ export default function ExpenseManager({
         setFormError(res.error);
       } else {
         const newRecord: Expense = {
-          id: Date.now(),
+          id: res.expense?.id || Date.now(),
           title: formData.title.trim(),
           amount: amt,
           category: finalCategory,
@@ -269,12 +312,10 @@ export default function ExpenseManager({
         };
         setExpenses((prev) => [newRecord, ...prev]);
         setShowAddModal(false);
-        setIsCustomMode(false);
-        setCustomCategoryInput("");
+        setCategoryInput("Ingredients");
         setFormData({
           title: "",
           amount: "",
-          category: "ingredients",
           expense_date: todayStr,
           notes: "",
         });
@@ -301,18 +342,25 @@ export default function ExpenseManager({
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-200">
         <div>
-          <h1 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
-            <span>💸</span> Expense & Cost Management
-          </h1>
-          <p className="text-xs text-gray-500">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
+              <span>💸</span> Expense & Cost Management
+            </h1>
+            {shopName && (
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700 border border-red-200">
+                {shopName}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
             Log ingredients, daily supplies, utilities, wages, fuel, repairs, and custom restaurant overheads.
           </p>
         </div>
         <button
           onClick={handleOpenAddModal}
-          className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-5 py-2.5 flex items-center justify-center gap-2 transition-all rounded-lg shadow-sm hover:shadow"
+          className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-5 py-2.5 flex items-center justify-center gap-2 transition-all rounded-xl shadow-md shadow-red-500/20 hover:shadow-lg cursor-pointer"
         >
-          <span className="text-sm font-bold">＋</span> Record New Expense
+          <span className="text-base font-bold">＋</span> Record New Expense
         </button>
       </div>
 
@@ -379,7 +427,7 @@ export default function ExpenseManager({
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-thin">
           <button
             onClick={() => setSelectedCategory("all")}
-            className={`px-3 py-1.5 text-xs font-bold uppercase transition-all whitespace-nowrap rounded-lg ${
+            className={`px-3 py-1.5 text-xs font-bold uppercase transition-all whitespace-nowrap rounded-lg cursor-pointer ${
               selectedCategory === "all"
                 ? "bg-red-600 text-white shadow-sm"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -388,13 +436,13 @@ export default function ExpenseManager({
             All
           </button>
           {Object.entries(STANDARD_CATEGORIES)
-            .filter(([key]) => key !== "other")
+            .filter(([key]) => key !== "other" && key !== "misc")
             .map(([key, meta]) => (
               <button
                 key={key}
                 onClick={() => setSelectedCategory(key)}
-                className={`px-2.5 py-1.5 text-xs font-bold transition-all whitespace-nowrap rounded-lg flex items-center gap-1.5 ${
-                  selectedCategory === key
+                className={`px-2.5 py-1.5 text-xs font-bold transition-all whitespace-nowrap rounded-lg flex items-center gap-1.5 cursor-pointer ${
+                  selectedCategory.toLowerCase() === key.toLowerCase()
                     ? "bg-red-100 text-red-800 border border-red-200 shadow-sm"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
@@ -412,7 +460,7 @@ export default function ExpenseManager({
               <button
                 key={customCat}
                 onClick={() => setSelectedCategory(customCat)}
-                className={`px-2.5 py-1.5 text-xs font-bold transition-all whitespace-nowrap rounded-lg flex items-center gap-1.5 ${
+                className={`px-2.5 py-1.5 text-xs font-bold transition-all whitespace-nowrap rounded-lg flex items-center gap-1.5 cursor-pointer ${
                   isSelected
                     ? "bg-rose-100 text-rose-800 border border-rose-300 shadow-sm"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -480,7 +528,7 @@ export default function ExpenseManager({
                           onClick={() => handleDelete(exp.id)}
                           disabled={isPending}
                           title="Delete expense"
-                          className="text-gray-400 hover:text-red-600 transition-colors p-1.5 rounded hover:bg-red-50"
+                          className="text-gray-400 hover:text-red-600 transition-colors p-1.5 rounded hover:bg-red-50 cursor-pointer"
                         >
                           ✕
                         </button>
@@ -495,13 +543,13 @@ export default function ExpenseManager({
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* Modern Add Expense Modal (Elevated UI with Custom Category)  */}
+      {/* Modern Add Expense Modal (Direct Custom & Preset Category)   */}
       {/* ───────────────────────────────────────────────────────────── */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 overflow-hidden relative my-6">
             
-            {/* Header Banner */}
+            {/* Header Banner with Sole What Branding */}
             <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-6 py-4 text-white flex items-center justify-between shadow-md">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl shadow-inner border border-white/20">
@@ -512,14 +560,14 @@ export default function ExpenseManager({
                     Record New Expense
                   </h3>
                   <p className="text-xs text-red-100 font-medium">
-                    Log supplies, bills, wages & custom shop expenses
+                    Add any shop cost, supplies, wages, or custom category
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center text-sm font-bold transition-colors"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center text-sm font-bold transition-colors cursor-pointer"
                 title="Close"
               >
                 ✕
@@ -528,7 +576,7 @@ export default function ExpenseManager({
 
             {/* Error Banner */}
             {formError && (
-              <div className="mx-6 mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-800 font-medium flex items-center gap-2">
+              <div className="mx-6 mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 font-medium flex items-center gap-2">
                 <span>⚠️</span>
                 <span>{formError}</span>
               </div>
@@ -546,7 +594,7 @@ export default function ExpenseManager({
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 50kg Mozzarella Cheese, Gas Cylinder, Bike Fuel, Staff Tea"
+                    placeholder="e.g. 50kg Mozzarella Cheese, Gas Cylinder, Bike Petrol, Staff Lunch..."
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 placeholder-gray-400 focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition-all shadow-sm"
@@ -572,7 +620,7 @@ export default function ExpenseManager({
                       placeholder="0.00"
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      className="w-full bg-white border border-gray-300 rounded-xl pl-9 pr-3 py-2.5 text-xs text-gray-900 font-mono font-bold focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition-all shadow-sm"
+                      className="w-full bg-white border border-gray-300 rounded-xl pl-10 pr-3 py-2.5 text-xs text-gray-900 font-mono font-bold focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition-all shadow-sm"
                     />
                   </div>
                   {/* Quick amount increment pills */}
@@ -580,21 +628,21 @@ export default function ExpenseManager({
                     <button
                       type="button"
                       onClick={() => handleQuickAmount(500)}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
                     >
                       +500
                     </button>
                     <button
                       type="button"
                       onClick={() => handleQuickAmount(1000)}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
                     >
                       +1,000
                     </button>
                     <button
                       type="button"
                       onClick={() => handleQuickAmount(5000)}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
                     >
                       +5,000
                     </button>
@@ -609,7 +657,7 @@ export default function ExpenseManager({
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, expense_date: todayStr })}
-                      className="text-[10px] font-bold text-red-600 hover:underline"
+                      className="text-[10px] font-bold text-red-600 hover:underline cursor-pointer"
                     >
                       Today
                     </button>
@@ -625,130 +673,91 @@ export default function ExpenseManager({
               </div>
 
               {/* ───────────────────────────────────────────────────────────── */}
-              {/* Category Selector with Custom Category Support               */}
+              {/* Category: User Can Directly Type ANY Custom Category or Tap Preset */}
               {/* ───────────────────────────────────────────────────────────── */}
-              <div className="bg-gray-50/70 border border-gray-200 rounded-xl p-3.5 space-y-2.5">
+              <div className="bg-gray-50/80 border border-gray-200 rounded-xl p-3.5 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-black uppercase tracking-wider text-gray-800 flex items-center gap-1.5">
                     <span>🏷️</span>
-                    <span>Category *</span>
+                    <span>Category (Type Custom or Tap Preset) *</span>
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsCustomMode(!isCustomMode);
-                      if (!isCustomMode) {
-                        setCustomCategoryInput("");
-                      }
-                    }}
-                    className="text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline flex items-center gap-1"
-                  >
-                    {isCustomMode ? "← Choose Standard" : "＋ Type Custom Category"}
-                  </button>
+                  <span className="text-[10px] font-semibold text-gray-400">
+                    Fully customizable
+                  </span>
                 </div>
 
-                {!isCustomMode ? (
-                  <div>
-                    <select
-                      value={formData.category}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === "__custom__") {
-                          setIsCustomMode(true);
-                          setCustomCategoryInput("");
-                        } else {
-                          setFormData({ ...formData, category: val as ExpenseCategory });
-                        }
-                      }}
-                      className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 font-semibold focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition-all shadow-sm"
-                    >
-                      <optgroup label="Standard Categories">
-                        {Object.entries(STANDARD_CATEGORIES)
-                          .filter(([key]) => key !== "other")
-                          .map(([key, meta]) => (
-                            <option key={key} value={key}>
-                              {meta.icon} {meta.label}
-                            </option>
-                          ))}
-                      </optgroup>
+                {/* Direct Editable Category Input with Suggestions */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    list="expense-category-suggestions"
+                    value={categoryInput}
+                    onChange={(e) => setCategoryInput(e.target.value)}
+                    placeholder="Type any category (e.g. Fuel, Delivery, Staff Tea, Grocery, Rent)..."
+                    className="w-full bg-white border-2 border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 font-bold placeholder-gray-400 focus:outline-none transition-all shadow-sm"
+                  />
+                  <datalist id="expense-category-suggestions">
+                    <option value="Ingredients" />
+                    <option value="Utilities" />
+                    <option value="Wages & Staff" />
+                    <option value="Packaging" />
+                    <option value="Rent" />
+                    <option value="Fuel / Petrol" />
+                    <option value="Delivery / Bike" />
+                    <option value="Maintenance & Repair" />
+                    <option value="Cleaning & Supplies" />
+                    <option value="Grocery" />
+                    <option value="Marketing & Ads" />
+                    <option value="Miscellaneous" />
+                    {customCategoriesList.map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                </div>
 
-                      {customCategoriesList.length > 0 && (
-                        <optgroup label="Saved Custom Categories">
-                          {customCategoriesList.map((custom) => (
-                            <option key={custom} value={custom}>
-                              🏷️ {getCategoryInfo(custom).label}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-
-                      <option value="__custom__">
-                        ➕ + Enter Custom Category...
-                      </option>
-                    </select>
-
-                    {/* Quick Category Chips for Fast 1-Click Tap */}
-                    <div className="flex flex-wrap gap-1.5 pt-1.5">
-                      {["ingredients", "utilities", "wages", "packaging"].map((quickKey) => {
-                        const info = STANDARD_CATEGORIES[quickKey];
-                        const isSelected = !isCustomMode && formData.category === quickKey;
-                        return (
-                          <button
-                            key={quickKey}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, category: quickKey as ExpenseCategory })}
-                            className={`text-[10px] font-bold px-2 py-1 rounded-md transition-all flex items-center gap-1 ${
-                              isSelected
-                                ? "bg-red-600 text-white shadow-sm"
-                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100"
-                            }`}
-                          >
-                            <span>{info.icon}</span>
-                            <span>{info.label}</span>
-                          </button>
-                        );
-                      })}
-                      <button
-                        type="button"
-                        onClick={() => setIsCustomMode(true)}
-                        className="text-[10px] font-bold px-2 py-1 rounded-md bg-white text-red-600 border border-dashed border-red-300 hover:bg-red-50 transition-colors flex items-center gap-1"
-                      >
-                        <span>＋</span>
-                        <span>Custom</span>
-                      </button>
-                    </div>
+                {/* Quick 1-Tap Category Pills */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-gray-400">
+                    Quick Presets (Tap to Fill):
                   </div>
-                ) : (
-                  <div className="bg-white border-2 border-red-500/30 rounded-xl p-3 space-y-2 animate-in fade-in duration-150">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-gray-700">
-                        Type Your Custom Category:
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setIsCustomMode(false)}
-                        className="text-[10px] text-gray-500 hover:text-gray-800 font-medium"
-                      >
-                        Cancel Custom
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      autoFocus
-                      required
-                      placeholder="e.g. Fuel / Petrol, Delivery Bike Repair, Grocery, Ice, Marketing"
-                      value={customCategoryInput}
-                      onChange={(e) => setCustomCategoryInput(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 font-bold placeholder-gray-400 focus:bg-white focus:border-red-500 focus:outline-none"
-                    />
-                    <p className="text-[10px] text-gray-500">
-                      💡 Tip: This new category will be saved and available in your filters & reports.
-                    </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { label: "Ingredients", icon: "🍅" },
+                      { label: "Utilities", icon: "⚡" },
+                      { label: "Wages & Staff", icon: "👨‍🍳" },
+                      { label: "Packaging", icon: "📦" },
+                      { label: "Rent", icon: "🏢" },
+                      { label: "Fuel / Petrol", icon: "⛽" },
+                      { label: "Delivery / Bike", icon: "🛵" },
+                      { label: "Maintenance & Repair", icon: "🔧" },
+                      { label: "Cleaning", icon: "🧹" },
+                      { label: "Grocery", icon: "🛒" },
+                      ...customCategoriesList.slice(0, 5).map((c) => ({ label: c, icon: "🏷️" })),
+                    ].map((preset) => {
+                      const isSelected =
+                        categoryInput.trim().toLowerCase() === preset.label.toLowerCase();
+                      return (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => setCategoryInput(preset.label)}
+                          className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all flex items-center gap-1 border cursor-pointer ${
+                            isSelected
+                              ? "bg-red-600 text-white border-red-600 shadow-sm ring-1 ring-red-300"
+                              : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
+                          }`}
+                        >
+                          <span>{preset.icon}</span>
+                          <span>{preset.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Notes / Vendor */}
+              {/* Notes / Vendor / Bill # */}
               <div>
                 <label className="block text-[11px] font-black uppercase tracking-wider text-gray-700 mb-1">
                   Notes / Vendor / Invoice # (Optional)
@@ -762,19 +771,37 @@ export default function ExpenseManager({
                 />
               </div>
 
+              {/* Live Preview Strip */}
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 font-bold">Selected Category:</span>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-md text-[11px] font-black border ${getCategoryInfo(categoryInput).bg} ${getCategoryInfo(categoryInput).text} ${getCategoryInfo(categoryInput).border}`}
+                  >
+                    {getCategoryInfo(categoryInput).icon} {getCategoryInfo(categoryInput).label}
+                  </span>
+                </div>
+
+                {Number(formData.amount) > 0 && (
+                  <div className="font-mono font-black text-red-600 text-sm">
+                    {currencySymbol} {Number(formData.amount).toFixed(2)}
+                  </div>
+                )}
+              </div>
+
               {/* Action Buttons */}
               <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-colors"
+                  className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-6 py-2.5 transition-all rounded-xl shadow-md shadow-red-500/20 hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
+                  className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-6 py-2.5 transition-all rounded-xl shadow-md shadow-red-500/20 hover:shadow-lg disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                 >
                   {isPending && (
                     <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
