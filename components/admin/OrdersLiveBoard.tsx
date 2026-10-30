@@ -193,6 +193,9 @@ export default function OrdersLiveBoard({
   activeBusinessDate = "",
 }: OrdersLiveBoardProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
+  useEffect(() => {
+    if (initialOrders) setOrders(initialOrders);
+  }, [initialOrders]);
   const [currentLastClosedAt, setCurrentLastClosedAt] = useState<string | null>(lastClosedAt || null);
   const [currentActiveDate, setCurrentActiveDate] = useState<string>(activeBusinessDate || "");
   const [savedRiders, setSavedRiders] = useState<DeliveryRider[]>(initialRiders);
@@ -468,8 +471,9 @@ export default function OrdersLiveBoard({
                 playPosOrderChime();
               }
 
-              const prevSign = prev.map((o) => `${o.id}-${o.status}`).join(",");
-              const newSign = data.map((o) => `${o.id}-${o.status}`).join(",");
+              const getOrderFp = (o: Order) => `${o.id}_${o.status}_${o.total}_${o.created_at}_${o.updated_at || ""}_${o.items?.length || 0}_${(o.notes || "").slice(-25)}`;
+              const prevSign = prev.map(getOrderFp).join(",");
+              const newSign = data.map(getOrderFp).join(",");
               if (prevSign !== newSign) {
                 return data;
               }

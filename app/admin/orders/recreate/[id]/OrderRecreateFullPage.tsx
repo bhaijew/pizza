@@ -290,9 +290,8 @@ export default function OrderRecreateFullPage({
         if (res.success) {
           setSuccessMsg("Order successfully recreated! Redirecting to Live Orders...");
           setTimeout(() => {
-            router.push("/admin/orders");
-            router.refresh();
-          }, 600);
+            window.location.href = "/admin/orders";
+          }, 500);
         } else {
           setErrorMsg(res.error || "Failed to recreate order.");
         }

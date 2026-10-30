@@ -2167,6 +2167,7 @@ export async function recreateOrder(params: RecreateOrderParams): Promise<{
     }).catch(() => {});
   }
 
+  dbCache.invalidateTag("orders");
   revalidatePath("/admin/orders");
   revalidatePath("/admin/customers");
   revalidatePath("/admin/kitchen");
