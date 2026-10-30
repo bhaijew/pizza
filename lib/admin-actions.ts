@@ -711,7 +711,7 @@ export async function deleteCategory(id: number): Promise<{ error: string | null
  */
 export async function reorderCategories(
   orderedCategoryIds: number[]
-): Promise<{ error: string | null; success: boolean }> {
+): Promise<{ error: string | null; success: boolean; expense?: any }> {
   await requireAdmin();
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
@@ -2485,13 +2485,28 @@ export async function fetchExpenses(): Promise<{
     return { data: [], error: null };
   }
 
-  return { data: data || [], error: null };
+  // Normalize any custom categories saved in notes fallback
+  const parsedData = (data || []).map((exp: any) => {
+    if (exp.category === "other" && exp.notes && typeof exp.notes === "string" && exp.notes.startsWith("[Category: ")) {
+      const match = exp.notes.match(/^\[Category:\s*([^\]]+)\]\s*(.*)$/);
+      if (match) {
+        return {
+          ...exp,
+          category: match[1].trim(),
+          notes: match[2].trim() || null,
+        };
+      }
+    }
+    return exp;
+  });
+
+  return { data: parsedData, error: null };
 }
 
 export async function createExpense(
   _prev: { error: string | null; success: boolean },
   formData: FormData
-): Promise<{ error: string | null; success: boolean }> {
+): Promise<{ error: string | null; success: boolean; expense?: any }> {
   await requireAdmin();
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
@@ -2510,20 +2525,40 @@ export async function createExpense(
     return { error: "Please enter a valid expense title and amount.", success: false };
   }
 
-  const { error } = await db.from("expenses").insert({
+  // Attempt insert with user's category (standard or custom)
+  let { data: inserted, error } = await db.from("expenses").insert({
     title,
     amount,
     category,
     notes,
     expense_date,
     shop_id: activeShop.shopId || null,
-  });
+  }).select().maybeSingle();
+
+  // If DB check constraint blocks custom category, gracefully fallback to 'other' + notes prefix
+  if (error && (error.message?.includes("expenses_category_check") || error.message?.toLowerCase().includes("category"))) {
+    const fallbackNotes = notes ? `[Category: ${category}] ${notes}` : `[Category: ${category}]`;
+    const fallback = await db.from("expenses").insert({
+      title,
+      amount,
+      category: "other",
+      notes: fallbackNotes,
+      expense_date,
+      shop_id: activeShop.shopId || null,
+    }).select().maybeSingle();
+    error = fallback.error;
+    inserted = fallback.data ? {
+      ...fallback.data,
+      category,
+      notes,
+    } : null;
+  }
 
   if (error) return { error: error.message, success: false };
 
   revalidatePath("/admin/expenses");
   revalidatePath("/admin/closing");
-  return { error: null, success: true };
+  return { error: null, success: true, expense: inserted };
 }
 
 export async function deleteExpense(id: number | string): Promise<{ error: string | null }> {

@@ -132,7 +132,8 @@ export type ExpenseCategory =
   | "rent"
   | "maintenance"
   | "misc"
-  | "other";
+  | "other"
+  | (string & {});
 
 export interface Expense {
   id: number | string;
@@ -210,7 +211,8 @@ export type RawIngredientCategory =
   | "bakery"
   | "packaging"
   | "spices"
-  | "other";
+  | "other"
+  | (string & {});
 
 export interface RawIngredient {
   id: number;
