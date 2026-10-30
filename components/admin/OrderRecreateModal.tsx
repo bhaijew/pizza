@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useTransition } from "react";
+import Link from "next/link";
 import type { Order } from "@/types/menu";
 import { recreateOrder, getShopMenuProducts, type ShopMenuProduct } from "@/lib/admin-actions";
 import { broadcastPoleDisplay } from "@/lib/pole-display";
@@ -25,6 +26,7 @@ import {
   Layers,
   Edit2,
   Check,
+  ExternalLink,
 } from "lucide-react";
 
 export interface RecreateItemState {
@@ -119,7 +121,7 @@ export default function OrderRecreateModal({
     // Initialize Customer Info
     let initialAddress = order.delivery_address || "";
     if (!initialAddress && order.notes?.includes("[DELIVERY:")) {
-      const match = order.notes.match(/\[DELIVERY:\s*Address:\s*([^|]+)/i);
+      const match = order.notes.match(/\[DELIVERY:\s*Address:\s*([^|]+)/i);
       if (match) initialAddress = match[1].trim();
     }
     setCustomerName(order.customer_name || "");
@@ -353,6 +355,15 @@ export default function OrderRecreateModal({
             </div>
           </div>
 
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/admin/orders/recreate/${order.id}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 font-extrabold text-xs border border-orange-200 transition-colors shadow-2xs"
+              title="Open dedicated Full Page Order Recreator"
+            >
+              <ExternalLink size={13} />
+              <span>Full Page View</span>
+            </Link>
           <button
             type="button"
             onClick={onClose}
@@ -362,6 +373,7 @@ export default function OrderRecreateModal({
           >
             <X size={20} />
           </button>
+          </div>
         </div>
 
         {/* ─── SCROLLABLE CONTENT BODY ─────────────────────────────── */}

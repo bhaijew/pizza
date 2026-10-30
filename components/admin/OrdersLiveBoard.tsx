@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useTransition, useCallback } from "react";
+import Link from "next/link";
 import type { Order } from "@/types/menu";
 import {
   updateOrderStatus,
@@ -2294,10 +2295,9 @@ export default function OrdersLiveBoard({
                         <span>Edit Info</span>
                       </button>
 
-                      {/* Recreate / Modify Order Button */}
-                      <button
-                        type="button"
-                        onClick={() => setRecreatingOrder(order)}
+                      {/* Recreate / Modify Order Button (Full Page View) */}
+                      <Link
+                        href={`/admin/orders/recreate/${order.id}`}
                         style={{
                           height: "28px",
                           borderRadius: "5px",
@@ -2312,15 +2312,16 @@ export default function OrdersLiveBoard({
                           justifyContent: "center",
                           gap: "4px",
                           whiteSpace: "nowrap",
-                          padding: "0 4px",
+                          padding: "0 6px",
+                          textDecoration: "none",
                           transition: "all 0.15s ease",
                         }}
                         className="hover:bg-orange-100 hover:border-orange-300"
-                        title="Recreate order (keep same Order ID, add burger/pizza, refresh time to now)"
+                        title="Open Full Page Recreate: search products, add items, keep exact same Order ID"
                       >
                         <RefreshCw size={12} style={{ flexShrink: 0 }} />
                         <span>Recreate</span>
-                      </button>
+                      </Link>
 
                       {/* Cancel Order Button */}
                       {order.status !== "cancelled" && order.status !== "delivered" && (
