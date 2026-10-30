@@ -245,6 +245,10 @@ export default function KitchenDisplay({
   // Active kitchen tickets: pending, confirmed or preparing
   const activeKitchenOrders = useMemo(() => {
     return orders.filter((o) => {
+      // Hold back unverified online menu orders until verified by admin at /admin/verify
+      const isUnverified = (o as any).is_verified === false || o.notes?.includes("[ONLINE_MENU: AWAITING_VERIFICATION]");
+      if (isUnverified) return false;
+
       const isKitchenStatus = ["pending", "confirmed", "preparing"].includes(o.status);
       if (!isKitchenStatus) return false;
 
