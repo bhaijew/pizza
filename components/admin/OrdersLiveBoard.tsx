@@ -2299,34 +2299,6 @@ export default function OrdersLiveBoard({
                         <span>Edit Info</span>
                       </button>
 
-                      {/* Recreate / Modify Order Button (Full Page View) */}
-                      <Link
-                        href={`/admin/orders/recreate/${order.id}`}
-                        style={{
-                          height: "28px",
-                          borderRadius: "5px",
-                          background: "#fff7ed",
-                          color: "#ea580c",
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          border: "1px solid #fed7aa",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "4px",
-                          whiteSpace: "nowrap",
-                          padding: "0 6px",
-                          textDecoration: "none",
-                          transition: "all 0.15s ease",
-                        }}
-                        className="hover:bg-orange-100 hover:border-orange-300"
-                        title="Open Full Page Recreate: search products, add items, keep exact same Order ID"
-                      >
-                        <RefreshCw size={12} style={{ flexShrink: 0 }} />
-                        <span>Recreate</span>
-                      </Link>
-
                       {/* Cancel Order Button */}
                       {order.status !== "cancelled" && order.status !== "delivered" && (
                         canCancelOrders ? (
