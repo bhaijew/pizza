@@ -1,85 +1,62 @@
 "use client";
 
 /**
- * ExpenseManager — Modern Enterprise 5px Square UI for Restaurant Cost & Outgoings.
- * Features:
- * - Dedicated Popup Modal with Backdrop Blur
- * - Custom Category creation on-the-fly (persisted & automatically detected)
- * - Real-time Financial Outgoing KPIs (Today, This Month, Top Cost Center, All-Time)
- * - Precision search & category filter pills
+ * ExpenseManager — Modern Restaurant Cost & Outgoings Tracking for Sole What.
+ * Manages daily shop outgoings (Ingredients, Utilities, Wages, Packaging, Rent, Misc,
+ * plus custom user-defined categories like Fuel, Delivery, Marketing, Repairs).
  */
-import { useState, useTransition, useMemo, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
+import { useState, useTransition, useMemo } from "react";
 import type { Expense, ExpenseCategory } from "@/types/menu";
 import { createExpense, deleteExpense } from "@/lib/admin-actions";
-import {
-  Plus,
-  X,
-  Search,
-  Trash2,
-  Clock,
-  Tag,
-  FileText,
-  Check,
-  Layers,
-  Sparkles,
-  AlertCircle,
-  Receipt,
-  Store,
-} from "lucide-react";
 
 interface ExpenseManagerProps {
   initialExpenses: Expense[];
   currencySymbol?: string;
   shopId?: number | null;
+  shopName?: string;
 }
 
-interface CategoryMeta {
-  label: string;
-  icon: string;
-  bg: string;
-  text: string;
-  border: string;
-}
-
-const BUILT_IN_CATEGORIES: Record<string, CategoryMeta> = {
+const STANDARD_CATEGORIES: Record<
+  string,
+  { label: string; icon: string; bg: string; text: string; border: string }
+> = {
   ingredients: {
-    label: "Ingredients & Raw Materials",
+    label: "Ingredients",
     icon: "🍅",
     bg: "bg-red-50",
     text: "text-red-700",
     border: "border-red-200",
   },
   utilities: {
-    label: "Utilities (Gas / Electricity / Water)",
+    label: "Utilities",
     icon: "⚡",
     bg: "bg-amber-50",
     text: "text-amber-800",
     border: "border-amber-200",
   },
   wages: {
-    label: "Wages & Staff Salary",
+    label: "Wages & Staff",
     icon: "👨‍🍳",
     bg: "bg-blue-50",
     text: "text-blue-700",
     border: "border-blue-200",
   },
   packaging: {
-    label: "Packaging & Boxes",
+    label: "Packaging",
     icon: "📦",
     bg: "bg-orange-50",
     text: "text-orange-800",
     border: "border-orange-200",
   },
   rent: {
-    label: "Shop Rent",
+    label: "Rent",
     icon: "🏢",
     bg: "bg-purple-50",
     text: "text-purple-700",
     border: "border-purple-200",
   },
   maintenance: {
-    label: "Repairs & Maintenance",
+    label: "Maintenance",
     icon: "🔧",
     bg: "bg-cyan-50",
     text: "text-cyan-800",
@@ -88,41 +65,43 @@ const BUILT_IN_CATEGORIES: Record<string, CategoryMeta> = {
   misc: {
     label: "Miscellaneous",
     icon: "📌",
-    bg: "bg-slate-50",
-    text: "text-slate-700",
-    border: "border-slate-200",
+    bg: "bg-gray-50",
+    text: "text-gray-700",
+    border: "border-gray-200",
   },
   other: {
     label: "Other Expenses",
-    icon: "📌",
+    icon: "🏷️",
     bg: "bg-slate-50",
     text: "text-slate-700",
     border: "border-slate-200",
   },
 };
 
-const CUSTOM_CATEGORY_PALETTES = [
-  { bg: "bg-emerald-50", text: "text-emerald-800", border: "border-emerald-200" },
-  { bg: "bg-indigo-50", text: "text-indigo-800", border: "border-indigo-200" },
-  { bg: "bg-rose-50", text: "text-rose-800", border: "border-rose-200" },
-  { bg: "bg-violet-50", text: "text-violet-800", border: "border-violet-200" },
-  { bg: "bg-teal-50", text: "text-teal-800", border: "border-teal-200" },
-  { bg: "bg-fuchsia-50", text: "text-fuchsia-800", border: "border-fuchsia-200" },
-];
-
-const QUICK_EMOJIS = ["🏷️", "⛽", "📢", "🛵", "🧹", "🥩", "🥤", "💡", "🛡️", "📦"];
-
-function formatCategoryLabel(key: string): string {
-  if (BUILT_IN_CATEGORIES[key]) return BUILT_IN_CATEGORIES[key].label;
-  return key
+/** Format category key into a friendly label and icon (standard or custom) */
+function getCategoryInfo(categoryKey: string) {
+  const key = (categoryKey || "misc").toLowerCase().trim();
+  if (STANDARD_CATEGORIES[key]) {
+    return STANDARD_CATEGORIES[key];
+  }
+  // Custom user-defined category
+  const formatted = key
     .replace(/[_-]/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
+  return {
+    label: formatted,
+    icon: "🏷️",
+    bg: "bg-rose-50",
+    text: "text-rose-700",
+    border: "border-rose-200",
+  };
 }
 
 export default function ExpenseManager({
   initialExpenses,
-  currencySymbol = "Rs.",
-  shopId = null,
+  currencySymbol = "$",
+  shopId,
+  shopName,
 }: ExpenseManagerProps) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -130,146 +109,33 @@ export default function ExpenseManager({
   const [showAddModal, setShowAddModal] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
 
-  // Custom categories state (stored per shop)
-  const [customCategories, setCustomCategories] = useState<{ id: string; label: string; icon: string }[]>([]);
-  const [showCustomCatInput, setShowCustomCatInput] = useState(false);
-  const [newCatName, setNewCatName] = useState("");
-  const [newCatIcon, setNewCatIcon] = useState("🏷️");
+  // Custom Category State
+  const [isCustomMode, setIsCustomMode] = useState(false);
+  const [customCategoryInput, setCustomCategoryInput] = useState("");
 
+  // Form state
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
-  const yesterdayStr = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 1);
-    return d.toISOString().split("T")[0];
-  }, []);
-
   const [formData, setFormData] = useState({
     title: "",
     amount: "",
-    category: "ingredients" as string,
+    category: "ingredients" as ExpenseCategory,
     expense_date: todayStr,
     notes: "",
   });
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Sync initialExpenses if updated from server
-  useEffect(() => {
-    setExpenses(initialExpenses);
-  }, [initialExpenses]);
-
-  // Load custom categories from localStorage + extract existing custom categories from expenses
-  useEffect(() => {
-    const storageKey = `solewhat_custom_expense_cats_${shopId ?? "main"}`;
-    let saved: { id: string; label: string; icon: string }[] = [];
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) saved = JSON.parse(raw);
-    } catch {
-      saved = [];
-    }
-
-    // Also scan initialExpenses for any custom categories already in database
-    const existingCats = new Set<string>();
-    saved.forEach((c) => existingCats.add(c.id.toLowerCase()));
-
-    const fromExpenses: { id: string; label: string; icon: string }[] = [];
-    initialExpenses.forEach((e) => {
-      const catKey = (e.category || "").trim();
-      if (catKey && !BUILT_IN_CATEGORIES[catKey.toLowerCase()] && !existingCats.has(catKey.toLowerCase())) {
-        existingCats.add(catKey.toLowerCase());
-        fromExpenses.push({
-          id: catKey,
-          label: formatCategoryLabel(catKey),
-          icon: "🏷️",
-        });
+  // Extract all distinct custom categories that have been recorded
+  const customCategoriesList = useMemo(() => {
+    const standardKeys = new Set(Object.keys(STANDARD_CATEGORIES));
+    const set = new Set<string>();
+    for (const exp of expenses) {
+      const cat = (exp.category || "").trim();
+      if (cat && !standardKeys.has(cat.toLowerCase()) && cat !== "other") {
+        set.add(cat);
       }
-    });
-
-    const merged = [...saved, ...fromExpenses];
-    setCustomCategories(merged);
-  }, [initialExpenses, shopId]);
-
-  // Save new custom category
-  const handleSaveCustomCategory = () => {
-    const trimmed = newCatName.trim();
-    if (!trimmed) return;
-
-    const catId = trimmed.toLowerCase().replace(/\s+/g, "_");
-    const exists =
-      BUILT_IN_CATEGORIES[catId] ||
-      customCategories.some((c) => c.id.toLowerCase() === catId);
-
-    if (exists) {
-      setFormData((prev) => ({ ...prev, category: catId }));
-      setShowCustomCatInput(false);
-      setNewCatName("");
-      return;
     }
-
-    const newEntry = {
-      id: catId,
-      label: trimmed,
-      icon: newCatIcon || "🏷️",
-    };
-
-    const updated = [...customCategories, newEntry];
-    setCustomCategories(updated);
-    setFormData((prev) => ({ ...prev, category: catId }));
-
-    try {
-      const storageKey = `solewhat_custom_expense_cats_${shopId ?? "main"}`;
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-    } catch (err) {
-      console.warn("Failed to persist custom category", err);
-    }
-
-    setShowCustomCatInput(false);
-    setNewCatName("");
-  };
-
-  // Helper to get styling and label for any category (built-in or custom)
-  const getCategoryInfo = useCallback(
-    (catKey: string): CategoryMeta => {
-      const lower = (catKey || "").toLowerCase();
-      if (BUILT_IN_CATEGORIES[lower]) {
-        return BUILT_IN_CATEGORIES[lower];
-      }
-
-      const customMatch = customCategories.find((c) => c.id.toLowerCase() === lower);
-      const icon = customMatch?.icon || "🏷️";
-      const label = customMatch?.label || formatCategoryLabel(catKey);
-
-      // Deterministic palette selection based on string hash
-      let hash = 0;
-      for (let i = 0; i < catKey.length; i++) hash = catKey.charCodeAt(i) + ((hash << 5) - hash);
-      const palette = CUSTOM_CATEGORY_PALETTES[Math.abs(hash) % CUSTOM_CATEGORY_PALETTES.length];
-
-      return {
-        label,
-        icon,
-        bg: palette.bg,
-        text: palette.text,
-        border: palette.border,
-      };
-    },
-    [customCategories]
-  );
-
-  // Keyboard shortcut: Escape closes modal
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && showAddModal) {
-        setShowAddModal(false);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showAddModal]);
+    return Array.from(set);
+  }, [expenses]);
 
   // KPI Calculations
   const metrics = useMemo(() => {
@@ -288,11 +154,12 @@ export default function ExpenseManager({
       if (exp.expense_date === today) {
         todayTotal += amt;
       }
-      if (exp.expense_date.startsWith(currentMonth)) {
+      if (exp.expense_date && exp.expense_date.startsWith(currentMonth)) {
         monthTotal += amt;
       }
 
-      catTotals[exp.category] = (catTotals[exp.category] || 0) + amt;
+      const catKey = (exp.category || "misc").toLowerCase().trim();
+      catTotals[catKey] = (catTotals[catKey] || 0) + amt;
     }
 
     // Top category
@@ -312,36 +179,55 @@ export default function ExpenseManager({
       topCat,
       topCatAmt,
     };
-  }, [expenses, getCategoryInfo]);
+  }, [expenses]);
 
   // Filtered expenses
   const filteredExpenses = useMemo(() => {
     return expenses.filter((e) => {
+      const catKey = (e.category || "").toLowerCase().trim();
       const matchesCat =
         selectedCategory === "all" ||
-        (e.category || "").toLowerCase() === selectedCategory.toLowerCase();
+        catKey === selectedCategory.toLowerCase().trim();
 
-      const q = searchQuery.toLowerCase().trim();
-      const catInfo = getCategoryInfo(e.category);
       const matchesSearch =
-        !q ||
-        (e.title || "").toLowerCase().includes(q) ||
-        (e.notes && e.notes.toLowerCase().includes(q)) ||
-        catInfo.label.toLowerCase().includes(q) ||
-        String(e.amount).includes(q);
+        !searchQuery ||
+        e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (e.notes && e.notes.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        catKey.includes(searchQuery.toLowerCase());
 
       return matchesCat && matchesSearch;
     });
-  }, [expenses, selectedCategory, searchQuery, getCategoryInfo]);
+  }, [expenses, selectedCategory, searchQuery]);
 
-  // Handle Add Expense Form Submit
+  // Quick Amount Helper
+  const handleQuickAmount = (increment: number) => {
+    const current = parseFloat(formData.amount) || 0;
+    setFormData((prev) => ({ ...prev, amount: String(current + increment) }));
+  };
+
+  // Open Modal with clean reset
+  const handleOpenAddModal = () => {
+    setFormError(null);
+    setIsCustomMode(false);
+    setCustomCategoryInput("");
+    setFormData({
+      title: "",
+      amount: "",
+      category: "ingredients",
+      expense_date: todayStr,
+      notes: "",
+    });
+    setShowAddModal(true);
+  };
+
+  // Handle Add Expense
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
     const amt = parseFloat(formData.amount);
     if (!formData.title.trim()) {
-      setFormError("Please enter an expense title / description.");
+      setFormError("Please enter an expense description / title.");
       return;
     }
     if (isNaN(amt) || amt <= 0) {
@@ -349,11 +235,22 @@ export default function ExpenseManager({
       return;
     }
 
+    // Determine final category (custom vs standard)
+    let finalCategory = formData.category;
+    if (isCustomMode) {
+      const customTrimmed = customCategoryInput.trim();
+      if (!customTrimmed) {
+        setFormError("Please enter a custom category name (e.g. Fuel, Delivery, Repairs).");
+        return;
+      }
+      finalCategory = customTrimmed;
+    }
+
     startTransition(async () => {
       const fd = new FormData();
       fd.append("title", formData.title.trim());
       fd.append("amount", String(amt));
-      fd.append("category", formData.category);
+      fd.append("category", finalCategory);
       fd.append("expense_date", formData.expense_date);
       fd.append("notes", formData.notes.trim());
 
@@ -361,19 +258,19 @@ export default function ExpenseManager({
       if (res.error) {
         setFormError(res.error);
       } else {
-        const newRecord: Expense = res.expense || {
+        const newRecord: Expense = {
           id: Date.now(),
           title: formData.title.trim(),
           amount: amt,
-          category: formData.category,
+          category: finalCategory,
           expense_date: formData.expense_date,
           notes: formData.notes.trim() || null,
           created_at: new Date().toISOString(),
-          shop_id: shopId,
         };
-
         setExpenses((prev) => [newRecord, ...prev]);
         setShowAddModal(false);
+        setIsCustomMode(false);
+        setCustomCategoryInput("");
         setFormData({
           title: "",
           amount: "",
@@ -387,7 +284,7 @@ export default function ExpenseManager({
 
   // Handle Delete Expense
   const handleDelete = async (id: number | string) => {
-    if (!confirm("Are you sure you want to permanently delete this expense record?")) return;
+    if (!confirm("Are you sure you want to delete this expense record?")) return;
 
     startTransition(async () => {
       const res = await deleteExpense(id);
@@ -399,279 +296,193 @@ export default function ExpenseManager({
     });
   };
 
-  // All available categories for filter tabs (Built-in + Custom)
-  const allFilterCategories = useMemo(() => {
-    const list: { key: string; label: string; icon: string }[] = [];
-
-    // Built-in
-    Object.entries(BUILT_IN_CATEGORIES)
-      .filter(([key]) => key !== "other")
-      .forEach(([key, meta]) => {
-        list.push({ key, label: meta.label, icon: meta.icon });
-      });
-
-    // Custom
-    customCategories.forEach((c) => {
-      if (!list.some((item) => item.key.toLowerCase() === c.id.toLowerCase())) {
-        list.push({ key: c.id, label: c.label, icon: c.icon });
-      }
-    });
-
-    return list;
-  }, [customCategories]);
-
   return (
     <div className="space-y-6">
-      {/* ─── TOP HEADER ────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-200">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="p-1.5 bg-red-100 text-red-600 rounded-[5px] inline-flex">
-              <Receipt size={18} />
-            </span>
-            <h1 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">
-              Expense &amp; Cost Management
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500">
-            Log raw materials, cheese &amp; flour batches, utility bills, staff wages, and daily shop outgoings.
+          <h1 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
+            <span>💸</span> Expense & Cost Management
+          </h1>
+          <p className="text-xs text-gray-500">
+            Log ingredients, daily supplies, utilities, wages, fuel, repairs, and custom restaurant overheads.
           </p>
         </div>
-
         <button
-          onClick={() => {
-            setFormError(null);
-            setShowAddModal(true);
-          }}
-          className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-black text-xs uppercase tracking-wider px-4 py-2.5 flex items-center justify-center gap-2 transition-all rounded-[5px] shadow-sm hover:shadow cursor-pointer"
+          onClick={handleOpenAddModal}
+          className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-5 py-2.5 flex items-center justify-center gap-2 transition-all rounded-lg shadow-sm hover:shadow"
         >
-          <Plus size={16} />
-          <span>Add New Expense</span>
+          <span className="text-sm font-bold">＋</span> Record New Expense
         </button>
       </div>
 
-      {/* ─── KPI METRIC CARDS ─────────────────────────────────── */}
+      {/* Metric KPI Cards (Clean White) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white border border-slate-200 rounded-[5px] p-4 shadow-xs">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-[10px] font-extrabold tracking-widest uppercase text-slate-400">
-              Today&apos;s Expenses
-            </p>
-            <span className="text-xs">📅</span>
-          </div>
-          <p className="text-2xl font-black text-red-600 font-mono">
-            {currencySymbol} {metrics.todayTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1">
+            Today&apos;s Expenses
           </p>
-          <span className="text-[11px] text-slate-500">Current open shift</span>
+          <p className="text-2xl font-black text-red-600">
+            {currencySymbol}
+            {metrics.todayTotal.toFixed(2)}
+          </p>
+          <span className="text-[11px] text-gray-500 font-medium">Logged today</span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-[5px] p-4 shadow-xs">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-[10px] font-extrabold tracking-widest uppercase text-slate-400">
-              This Month
-            </p>
-            <span className="text-xs">⚡</span>
-          </div>
-          <p className="text-2xl font-black text-amber-600 font-mono">
-            {currencySymbol} {metrics.monthTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1">
+            This Month
           </p>
-          <span className="text-[11px] text-slate-500">Monthly operational cost</span>
+          <p className="text-2xl font-black text-amber-600">
+            {currencySymbol}
+            {metrics.monthTotal.toFixed(2)}
+          </p>
+          <span className="text-[11px] text-gray-500 font-medium">Current monthly burn</span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-[5px] p-4 shadow-xs">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-[10px] font-extrabold tracking-widest uppercase text-slate-400">
-              Top Cost Center
-            </p>
-            <span className="text-xs">🏆</span>
-          </div>
-          <p className="text-lg font-black text-slate-900 truncate" title={metrics.topCat}>
-            {metrics.topCat}
+        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1">
+            Top Cost Center
           </p>
-          <span className="text-[11px] text-slate-500 font-mono">
-            {currencySymbol} {metrics.topCatAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total
+          <p className="text-xl font-black text-gray-900 truncate">{metrics.topCat}</p>
+          <span className="text-[11px] text-gray-500 font-medium">
+            {currencySymbol}
+            {metrics.topCatAmt.toFixed(2)} total
           </span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-[5px] p-4 shadow-xs">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-[10px] font-extrabold tracking-widest uppercase text-slate-400">
-              Total Outgoings
-            </p>
-            <span className="text-xs">📊</span>
-          </div>
-          <p className="text-2xl font-black text-slate-900 font-mono">
-            {currencySymbol} {metrics.allTimeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1">
+            All-Time Outgoings
           </p>
-          <span className="text-[11px] text-slate-500">{expenses.length} recorded entries</span>
+          <p className="text-2xl font-black text-gray-900">
+            {currencySymbol}
+            {metrics.allTimeTotal.toFixed(2)}
+          </p>
+          <span className="text-[11px] text-gray-500 font-medium">{expenses.length} total entries</span>
         </div>
       </div>
 
-      {/* ─── SEARCH & CATEGORY FILTER TABS ───────────────────── */}
-      <div className="bg-white border border-slate-200 rounded-[5px] p-3 shadow-xs space-y-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search expenses by title, category, vendor, amount, or notes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-[5px] pl-9 pr-8 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-red-500 focus:bg-white focus:outline-none transition-colors"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          <button
-            onClick={() => {
-              setFormError(null);
-              setShowAddModal(true);
-            }}
-            className="sm:hidden bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase px-3 py-2 rounded-[5px] flex items-center justify-center gap-1.5"
-          >
-            <Plus size={14} />
-            <span>Add Expense</span>
-          </button>
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Search expense title, category, supplier, notes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3.5 py-2 text-xs text-gray-900 placeholder-gray-400 focus:border-red-500 focus:bg-white focus:outline-none transition-colors"
+          />
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        {/* Category Tabs (Includes standard + any custom categories) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-thin">
           <button
             onClick={() => setSelectedCategory("all")}
-            className={`px-3 py-1.5 text-xs font-extrabold uppercase transition-all whitespace-nowrap rounded-[5px] cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-bold uppercase transition-all whitespace-nowrap rounded-lg ${
               selectedCategory === "all"
-                ? "bg-slate-900 text-white shadow-xs"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                ? "bg-red-600 text-white shadow-sm"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
-            All Categories ({expenses.length})
+            All
           </button>
-
-          {allFilterCategories.map((cat) => {
-            const count = expenses.filter(
-              (e) => (e.category || "").toLowerCase() === cat.key.toLowerCase()
-            ).length;
-            const isSelected = selectedCategory.toLowerCase() === cat.key.toLowerCase();
-
-            return (
+          {Object.entries(STANDARD_CATEGORIES)
+            .filter(([key]) => key !== "other")
+            .map(([key, meta]) => (
               <button
-                key={cat.key}
-                onClick={() => setSelectedCategory(cat.key)}
-                className={`px-2.5 py-1.5 text-xs font-bold transition-all whitespace-nowrap rounded-[5px] flex items-center gap-1.5 cursor-pointer ${
-                  isSelected
-                    ? "bg-red-600 text-white shadow-xs"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                key={key}
+                onClick={() => setSelectedCategory(key)}
+                className={`px-2.5 py-1.5 text-xs font-bold transition-all whitespace-nowrap rounded-lg flex items-center gap-1.5 ${
+                  selectedCategory === key
+                    ? "bg-red-100 text-red-800 border border-red-200 shadow-sm"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                <span>{cat.icon}</span>
-                <span>{cat.label}</span>
-                {count > 0 && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      isSelected ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
+                <span>{meta.icon}</span>
+                <span>{meta.label}</span>
+              </button>
+            ))}
+
+          {/* Dynamic custom categories tabs */}
+          {customCategoriesList.map((customCat) => {
+            const info = getCategoryInfo(customCat);
+            const isSelected = selectedCategory.toLowerCase() === customCat.toLowerCase();
+            return (
+              <button
+                key={customCat}
+                onClick={() => setSelectedCategory(customCat)}
+                className={`px-2.5 py-1.5 text-xs font-bold transition-all whitespace-nowrap rounded-lg flex items-center gap-1.5 ${
+                  isSelected
+                    ? "bg-rose-100 text-rose-800 border border-rose-300 shadow-sm"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                <span>{info.icon}</span>
+                <span>{info.label}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* ─── EXPENSES TABLE ──────────────────────────────────── */}
-      <div className="bg-white border border-slate-200 rounded-[5px] overflow-hidden shadow-xs">
+      {/* Expenses Table */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         {filteredExpenses.length === 0 ? (
-          <div className="p-14 text-center">
-            <span className="text-4xl block mb-3">🧾</span>
-            <p className="text-slate-900 font-extrabold text-sm">
-              {searchQuery || selectedCategory !== "all"
-                ? "No matching expenses found"
-                : "No expenses recorded yet"}
+          <div className="p-12 text-center">
+            <span className="text-4xl block mb-2">🧾</span>
+            <p className="text-gray-900 font-bold text-sm">No expenses found</p>
+            <p className="text-gray-500 text-xs mt-1">
+              Click &quot;Record New Expense&quot; to log your shop costs, raw materials, or bills.
             </p>
-            <p className="text-slate-500 text-xs mt-1 max-w-sm mx-auto">
-              {searchQuery || selectedCategory !== "all"
-                ? "Try clearing your search query or selecting another category filter."
-                : "Click \"Add New Expense\" to log restaurant grocery, flour, electricity, or staff wages."}
-            </p>
-            <button
-              onClick={() => {
-                if (searchQuery || selectedCategory !== "all") {
-                  setSearchQuery("");
-                  setSelectedCategory("all");
-                } else {
-                  setShowAddModal(true);
-                }
-              }}
-              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-[5px] hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              {searchQuery || selectedCategory !== "all" ? "Reset Filters" : "+ Record First Expense"}
-            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px] border-b border-slate-200">
+              <thead className="bg-gray-50 text-gray-500 uppercase tracking-wider text-[10px] border-b border-gray-200">
                 <tr>
-                  <th className="py-3 px-4 font-black">Date</th>
-                  <th className="py-3 px-4 font-black">Expense Title</th>
-                  <th className="py-3 px-4 font-black">Category</th>
-                  <th className="py-3 px-4 font-black">Notes / Vendor / Bill</th>
-                  <th className="py-3 px-4 font-black text-right">Amount</th>
-                  <th className="py-3 px-4 font-black text-center w-16">Action</th>
+                  <th className="py-3 px-4 font-bold">Date</th>
+                  <th className="py-3 px-4 font-bold">Expense Title</th>
+                  <th className="py-3 px-4 font-bold">Category</th>
+                  <th className="py-3 px-4 font-bold">Notes / Vendor</th>
+                  <th className="py-3 px-4 font-bold text-right">Amount</th>
+                  <th className="py-3 px-4 font-bold text-center">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-gray-100">
                 {filteredExpenses.map((exp) => {
                   const cat = getCategoryInfo(exp.category);
                   return (
-                    <tr key={exp.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3.5 px-4 font-mono text-slate-600 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <Clock size={12} className="text-slate-400" />
-                          <span>{exp.expense_date}</span>
-                        </div>
+                    <tr key={exp.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="py-3.5 px-4 font-mono text-gray-600 whitespace-nowrap">
+                        {exp.expense_date}
                       </td>
-                      <td className="py-3.5 px-4 font-black text-slate-900">
+                      <td className="py-3.5 px-4 font-bold text-gray-900">
                         {exp.title}
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-extrabold rounded-[5px] border ${cat.bg} ${cat.text} ${cat.border}`}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-md border ${cat.bg} ${cat.text} ${cat.border}`}
                         >
                           <span>{cat.icon}</span>
                           <span>{cat.label}</span>
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-slate-600 max-w-xs truncate">
-                        {exp.notes ? (
-                          <span className="flex items-center gap-1">
-                            <FileText size={11} className="text-slate-400 shrink-0" />
-                            <span className="truncate">{exp.notes}</span>
-                          </span>
-                        ) : (
-                          <span className="text-slate-300">—</span>
-                        )}
+                      <td className="py-3.5 px-4 text-gray-600 max-w-xs truncate">
+                        {exp.notes || "—"}
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-black text-red-600 text-right text-sm whitespace-nowrap">
-                        {currencySymbol} {Number(exp.amount).toFixed(2)}
+                      <td className="py-3.5 px-4 font-mono font-bold text-red-600 text-right text-sm whitespace-nowrap">
+                        {currencySymbol}
+                        {Number(exp.amount).toFixed(2)}
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <button
                           onClick={() => handleDelete(exp.id)}
                           disabled={isPending}
-                          title="Delete expense entry"
-                          className="text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-[4px] p-1.5 transition-colors cursor-pointer"
+                          title="Delete expense"
+                          className="text-gray-400 hover:text-red-600 transition-colors p-1.5 rounded hover:bg-red-50"
                         >
-                          <Trash2 size={13} />
+                          ✕
                         </button>
                       </td>
                     </tr>
@@ -683,307 +494,297 @@ export default function ExpenseManager({
         )}
       </div>
 
-      {/* ─── DEDICATED EXPENSE POPUP MODAL (PORTAL) ───────────── */}
-      {mounted && showAddModal && typeof document !== "undefined" && createPortal(
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-99999 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowAddModal(false);
-          }}
-        >
-          <div
-            className="bg-white border border-slate-200 rounded-[5px] w-full max-w-lg shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 bg-red-600 text-white rounded-[5px]">
-                  <Receipt size={16} />
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* Modern Add Expense Modal (Elevated UI with Custom Category)  */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 overflow-hidden relative my-6">
+            
+            {/* Header Banner */}
+            <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-6 py-4 text-white flex items-center justify-between shadow-md">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl shadow-inner border border-white/20">
+                  💸
                 </div>
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-wider">
+                  <h3 className="text-base font-black tracking-tight text-white uppercase">
                     Record New Expense
                   </h3>
-                  <p className="text-[11px] text-slate-300">
-                    Add restaurant outgoings, supplies, bills or staff costs
+                  <p className="text-xs text-red-100 font-medium">
+                    Log supplies, bills, wages & custom shop expenses
                   </p>
                 </div>
               </div>
-
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-[4px] p-1.5 transition-colors cursor-pointer"
-                title="Close (Esc)"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center text-sm font-bold transition-colors"
+                title="Close"
               >
-                <X size={16} />
+                ✕
               </button>
             </div>
 
-            {/* Error Message */}
+            {/* Error Banner */}
             {formError && (
-              <div className="mx-5 mt-4 p-3 bg-red-50 border border-red-200 rounded-[5px] flex items-center gap-2 text-xs text-red-700 font-bold">
-                <AlertCircle size={15} className="shrink-0 text-red-600" />
+              <div className="mx-6 mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-800 font-medium flex items-center gap-2">
+                <span>⚠️</span>
                 <span>{formError}</span>
               </div>
             )}
 
-            {/* Modal Form */}
-            <form onSubmit={handleAddExpense} className="p-5 space-y-4">
-              {/* Description */}
+            {/* Form */}
+            <form onSubmit={handleAddExpense} className="p-6 space-y-4">
+              
+              {/* Expense Title */}
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">
+                <label className="block text-[11px] font-black uppercase tracking-wider text-gray-700 mb-1">
                   Expense Description / Title *
                 </label>
-                <input
-                  type="text"
-                  required
-                  autoFocus
-                  placeholder="e.g. 50kg Mozzarella Cheese, Flour bags, Electricity Bill"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-white border border-slate-300 rounded-[5px] px-3 py-2 text-xs font-semibold text-slate-900 placeholder-slate-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none transition-all"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 50kg Mozzarella Cheese, Gas Cylinder, Bike Fuel, Staff Tea"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 placeholder-gray-400 focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition-all shadow-sm"
+                  />
+                </div>
               </div>
 
-              {/* Amount and Date */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Amount and Date (2 Columns) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-gray-700 mb-1">
                     Amount ({currencySymbol}) *
                   </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-500 font-mono">
+                  <div className="relative flex items-center">
+                    <span className="absolute left-3 text-xs font-bold text-gray-500 font-mono">
                       {currencySymbol}
                     </span>
                     <input
                       type="number"
                       step="0.01"
-                      min="0.01"
+                      min="0"
                       required
                       placeholder="0.00"
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      className="w-full bg-white border border-slate-300 rounded-[5px] pl-10 pr-3 py-2 text-xs font-mono font-black text-slate-900 focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none transition-all"
+                      className="w-full bg-white border border-gray-300 rounded-xl pl-9 pr-3 py-2.5 text-xs text-gray-900 font-mono font-bold focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition-all shadow-sm"
                     />
+                  </div>
+                  {/* Quick amount increment pills */}
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleQuickAmount(500)}
+                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    >
+                      +500
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickAmount(1000)}
+                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    >
+                      +1,000
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickAmount(5000)}
+                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    >
+                      +5,000
+                    </button>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700">
+                    <label className="block text-[11px] font-black uppercase tracking-wider text-gray-700">
                       Expense Date *
                     </label>
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData((prev) => ({ ...prev, expense_date: todayStr }))}
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-[3px] border cursor-pointer ${
-                          formData.expense_date === todayStr
-                            ? "bg-red-50 border-red-300 text-red-700"
-                            : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                        }`}
-                      >
-                        Today
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData((prev) => ({ ...prev, expense_date: yesterdayStr }))}
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-[3px] border cursor-pointer ${
-                          formData.expense_date === yesterdayStr
-                            ? "bg-red-50 border-red-300 text-red-700"
-                            : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                        }`}
-                      >
-                        Yesterday
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, expense_date: todayStr })}
+                      className="text-[10px] font-bold text-red-600 hover:underline"
+                    >
+                      Today
+                    </button>
                   </div>
                   <input
                     type="date"
                     required
                     value={formData.expense_date}
                     onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
-                    className="w-full bg-white border border-slate-300 rounded-[5px] px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none transition-all"
+                    className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 font-mono font-medium focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition-all shadow-sm"
                   />
                 </div>
               </div>
 
-              {/* Category Selector with Custom Category Creator */}
-              <div className="space-y-2">
+              {/* ───────────────────────────────────────────────────────────── */}
+              {/* Category Selector with Custom Category Support               */}
+              {/* ───────────────────────────────────────────────────────────── */}
+              <div className="bg-gray-50/70 border border-gray-200 rounded-xl p-3.5 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700">
-                    Expense Category *
+                  <label className="text-[11px] font-black uppercase tracking-wider text-gray-800 flex items-center gap-1.5">
+                    <span>🏷️</span>
+                    <span>Category *</span>
                   </label>
                   <button
                     type="button"
-                    onClick={() => setShowCustomCatInput((v) => !v)}
-                    className="text-[11px] font-extrabold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
+                    onClick={() => {
+                      setIsCustomMode(!isCustomMode);
+                      if (!isCustomMode) {
+                        setCustomCategoryInput("");
+                      }
+                    }}
+                    className="text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline flex items-center gap-1"
                   >
-                    <Sparkles size={11} />
-                    <span>{showCustomCatInput ? "Hide Custom Category" : "+ Add Custom Category"}</span>
+                    {isCustomMode ? "← Choose Standard" : "＋ Type Custom Category"}
                   </button>
                 </div>
 
-                {/* Inline Custom Category Creator */}
-                {showCustomCatInput && (
-                  <div className="p-3 bg-red-50/70 border border-red-200 rounded-[5px] space-y-2.5 animate-in slide-in-from-top-2 duration-150">
-                    <p className="text-[11px] font-black text-red-800 uppercase tracking-wider">
-                      Create Your Own Custom Category:
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={newCatIcon}
-                        onChange={(e) => setNewCatIcon(e.target.value)}
-                        className="bg-white border border-red-300 rounded-[4px] px-2 py-1.5 text-sm focus:outline-none cursor-pointer"
-                        title="Choose Icon"
-                      >
-                        {QUICK_EMOJIS.map((em) => (
-                          <option key={em} value={em}>
-                            {em}
-                          </option>
-                        ))}
-                      </select>
+                {!isCustomMode ? (
+                  <div>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "__custom__") {
+                          setIsCustomMode(true);
+                          setCustomCategoryInput("");
+                        } else {
+                          setFormData({ ...formData, category: val as ExpenseCategory });
+                        }
+                      }}
+                      className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 font-semibold focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition-all shadow-sm"
+                    >
+                      <optgroup label="Standard Categories">
+                        {Object.entries(STANDARD_CATEGORIES)
+                          .filter(([key]) => key !== "other")
+                          .map(([key, meta]) => (
+                            <option key={key} value={key}>
+                              {meta.icon} {meta.label}
+                            </option>
+                          ))}
+                      </optgroup>
 
-                      <input
-                        type="text"
-                        placeholder="e.g. Generator Fuel, Marketing, Delivery Petrol"
-                        value={newCatName}
-                        onChange={(e) => setNewCatName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleSaveCustomCategory();
-                          }
-                        }}
-                        className="flex-1 bg-white border border-red-300 rounded-[4px] px-2.5 py-1.5 text-xs text-slate-900 font-bold placeholder-slate-400 focus:outline-none"
-                      />
+                      {customCategoriesList.length > 0 && (
+                        <optgroup label="Saved Custom Categories">
+                          {customCategoriesList.map((custom) => (
+                            <option key={custom} value={custom}>
+                              🏷️ {getCategoryInfo(custom).label}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
 
+                      <option value="__custom__">
+                        ➕ + Enter Custom Category...
+                      </option>
+                    </select>
+
+                    {/* Quick Category Chips for Fast 1-Click Tap */}
+                    <div className="flex flex-wrap gap-1.5 pt-1.5">
+                      {["ingredients", "utilities", "wages", "packaging"].map((quickKey) => {
+                        const info = STANDARD_CATEGORIES[quickKey];
+                        const isSelected = !isCustomMode && formData.category === quickKey;
+                        return (
+                          <button
+                            key={quickKey}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, category: quickKey as ExpenseCategory })}
+                            className={`text-[10px] font-bold px-2 py-1 rounded-md transition-all flex items-center gap-1 ${
+                              isSelected
+                                ? "bg-red-600 text-white shadow-sm"
+                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100"
+                            }`}
+                          >
+                            <span>{info.icon}</span>
+                            <span>{info.label}</span>
+                          </button>
+                        );
+                      })}
                       <button
                         type="button"
-                        onClick={handleSaveCustomCategory}
-                        disabled={!newCatName.trim()}
-                        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-black rounded-[4px] cursor-pointer transition-colors"
+                        onClick={() => setIsCustomMode(true)}
+                        className="text-[10px] font-bold px-2 py-1 rounded-md bg-white text-red-600 border border-dashed border-red-300 hover:bg-red-50 transition-colors flex items-center gap-1"
                       >
-                        Save
+                        <span>＋</span>
+                        <span>Custom</span>
                       </button>
                     </div>
                   </div>
-                )}
-
-                {/* Category Options Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-48 overflow-y-auto p-1 border border-slate-200 rounded-[5px] bg-slate-50/50">
-                  {/* Built-in Categories */}
-                  {Object.entries(BUILT_IN_CATEGORIES)
-                    .filter(([key]) => key !== "other")
-                    .map(([key, meta]) => {
-                      const isSelected = formData.category.toLowerCase() === key.toLowerCase();
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, category: key })}
-                          className={`p-2 rounded-[4px] border text-left flex items-center gap-1.5 transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-white border-red-600 shadow-xs ring-1 ring-red-600"
-                              : "bg-white border-slate-200 hover:border-slate-300 text-slate-700"
-                          }`}
-                        >
-                          <span className="text-sm shrink-0">{meta.icon}</span>
-                          <span className={`text-[11px] font-bold truncate ${isSelected ? "text-red-700 font-black" : ""}`}>
-                            {meta.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-
-                  {/* Custom Categories Added by Admin */}
-                  {customCategories.map((cat) => {
-                    const isSelected = formData.category.toLowerCase() === cat.id.toLowerCase();
-                    return (
+                ) : (
+                  <div className="bg-white border-2 border-red-500/30 rounded-xl p-3 space-y-2 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-gray-700">
+                        Type Your Custom Category:
+                      </span>
                       <button
-                        key={cat.id}
                         type="button"
-                        onClick={() => setFormData({ ...formData, category: cat.id })}
-                        className={`p-2 rounded-[4px] border text-left flex items-center gap-1.5 transition-all cursor-pointer ${
-                          isSelected
-                            ? "bg-white border-red-600 shadow-xs ring-1 ring-red-600"
-                            : "bg-white border-slate-200 hover:border-slate-300 text-slate-700"
-                        }`}
+                        onClick={() => setIsCustomMode(false)}
+                        className="text-[10px] text-gray-500 hover:text-gray-800 font-medium"
                       >
-                        <span className="text-sm shrink-0">{cat.icon}</span>
-                        <span className={`text-[11px] font-bold truncate ${isSelected ? "text-red-700 font-black" : ""}`}>
-                          {cat.label}
-                        </span>
+                        Cancel Custom
                       </button>
-                    );
-                  })}
-                </div>
+                    </div>
+                    <input
+                      type="text"
+                      autoFocus
+                      required
+                      placeholder="e.g. Fuel / Petrol, Delivery Bike Repair, Grocery, Ice, Marketing"
+                      value={customCategoryInput}
+                      onChange={(e) => setCustomCategoryInput(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 font-bold placeholder-gray-400 focus:bg-white focus:border-red-500 focus:outline-none"
+                    />
+                    <p className="text-[10px] text-gray-500">
+                      💡 Tip: This new category will be saved and available in your filters & reports.
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Notes / Vendor / Bill # */}
+              {/* Notes / Vendor */}
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">
-                  Notes / Vendor / Bill # (Optional)
+                <label className="block text-[11px] font-black uppercase tracking-wider text-gray-700 mb-1">
+                  Notes / Vendor / Invoice # (Optional)
                 </label>
                 <textarea
                   rows={2}
-                  placeholder="Receipt number, supplier name (e.g. Metro / Al-Madina Traders), or extra details..."
+                  placeholder="Supplier name, receipt / invoice number, cash vs online payment..."
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full bg-white border border-slate-300 rounded-[5px] px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none resize-none transition-all"
+                  className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2 text-xs text-gray-900 placeholder-gray-400 focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none resize-none transition-all shadow-sm"
                 />
               </div>
 
-              {/* Live Preview Strip */}
-              {Number(formData.amount) > 0 && (
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-[5px] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-500 font-bold">Selected:</span>
-                    <span
-                      className={`px-2 py-0.5 rounded-[4px] text-[10px] font-black border ${getCategoryInfo(formData.category).bg} ${getCategoryInfo(formData.category).text} ${getCategoryInfo(formData.category).border}`}
-                    >
-                      {getCategoryInfo(formData.category).icon} {getCategoryInfo(formData.category).label}
-                    </span>
-                  </div>
-
-                  <div className="font-mono font-black text-red-600 text-sm">
-                    {currencySymbol} {Number(formData.amount).toFixed(2)}
-                  </div>
-                </div>
-              )}
-
-              {/* Footer Actions */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-[5px] transition-colors cursor-pointer"
+                  className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider px-5 py-2.5 transition-all rounded-[5px] shadow-sm hover:shadow flex items-center gap-1.5 cursor-pointer"
+                  className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-6 py-2.5 transition-all rounded-xl shadow-md shadow-red-500/20 hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
                 >
-                  {isPending ? (
-                    <span>Saving...</span>
-                  ) : (
-                    <>
-                      <Check size={14} />
-                      <span>Save Expense</span>
-                    </>
+                  {isPending && (
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   )}
+                  <span>{isPending ? "Saving..." : "Save Expense"}</span>
                 </button>
               </div>
             </form>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
     </div>
   );
