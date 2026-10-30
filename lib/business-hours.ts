@@ -107,8 +107,9 @@ export function getBusinessShiftUtcRange(
   const isCrossMidnight = closeH < openH || (closeH === openH && closeM <= openM);
   const closingDay = isCrossMidnight ? d + 1 : d;
 
-  // Buffer: Give a 59-minute closing buffer or extend until next opening so last-minute orders are never lost
-  const endEpoch = Date.UTC(y, m, closingDay, closeH - PKT_OFFSET_HOURS, closeM, 59, 999);
+  // Shift window extends all late-night orders until the next shift opens
+  // This guarantees late-night orders past 01:00 AM are never lost or dropped before the new business day begins
+  const endEpoch = Date.UTC(y, m, d + 1, openH - PKT_OFFSET_HOURS, openM - 1, 59, 999);
   const endDate = new Date(endEpoch);
 
   return {

@@ -523,11 +523,9 @@ export default function OrdersLiveBoard({
         return false;
       }
 
-      // Live tabs (active, today, delivery, tables, tokens, etc) strictly show today's operational shift orders
-      if (activeTab !== "all") {
-        if (!isOrderInTodayShift(order.created_at, openingTime, closingTime)) {
-          return false;
-        }
+      // Live tabs strictly show today's operational shift orders
+      if (!isOrderInTodayShift(order.created_at, openingTime, closingTime)) {
+        return false;
       }
 
       // Hold back unverified online menu orders until verified by admin at /admin/verify
@@ -540,7 +538,7 @@ export default function OrdersLiveBoard({
 
       if (activeTab === "active") {
         if (order.status === "delivered" || order.status === "cancelled") return false;
-      } else if (activeTab === "today") {
+      } else if (activeTab === "today" || (activeTab as string) === "all") {
         return true;
       } else if (activeTab === "delivery") {
         if (info.type !== "delivery") return false;
@@ -548,7 +546,7 @@ export default function OrdersLiveBoard({
         if (info.type !== "dine_in") return false;
       } else if (activeTab === "tokens") {
         if (info.type !== "takeaway") return false;
-      } else if (activeTab !== "all" && order.status !== activeTab) {
+      } else if (order.status !== activeTab) {
         return false;
       }
 
@@ -591,9 +589,46 @@ export default function OrdersLiveBoard({
     });
   }, [todayOrders]);
 
-  const activeCount = todayOrders.filter(
-    (o) => o.status !== "delivered" && o.status !== "cancelled"
-  ).length;
+  const tabCounts = useMemo(() => {
+    let pending = 0;
+    let preparing = 0;
+    let ready = 0;
+    let delivered = 0;
+    let cancelled = 0;
+    let delivery = 0;
+    let dineIn = 0;
+    let takeaway = 0;
+
+    todayOrders.forEach((o) => {
+      if (o.status === "pending") pending++;
+      else if (o.status === "preparing") preparing++;
+      else if (o.status === "ready") ready++;
+      else if (o.status === "delivered") delivered++;
+      else if (o.status === "cancelled") cancelled++;
+
+      const info = getOrderServiceInfo(o);
+      if (info.type === "delivery") delivery++;
+      else if (info.type === "dine_in") dineIn++;
+      else takeaway++;
+    });
+
+    const active = todayOrders.filter((o) => o.status !== "delivered" && o.status !== "cancelled").length;
+
+    return {
+      active,
+      today: todayOrders.length,
+      delivery,
+      dineIn,
+      takeaway,
+      pending,
+      preparing,
+      ready,
+      delivered,
+      cancelled,
+    };
+  }, [todayOrders]);
+
+  const activeCount = tabCounts.active;
 
   return (
     <div>
@@ -1030,17 +1065,17 @@ export default function OrdersLiveBoard({
             fontSize: "13px",
             fontWeight: 700,
             cursor: "pointer",
-            border: activeTab === "today" ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
-            background: activeTab === "today" ? "#f0fdf4" : "#ffffff",
-            color: activeTab === "today" ? "#16a34a" : "#64748b",
+            border: activeTab === "today" || (activeTab as string) === "all" ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
+            background: activeTab === "today" || (activeTab as string) === "all" ? "#f0fdf4" : "#ffffff",
+            color: activeTab === "today" || (activeTab as string) === "all" ? "#16a34a" : "#64748b",
             display: "inline-flex",
             alignItems: "center",
             gap: "5px",
             transition: "all 0.15s ease",
           }}
         >
-          <Clock size={14} className={activeTab === "today" ? "text-emerald-500" : ""} />
-          <span>Today ({todayOrders.length})</span>
+          <Clock size={14} className={activeTab === "today" || (activeTab as string) === "all" ? "text-emerald-500" : ""} />
+          <span>Today ({tabCounts.today})</span>
         </button>
 
         {/* Delivery tab */}
@@ -1062,29 +1097,7 @@ export default function OrdersLiveBoard({
           }}
         >
           <Bike size={14} />
-          <span>Delivery ({todayOrders.filter((o) => getOrderServiceInfo(o).type === "delivery").length})</span>
-        </button>
-
-        {/* All Orders tab */}
-        <button
-          onClick={() => setActiveTab("all")}
-          style={{
-            padding: "7px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-            cursor: "pointer",
-            border: activeTab === "all" ? "1px solid #cbd5e1" : "1px solid #e2e8f0",
-            background: activeTab === "all" ? "#f1f5f9" : "#ffffff",
-            color: activeTab === "all" ? "#0f172a" : "#64748b",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <ShoppingBag size={14} />
-          <span>All Orders ({todayOrders.length})</span>
+          <span>Delivery ({tabCounts.delivery})</span>
         </button>
 
         <button
@@ -1105,7 +1118,7 @@ export default function OrdersLiveBoard({
           }}
         >
           <UtensilsCrossed size={14} />
-          <span>Tables ({todayOrders.filter(o => getOrderServiceInfo(o).type === "dine_in").length})</span>
+          <span>Tables ({tabCounts.dineIn})</span>
         </button>
 
         <button
@@ -1126,7 +1139,7 @@ export default function OrdersLiveBoard({
           }}
         >
           <Key size={14} />
-          <span>Tokens ({todayOrders.filter(o => getOrderServiceInfo(o).type === "takeaway").length})</span>
+          <span>Tokens ({tabCounts.takeaway})</span>
         </button>
 
         <button
@@ -1147,7 +1160,7 @@ export default function OrdersLiveBoard({
           }}
         >
           <Clock size={13} />
-          <span>Pending</span>
+          <span>Pending ({tabCounts.pending})</span>
         </button>
 
         <button
@@ -1168,7 +1181,7 @@ export default function OrdersLiveBoard({
           }}
         >
           <Flame size={13} />
-          <span>In Kitchen</span>
+          <span>In Kitchen ({tabCounts.preparing})</span>
         </button>
 
         <button
@@ -1189,7 +1202,7 @@ export default function OrdersLiveBoard({
           }}
         >
           <CheckCircle2 size={13} />
-          <span>Ready</span>
+          <span>Ready ({tabCounts.ready})</span>
         </button>
 
         <button
@@ -1210,7 +1223,7 @@ export default function OrdersLiveBoard({
           }}
         >
           <CheckCircle2 size={13} />
-          <span>Delivered</span>
+          <span>Delivered ({tabCounts.delivered})</span>
         </button>
       </div>
 
