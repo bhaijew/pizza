@@ -8,7 +8,6 @@ import {
   validatePromoCode,
   lookupCustomerLoyalty,
   type PromoValidationResult,
-  type CustomerLoyaltyInfo,
 } from "@/lib/promo-actions";
 import type { Product } from "@/types/menu";
 import { MENU2_THEMES, type Menu2ThemeId } from "./menu2-themes";
@@ -85,8 +84,6 @@ export default function Menu2CartDrawer({
   const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoMsg, setPromoMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [loyaltyInfo, setLoyaltyInfo] = useState<CustomerLoyaltyInfo | null>(null);
-  const [redeemLoyalty, setRedeemLoyalty] = useState(false);
 
   const [placedOrderNumber, setPlacedOrderNumber] = useState<string | null>(null);
   const [confirmedType, setConfirmedType] = useState<"dine_in" | "takeaway" | "delivery">("delivery");
@@ -113,8 +110,6 @@ export default function Menu2CartDrawer({
     if (digits.length >= 10) {
       lookupCustomerLoyalty(customerPhone, shopId)
         .then((info) => {
-          setLoyaltyInfo(info);
-          if (!info || info.pointsBalance <= 0) setRedeemLoyalty(false);
           if (info) {
             if (
               info.customerName &&
@@ -129,9 +124,6 @@ export default function Menu2CartDrawer({
           }
         })
         .catch(() => {});
-    } else {
-      setLoyaltyInfo(null);
-      setRedeemLoyalty(false);
     }
   }, [customerPhone, shopId]);
 
@@ -181,10 +173,7 @@ export default function Menu2CartDrawer({
   };
 
   const promoDiscount = appliedPromo?.discountAmount || 0;
-  const maxLoyaltyAllowed = Math.max(0, totalPrice - promoDiscount);
-  const loyaltyDiscount =
-    redeemLoyalty && loyaltyInfo ? Math.min(maxLoyaltyAllowed, loyaltyInfo.pointsBalance) : 0;
-  const totalDiscount = promoDiscount + loyaltyDiscount;
+  const totalDiscount = promoDiscount;
   const finalPayable = Math.max(0, totalPrice - totalDiscount);
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
@@ -231,7 +220,6 @@ export default function Menu2CartDrawer({
       delivery_fee: 0,
       discount_amount: totalDiscount,
       promo_code: appliedPromo?.code || null,
-      points_redeemed: loyaltyDiscount,
       notes: orderNotes.trim(),
       items: orderItems,
       total: finalPayable,
@@ -631,28 +619,6 @@ export default function Menu2CartDrawer({
                     />
                   </div>
                 </div>
-
-                {loyaltyInfo && loyaltyInfo.pointsBalance > 0 && (
-                  <div className={`p-3 rounded-[7px] ${theme.sizeBoxBg} border flex items-center justify-between gap-2`}>
-                    <div>
-                      <p className="text-xs font-black">
-                        Welcome back, {loyaltyInfo.customerName}!
-                      </p>
-                      <p className={`text-[11px] ${theme.priceText} font-semibold`}>
-                        Available Loyalty Points: {loyaltyInfo.pointsBalance} (Rs. {loyaltyInfo.rupeeValue})
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setRedeemLoyalty((r) => !r)}
-                      className={`px-2.5 py-1.5 rounded-[5px] text-[11px] font-extrabold transition cursor-pointer ${
-                        redeemLoyalty ? theme.primaryBtn : `${theme.cardBg} border ${theme.cardBorder}`
-                      }`}
-                    >
-                      {redeemLoyalty ? "Redeemed ✓" : "Use Points"}
-                    </button>
-                  </div>
-                )}
 
                 <div>
                   <label className="block text-xs font-extrabold mb-1">

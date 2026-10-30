@@ -2620,9 +2620,9 @@ export async function getShopActiveShiftBoundary(shopId?: number | null): Promis
       activeBusinessDate = nextBusinessDate;
     }
 
-    // Active shift start is whichever is more recent:
-    // If closing was completed recently, orders for the new active shift MUST have been placed AFTER that closing!
-    if (lastClosedAt && new Date(lastClosedAt).getTime() > new Date(normalStartUtc).getTime()) {
+    // Active shift start is strictly from the last completed closing:
+    // Any order created after that closing belongs to the current open shift
+    if (lastClosedAt) {
       activeShiftStartUtc = lastClosedAt;
     }
   }
@@ -2660,15 +2660,6 @@ export async function fetchDailyClosingData(targetDate?: string, skipAutoCheck =
   await requireAdmin();
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
-
-  // If viewing current active shift, verify if previous shift needs auto-closing
-  if (!skipAutoCheck && !targetDate) {
-    try {
-      await checkAndPerformAutoClosing(activeShop.shopId);
-    } catch (e) {
-      console.error("[Auto-close hook error]", e);
-    }
-  }
 
   // Retrieve shop operating shift timing (e.g. 11:00 AM to 01:00 AM Next Day)
   let openingTime = "11:00";
@@ -2917,163 +2908,15 @@ export async function sendDailyClosingWhatsAppAction(input: {
 }
 
 /**
- * Automatically reconciles and closes the daily register when shop closing time has passed,
- * dispatches the automated WhatsApp closing report to the owner's phone,
- * and rolls over the register to the next business date.
+ * Daily closing is strictly manual by Shop Admin from /admin/closing.
+ * Automated closing has been disabled by user instruction.
  */
 export async function checkAndPerformAutoClosing(shopId?: number | null): Promise<{
   autoClosed: boolean;
   date?: string;
   message?: string;
 }> {
-  try {
-    const db = createAdminClient();
-    if (!isServiceRoleConfigured()) {
-      return { autoClosed: false, message: "Service role not configured" };
-    }
-
-    let resolvedShopId = shopId;
-    if (resolvedShopId === undefined) {
-      try {
-        const activeShop = await getActiveShopContext();
-        resolvedShopId = activeShop.shopId;
-      } catch {
-        resolvedShopId = null;
-      }
-    }
-
-    let openingTime = "11:00";
-    let closingTime = "01:00";
-    let ownerPhone = "";
-    let shopName = "Pizza System";
-    let currencySymbol = "Rs.";
-
-    if (resolvedShopId) {
-      const { data: sData } = await db
-        .from("shops")
-        .select("name, opening_time, closing_time, owner_phone, phone, currency_symbol")
-        .eq("id", resolvedShopId)
-        .maybeSingle();
-      if (sData) {
-        if (sData.opening_time) openingTime = sData.opening_time;
-        if (sData.closing_time) closingTime = sData.closing_time;
-        ownerPhone = sData.owner_phone || sData.phone || "";
-        if (sData.name) shopName = sData.name;
-        if (sData.currency_symbol) currencySymbol = sData.currency_symbol;
-      }
-    } else {
-      const { data: stData } = await db
-        .from("shop_settings")
-        .select("shop_name, opening_time, closing_time, currency_symbol")
-        .eq("id", "main")
-        .maybeSingle();
-      if (stData) {
-        if (stData.opening_time) openingTime = stData.opening_time;
-        if (stData.closing_time) closingTime = stData.closing_time;
-        if (stData.shop_name) shopName = stData.shop_name;
-        if (stData.currency_symbol) currencySymbol = stData.currency_symbol;
-      }
-    }
-
-    const pktNow = getPakistanNow();
-    const currentBusinessDate = getCurrentBusinessDate(openingTime, closingTime);
-
-    // Previous business shift date (strictly the cycle before current business date)
-    const [cy, cm, cd] = currentBusinessDate.split("-").map(Number);
-    const prevDateObj = new Date(Date.UTC(cy, cm - 1, cd - 1));
-    const previousBusinessDate = formatDateStr(prevDateObj);
-
-    // Current shift window
-    const currentShift = getBusinessShiftUtcRange(currentBusinessDate, openingTime, closingTime);
-    const currentShiftEndEpoch = new Date(currentShift.endUtc).getTime();
-
-    // Candidates to auto-close:
-    const datesToCheck: string[] = [previousBusinessDate];
-
-    // CRITICAL: Current business shift must ONLY be auto-closed AFTER its scheduled closing time has elapsed!
-    // E.g. If closing_time is 01:00 AM, at 12:00 AM midnight the shift is STILL ACTIVE and MUST NOT be closed!
-    if (Date.now() >= currentShiftEndEpoch) {
-      datesToCheck.push(currentBusinessDate);
-    }
-
-    for (const checkDate of datesToCheck) {
-      // Safety guard: Never auto-close a date if its shift endUtc is in the future
-      const targetShift = getBusinessShiftUtcRange(checkDate, openingTime, closingTime);
-      if (Date.now() < new Date(targetShift.endUtc).getTime()) {
-        continue;
-      }
-      let q = db
-        .from("daily_closings")
-        .select("id")
-        .eq("closing_date", checkDate);
-      if (resolvedShopId) {
-        q = q.eq("shop_id", resolvedShopId);
-      } else {
-        q = q.is("shop_id", null);
-      }
-      const { data: existingClosing } = await q.maybeSingle();
-
-      if (!existingClosing) {
-        const summary = await fetchDailyClosingData(checkDate, true);
-
-        const payload: Record<string, any> = {
-          closing_date: checkDate,
-          total_orders: summary.totalOrders,
-          total_sales: summary.totalSales,
-          dine_in_sales: summary.dineInSales,
-          takeaway_sales: summary.takeawaySales,
-          total_expenses: summary.totalExpenses,
-          net_profit: summary.netProfit,
-          closed_by: "Auto System (Shift End)",
-          notes: `Automatic day-end closing at scheduled shop closing time (${closingTime} PKT).`,
-          shop_id: resolvedShopId || null,
-        };
-
-        const { error: insertErr } = await db.from("daily_closings").upsert(payload);
-        if (!insertErr) {
-          if (ownerPhone) {
-            try {
-              await sendWhatsAppDailyClosingAlert({
-                recipientPhone: ownerPhone,
-                date: checkDate,
-                closedBy: "Auto System (Shift End)",
-                totalOrders: summary.totalOrders,
-                totalSales: summary.totalSales,
-                dineInSales: summary.dineInSales,
-                takeawaySales: summary.takeawaySales,
-                dineInOrdersCount: summary.dineInOrdersCount,
-                takeawayOrdersCount: summary.takeawayOrdersCount,
-                totalExpenses: summary.totalExpenses,
-                netProfit: summary.netProfit,
-                notes: `Auto-closed according to shop closing time (${closingTime} PKT). Next business date is now active.`,
-                shiftWindow: summary.shiftWindow,
-                shopId: resolvedShopId,
-                currencySymbol,
-                shopName,
-              });
-            } catch (waErr) {
-              console.error("[Auto-close WhatsApp Error]", waErr);
-            }
-          }
-
-          dbCache.invalidateTag("daily_closings", "closings");
-          revalidatePath("/admin/closing");
-          revalidatePath("/admin");
-
-          return {
-            autoClosed: true,
-            date: checkDate,
-            message: `Register for ${checkDate} auto-closed at shop closing time and WhatsApp sent to owner.`,
-          };
-        }
-      }
-    }
-
-    return { autoClosed: false };
-  } catch (err: any) {
-    console.error("[checkAndPerformAutoClosing error]", err);
-    return { autoClosed: false, message: err?.message };
-  }
+  return { autoClosed: false, message: "Auto-closing is disabled. Shifts are closed manually by the Admin." };
 }
 
 // ─── STAFF & SUB-ADMIN MANAGEMENT ACTIONS ────────────────────────

@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
-import { checkAndPerformAutoClosing, getShopActiveShiftBoundary } from "@/lib/admin-actions";
+import { getShopActiveShiftBoundary } from "@/lib/admin-actions";
 import type { Order } from "@/types/menu";
 
 export const dynamic = "force-dynamic";
-
-let lastAutoCloseCheckMs = 0;
 
 /**
  * GET /api/orders/live
@@ -26,15 +24,6 @@ export async function GET(request: NextRequest) {
     shopIdParam && shopIdParam !== "null" && shopIdParam !== "all" && shopIdParam !== "undefined" && !isNaN(Number(shopIdParam))
       ? Number(shopIdParam)
       : null;
-
-  // Periodically verify if previous business shift has ended and needs automated daily closing
-  const nowMs = Date.now();
-  if (nowMs - lastAutoCloseCheckMs > 60000) {
-    lastAutoCloseCheckMs = nowMs;
-    checkAndPerformAutoClosing(parsedShopId).catch((err) => {
-      console.error("[Background auto-closing check error]", err);
-    });
-  }
 
   const shiftBoundary = await getShopActiveShiftBoundary(parsedShopId);
   const db = createAdminClient();

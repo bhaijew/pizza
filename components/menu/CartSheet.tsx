@@ -13,7 +13,6 @@ import {
   validatePromoCode,
   lookupCustomerLoyalty,
   type PromoValidationResult,
-  type CustomerLoyaltyInfo,
 } from "@/lib/promo-actions";
 import type { Product } from "@/types/menu";
 import OptimizedImage from "@/components/ui/OptimizedImage";
@@ -79,10 +78,6 @@ export default function CartSheet({
   const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoMsg, setPromoMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  // Feature 5: Customer Loyalty Points
-  const [loyaltyInfo, setLoyaltyInfo] = useState<CustomerLoyaltyInfo | null>(null);
-  const [redeemLoyalty, setRedeemLoyalty] = useState(false);
 
   // Confirmed order state
   const [placedOrderNumber, setPlacedOrderNumber] = useState<string | null>(null);
@@ -213,14 +208,12 @@ export default function CartSheet({
     if (propSetTableNumber) propSetTableNumber(val);
   };
 
-  // Lookup loyalty points when phone number has 10+ digits
+  // Autofill customer name and address when phone number has 10+ digits
   useEffect(() => {
     const digits = customerPhone.replace(/\D/g, "");
     if (digits.length >= 10) {
       lookupCustomerLoyalty(customerPhone, shopId)
         .then((info) => {
-          setLoyaltyInfo(info);
-          if (!info || info.pointsBalance <= 0) setRedeemLoyalty(false);
           if (info) {
             if (
               info.customerName &&
@@ -235,9 +228,6 @@ export default function CartSheet({
           }
         })
         .catch(() => {});
-    } else {
-      setLoyaltyInfo(null);
-      setRedeemLoyalty(false);
     }
   }, [customerPhone, shopId]);
 
@@ -267,11 +257,8 @@ export default function CartSheet({
   };
 
   const promoDiscount = appliedPromo?.discountAmount || 0;
-  const maxLoyaltyAllowed = Math.max(0, totalPrice - promoDiscount);
-  const loyaltyDiscount = redeemLoyalty && loyaltyInfo ? Math.min(maxLoyaltyAllowed, loyaltyInfo.pointsBalance) : 0;
-  const totalDiscount = promoDiscount + loyaltyDiscount;
+  const totalDiscount = promoDiscount;
   const finalPayable = Math.max(0, totalPrice - totalDiscount) + (selectedOrderType === "delivery" ? deliveryFee : 0);
-  const pointsToEarn = Math.max(0, Math.floor(finalPayable / 50));
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -324,7 +311,6 @@ export default function CartSheet({
       delivery_fee: selectedOrderType === "delivery" ? deliveryFee : 0,
       discount_amount: totalDiscount,
       promo_code: appliedPromo?.code || null,
-      points_redeemed: loyaltyDiscount,
       notes: orderNotes,
       items: orderItems,
       total: finalPayable,
@@ -1604,72 +1590,6 @@ export default function CartSheet({
                     {promoMsg.text}
                   </p>
                 )}
-
-
-              </div>
-
-              {/* Feature 5: Customer Loyalty Points Banner */}
-              <div
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: 6,
-                  background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
-                  border: "1px solid #fcd34d",
-                  marginBottom: 16,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 16 }}>🪙</span>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: "#78350f", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                      Customer Loyalty Rewards
-                    </span>
-                  </div>
-                  {loyaltyInfo && (
-                    <span style={{ fontSize: 11, fontWeight: 900, color: "#b45309" }}>
-                      {loyaltyInfo.pointsBalance} pts (Rs. {loyaltyInfo.pointsBalance})
-                    </span>
-                  )}
-                </div>
-
-                {loyaltyInfo && loyaltyInfo.pointsBalance > 0 ? (
-                  <div>
-                    <p style={{ margin: "2px 0 8px", fontSize: 11, color: "#92400e" }}>
-                      You have <strong>{loyaltyInfo.pointsBalance} points</strong> ready to use. 1 point = Rs. 1 cash discount!
-                    </p>
-                    <label
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: "#78350f",
-                        cursor: "pointer",
-                        background: "#ffffff",
-                        padding: "8px 10px",
-                        borderRadius: 4,
-                        border: "1px solid #fde68a",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={redeemLoyalty}
-                        onChange={(e) => setRedeemLoyalty(e.target.checked)}
-                        style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#d97706" }}
-                      />
-                      <span>
-                        Redeem {loyaltyDiscount} points on this order{" "}
-                        <strong style={{ color: "#16a34a" }}>(-{formatPrice(loyaltyDiscount)})</strong>
-                      </span>
-                    </label>
-                  </div>
-                ) : (
-                  <p style={{ margin: 0, fontSize: 11, color: "#92400e" }}>
-                    🎁 <strong>VIP Member:</strong> You will earn{" "}
-                    <strong style={{ color: "#d97706" }}>+{pointsToEarn} loyalty points</strong> (1 pt per Rs. 50 spent) on this order!
-                  </p>
-                )}
               </div>
 
               {/* Mini Order Summary */}
@@ -1768,41 +1688,6 @@ export default function CartSheet({
                     <span>-{formatPrice(promoDiscount)}</span>
                   </div>
                 )}
-
-                {/* Loyalty Points Discount */}
-                {loyaltyDiscount > 0 && (
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      fontSize: 12,
-                      color: "#16a34a",
-                      marginTop: 4,
-                      fontWeight: 700,
-                    }}
-                  >
-                    <span>🪙 Loyalty Points Redeemed</span>
-                    <span>-{formatPrice(loyaltyDiscount)}</span>
-                  </div>
-                )}
-
-                {/* Points Earning Line */}
-                <div
-                  style={{
-                    marginTop: 8,
-                    paddingTop: 6,
-                    borderTop: "1px dashed #fed7aa",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "#b45309",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <span>🎁 Points Earning on this order:</span>
-                  <span>+{pointsToEarn} pts</span>
-                </div>
               </div>
             </div>
 
