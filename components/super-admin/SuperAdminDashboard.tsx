@@ -1864,6 +1864,67 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                 </div>
               </div>
 
+              {/* Enterprise Cloud Health & Multi-Terminal Sync Matrix */}
+              <div
+                style={{
+                  background: isLight ? "#ffffff" : "#0e1526",
+                  border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: "14px",
+                  padding: "20px 24px",
+                  marginBottom: "28px",
+                  boxShadow: isLight ? "0 4px 18px rgba(0, 0, 0, 0.02)" : "0 8px 24px rgba(0, 0, 0, 0.25)",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "8px", background: "#f0fdf4", color: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Activity size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "15px", fontWeight: 800, color: isLight ? "#0f172a" : "#ffffff" }}>
+                        Multi-Branch &amp; POS Cloud Sync Telemetry
+                      </div>
+                      <div style={{ fontSize: "12px", color: isLight ? "#64748b" : "#94a3b8" }}>
+                        Real-time status of branch synchronization, terminal concurrency, and database integrity
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 10px", borderRadius: "20px", background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#16a34a", fontSize: "11px", fontWeight: 700 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#16a34a", display: "inline-block" }}></span>
+                      All Systems Operational
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
+                  <div style={{ background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.03)", padding: "12px 16px", borderRadius: "8px", border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.06)" }}>
+                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#6366f1", textTransform: "uppercase" }}>Terminal Collision Guard</div>
+                    <div style={{ fontSize: "13px", fontWeight: 800, marginTop: "2px", color: isLight ? "#0f172a" : "#ffffff" }}>T1, T2 Prefix Active</div>
+                    <div style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8" }}>Prevents multi-counter order number overwrite</div>
+                  </div>
+
+                  <div style={{ background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.03)", padding: "12px 16px", borderRadius: "8px", border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.06)" }}>
+                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#10b981", textTransform: "uppercase" }}>Supabase Quota Shield</div>
+                    <div style={{ fontSize: "13px", fontWeight: 800, marginTop: "2px", color: isLight ? "#0f172a" : "#ffffff" }}>5-Min Memory Cache</div>
+                    <div style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8" }}>Zero table-polling loops, WebSocket-driven</div>
+                  </div>
+
+                  <div style={{ background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.03)", padding: "12px 16px", borderRadius: "8px", border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.06)" }}>
+                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#ea580c", textTransform: "uppercase" }}>Inventory Concurrency</div>
+                    <div style={{ fontSize: "13px", fontWeight: 800, marginTop: "2px", color: isLight ? "#0f172a" : "#ffffff" }}>Atomic DB Decrement</div>
+                    <div style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8" }}>Prevents overselling during rush hours</div>
+                  </div>
+
+                  <div style={{ background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.03)", padding: "12px 16px", borderRadius: "8px", border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.06)" }}>
+                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#0284c7", textTransform: "uppercase" }}>Midnight Shift Window</div>
+                    <div style={{ fontSize: "13px", fontWeight: 800, marginTop: "2px", color: isLight ? "#0f172a" : "#ffffff" }}>05:00 AM Daily Cutoff</div>
+                    <div style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8" }}>Preserves night-shift register reconciliation</div>
+                  </div>
+                </div>
+              </div>
+
               {/* Quick Action Matrix Grid */}
               <div style={{ marginBottom: "28px" }}>
                 <h2 style={{ fontSize: "16px", fontWeight: 800, margin: "0 0 14px", color: isLight ? "#0f172a" : "#ffffff" }}>
@@ -3400,10 +3461,20 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                   <div style={{ background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.03)", padding: "16px", borderRadius: "10px", border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.06)" }}>
                     <span style={{ fontSize: "11px", fontWeight: 800, color: "#ea580c", textTransform: "uppercase" }}>Terminal Port Requirement</span>
                     <div style={{ fontSize: "14px", fontWeight: 800, marginTop: "4px", color: isLight ? "#0f172a" : "#ffffff" }}>
-                      Zero Port Config (Client WebSocket)
+                       Zero Port Config (Client WebSocket)
                     </div>
                     <p style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8", margin: "4px 0 0" }}>
                       FloDesktop connects outbound to Supabase. Terminal machines need no port forwarding or local HTTP servers.
+                    </p>
+                  </div>
+
+                  <div style={{ background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.03)", padding: "16px", borderRadius: "10px", border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.06)" }}>
+                    <span style={{ fontSize: "11px", fontWeight: 800, color: "#10b981", textTransform: "uppercase" }}>Multi-Counter Isolation</span>
+                    <div style={{ fontSize: "14px", fontWeight: 800, marginTop: "4px", color: isLight ? "#0f172a" : "#ffffff" }}>
+                      Active Prefix (T1, T2, T3...)
+                    </div>
+                    <p style={{ fontSize: "11px", color: isLight ? "#64748b" : "#94a3b8", margin: "4px 0 0" }}>
+                      Order format: <code>ORD-YYYYMMDD-T1-XXXX</code>. Prevents offline counter collisions during rush hours.
                     </p>
                   </div>
                 </div>
@@ -3434,8 +3505,8 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                   </button>
 
                   <a
-                    href="/release/Sole-What-Setup-1.6.9.exe"
-                    download="Sole-What-Setup-1.6.9.exe"
+                    href="/release/Sole-What-Setup-1.7.9.exe"
+                    download="Sole-What-Setup-1.7.9.exe"
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
@@ -3451,10 +3522,10 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                       boxShadow: "0 3px 12px rgba(16, 185, 129, 0.3)",
                     }}
                     className="hover:scale-105 transition-transform"
-                    title="Download FloDesktop POS Setup 1.6.8.exe"
+                    title="Download FloDesktop POS Setup 1.7.9.exe with Multi-Terminal Isolation"
                   >
                     <Download size={15} />
-                    <span>Download POS Setup (1.6.8.exe)</span>
+                    <span>Download POS Setup (v1.7.9.exe)</span>
                   </a>
 
                   <a

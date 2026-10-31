@@ -98,3 +98,4 @@ GRANT EXECUTE ON FUNCTION public.deduct_ingredient_stock_atomic(INT, NUMERIC, IN
 
 -- Reload schema cache
 NOTIFY pgrst, 'reload schema';
+
