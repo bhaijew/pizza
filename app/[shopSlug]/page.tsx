@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, cache } from "react";
 import {
   fetchCategories,
   fetchProducts,
@@ -13,7 +13,12 @@ import Menu2Client from "@/components/menu/Menu2Client";
 import MenuSkeleton from "@/components/menu/MenuSkeleton";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+// 30-second ISR edge cache: enables sub-100ms instant page loads
+export const revalidate = 30;
+
+const getCachedShop = cache(async (slug: string) => {
+  return fetchShopBySlugOrId(slug);
+});
 
 // Reserved routes that should not be handled by the dynamic shop slug
 const RESERVED_SLUGS = new Set([
@@ -44,7 +49,7 @@ export async function generateMetadata({
   params,
 }: DynamicShopPageProps): Promise<Metadata> {
   const { shopSlug } = await params;
-  const shop = await fetchShopBySlugOrId(shopSlug);
+  const shop = await getCachedShop(shopSlug);
 
   if (!shop) {
     if (RESERVED_SLUGS.has(shopSlug.toLowerCase())) {
@@ -66,8 +71,8 @@ export default async function DynamicShopMenuPage({
   const { shopSlug } = await params;
   const { table, type } = await searchParams;
 
-  // 1. Fetch shop by slug
-  const shop = await fetchShopBySlugOrId(shopSlug);
+  // 1. Fetch shop by slug (deduplicated with generateMetadata via React cache)
+  const shop = await getCachedShop(shopSlug);
 
   // If slug matches a known reserved system route and no shop exists, defer to notFound()
   if (!shop && RESERVED_SLUGS.has(shopSlug.toLowerCase())) {

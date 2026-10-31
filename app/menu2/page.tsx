@@ -11,7 +11,8 @@ import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/adm
 import Menu2Client from "@/components/menu/Menu2Client";
 import MenuSkeleton from "@/components/menu/MenuSkeleton";
 
-export const dynamic = "force-dynamic";
+// 30-second ISR edge cache
+export const revalidate = 30;
 
 export const metadata: Metadata = {
   title: "Menu 2.0 — Modern Online Ordering",

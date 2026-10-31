@@ -7,6 +7,7 @@
  * { data: null, error: <message> } and the UI renders the empty/error state.
  */
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { cookies } from "next/headers";
 import type { Category, Product, RestaurantTable } from "@/types/menu";
 import { dbCache } from "@/lib/db-cache";
@@ -14,6 +15,9 @@ import { getShopBranding } from "@/lib/shop-branding";
 
 // ─── Helper ───────────────────────────────────────────────────────
 async function getSupabase() {
+  if (isServiceRoleConfigured()) {
+    return createAdminClient();
+  }
   const cookieStore = await cookies();
   return createClient(cookieStore);
 }

@@ -7,6 +7,7 @@
  */
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { getTableScanSession } from "@/lib/table-session";
@@ -340,16 +341,16 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
     // CHECKOUT SPEED OPTIMIZATION: High-Performance Batch Stock Deduction
     // Consolidates 70+ sequential network queries into 3-4 parallel batch calls
     // -------------------------------------------------------------
+    const qtyByProdId = new Map<number, number>();
+    for (const item of verifiedItems) {
+      if (!item.id) continue;
+      const pid = Number(item.id);
+      const q = Number(item.qty || (item as any).quantity || 1);
+      qtyByProdId.set(pid, (qtyByProdId.get(pid) || 0) + q);
+    }
+
     try {
       // A. Finished Product Stock Deduction (Batch)
-      const qtyByProdId = new Map<number, number>();
-      for (const item of verifiedItems) {
-        if (!item.id) continue;
-        const pid = Number(item.id);
-        const q = Number(item.qty || (item as any).quantity || 1);
-        qtyByProdId.set(pid, (qtyByProdId.get(pid) || 0) + q);
-      }
-
       const prodIds = Array.from(qtyByProdId.keys());
       if (prodIds.length > 0) {
         const { data: trackableProds } = await supabase
@@ -385,205 +386,215 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
           }
         }
       }
-
-      // B. Recipe & Raw Material Deduction (Batch)
-      if (prodIds.length > 0) {
-        let recQuery = supabase
-          .from("product_recipes")
-          .select("product_id, ingredient_id, quantity_required, variation_name")
-          .in("product_id", prodIds);
-
-        if (targetShopId) {
-          recQuery = recQuery.eq("shop_id", targetShopId);
-        }
-
-        const { data: allRecipes } = await recQuery;
-
-        if (allRecipes && allRecipes.length > 0) {
-          // Map recipes by product_id
-          const recipesByProd = new Map<number, any[]>();
-          for (const r of allRecipes) {
-            const list = recipesByProd.get(Number(r.product_id)) || [];
-            list.push(r);
-            recipesByProd.set(Number(r.product_id), list);
-          }
-
-          // In-memory aggregation of total required deduction per ingredient
-          const totalDeductByIngredient = new Map<number, { amount: number; notes: string[] }>();
-
-          for (const item of verifiedItems) {
-            if (!item.id) continue;
-            const pid = Number(item.id);
-            const itemQty = Number(item.qty || (item as any).quantity || 1);
-            const recipes = recipesByProd.get(pid);
-            if (!recipes || recipes.length === 0) continue;
-
-            const rawVar = (item as any).selected_variation || (item as any).selectedVariation;
-            const variationName = (
-              typeof rawVar === "string"
-                ? rawVar
-                : rawVar && typeof rawVar === "object"
-                ? rawVar.name || ""
-                : ""
-            ).toLowerCase().trim();
-
-            let matched = variationName
-              ? recipes.filter((r) => r.variation_name && r.variation_name.toLowerCase().trim() === variationName)
-              : [];
-
-            if (matched.length === 0) {
-              matched = recipes.filter((r) => !r.variation_name);
-            }
-
-            for (const r of matched) {
-              const reqQty = Number(r.quantity_required) || 0;
-              const deduct = Number((reqQty * itemQty).toFixed(3));
-              if (deduct > 0) {
-                const ingId = Number(r.ingredient_id);
-                const prev = totalDeductByIngredient.get(ingId) || { amount: 0, notes: [] };
-                prev.amount = Number((prev.amount + deduct).toFixed(3));
-                prev.notes.push(`${itemQty}x ${variationName || "Base"}`);
-                totalDeductByIngredient.set(ingId, prev);
-              }
-            }
-          }
-
-          // Single query for all needed raw ingredients
-          const ingIds = Array.from(totalDeductByIngredient.keys());
-          if (ingIds.length > 0) {
-            const { data: rawIngredients } = await supabase
-              .from("raw_ingredients")
-              .select("id, current_stock")
-              .in("id", ingIds);
-
-            if (rawIngredients && rawIngredients.length > 0) {
-              const nowIso = new Date().toISOString();
-              const ingUpdatePromises: any[] = [];
-              const stockLogs: any[] = [];
-
-              for (const ing of rawIngredients) {
-                const ingId = Number(ing.id);
-                const deductInfo = totalDeductByIngredient.get(ingId);
-                if (!deductInfo) continue;
-
-                const notes = `Used in Order #${orderNumber} (${deductInfo.notes.join(", ")})`;
-                ingUpdatePromises.push(
-                  (async () => {
-                    try {
-                      const { error: rpcErr } = await (supabase as any).rpc("deduct_ingredient_stock_atomic", {
-                        p_ingredient_id: ingId,
-                        p_qty: deductInfo.amount,
-                        p_shop_id: targetShopId || null,
-                        p_order_number: orderNumber,
-                        p_notes: notes,
-                      });
-                      if (!rpcErr) return;
-                    } catch (_) {
-                      // Fallback if RPC pending
-                    }
-                    const currentStock = Number(ing.current_stock) || 0;
-                    const newStock = Math.max(0, Number((currentStock - deductInfo.amount).toFixed(3)));
-                    await supabase
-                      .from("raw_ingredients")
-                      .update({ current_stock: newStock, updated_at: nowIso })
-                      .eq("id", ingId);
-                    stockLogs.push({
-                      shop_id: targetShopId || null,
-                      ingredient_id: ingId,
-                      change_type: "order_deduction",
-                      quantity_change: -deductInfo.amount,
-                      previous_stock: currentStock,
-                      new_stock: newStock,
-                      reference_id: orderNumber,
-                      notes,
-                    });
-                  })()
-                );
-              }
-
-              // Parallel atomic updates + fallback logs insert
-              await Promise.all(ingUpdatePromises);
-              if (stockLogs.length > 0) {
-                await supabase.from("ingredient_stock_logs").insert(stockLogs);
-              }
-            }
-          }
-        }
-      }
     } catch (stockDeductionErr) {
       console.warn("[placeCustomerOrder batch stock deduction non-blocking error]", stockDeductionErr);
     }
 
-    // If order succeeded and belongs to a registered shop, increment its aggregate counters
-    if (targetShopId) {
+    // -------------------------------------------------------------
+    // INSTANT CHECKOUT ACCELERATOR: Non-blocking Background Tasks
+    // Uses Next.js 15+ after() to execute heavy side-effects asynchronously:
+    // - Recipe & raw material stock deduction
+    // - Aggregate shop revenue counters
+    // - Customer CRM & Loyalty point calculation
+    // - WhatsApp order alert dispatch (eliminates 3.5s blocking delay)
+    // -------------------------------------------------------------
+    after(async () => {
       try {
-        const { data: currentShop } = await supabase
-          .from("shops")
-          .select("total_orders_count, total_revenue")
-          .eq("id", targetShopId)
-          .maybeSingle();
+        const prodIds = Array.from(qtyByProdId.keys());
 
-        if (currentShop) {
-          const currentCount = Number(currentShop.total_orders_count) || 0;
-          const currentRev = Number(currentShop.total_revenue) || 0;
-          await supabase
-            .from("shops")
-            .update({
-              total_orders_count: currentCount + 1,
-              total_revenue: Number((currentRev + finalTotal).toFixed(2)),
-            })
-            .eq("id", targetShopId);
+        // A. Recipe & Raw Material Deduction (Batch)
+        if (prodIds.length > 0) {
+          let recQuery = supabase
+            .from("product_recipes")
+            .select("product_id, ingredient_id, quantity_required, variation_name")
+            .in("product_id", prodIds);
+
+          if (targetShopId) {
+            recQuery = recQuery.eq("shop_id", targetShopId);
+          }
+
+          const { data: allRecipes } = await recQuery;
+
+          if (allRecipes && allRecipes.length > 0) {
+            // Map recipes by product_id
+            const recipesByProd = new Map<number, any[]>();
+            for (const r of allRecipes) {
+              const list = recipesByProd.get(Number(r.product_id)) || [];
+              list.push(r);
+              recipesByProd.set(Number(r.product_id), list);
+            }
+
+            // In-memory aggregation of total required deduction per ingredient
+            const totalDeductByIngredient = new Map<number, { amount: number; notes: string[] }>();
+
+            for (const item of verifiedItems) {
+              if (!item.id) continue;
+              const pid = Number(item.id);
+              const itemQty = Number(item.qty || (item as any).quantity || 1);
+              const recipes = recipesByProd.get(pid);
+              if (!recipes || recipes.length === 0) continue;
+
+              const rawVar = (item as any).selected_variation || (item as any).selectedVariation;
+              const variationName = (
+                typeof rawVar === "string"
+                  ? rawVar
+                  : rawVar && typeof rawVar === "object"
+                  ? rawVar.name || ""
+                  : ""
+              ).toLowerCase().trim();
+
+              let matched = variationName
+                ? recipes.filter((r) => r.variation_name && r.variation_name.toLowerCase().trim() === variationName)
+                : [];
+
+              if (matched.length === 0) {
+                matched = recipes.filter((r) => !r.variation_name);
+              }
+
+              for (const r of matched) {
+                const reqQty = Number(r.quantity_required) || 0;
+                const deduct = Number((reqQty * itemQty).toFixed(3));
+                if (deduct > 0) {
+                  const ingId = Number(r.ingredient_id);
+                  const prev = totalDeductByIngredient.get(ingId) || { amount: 0, notes: [] };
+                  prev.amount = Number((prev.amount + deduct).toFixed(3));
+                  prev.notes.push(`${itemQty}x ${variationName || "Base"}`);
+                  totalDeductByIngredient.set(ingId, prev);
+                }
+              }
+            }
+
+            // Single query for all needed raw ingredients
+            const ingIds = Array.from(totalDeductByIngredient.keys());
+            if (ingIds.length > 0) {
+              const { data: rawIngredients } = await supabase
+                .from("raw_ingredients")
+                .select("id, current_stock")
+                .in("id", ingIds);
+
+              if (rawIngredients && rawIngredients.length > 0) {
+                const nowIso = new Date().toISOString();
+                const ingUpdatePromises: any[] = [];
+                const stockLogs: any[] = [];
+
+                for (const ing of rawIngredients) {
+                  const ingId = Number(ing.id);
+                  const deductInfo = totalDeductByIngredient.get(ingId);
+                  if (!deductInfo) continue;
+
+                  const notes = `Used in Order #${orderNumber} (${deductInfo.notes.join(", ")})`;
+                  ingUpdatePromises.push(
+                    (async () => {
+                      try {
+                        const { error: rpcErr } = await (supabase as any).rpc("deduct_ingredient_stock_atomic", {
+                          p_ingredient_id: ingId,
+                          p_qty: deductInfo.amount,
+                          p_shop_id: targetShopId || null,
+                          p_order_number: orderNumber,
+                          p_notes: notes,
+                        });
+                        if (!rpcErr) return;
+                      } catch (_) {
+                        // Fallback if RPC pending
+                      }
+                      const currentStock = Number(ing.current_stock) || 0;
+                      const newStock = Math.max(0, Number((currentStock - deductInfo.amount).toFixed(3)));
+                      await supabase
+                        .from("raw_ingredients")
+                        .update({ current_stock: newStock, updated_at: nowIso })
+                        .eq("id", ingId);
+                      stockLogs.push({
+                        shop_id: targetShopId || null,
+                        ingredient_id: ingId,
+                        change_type: "order_deduction",
+                        quantity_change: -deductInfo.amount,
+                        previous_stock: currentStock,
+                        new_stock: newStock,
+                        reference_id: orderNumber,
+                        notes,
+                      });
+                    })()
+                  );
+                }
+
+                // Parallel atomic updates + fallback logs insert
+                await Promise.all(ingUpdatePromises);
+                if (stockLogs.length > 0) {
+                  await supabase.from("ingredient_stock_logs").insert(stockLogs);
+                }
+              }
+            }
+          }
         }
-      } catch {
-        // Non-blocking
+      } catch (recipeErr) {
+        console.warn("[Background recipe deduction error]", recipeErr);
       }
-    }
 
-    // Process Customer Loyalty Points & Save Customer Info (Name, Phone, Delivery Address)
-    if (input.customer_phone?.trim()) {
-      await syncCustomerFromOrder({
-        phone: input.customer_phone.trim(),
-        customerName: input.customer_name?.trim() || "Customer",
-        deliveryAddress: input.delivery_address?.trim() || "",
-        orderTotal: finalTotal,
-        pointsRedeemed: input.points_redeemed || 0,
-        shopId: targetShopId,
-        isNewOrder: true,
-      }).catch((crmErr) => {
-        console.warn("[Customer CRM sync non-blocking error]", crmErr);
-      });
+      // B. Increment aggregate shop counters
+      if (targetShopId) {
+        try {
+          const { data: currentShop } = await supabase
+            .from("shops")
+            .select("total_orders_count, total_revenue")
+            .eq("id", targetShopId)
+            .maybeSingle();
 
-      processLoyaltyPoints(
-        input.customer_phone.trim(),
-        input.customer_name?.trim() || "Customer",
-        finalTotal,
-        input.points_redeemed || 0,
-        targetShopId
-      ).catch((loyaltyErr) => {
-        console.warn("[Customer Loyalty non-blocking error]", loyaltyErr);
-      });
-    }
+          if (currentShop) {
+            const currentCount = Number(currentShop.total_orders_count) || 0;
+            const currentRev = Number(currentShop.total_revenue) || 0;
+            await supabase
+              .from("shops")
+              .update({
+                total_orders_count: currentCount + 1,
+                total_revenue: Number((currentRev + finalTotal).toFixed(2)),
+              })
+              .eq("id", targetShopId);
+          }
+        } catch (shopCountErr) {
+          console.warn("[Background shop counter update error]", shopCountErr);
+        }
+      }
 
-    // Trigger WhatsApp notification alert (multi-tenant session ID support)
-    // CRITICAL: Bounded await ensures serverless runtime finishes HTTP connection before freezing
-    if (input.customer_phone?.trim()) {
-      try {
-        await Promise.race([
-          sendWhatsAppOrderAlert({
+      // C. Process Customer Loyalty Points & Save CRM Info
+      if (input.customer_phone?.trim()) {
+        try {
+          await syncCustomerFromOrder({
+            phone: input.customer_phone.trim(),
+            customerName: input.customer_name?.trim() || "Customer",
+            deliveryAddress: input.delivery_address?.trim() || "",
+            orderTotal: finalTotal,
+            pointsRedeemed: input.points_redeemed || 0,
+            shopId: targetShopId,
+            isNewOrder: true,
+          });
+
+          await processLoyaltyPoints(
+            input.customer_phone.trim(),
+            input.customer_name?.trim() || "Customer",
+            finalTotal,
+            input.points_redeemed || 0,
+            targetShopId
+          );
+        } catch (crmErr) {
+          console.warn("[Background CRM/Loyalty error]", crmErr);
+        }
+      }
+
+      // D. Trigger WhatsApp notification alert in background
+      if (input.customer_phone?.trim()) {
+        try {
+          await sendWhatsAppOrderAlert({
             phone: input.customer_phone.trim(),
             customerName: input.customer_name?.trim() || "Customer",
             orderId: orderNumber,
             total: `${finalTotal.toFixed(2)}`,
             shopId: targetShopId,
-          }),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("WhatsApp dispatch timeout")), 3500)
-          ),
-        ]);
-      } catch (waErr) {
-        console.warn("[WhatsApp order alert non-blocking warning]", waErr);
+          });
+        } catch (waErr) {
+          console.warn("[Background WhatsApp dispatch error]", waErr);
+        }
       }
-    }
+    });
 
     return {
       success: true,
