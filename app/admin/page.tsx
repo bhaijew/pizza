@@ -145,7 +145,7 @@ export default async function AdminDashboardPage() {
           todayNetSales: validSales,
         };
       },
-      { ttlSeconds: 20, tags: ["orders", "products", "categories"] }
+      { ttlSeconds: 5, tags: ["orders", "products", "categories"] }
     );
 
     productCount = metrics.productCount;

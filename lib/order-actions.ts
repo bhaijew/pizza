@@ -361,12 +361,22 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
         if (trackableProds && trackableProds.length > 0) {
           const productUpdates = (trackableProds as any[])
             .filter((p: any) => p.stock_quantity !== null && p.stock_quantity !== undefined)
-            .map((p: any) => {
+            .map(async (p: any) => {
               const orderedQty = qtyByProdId.get(Number(p.id)) || 0;
+              try {
+                // Try atomic DB-level decrement first to prevent concurrent checkout race condition
+                const { error: rpcErr } = await (supabase as any).rpc("deduct_product_stock_atomic", {
+                  p_product_id: p.id,
+                  p_qty: orderedQty,
+                });
+                if (!rpcErr) return;
+              } catch (_) {
+                // Fallback to direct update if RPC is pending
+              }
               const newStock = Math.max(0, Number(p.stock_quantity) - orderedQty);
               const updateData: Record<string, any> = { stock_quantity: newStock };
               if (newStock === 0) updateData.is_available = false;
-              return supabase.from("products").update(updateData).eq("id", p.id);
+              await supabase.from("products").update(updateData).eq("id", p.id);
             });
 
           if (productUpdates.length > 0) {
@@ -456,33 +466,46 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
                 const deductInfo = totalDeductByIngredient.get(ingId);
                 if (!deductInfo) continue;
 
-                const currentStock = Number(ing.current_stock) || 0;
-                const newStock = Math.max(0, Number((currentStock - deductInfo.amount).toFixed(3)));
-
+                const notes = `Used in Order #${orderNumber} (${deductInfo.notes.join(", ")})`;
                 ingUpdatePromises.push(
-                  supabase
-                    .from("raw_ingredients")
-                    .update({ current_stock: newStock, updated_at: nowIso })
-                    .eq("id", ingId)
+                  (async () => {
+                    try {
+                      const { error: rpcErr } = await (supabase as any).rpc("deduct_ingredient_stock_atomic", {
+                        p_ingredient_id: ingId,
+                        p_qty: deductInfo.amount,
+                        p_shop_id: targetShopId || null,
+                        p_order_number: orderNumber,
+                        p_notes: notes,
+                      });
+                      if (!rpcErr) return;
+                    } catch (_) {
+                      // Fallback if RPC pending
+                    }
+                    const currentStock = Number(ing.current_stock) || 0;
+                    const newStock = Math.max(0, Number((currentStock - deductInfo.amount).toFixed(3)));
+                    await supabase
+                      .from("raw_ingredients")
+                      .update({ current_stock: newStock, updated_at: nowIso })
+                      .eq("id", ingId);
+                    stockLogs.push({
+                      shop_id: targetShopId || null,
+                      ingredient_id: ingId,
+                      change_type: "order_deduction",
+                      quantity_change: -deductInfo.amount,
+                      previous_stock: currentStock,
+                      new_stock: newStock,
+                      reference_id: orderNumber,
+                      notes,
+                    });
+                  })()
                 );
-
-                stockLogs.push({
-                  shop_id: targetShopId || null,
-                  ingredient_id: ingId,
-                  change_type: "order_deduction",
-                  quantity_change: -deductInfo.amount,
-                  previous_stock: currentStock,
-                  new_stock: newStock,
-                  reference_id: orderNumber,
-                  notes: `Used in Order #${orderNumber} (${deductInfo.notes.join(", ")})`,
-                });
               }
 
-              // Parallel updates + single batch log insert
-              await Promise.all([
-                Promise.all(ingUpdatePromises),
-                supabase.from("ingredient_stock_logs").insert(stockLogs),
-              ]);
+              // Parallel atomic updates + fallback logs insert
+              await Promise.all(ingUpdatePromises);
+              if (stockLogs.length > 0) {
+                await supabase.from("ingredient_stock_logs").insert(stockLogs);
+              }
             }
           }
         }
