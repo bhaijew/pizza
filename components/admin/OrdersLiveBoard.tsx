@@ -39,7 +39,6 @@ import {
   Edit2,
   ShieldCheck,
 } from "lucide-react";
-import OrderRecreateModal from "@/components/admin/OrderRecreateModal";
 import OrderCustomerEditModal from "@/components/admin/OrderCustomerEditModal";
 import ThermalDualPrintModal from "@/components/admin/ThermalDualPrintModal";
 import type { DeliveryRider } from "@/lib/admin-actions";
@@ -204,7 +203,6 @@ export default function OrdersLiveBoard({
   const [isPending, startTransition] = useTransition();
   const [realtimeActive, setRealtimeActive] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [recreatingOrder, setRecreatingOrder] = useState<Order | null>(null);
   const [editingCustomerOrder, setEditingCustomerOrder] = useState<Order | null>(null);
 
   // Keep saved delivery riders fresh
@@ -2262,7 +2260,7 @@ export default function OrdersLiveBoard({
                       )}
                     </div>
 
-                    {/* ROW 2: Utility Toolbelt (Edit Info, Recreate, Cancel, Delete) */}
+                    {/* ROW 2: Utility Toolbelt (Edit Info, Cancel, Delete) */}
                     <div
                       style={{
                         display: "grid",
@@ -2396,22 +2394,7 @@ export default function OrdersLiveBoard({
           })}
         </div>
       )}
-      {/* ─── ORDER RECREATE MODAL ───────────────────────────── */}
-      <OrderRecreateModal
-        isOpen={!!recreatingOrder}
-        onClose={() => setRecreatingOrder(null)}
-        order={recreatingOrder}
-        currencySymbol={currencySymbol}
-        shopId={shopId}
-        initialProducts={availableProducts}
-        onSuccess={(updatedOrder) => {
-          setOrders((prev) => {
-            const list = prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o));
-            return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-          });
-          playPosOrderChime();
-        }}
-      />
+
 
       {/* ─── ORDER CUSTOMER DETAILS EDIT MODAL ───────────────── */}
       <OrderCustomerEditModal
