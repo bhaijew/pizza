@@ -93,6 +93,7 @@ export async function fetchProducts(
       let query = supabase
         .from("products")
         .select("*, category:categories(id, name, slug)")
+        .eq("is_active", true)
         .order("sort_order", { ascending: true });
 
       if (categoryId != null) {
@@ -107,7 +108,25 @@ export async function fetchProducts(
         }
       }
 
-      const { data, error } = await query;
+      let dealQuery = supabase
+        .from("deals")
+        .select("id, product_id, title, slug, items_included, badge, deal_price, original_price, description")
+        .eq("is_active", true);
+
+      if (resolvedShopId !== undefined) {
+        if (resolvedShopId !== null) {
+          dealQuery = dealQuery.eq("shop_id", resolvedShopId);
+        } else {
+          dealQuery = dealQuery.is("shop_id", null);
+        }
+      }
+
+      // Execute product and deals queries in parallel (halves network latency)
+      const [{ data, error }, dealsRes] = await Promise.all([
+        query,
+        Promise.resolve(dealQuery).catch(() => ({ data: null })),
+      ]);
+      const dealsData = (dealsRes as any)?.data;
 
       if (error) {
         const tableMissing = error.message.includes("schema cache") || error.code === "PGRST205";
@@ -118,20 +137,6 @@ export async function fetchProducts(
 
       // Enrich products with deal data (items_included, original_price, badge)
       try {
-        let dealQuery = supabase
-          .from("deals")
-          .select("id, product_id, title, slug, items_included, badge, deal_price, original_price, description")
-          .eq("is_active", true);
-
-        if (resolvedShopId !== undefined) {
-          if (resolvedShopId !== null) {
-            dealQuery = dealQuery.eq("shop_id", resolvedShopId);
-          } else {
-            dealQuery = dealQuery.is("shop_id", null);
-          }
-        }
-
-        const { data: dealsData } = await dealQuery;
 
         if (dealsData && dealsData.length > 0) {
           const dealByProdId = new Map<string, any>();
@@ -233,7 +238,7 @@ export interface ShopSettings {
   menu2_requested_at?: string | null;
 }
 
-const DEFAULT_SETTINGS: ShopSettings = {
+export const DEFAULT_SETTINGS: ShopSettings = {
   shop_name: "Pizza Shop",
   menu_title: "Our Menu",
   meta_title: "Pizza Shop — Order Online",
@@ -317,13 +322,12 @@ export async function fetchShopBySlugOrId(identifier: string | number): Promise<
 }
 
 export async function fetchSettings(shopId?: number | null): Promise<ShopSettings> {
-  const cookieStore = await cookies();
-  const targetShopId =
-    shopId !== undefined
-      ? shopId
-      : cookieStore.get("pizza_admin_shop_id")?.value
-        ? parseInt(cookieStore.get("pizza_admin_shop_id")!.value, 10)
-        : null;
+  let targetShopId = shopId;
+  if (targetShopId === undefined) {
+    const cookieStore = await cookies();
+    const cookieVal = cookieStore.get("pizza_admin_shop_id")?.value;
+    targetShopId = cookieVal ? parseInt(cookieVal, 10) : null;
+  }
 
   const cacheKey = `settings:${targetShopId ?? "main"}`;
 

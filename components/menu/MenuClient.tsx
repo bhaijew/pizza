@@ -67,6 +67,7 @@ function MenuInner({
 }: MenuClientProps) {
   const searchParams = useSearchParams();
   const urlTableParam = searchParams.get("table");
+  const urlTypeParam = searchParams.get("type") as "dine_in" | "takeaway" | "delivery" | null;
 
   const [activeCategoryId, setActiveCategoryId] = useState<string | number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -201,8 +202,10 @@ function MenuInner({
     if (urlTableParam && !initialTableNumber && !verifiedTable) {
       setTableNumber(urlTableParam);
       setOrderType("dine_in");
+    } else if (urlTypeParam && !initialOrderType) {
+      setOrderType(urlTypeParam);
     }
-  }, [urlTableParam, initialTableNumber, verifiedTable]);
+  }, [urlTableParam, urlTypeParam, initialTableNumber, verifiedTable, initialOrderType]);
 
   // Top Featured Zinger Burgers (highlighted right at the top of All Items)
   const topZingerPicks = useMemo(() => {

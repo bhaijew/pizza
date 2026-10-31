@@ -4,10 +4,11 @@ import { Suspense, cache } from "react";
 import {
   fetchCategories,
   fetchProducts,
-  fetchSettings,
   fetchShopBySlugOrId,
+  DEFAULT_SETTINGS,
+  DEFAULT_PROMO_SLIDES,
+  type ShopSettings,
 } from "@/lib/menu-data";
-import { getShopBranding } from "@/lib/shop-branding";
 import MenuClient from "@/components/menu/MenuClient";
 import Menu2Client from "@/components/menu/Menu2Client";
 import MenuSkeleton from "@/components/menu/MenuSkeleton";
@@ -42,7 +43,7 @@ const RESERVED_SLUGS = new Set([
 
 interface DynamicShopPageProps {
   params: Promise<{ shopSlug: string }>;
-  searchParams: Promise<{ table?: string; type?: "dine_in" | "takeaway" | "delivery" }>;
+  searchParams?: Promise<{ table?: string; type?: "dine_in" | "takeaway" | "delivery" }>;
 }
 
 export async function generateMetadata({
@@ -69,7 +70,9 @@ export default async function DynamicShopMenuPage({
   searchParams,
 }: DynamicShopPageProps) {
   const { shopSlug } = await params;
-  const { table, type } = await searchParams;
+  const sp = searchParams ? await searchParams : undefined;
+  const table = sp?.table;
+  const type = sp?.type;
 
   // 1. Fetch shop by slug (deduplicated with generateMetadata via React cache)
   const shop = await getCachedShop(shopSlug);
@@ -239,53 +242,70 @@ export default async function DynamicShopMenuPage({
     );
   }
 
-  // 4. Shop is active — fetch categories & products isolated to this shop
-  const [categoriesResult, productsResult, baseSettings, branding] = await Promise.all([
+  // 4. Shop is active — fetch categories & products concurrently isolated to this shop
+  const [categoriesResult, productsResult] = await Promise.all([
     fetchCategories(shop.id),
     fetchProducts(null, shop.id),
-    fetchSettings(shop.id),
-    getShopBranding(shop.id),
   ]);
 
-  // Build shop settings tailored to this specific shop
-  const shopSettings = {
-    ...baseSettings,
+  let parsedSlides = (shop as any).slider_images;
+  if (typeof parsedSlides === "string") {
+    try {
+      parsedSlides = JSON.parse(parsedSlides);
+    } catch {
+      parsedSlides = DEFAULT_PROMO_SLIDES;
+    }
+  }
+
+  const ff =
+    (shop as any).feature_flags && typeof (shop as any).feature_flags === "object"
+      ? (shop as any).feature_flags
+      : {};
+
+  // Build shop settings tailored to this specific shop directly from cached shop row (0 redundant queries!)
+  const shopSettings: ShopSettings = {
+    ...DEFAULT_SETTINGS,
     shop_name: shop.name,
     menu_title: `${shop.name} Menu`,
     meta_title: `${shop.name} — Fresh Pizzas Online`,
     meta_description: `Order fresh from ${shop.name}${shop.branch_address ? ` (${shop.branch_address})` : ""}.`,
-    currency_symbol: shop.currency_symbol || baseSettings.currency_symbol || "Rs.",
-    theme_color: (shop as any).theme_color || baseSettings.theme_color || "#ea580c",
-    slider_enabled: (shop as any).slider_enabled !== undefined ? (shop as any).slider_enabled : (baseSettings.slider_enabled ?? true),
-    slider_height_mobile: (shop as any).slider_height_mobile || baseSettings.slider_height_mobile || 180,
-    slider_images: (shop as any).slider_images || baseSettings.slider_images,
-    hero_badge_text: (shop as any).hero_badge_text ?? baseSettings.hero_badge_text,
-    hero_title: (shop as any).hero_title ?? baseSettings.hero_title,
-    hero_title_highlight: (shop as any).hero_title_highlight ?? baseSettings.hero_title_highlight,
-    hero_subtitle: (shop as any).hero_subtitle ?? baseSettings.hero_subtitle,
-    hero_btn_primary_text: (shop as any).hero_btn_primary_text ?? baseSettings.hero_btn_primary_text,
-    hero_btn_primary_link: (shop as any).hero_btn_primary_link || baseSettings.hero_btn_primary_link,
-    hero_btn_secondary_text: (shop as any).hero_btn_secondary_text ?? baseSettings.hero_btn_secondary_text,
-    hero_btn_secondary_link: (shop as any).hero_btn_secondary_link || baseSettings.hero_btn_secondary_link,
-    hero_chip1_text: (shop as any).hero_chip1_text ?? baseSettings.hero_chip1_text,
-    hero_chip2_text: (shop as any).hero_chip2_text ?? baseSettings.hero_chip2_text,
-    hero_chip3_text: (shop as any).hero_chip3_text ?? baseSettings.hero_chip3_text,
-    hero_show_chips: (shop as any).hero_show_chips !== undefined ? (shop as any).hero_show_chips : baseSettings.hero_show_chips,
-    hero_bg_type: (shop as any).hero_bg_type || baseSettings.hero_bg_type,
-    hero_bg_color: (shop as any).hero_bg_color || baseSettings.hero_bg_color,
-    hero_bg_gradient: (shop as any).hero_bg_gradient || baseSettings.hero_bg_gradient,
-    hero_bg_image: (shop as any).hero_bg_image || baseSettings.hero_bg_image,
-    hero_show_pattern: (shop as any).hero_show_pattern !== undefined ? (shop as any).hero_show_pattern : baseSettings.hero_show_pattern,
-    logo_url: branding.logo_url || (shop as any).logo_url || baseSettings.logo_url,
-    menu_layout: "default",
+    currency_symbol: shop.currency_symbol || DEFAULT_SETTINGS.currency_symbol || "Rs.",
     shop_id: shop.id,
-    menu2_status: (shop as any).feature_flags?.menu2_status || baseSettings.menu2_status || "locked",
+    owner_phone: (shop as any).owner_phone || null,
+    whatsapp_session_id: (shop as any).whatsapp_session_id || null,
+    whatsapp_api_key: (shop as any).whatsapp_api_key || null,
+    opening_time: (shop as any).opening_time || "11:00",
+    closing_time: (shop as any).closing_time || "01:00",
+    theme_color: (shop as any).theme_color || DEFAULT_SETTINGS.theme_color || "#ea580c",
+    slider_enabled: (shop as any).slider_enabled !== undefined ? (shop as any).slider_enabled : (DEFAULT_SETTINGS.slider_enabled ?? true),
+    slider_height_mobile: (shop as any).slider_height_mobile || DEFAULT_SETTINGS.slider_height_mobile || 180,
+    slider_images: Array.isArray(parsedSlides) && parsedSlides.length > 0 ? parsedSlides : DEFAULT_PROMO_SLIDES,
+    hero_badge_text: (shop as any).hero_badge_text ?? DEFAULT_SETTINGS.hero_badge_text,
+    hero_title: (shop as any).hero_title ?? DEFAULT_SETTINGS.hero_title,
+    hero_title_highlight: (shop as any).hero_title_highlight ?? DEFAULT_SETTINGS.hero_title_highlight,
+    hero_subtitle: (shop as any).hero_subtitle ?? DEFAULT_SETTINGS.hero_subtitle,
+    hero_btn_primary_text: (shop as any).hero_btn_primary_text ?? DEFAULT_SETTINGS.hero_btn_primary_text,
+    hero_btn_primary_link: (shop as any).hero_btn_primary_link || DEFAULT_SETTINGS.hero_btn_primary_link,
+    hero_btn_secondary_text: (shop as any).hero_btn_secondary_text ?? DEFAULT_SETTINGS.hero_btn_secondary_text,
+    hero_btn_secondary_link: (shop as any).hero_btn_secondary_link || DEFAULT_SETTINGS.hero_btn_secondary_link,
+    hero_chip1_text: (shop as any).hero_chip1_text ?? DEFAULT_SETTINGS.hero_chip1_text,
+    hero_chip2_text: (shop as any).hero_chip2_text ?? DEFAULT_SETTINGS.hero_chip2_text,
+    hero_chip3_text: (shop as any).hero_chip3_text ?? DEFAULT_SETTINGS.hero_chip3_text,
+    hero_show_chips: (shop as any).hero_show_chips !== undefined ? (shop as any).hero_show_chips : DEFAULT_SETTINGS.hero_show_chips,
+    hero_bg_type: (shop as any).hero_bg_type || DEFAULT_SETTINGS.hero_bg_type,
+    hero_bg_color: (shop as any).hero_bg_color || DEFAULT_SETTINGS.hero_bg_color,
+    hero_bg_gradient: (shop as any).hero_bg_gradient || DEFAULT_SETTINGS.hero_bg_gradient,
+    hero_bg_image: (shop as any).hero_bg_image || DEFAULT_SETTINGS.hero_bg_image,
+    hero_show_pattern: (shop as any).hero_show_pattern !== undefined ? (shop as any).hero_show_pattern : DEFAULT_SETTINGS.hero_show_pattern,
+    google_review_url: (shop as any).google_review_url || "",
+    logo_url: (shop as any).logo_url || null,
+    menu_layout: (shop as any).menu_layout || "default",
+    menu2_status: ff.menu2_status || "locked",
     active_menu_template:
-      ((shop as any).feature_flags?.menu2_status || baseSettings.menu2_status) === "approved" &&
-        ((shop as any).feature_flags?.active_menu_template || baseSettings.active_menu_template) === "menu2"
+      ff.menu2_status === "approved" && ff.active_menu_template === "menu2"
         ? "menu2"
         : "menu1",
-    menu2_theme: (shop as any).feature_flags?.menu2_theme || baseSettings.menu2_theme || "ruby_gold",
+    menu2_theme: ff.menu2_theme || "ruby_gold",
   };
 
   const useMenu2 =

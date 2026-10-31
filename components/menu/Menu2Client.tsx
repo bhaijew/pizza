@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import type { Category, Product, ProductVariation } from "@/types/menu";
 import type { ShopSettings } from "@/lib/menu-data";
 import { createClient } from "@/utils/supabase/client";
@@ -125,6 +126,19 @@ function Menu2Inner({
     initialOrderType || (initialTableNumber ? "dine_in" : "delivery")
   );
   const [tableNumber, setTableNumber] = useState<string>(initialTableNumber);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const urlTable = searchParams?.get("table");
+    const urlType = searchParams?.get("type") as "dine_in" | "takeaway" | "delivery" | null;
+    if (urlTable && !tableNumber) {
+      setTableNumber(urlTable);
+      setOrderType("dine_in");
+    } else if (urlType && !initialOrderType) {
+      setOrderType(urlType);
+    }
+  }, [searchParams, tableNumber, initialOrderType]);
 
   useEffect(() => {
     setLiveProducts(products);
