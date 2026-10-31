@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
  * Vercel Serverless Function 50MB payload bundle limits.
  */
 export async function GET(request: NextRequest) {
-  // Direct download from GitHub Releases latest version (v1.8.1)
-  const githubReleaseUrl = "https://github.com/bhaijew/sole/releases/download/v1.8.1/Sole-What-Setup-1.8.1.exe";
+  // Direct download from GitHub Releases latest version (v1.8.2)
+  const githubReleaseUrl = "https://github.com/bhaijew/sole/releases/download/v1.8.2/Sole-What-Setup-1.8.2.exe";
   return NextResponse.redirect(githubReleaseUrl, 307);
 }
