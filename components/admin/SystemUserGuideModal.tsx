@@ -669,7 +669,23 @@ export default function SystemUserGuideModal({
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span style={{ fontSize: "11px", color: "#94a3b8" }}>Need urgent tech support? WhatsApp: 0312-8314521</span>
+            <a
+              href="https://wa.me/923334867615?text=Assalam-o-Alaikum,%20need%20tech%20support%20for%20Sole%20What%20POS"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: "11.5px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                textDecoration: "none",
+              }}
+              className="hover:opacity-80"
+              title="Click to chat on WhatsApp"
+            >
+              <span style={{ color: "#64748b" }}>Need tech support? WhatsApp:</span>
+              <span style={{ color: "#059669", fontWeight: 700 }}>0333-4867615</span>
+            </a>
             <button
               type="button"
               onClick={onClose}
