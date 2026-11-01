@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (parsedShopId !== null) {
-    query = query.eq("shop_id", parsedShopId);
+    query = query.or(`shop_id.eq.${parsedShopId},shop_id.is.null`);
   }
 
   query = query.order("created_at", { ascending: isKitchen ? true : false });

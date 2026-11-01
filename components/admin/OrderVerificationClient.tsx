@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo, useTransition } from "react";
+import { useState, useEffect, useMemo, useTransition, useCallback } from "react";
 import type { Order } from "@/types/menu";
 import { verifyMenuOrder, rejectMenuOrder } from "@/lib/admin-actions";
 import { createClient } from "@/utils/supabase/client";
+import {
+  playAlertChime,
+  SOUND_VOLUME_KEY,
+  SOUND_MUTED_KEY,
+} from "@/components/admin/AudioNotificationController";
 import {
   ShieldCheck,
   Phone,
@@ -52,52 +57,20 @@ export default function OrderVerificationClient({
   const [rejectingOrderId, setRejectingOrderId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
 
-  // Enterprise Realtime WebSocket Subscription for instant incoming menu orders
-  useEffect(() => {
-    const supabase = createClient();
-    const channelName = `verify-orders-${shopId || "all"}-${Math.random().toString(36).substring(2, 7)}`;
-
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "orders",
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            const newOrder = payload.new as Order;
-            if (shopId && newOrder.shop_id != null && Number(newOrder.shop_id) !== Number(shopId)) {
-              return;
-            }
-            setOrders((prev) => [newOrder, ...prev.filter((o) => o.id !== newOrder.id)]);
-            try {
-              // Play alert chime if available
-              const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
-              audio.volume = 0.8;
-              audio.play().catch(() => {});
-            } catch {}
-          } else if (payload.eventType === "UPDATE") {
-            const updated = payload.new as Order;
-            if (shopId && updated.shop_id != null && Number(updated.shop_id) !== Number(shopId)) {
-              setOrders((prev) => prev.filter((o) => o.id !== updated.id));
-              return;
-            }
-            setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
-          } else if (payload.eventType === "DELETE") {
-            setOrders((prev) => prev.filter((o) => o.id !== (payload.old as any).id));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [shopId]);
+  // Determine if order belongs in online verification flow
+  const isVerifyTarget = (o: any) => {
+    return (
+      o.source === "online_menu" ||
+      o.is_verified === false ||
+      Boolean(o.notes?.includes("[ONLINE_MENU: AWAITING_VERIFICATION]")) ||
+      Boolean(o.notes?.includes("[DELIVERY:")) ||
+      Boolean(o.notes?.includes("[DINE-IN:")) ||
+      Boolean(o.notes?.includes("[TAKEAWAY:"))
+    );
+  };
 
   // Determine if order is an online menu order awaiting verification
   const isPendingVerification = (order: Order) => {
@@ -120,6 +93,121 @@ export default function OrderVerificationClient({
   const isRejected = (order: Order) => {
     return order.status === "cancelled";
   };
+
+  // Play crisp local synthesized alert chime
+  const playVerifyAlert = useCallback(() => {
+    let vol = 80;
+    let muted = false;
+    try {
+      const savedVol = localStorage.getItem(SOUND_VOLUME_KEY);
+      const savedMuted = localStorage.getItem(SOUND_MUTED_KEY);
+      if (savedVol !== null) vol = parseInt(savedVol, 10);
+      if (savedMuted !== null) muted = savedMuted === "true";
+    } catch {}
+    playAlertChime(vol, muted, "pos");
+  }, []);
+
+  // Live Sync Engine — bypasses RLS and fetches brand new orders with zero browser reload
+  const fetchLiveOrders = useCallback(
+    async (silent = true) => {
+      try {
+        if (!silent) setIsRefreshing(true);
+        const res = await fetch(`/api/orders/live?shopId=${shopId || ""}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.orders && Array.isArray(json.orders)) {
+            const allOrders = json.orders as Order[];
+            const relevantOrders = allOrders.filter(isVerifyTarget);
+
+            setOrders((prev) => {
+              const prevIds = new Set(prev.map((o) => o.id));
+              const hasNewPending = relevantOrders.some(
+                (o) => !prevIds.has(o.id) && isPendingVerification(o)
+              );
+              if (hasNewPending) {
+                playVerifyAlert();
+              }
+
+              const getOrderFp = (o: Order) =>
+                `${o.id}_${o.status}_${(o as any).is_verified}_${o.total}_${o.created_at}_${o.updated_at || ""}_${o.items?.length || 0}_${(o.notes || "").slice(-25)}`;
+              const prevSign = prev.map(getOrderFp).join(",");
+              const newSign = relevantOrders.map(getOrderFp).join(",");
+              if (prevSign !== newSign) {
+                return relevantOrders;
+              }
+              return prev;
+            });
+            setLastSyncTime(new Date());
+          }
+        }
+      } catch {
+        // network blink safe
+      } finally {
+        if (!silent) setIsRefreshing(false);
+      }
+    },
+    [shopId, playVerifyAlert]
+  );
+
+  // Fast background auto-poll every 2.5 seconds (zero manual refresh needed!)
+  useEffect(() => {
+    const syncInterval = setInterval(() => {
+      fetchLiveOrders(true);
+    }, 2500);
+
+    return () => clearInterval(syncInterval);
+  }, [fetchLiveOrders]);
+
+  // Enterprise Realtime WebSocket Subscription for instant incoming menu orders
+  useEffect(() => {
+    const supabase = createClient();
+    const channelName = `verify-orders-${shopId || "all"}-${Math.random().toString(36).substring(2, 7)}`;
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT") {
+            const newOrder = payload.new as Order;
+            if (shopId && newOrder.shop_id != null && Number(newOrder.shop_id) !== Number(shopId)) {
+              return;
+            }
+            if (isVerifyTarget(newOrder)) {
+              setOrders((prev) => [newOrder, ...prev.filter((o) => o.id !== newOrder.id)]);
+              if (isPendingVerification(newOrder)) {
+                playVerifyAlert();
+              }
+            }
+          } else if (payload.eventType === "UPDATE") {
+            const updated = payload.new as Order;
+            if (shopId && updated.shop_id != null && Number(updated.shop_id) !== Number(shopId)) {
+              setOrders((prev) => prev.filter((o) => o.id !== updated.id));
+              return;
+            }
+            if (isVerifyTarget(updated)) {
+              setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+            } else {
+              setOrders((prev) => prev.filter((o) => o.id !== updated.id));
+            }
+          } else if (payload.eventType === "DELETE") {
+            setOrders((prev) => prev.filter((o) => o.id !== (payload.old as any).id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [shopId, playVerifyAlert]);
 
   // Filtered orders
   const filteredOrders = useMemo(() => {
@@ -246,7 +334,57 @@ export default function OrderVerificationClient({
             </p>
           </div>
 
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                background: "rgba(16, 185, 129, 0.15)",
+                border: "1px solid rgba(16, 185, 129, 0.35)",
+                padding: "6px 10px",
+                borderRadius: "5px",
+              }}
+              title="Orders auto-update every 2.5 seconds without needing browser refresh"
+            >
+              <span
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  background: "#10b981",
+                  boxShadow: "0 0 8px #10b981",
+                  display: "inline-block",
+                }}
+              />
+              <span style={{ fontSize: "11px", fontWeight: 800, color: "#34d399", letterSpacing: "0.3px" }}>
+                Auto-Live (2.5s)
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => fetchLiveOrders(false)}
+              disabled={isRefreshing}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                background: "rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                color: "#ffffff",
+                fontSize: "12px",
+                fontWeight: 700,
+                padding: "7px 12px",
+                borderRadius: "5px",
+                cursor: isRefreshing ? "wait" : "pointer",
+              }}
+              title="Force check for new orders now"
+            >
+              <RefreshCw size={13} className={isRefreshing ? "animate-spin text-amber-400" : ""} />
+              <span>{isRefreshing ? "Checking..." : "Refresh"}</span>
+            </button>
+
             <a
               href="/admin/orders"
               style={{
@@ -258,7 +396,7 @@ export default function OrderVerificationClient({
                 color: "#ffffff",
                 fontSize: "12px",
                 fontWeight: 800,
-                padding: "8px 14px",
+                padding: "7px 14px",
                 borderRadius: "5px",
                 textDecoration: "none",
               }}

@@ -25,9 +25,7 @@ export default async function AdminVerifyOrdersPage() {
     .order("created_at", { ascending: false });
 
   if (activeShop.shopId) {
-    ordersQuery = ordersQuery.eq("shop_id", activeShop.shopId);
-  } else {
-    ordersQuery = ordersQuery.is("shop_id", null);
+    ordersQuery = ordersQuery.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
   }
 
   const [{ data: orders }, settings] = await Promise.all([
