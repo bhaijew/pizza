@@ -12,6 +12,53 @@ import type {
   IngredientStockLog,
 } from "@/types/menu";
 
+const STANDARD_RAW_INGREDIENTS = [
+  { name: "Chicken Tikka (Boneless Meat)", category: "meat", unit: "kg", current_stock: 45, low_stock_threshold: 5, cost_per_unit: 950 },
+  { name: "Mozzarella & Cheddar Cheese Blend", category: "dairy", unit: "kg", current_stock: 35, low_stock_threshold: 5, cost_per_unit: 1650 },
+  { name: "Pizza Dough Ball / Flour Mix", category: "bakery", unit: "kg", current_stock: 50, low_stock_threshold: 10, cost_per_unit: 160 },
+  { name: "Special Pizza Sauce", category: "sauces", unit: "ltr", current_stock: 25, low_stock_threshold: 4, cost_per_unit: 620 },
+  { name: "Garlic Mayo Sauce", category: "sauces", unit: "ltr", current_stock: 20, low_stock_threshold: 3, cost_per_unit: 540 },
+  { name: "White Special Creamy Sauce", category: "sauces", unit: "ltr", current_stock: 15, low_stock_threshold: 3, cost_per_unit: 680 },
+  { name: "Black Olives & Mushrooms", category: "veggies", unit: "kg", current_stock: 15, low_stock_threshold: 2, cost_per_unit: 850 },
+  { name: "Capsicum, Onion & Veggie Toppings", category: "veggies", unit: "kg", current_stock: 30, low_stock_threshold: 5, cost_per_unit: 180 },
+  { name: "Corrugated Pizza Box (Printed)", category: "packaging", unit: "pcs", current_stock: 500, low_stock_threshold: 50, cost_per_unit: 45 },
+  { name: "Crispy Burger Patty (Chicken/Beef)", category: "meat", unit: "pcs", current_stock: 120, low_stock_threshold: 20, cost_per_unit: 130 },
+  { name: "Brioche Burger Bun", category: "bakery", unit: "pcs", current_stock: 150, low_stock_threshold: 25, cost_per_unit: 40 },
+  { name: "French Fries (Frozen Potato)", category: "veggies", unit: "kg", current_stock: 40, low_stock_threshold: 8, cost_per_unit: 450 },
+  { name: "Chicken Wings / Nuggets", category: "meat", unit: "pcs", current_stock: 200, low_stock_threshold: 30, cost_per_unit: 55 },
+  { name: "Shawarma Pita Bread", category: "bakery", unit: "pcs", current_stock: 100, low_stock_threshold: 15, cost_per_unit: 35 },
+];
+
+/**
+ * Seed standard raw ingredients for a shop
+ */
+export async function seedStandardRawIngredients(targetShopId?: number | null): Promise<{
+  success: boolean;
+  data?: RawIngredient[];
+  error?: string;
+}> {
+  if (!isServiceRoleConfigured()) {
+    return { success: false, error: "Supabase Service Role is not configured" };
+  }
+  try {
+    const db = createAdminClient();
+    const activeShop = await getActiveShopContext();
+    const shopId = targetShopId !== undefined ? targetShopId : activeShop.shopId;
+    const records = STANDARD_RAW_INGREDIENTS.map((item) => ({
+      ...item,
+      shop_id: shopId || null,
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { data, error } = await db.from("raw_ingredients").insert(records).select();
+    if (error) return { success: false, error: error.message };
+    revalidatePath("/admin/inventory");
+    return { success: true, data: (data as RawIngredient[]) || [] };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
 /**
  * Fetch all raw ingredients for the active shop
  */
@@ -35,16 +82,24 @@ export async function getRawIngredients(): Promise<{
       .order("name", { ascending: true });
 
     if (activeShop.shopId) {
-      query = query.eq("shop_id", activeShop.shopId);
+      query = query.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
     }
 
-    const { data, error } = await query;
+    let { data, error } = await query;
 
     if (error) {
       if (error.code === "PGRST205" || error.message.includes("does not exist") || error.message.includes("schema cache")) {
         return { success: false, data: [], isTableMissing: true, error: "Database migration 014 has not been applied yet." };
       }
       return { success: false, data: [], error: error.message };
+    }
+
+    // Auto-seed standard ingredients if table is currently empty
+    if (!data || data.length === 0) {
+      const seeded = await seedStandardRawIngredients(activeShop.shopId || null);
+      if (seeded.success && seeded.data && seeded.data.length > 0) {
+        data = seeded.data;
+      }
     }
 
     return { success: true, data: (data as RawIngredient[]) || [] };
@@ -128,7 +183,7 @@ export async function deleteRawIngredient(id: number): Promise<{ success: boolea
 
     let query = db.from("raw_ingredients").delete().eq("id", id);
     if (activeShop.shopId) {
-      query = query.eq("shop_id", activeShop.shopId);
+      query = query.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
     }
     const { error } = await query;
     if (error) return { success: false, error: error.message };
@@ -223,7 +278,7 @@ export async function getProductRecipes(productId: number | string): Promise<{
       .eq("product_id", Number(productId));
 
     if (activeShop.shopId) {
-      query = query.eq("shop_id", activeShop.shopId);
+      query = query.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
     }
 
     const { data, error } = await query;
@@ -384,7 +439,7 @@ export async function getWastageLogs(): Promise<{
       .limit(50);
 
     if (activeShop.shopId) {
-      query = query.eq("shop_id", activeShop.shopId);
+      query = query.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
     }
 
     const { data, error } = await query;
@@ -637,7 +692,7 @@ export async function getStockAudits(): Promise<{
       .limit(20);
 
     if (activeShop.shopId) {
-      query = query.eq("shop_id", activeShop.shopId);
+      query = query.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
     }
 
     const { data, error } = await query;

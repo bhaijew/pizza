@@ -12,7 +12,12 @@ export const metadata = {
   description: "Complete restaurant recipe management, raw materials BOM, and chef wastage tracking.",
 };
 
-export default async function AdminInventoryPage() {
+export default async function AdminInventoryPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string; product?: string }>;
+}) {
+  const resolvedParams = searchParams ? await searchParams : {};
   const db = createAdminClient();
   const activeShop = await getActiveShopContext();
 
@@ -20,11 +25,8 @@ export default async function AdminInventoryPage() {
   let catQuery = db.from("categories").select("*").order("sort_order", { ascending: true });
 
   if (activeShop.shopId) {
-    prodQuery = prodQuery.eq("shop_id", activeShop.shopId);
-    catQuery = catQuery.eq("shop_id", activeShop.shopId);
-  } else {
-    prodQuery = prodQuery.is("shop_id", null);
-    catQuery = catQuery.is("shop_id", null);
+    prodQuery = prodQuery.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
+    catQuery = catQuery.or(`shop_id.eq.${activeShop.shopId},shop_id.is.null`);
   }
 
   const [
@@ -34,6 +36,7 @@ export default async function AdminInventoryPage() {
     rawIngRes,
     wastageRes,
     auditsRes,
+    { data: existingRecipes },
   ] = await Promise.all([
     prodQuery,
     catQuery,
@@ -41,7 +44,12 @@ export default async function AdminInventoryPage() {
     getRawIngredients(),
     getWastageLogs(),
     getStockAudits(),
+    db.from("product_recipes").select("product_id"),
   ]);
+
+  const configuredRecipeProductIds = Array.from(
+    new Set((existingRecipes || []).map((r: any) => Number(r.product_id)).filter(Boolean))
+  );
 
   return (
     <InventoryManager
@@ -53,6 +61,9 @@ export default async function AdminInventoryPage() {
       initialAudits={auditsRes.data || []}
       currencySymbol={settings.currency_symbol || "Rs."}
       shopName={activeShop.shopName}
+      initialTab={(resolvedParams?.tab as any) || "recipes"}
+      initialSelectedProductId={resolvedParams?.product ? Number(resolvedParams.product) : undefined}
+      configuredRecipeProductIds={configuredRecipeProductIds}
     />
   );
 }

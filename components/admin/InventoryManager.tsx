@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useMemo } from "react";
 import {
   Product,
   Category,
@@ -23,6 +23,7 @@ import {
   logIngredientWastage,
   calculateKitchenAuditData,
   saveStockAudit,
+  seedStandardRawIngredients,
 } from "@/lib/recipe-actions";
 import {
   Boxes,
@@ -52,6 +53,9 @@ interface InventoryManagerProps {
   initialAudits?: StockAudit[];
   currencySymbol?: string;
   shopName?: string;
+  initialTab?: TabType;
+  initialSelectedProductId?: number;
+  configuredRecipeProductIds?: number[];
 }
 
 type TabType = "raw_materials" | "recipes" | "audit" | "wastage" | "finished_goods";
@@ -66,8 +70,11 @@ export default function InventoryManager({
   initialAudits = [],
   currencySymbol = "Rs.",
   shopName = "Store",
+  initialTab = "recipes",
+  initialSelectedProductId,
+  configuredRecipeProductIds = [],
 }: InventoryManagerProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("raw_materials");
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [isPending, startTransition] = useTransition();
   const [copiedMigration, setCopiedMigration] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -75,6 +82,15 @@ export default function InventoryManager({
   const showToast = (text: string, type: "success" | "error" = "success") => {
     setStatusMessage({ text, type });
     setTimeout(() => setStatusMessage(null), 3500);
+  };
+
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", tab);
+      window.history.replaceState({}, "", url.toString());
+    }
   };
 
   // ─────────────────────────────────────────────────────────────
@@ -207,15 +223,46 @@ export default function InventoryManager({
   // TAB 2: RECIPE BUILDER (BOM) STATE
   // ─────────────────────────────────────────────────────────────
   const [selectedProductId, setSelectedProductId] = useState<number | null>(
-    initialProducts[0] ? Number(initialProducts[0].id) : null
+    initialSelectedProductId || (initialProducts[0] ? Number(initialProducts[0].id) : null)
   );
   const [selectedVariation, setSelectedVariation] = useState<string>("");
+  const [configuredIds, setConfiguredIds] = useState<Set<number>>(
+    new Set(configuredRecipeProductIds)
+  );
+  const [productSearch, setProductSearch] = useState("");
+  const [productCategoryFilter, setProductCategoryFilter] = useState<string>("all");
   const [recipeLines, setRecipeLines] = useState<
     { ingredient_id: number; quantity_required: number; notes: string }[]
   >([]);
   const [loadingRecipe, setLoadingRecipe] = useState(false);
 
   const currentProduct = initialProducts.find((p) => Number(p.id) === selectedProductId);
+
+  const recipeFilteredProducts = useMemo(() => {
+    return initialProducts.filter((p) => {
+      const matchSearch =
+        !productSearch.trim() ||
+        p.name.toLowerCase().includes(productSearch.toLowerCase().trim());
+      const matchCat =
+        productCategoryFilter === "all" ||
+        String(p.category_id) === String(productCategoryFilter);
+      return matchSearch && matchCat;
+    });
+  }, [initialProducts, productSearch, productCategoryFilter]);
+
+  // Helper to ensure standard ingredients exist in state and DB
+  const ensureIngredientsLoaded = async (): Promise<RawIngredient[]> => {
+    if (ingredients.length > 0) return ingredients;
+    try {
+      const res = await seedStandardRawIngredients();
+      if (res.success && res.data && res.data.length > 0) {
+        setIngredients(res.data);
+        showToast("Auto-provisioned standard restaurant raw ingredients!");
+        return res.data;
+      }
+    } catch {}
+    return ingredients;
+  };
 
   // Load existing recipe when product or variation changes
   useEffect(() => {
@@ -250,15 +297,19 @@ export default function InventoryManager({
     };
   }, [selectedProductId, selectedVariation]);
 
-  const handleAddRecipeLine = () => {
-    if (ingredients.length === 0) {
-      showToast("Please add raw materials first in Tab 1", "error");
+  const handleAddRecipeLine = async () => {
+    let currentIngs = ingredients;
+    if (currentIngs.length === 0) {
+      currentIngs = await ensureIngredientsLoaded();
+    }
+    if (currentIngs.length === 0) {
+      showToast("Please add raw materials first or check connection", "error");
       return;
     }
     setRecipeLines((prev) => [
       ...prev,
       {
-        ingredient_id: ingredients[0].id,
+        ingredient_id: currentIngs[0].id,
         quantity_required: 0.5,
         notes: "",
       },
@@ -281,6 +332,10 @@ export default function InventoryManager({
 
   const handleSaveRecipeFormula = () => {
     if (!selectedProductId) return;
+    if (recipeLines.length === 0) {
+      showToast("Please add at least 1 ingredient before saving.", "error");
+      return;
+    }
     startTransition(async () => {
       const res = await saveProductRecipe(
         selectedProductId,
@@ -288,6 +343,7 @@ export default function InventoryManager({
         recipeLines
       );
       if (res.success) {
+        setConfiguredIds((prev) => new Set([...prev, selectedProductId]));
         showToast(
           `Recipe saved for "${currentProduct?.name}${
             selectedVariation ? ` (${selectedVariation})` : ""
@@ -336,20 +392,25 @@ export default function InventoryManager({
         await saveProductRecipe(selectedProductId, v.name, scaledLines);
         countSaved++;
       }
+      setConfiguredIds((prev) => new Set([...prev, selectedProductId]));
       showToast(`Auto-scaled & saved recipes for all ${countSaved} sizes (Small, Big, Large, XL)!`);
     });
   };
 
-  const handleApplyPizzaTemplate = () => {
-    if (ingredients.length === 0) {
-      showToast("Please add raw materials first in Tab 1", "error");
+  const handleApplyPizzaTemplate = async () => {
+    let currentIngs = ingredients;
+    if (currentIngs.length === 0) {
+      currentIngs = await ensureIngredientsLoaded();
+    }
+    if (currentIngs.length === 0) {
+      showToast("Could not load raw materials. Please refresh.", "error");
       return;
     }
-    const meatIng = ingredients.find((x) => x.category === "meat" || x.name.toLowerCase().includes("chicken") || x.name.toLowerCase().includes("meat") || x.name.toLowerCase().includes("beef"));
-    const cheeseIng = ingredients.find((x) => x.category === "dairy" || x.name.toLowerCase().includes("cheese"));
-    const doughIng = ingredients.find((x) => x.category === "bakery" || x.name.toLowerCase().includes("dough"));
-    const sauceIng = ingredients.find((x) => x.category === "sauces" || x.name.toLowerCase().includes("sauce"));
-    const boxIng = ingredients.find((x) => x.category === "packaging" || x.name.toLowerCase().includes("box"));
+    const meatIng = currentIngs.find((x) => x.category === "meat" || x.name.toLowerCase().includes("chicken") || x.name.toLowerCase().includes("meat") || x.name.toLowerCase().includes("beef"));
+    const cheeseIng = currentIngs.find((x) => x.category === "dairy" || x.name.toLowerCase().includes("cheese"));
+    const doughIng = currentIngs.find((x) => x.category === "bakery" || x.name.toLowerCase().includes("dough"));
+    const sauceIng = currentIngs.find((x) => x.category === "sauces" || x.name.toLowerCase().includes("sauce"));
+    const boxIng = currentIngs.find((x) => x.category === "packaging" || x.name.toLowerCase().includes("box"));
 
     const lines: { ingredient_id: number; quantity_required: number; notes: string }[] = [];
     if (meatIng) lines.push({ ingredient_id: meatIng.id, quantity_required: 0.5, notes: "Meat (Half kg)" });
@@ -359,21 +420,25 @@ export default function InventoryManager({
     if (boxIng) lines.push({ ingredient_id: boxIng.id, quantity_required: 1, notes: "Pizza Box" });
 
     if (lines.length === 0) {
-      lines.push({ ingredient_id: ingredients[0].id, quantity_required: 0.5, notes: "" });
+      lines.push({ ingredient_id: currentIngs[0].id, quantity_required: 0.5, notes: "" });
     }
     setRecipeLines(lines);
-    showToast("Loaded Standard Pizza Recipe Template!");
+    showToast("Loaded Standard Pizza Recipe Formula!");
   };
 
-  const handleApplyBurgerTemplate = () => {
-    if (ingredients.length === 0) {
-      showToast("Please add raw materials first in Tab 1", "error");
+  const handleApplyBurgerTemplate = async () => {
+    let currentIngs = ingredients;
+    if (currentIngs.length === 0) {
+      currentIngs = await ensureIngredientsLoaded();
+    }
+    if (currentIngs.length === 0) {
+      showToast("Could not load raw materials. Please refresh.", "error");
       return;
     }
-    const meatIng = ingredients.find((x) => x.category === "meat" || x.name.toLowerCase().includes("patty") || x.name.toLowerCase().includes("chicken") || x.name.toLowerCase().includes("beef"));
-    const bunIng = ingredients.find((x) => x.category === "bakery" || x.name.toLowerCase().includes("bun"));
-    const cheeseIng = ingredients.find((x) => x.category === "dairy" || x.name.toLowerCase().includes("cheese"));
-    const sauceIng = ingredients.find((x) => x.category === "sauces" || x.name.toLowerCase().includes("sauce") || x.name.toLowerCase().includes("mayo"));
+    const meatIng = currentIngs.find((x) => x.category === "meat" || x.name.toLowerCase().includes("patty") || x.name.toLowerCase().includes("chicken") || x.name.toLowerCase().includes("beef"));
+    const bunIng = currentIngs.find((x) => x.category === "bakery" || x.name.toLowerCase().includes("bun"));
+    const cheeseIng = currentIngs.find((x) => x.category === "dairy" || x.name.toLowerCase().includes("cheese"));
+    const sauceIng = currentIngs.find((x) => x.category === "sauces" || x.name.toLowerCase().includes("sauce") || x.name.toLowerCase().includes("mayo"));
 
     const lines: { ingredient_id: number; quantity_required: number; notes: string }[] = [];
     if (meatIng) lines.push({ ingredient_id: meatIng.id, quantity_required: 0.15, notes: "Patty Meat (150g)" });
@@ -382,10 +447,10 @@ export default function InventoryManager({
     if (sauceIng) lines.push({ ingredient_id: sauceIng.id, quantity_required: 0.02, notes: "Sauce / Mayo" });
 
     if (lines.length === 0) {
-      lines.push({ ingredient_id: ingredients[0].id, quantity_required: 0.15, notes: "" });
+      lines.push({ ingredient_id: currentIngs[0].id, quantity_required: 0.15, notes: "" });
     }
     setRecipeLines(lines);
-    showToast("Loaded Standard Burger Recipe Template!");
+    showToast("Loaded Standard Burger Recipe Formula!");
   };
 
   // Recipe cost calculation
@@ -801,7 +866,7 @@ export default function InventoryManager({
       >
         <button
           type="button"
-          onClick={() => setActiveTab("raw_materials")}
+          onClick={() => handleTabChange("raw_materials")}
           style={{
             padding: "12px 18px",
             background: "none",
@@ -838,7 +903,7 @@ export default function InventoryManager({
 
         <button
           type="button"
-          onClick={() => setActiveTab("recipes")}
+          onClick={() => handleTabChange("recipes")}
           style={{
             padding: "12px 18px",
             background: "none",
@@ -860,7 +925,7 @@ export default function InventoryManager({
 
         <button
           type="button"
-          onClick={() => setActiveTab("audit")}
+          onClick={() => handleTabChange("audit")}
           style={{
             padding: "12px 18px",
             background: "none",
@@ -882,7 +947,7 @@ export default function InventoryManager({
 
         <button
           type="button"
-          onClick={() => setActiveTab("wastage")}
+          onClick={() => handleTabChange("wastage")}
           style={{
             padding: "12px 18px",
             background: "none",
@@ -904,7 +969,7 @@ export default function InventoryManager({
 
         <button
           type="button"
-          onClick={() => setActiveTab("finished_goods")}
+          onClick={() => handleTabChange("finished_goods")}
           style={{
             padding: "12px 18px",
             background: "none",
@@ -1320,54 +1385,222 @@ export default function InventoryManager({
               border: "1px solid #e2e8f0",
               padding: 16,
               height: "fit-content",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
             }}
           >
-            <h3 style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 800 }}>Select Menu Item</h3>
-            <p style={{ margin: "0 0 16px", fontSize: 12, color: "#64748b" }}>
-              Link raw ingredients with exact weights/quantities to build this item's recipe.
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>Select Menu Item</h3>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", background: "#f1f5f9", padding: "2px 8px", borderRadius: 12 }}>
+                {recipeFilteredProducts.length} of {initialProducts.length}
+              </span>
+            </div>
+            <p style={{ margin: "0 0 12px", fontSize: 12, color: "#64748b", lineHeight: 1.4 }}>
+              Link raw ingredients with exact weights/quantities to build recipe formulas.
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {initialProducts.map((p) => {
-                const isSelected = Number(p.id) === selectedProductId;
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedProductId(Number(p.id));
-                      setSelectedVariation("");
-                    }}
-                    style={{
-                      textAlign: "left",
-                      padding: "10px 12px",
-                      borderRadius: 6,
-                      border: isSelected ? "1.5px solid #ef4444" : "1px solid #e2e8f0",
-                      background: isSelected ? "#fef2f2" : "#ffffff",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          fontWeight: isSelected ? 800 : 600,
-                          color: isSelected ? "#ef4444" : "#0f172a",
-                          fontSize: 13,
-                        }}
-                      >
-                        {p.name}
+            {/* Instant Search Bar */}
+            <div style={{ position: "relative", marginBottom: 10 }}>
+              <Search
+                size={14}
+                style={{
+                  position: "absolute",
+                  left: 10,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "#94a3b8",
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Search menu items..."
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                style={{
+                  width: "100%",
+                  height: 36,
+                  paddingLeft: 32,
+                  paddingRight: productSearch ? 28 : 10,
+                  borderRadius: 6,
+                  border: "1px solid #cbd5e1",
+                  fontSize: 12.5,
+                  background: "#f8fafc",
+                  outline: "none",
+                }}
+              />
+              {productSearch && (
+                <button
+                  type="button"
+                  onClick={() => setProductSearch("")}
+                  style={{
+                    position: "absolute",
+                    right: 8,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    border: "none",
+                    background: "none",
+                    color: "#94a3b8",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    padding: 2,
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Category Quick Filter Pills */}
+            {categories.length > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  gap: 4,
+                  overflowX: "auto",
+                  paddingBottom: 8,
+                  marginBottom: 8,
+                  scrollbarWidth: "none",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setProductCategoryFilter("all")}
+                  style={{
+                    padding: "3px 8px",
+                    borderRadius: 4,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    whiteSpace: "nowrap",
+                    border: productCategoryFilter === "all" ? "1px solid #ef4444" : "1px solid #e2e8f0",
+                    background: productCategoryFilter === "all" ? "#fef2f2" : "#ffffff",
+                    color: productCategoryFilter === "all" ? "#ef4444" : "#64748b",
+                    cursor: "pointer",
+                  }}
+                >
+                  All ({initialProducts.length})
+                </button>
+                {categories.map((c) => {
+                  const catCount = initialProducts.filter((p) => String(p.category_id) === String(c.id)).length;
+                  if (catCount === 0) return null;
+                  const isCatActive = String(productCategoryFilter) === String(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setProductCategoryFilter(String(c.id))}
+                      style={{
+                        padding: "3px 8px",
+                        borderRadius: 4,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        whiteSpace: "nowrap",
+                        border: isCatActive ? "1px solid #ef4444" : "1px solid #e2e8f0",
+                        background: isCatActive ? "#fef2f2" : "#ffffff",
+                        color: isCatActive ? "#ef4444" : "#64748b",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {c.name} ({catCount})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Scrollable Products List with Scrollbar */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                maxHeight: "560px",
+                overflowY: "auto",
+                paddingRight: 4,
+              }}
+              className="admin-sidebar-scroll"
+            >
+              {recipeFilteredProducts.length === 0 ? (
+                <div style={{ padding: "28px 12px", textAlign: "center", color: "#94a3b8", fontSize: 12 }}>
+                  No menu items found matching &quot;{productSearch}&quot;.
+                </div>
+              ) : (
+                recipeFilteredProducts.map((p) => {
+                  const isSelected = Number(p.id) === selectedProductId;
+                  const hasRecipe = configuredIds.has(Number(p.id));
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedProductId(Number(p.id));
+                        setSelectedVariation("");
+                      }}
+                      style={{
+                        textAlign: "left",
+                        padding: "10px 12px",
+                        borderRadius: 6,
+                        border: isSelected ? "1.5px solid #ef4444" : "1px solid #e2e8f0",
+                        background: isSelected ? "#fef2f2" : "#ffffff",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 8,
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div
+                          style={{
+                            fontWeight: isSelected ? 800 : 600,
+                            color: isSelected ? "#ef4444" : "#0f172a",
+                            fontSize: 13,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {p.name}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                          <span style={{ fontSize: 11, color: "#64748b" }}>
+                            {currencySymbol} {Number(p.price || 0).toFixed(2)}
+                          </span>
+                          {hasRecipe ? (
+                            <span
+                              style={{
+                                fontSize: "9.5px",
+                                fontWeight: 800,
+                                color: "#059669",
+                                background: "#ecfdf5",
+                                border: "1px solid #a7f3d0",
+                                padding: "1px 5px",
+                                borderRadius: 3,
+                              }}
+                            >
+                              BOM ✓
+                            </span>
+                          ) : (
+                            <span
+                              style={{
+                                fontSize: "9.5px",
+                                fontWeight: 600,
+                                color: "#94a3b8",
+                                background: "#f8fafc",
+                                border: "1px solid #e2e8f0",
+                                padding: "1px 5px",
+                                borderRadius: 3,
+                              }}
+                            >
+                              No BOM
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11, color: "#64748b" }}>
-                        Price: {currencySymbol} {Number(p.price || 0).toFixed(2)}
-                      </div>
-                    </div>
-                    {isSelected && <Check size={14} color="#ef4444" />}
-                  </button>
-                );
-              })}
+                      {isSelected && <Check size={16} color="#ef4444" className="shrink-0" />}
+                    </button>
+                  );
+                })
+              )}
             </div>
           </div>
 
