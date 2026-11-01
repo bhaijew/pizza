@@ -44,6 +44,14 @@ import {
 import NavigationProgressBar from "@/components/admin/NavigationProgressBar";
 import SoleWhatLogo from "@/components/SoleWhatLogo";
 import { BusinessType, BUSINESS_THEMES, BusinessTheme } from "@/lib/business-themes";
+import SystemUserGuideModal from "@/components/admin/SystemUserGuideModal";
+
+const BookOpenIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+);
 
 const MonitorIcon = ({ className, size = 16 }: { className?: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -275,6 +283,7 @@ export default function AdminShell({
   const [sidebarTheme, setSidebarTheme] = useState<"dark" | "light">("dark");
   const [roleSwitching, setRoleSwitching] = useState(false);
   const [navigatingHref, setNavigatingHref] = useState<string | null>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   // Clear link loading state when route transition completes
   useEffect(() => {
@@ -1103,6 +1112,34 @@ export default function AdminShell({
               <ExternalLink size={11} style={{ flexShrink: 0 }} />
             </Link>
 
+            {/* How to Use / System Operations Guide Button */}
+            <button
+              type="button"
+              onClick={() => setGuideOpen(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "5px 13px",
+                borderRadius: "5px",
+                background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+                color: "#ffffff",
+                border: "none",
+                fontSize: "11.5px",
+                fontWeight: 800,
+                cursor: "pointer",
+                boxShadow: "0 2px 10px rgba(99, 102, 241, 0.35)",
+                transition: "all 0.15s ease",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
+              }}
+              className="hover:scale-105"
+              title="Open Complete Restaurant Operations & System Guide"
+            >
+              <BookOpenIcon size={13} className="shrink-0" />
+              <span>📖 How to Use</span>
+            </button>
+
             {/* ─── ROLE SELECTOR (Admin only) & ACTIVE PROFILE BADGE ─── */}
             <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
               {/* Quick Role Switcher for Admin preview (Hidden for Staff/Cashier) */}
@@ -1329,6 +1366,30 @@ export default function AdminShell({
                 PKT
               </span>
             </div>
+
+            {/* Mobile How to Use Button */}
+            <button
+              type="button"
+              onClick={() => setGuideOpen(true)}
+              style={{
+                background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+                border: "none",
+                color: "#ffffff",
+                padding: "6px 9px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                fontSize: "11px",
+                fontWeight: 800,
+                boxShadow: "0 2px 6px rgba(99, 102, 241, 0.3)",
+              }}
+              title="How to Use Guide"
+            >
+              <BookOpenIcon size={13} />
+              <span>Guide</span>
+            </button>
 
             {/* Mobile Slider / Menu Open Button */}
             <button
@@ -1715,6 +1776,13 @@ export default function AdminShell({
         </main>
       </div>
     </div>
+
+    {/* Full Page System Operations Guide & Feature Manual Modal */}
+    <SystemUserGuideModal
+      isOpen={guideOpen}
+      onClose={() => setGuideOpen(false)}
+      shopName={shopName || activeBranch}
+    />
     </>
   );
 }
