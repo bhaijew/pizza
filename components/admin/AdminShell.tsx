@@ -1120,24 +1120,23 @@ export default function AdminShell({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                padding: "5px 13px",
-                borderRadius: "5px",
-                background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-                color: "#ffffff",
-                border: "none",
+                padding: "5px 12px",
+                borderRadius: "6px",
+                background: isLight ? "#f1f5f9" : "#1e293b",
+                color: isLight ? "#0f172a" : "#f1f5f9",
+                border: isLight ? "1px solid #cbd5e1" : "1px solid #334155",
                 fontSize: "11.5px",
-                fontWeight: 800,
+                fontWeight: 600,
                 cursor: "pointer",
-                boxShadow: "0 2px 10px rgba(99, 102, 241, 0.35)",
                 transition: "all 0.15s ease",
                 flexShrink: 0,
                 whiteSpace: "nowrap",
               }}
-              className="hover:scale-105"
-              title="Open Complete Restaurant Operations & System Guide"
+              className="hover:border-slate-400"
+              title="Open Complete Restaurant Operations & System Manual"
             >
               <BookOpenIcon size={13} className="shrink-0" />
-              <span>📖 How to Use</span>
+              <span>User Manual</span>
             </button>
 
             {/* ─── ROLE SELECTOR (Admin only) & ACTIVE PROFILE BADGE ─── */}
@@ -1372,23 +1371,22 @@ export default function AdminShell({
               type="button"
               onClick={() => setGuideOpen(true)}
               style={{
-                background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-                border: "none",
-                color: "#ffffff",
-                padding: "6px 9px",
+                background: isLight ? "#f1f5f9" : "#1e293b",
+                border: isLight ? "1px solid #cbd5e1" : "1px solid #334155",
+                color: isLight ? "#0f172a" : "#f1f5f9",
+                padding: "6px 10px",
                 borderRadius: "6px",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: "4px",
+                gap: "5px",
                 fontSize: "11px",
-                fontWeight: 800,
-                boxShadow: "0 2px 6px rgba(99, 102, 241, 0.3)",
+                fontWeight: 600,
               }}
-              title="How to Use Guide"
+              title="Open System User Manual"
             >
-              <BookOpenIcon size={13} />
-              <span>Guide</span>
+              <BookOpenIcon size={12} />
+              <span>Manual</span>
             </button>
 
             {/* Mobile Slider / Menu Open Button */}
