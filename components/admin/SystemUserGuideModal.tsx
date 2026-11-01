@@ -256,7 +256,7 @@ export default function SystemUserGuideModal({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "16px",
+        padding: "14px 16px",
         fontFamily: "var(--font-poppins, system-ui, sans-serif)",
       }}
       onClick={(e) => {
@@ -266,14 +266,14 @@ export default function SystemUserGuideModal({
       {/* Full Page Guide Modal Window */}
       <div
         style={{
-          width: "100%",
-          maxWidth: "1280px",
-          height: "92vh",
-          maxHeight: "920px",
+          width: "calc(100vw - 32px)",
+          maxWidth: "calc(100vw - 32px)",
+          height: "calc(100vh - 28px)",
+          maxHeight: "calc(100vh - 28px)",
           background: "#ffffff",
-          borderRadius: "14px",
+          borderRadius: "12px",
           border: "1px solid #cbd5e1",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.45)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
@@ -435,7 +435,7 @@ export default function SystemUserGuideModal({
         </div>
 
         {/* ─── MODAL BODY: TWO COLUMN LAYOUT ─── */}
-        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "310px 1fr", minHeight: 0, overflow: "hidden" }}>
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "340px 1fr", minHeight: 0, overflow: "hidden" }}>
           {/* Left Column: Topics Navigation */}
           <div
             style={{
@@ -477,8 +477,8 @@ export default function SystemUserGuideModal({
                 >
                   <div
                     style={{
-                      width: "30px",
-                      height: "30px",
+                      width: "32px",
+                      height: "32px",
                       borderRadius: "6px",
                       background: isSelected ? "#fef2f2" : "#ffffff",
                       border: "1px solid #e2e8f0",
@@ -512,7 +512,7 @@ export default function SystemUserGuideModal({
 
                     <div
                       style={{
-                        fontSize: "12.5px",
+                        fontSize: "13px",
                         fontWeight: isSelected ? 800 : 600,
                         color: isSelected ? "#0f172a" : "#334155",
                         whiteSpace: "nowrap",
@@ -525,11 +525,13 @@ export default function SystemUserGuideModal({
 
                     <div
                       style={{
-                        fontSize: "11px",
-                        color: isSelected ? "#ef4444" : "#94a3b8",
+                        fontSize: "13.5px",
+                        fontWeight: 800,
+                        lineHeight: "1.5",
+                        color: isSelected ? "#dc2626" : "#475569",
                         direction: "rtl",
                         textAlign: "right",
-                        marginTop: "1px",
+                        marginTop: "2px",
                       }}
                     >
                       {topic.titleUrdu}
@@ -582,7 +584,7 @@ export default function SystemUserGuideModal({
                 <h1 style={{ margin: "0 0 6px", fontSize: "24px", fontWeight: 900, color: "#0f172a" }}>
                   {currentTopic.title}
                 </h1>
-                <div style={{ fontSize: "15px", color: "#64748b", fontWeight: 700, direction: "rtl", textAlign: "left" }}>
+                <div style={{ fontSize: "19px", color: "#dc2626", fontWeight: 800, direction: "rtl", textAlign: "left", lineHeight: "1.6" }}>
                   {currentTopic.titleUrdu}
                 </div>
               </div>
@@ -709,20 +711,34 @@ function SectionBox({
     <div
       style={{
         background: "#ffffff",
-        borderRadius: "8px",
+        borderRadius: "10px",
         border: "1px solid #e2e8f0",
-        padding: "20px",
+        padding: "20px 22px",
         marginBottom: "20px",
         boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 800, color: "#0f172a" }}>{title}</h3>
-          {titleUrdu && <div style={{ fontSize: "13px", color: "#64748b", marginTop: "2px" }}>{titleUrdu}</div>}
+          <h3 style={{ margin: 0, fontSize: "16.5px", fontWeight: 800, color: "#0f172a" }}>{title}</h3>
+          {titleUrdu && (
+            <div
+              style={{
+                fontSize: "16px",
+                fontWeight: 800,
+                color: "#dc2626",
+                marginTop: "4px",
+                direction: "rtl",
+                textAlign: "left",
+                lineHeight: "1.5",
+              }}
+            >
+              {titleUrdu}
+            </div>
+          )}
         </div>
         {badge && (
-          <span style={{ fontSize: "10px", fontWeight: 800, background: "#f1f5f9", color: "#475569", padding: "2px 8px", borderRadius: "4px" }}>
+          <span style={{ fontSize: "10px", fontWeight: 800, background: "#f1f5f9", color: "#475569", padding: "3px 8px", borderRadius: "4px" }}>
             {badge}
           </span>
         )}
@@ -744,29 +760,44 @@ function StepRow({
   descUrdu: string;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "14px" }}>
+    <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "16px" }}>
       <div
         style={{
-          width: "26px",
-          height: "26px",
+          width: "28px",
+          height: "28px",
           borderRadius: "50%",
           background: "#ef4444",
           color: "#ffffff",
           fontWeight: 800,
-          fontSize: "12px",
+          fontSize: "13px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
           marginTop: "2px",
+          boxShadow: "0 2px 5px rgba(239, 68, 68, 0.3)",
         }}
       >
         {num}
       </div>
       <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#0f172a" }}>{title}</div>
-        <p style={{ margin: "2px 0 4px", fontSize: "12.5px", color: "#475569", lineHeight: "1.5" }}>{desc}</p>
-        <div style={{ fontSize: "12px", color: "#059669", fontWeight: 600, direction: "rtl", textAlign: "left", lineHeight: "1.4" }}>
+        <div style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>{title}</div>
+        <p style={{ margin: "3px 0 6px", fontSize: "13px", color: "#475569", lineHeight: "1.55" }}>{desc}</p>
+        <div
+          style={{
+            fontSize: "15px",
+            color: "#065f46",
+            fontWeight: 800,
+            direction: "rtl",
+            textAlign: "right",
+            lineHeight: "1.75",
+            background: "#ecfdf5",
+            padding: "8px 14px",
+            borderRadius: "6px",
+            borderRight: "4px solid #10b981",
+            border: "1px solid #d1fae5",
+          }}
+        >
           {descUrdu}
         </div>
       </div>
