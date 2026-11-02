@@ -7,8 +7,8 @@ import AdminPromosClient from "@/components/admin/AdminPromosClient";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Promo Codes & Loyalty Rewards | Admin",
-  description: "Manage discount coupons, promo codes, and customer loyalty rewards points.",
+  title: "Discount Coupons & Promo Codes | Admin",
+  description: "Manage customer discount coupons, promo codes, and checkout vouchers.",
 };
 
 export default async function AdminPromosPage() {

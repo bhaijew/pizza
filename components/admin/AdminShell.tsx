@@ -190,9 +190,9 @@ const NAV_GROUPS: NavGroup[] = [
         icon: QrCode,
       },
       {
-        label: "Coupons & Loyalty",
+        label: "Discount Coupons",
         href: "/admin/promos",
-        badge: "PROMOS",
+        badge: "COUPONS",
         badgeColor: "#10b981",
         icon: TicketPercent,
       },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createPromoCode, lookupCustomerLoyalty, CustomerLoyaltyInfo } from "@/lib/promo-actions";
+import { createPromoCode, deletePromoCode, togglePromoCodeActive } from "@/lib/promo-actions";
 
 interface PromoCodeItem {
   id: number;
@@ -31,433 +31,538 @@ export default function AdminPromosClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Loyalty lookup state
-  const [searchPhone, setSearchPhone] = useState("");
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchedCustomer, setSearchedCustomer] = useState<CustomerLoyaltyInfo | null>(null);
-  const [searchError, setSearchError] = useState<string | null>(null);
+  // Deletion state
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // Quick feedback timer
+  const notify = (type: "success" | "error", text: string) => {
+    setActionMessage({ type, text });
+    setTimeout(() => setActionMessage(null), 3500);
+  };
+
+  // Delete handler
+  const handleDelete = async (promo: PromoCodeItem) => {
+    const confirmed = window.confirm(`Are you sure you want to delete coupon code "${promo.code}"? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    setDeletingId(promo.id);
+    try {
+      const res = await deletePromoCode(promo.id);
+      if (res.success) {
+        setPromos((prev) => prev.filter((p) => p.id !== promo.id));
+        notify("success", `Coupon "${promo.code}" deleted successfully.`);
+      } else {
+        notify("error", res.error || "Failed to delete coupon.");
+      }
+    } catch {
+      notify("error", "An unexpected error occurred while deleting coupon.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Toggle active handler
+  const handleToggleActive = async (promo: PromoCodeItem) => {
+    const nextActive = !promo.is_active;
+    // Optimistic update
+    setPromos((prev) =>
+      prev.map((p) => (p.id === promo.id ? { ...p, is_active: nextActive } : p))
+    );
+
+    try {
+      const res = await togglePromoCodeActive(promo.id, nextActive);
+      if (res.success) {
+        notify("success", `Coupon "${promo.code}" is now ${nextActive ? "Active" : "Disabled"}.`);
+      } else {
+        // Revert on failure
+        setPromos((prev) =>
+          prev.map((p) => (p.id === promo.id ? { ...p, is_active: promo.is_active } : p))
+        );
+        notify("error", res.error || "Failed to update coupon status.");
+      }
+    } catch {
+      setPromos((prev) =>
+        prev.map((p) => (p.id === promo.id ? { ...p, is_active: promo.is_active } : p))
+      );
+      notify("error", "Error updating coupon status.");
+    }
+  };
+
+  // Create coupon handler
   const handleCreateCoupon = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setFormError(null);
 
-    const formData = new FormData(e.currentTarget);
-    const res = await createPromoCode(formData);
-
-    setIsSubmitting(false);
-
-    if (res.success) {
-      setShowAddModal(false);
-      window.location.reload();
-    } else {
-      setFormError(res.error || "Failed to create promo code.");
-    }
-  };
-
-  const handleLookupLoyalty = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchPhone.trim()) return;
-
-    setSearchLoading(true);
-    setSearchError(null);
-    setSearchedCustomer(null);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
 
     try {
-      const info = await lookupCustomerLoyalty(searchPhone, shopId);
-      if (info) {
-        setSearchedCustomer(info);
+      const res = await createPromoCode(formData);
+
+      if (res.success) {
+        setShowAddModal(false);
+        form.reset();
+        if (res.promo) {
+          setPromos((prev) => [res.promo, ...prev]);
+        } else {
+          window.location.reload();
+        }
+        notify("success", "New coupon code created successfully!");
       } else {
-        setSearchError("No loyalty profile found for this phone number yet.");
+        setFormError(res.error || "Failed to create promo code.");
       }
     } catch {
-      setSearchError("Error searching customer loyalty records.");
+      setFormError("An unexpected error occurred.");
     } finally {
-      setSearchLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: 1100 }}>
+    <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 40 }}>
+      {/* Toast Notification Banner */}
+      {actionMessage && (
+        <div
+          style={{
+            position: "fixed",
+            top: 20,
+            right: 20,
+            zIndex: 99999,
+            padding: "12px 18px",
+            borderRadius: 6,
+            background: actionMessage.type === "success" ? "#065f46" : "#991b1b",
+            color: "#ffffff",
+            fontSize: 13,
+            fontWeight: 700,
+            boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            animation: "fadeIn 0.2s ease-out",
+          }}
+        >
+          <span>{actionMessage.type === "success" ? "✓" : "⚠"}</span>
+          <span>{actionMessage.text}</span>
+        </div>
+      )}
+
       {/* Page Header */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 24,
+          marginBottom: 20,
           flexWrap: "wrap",
-          gap: 12,
+          gap: 14,
+          background: "#ffffff",
+          padding: "20px 24px",
+          borderRadius: 8,
+          border: "1px solid #e2e8f0",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
         }}
       >
         <div>
-          <h1
-            style={{
-              fontSize: 24,
-              fontWeight: 800,
-              color: "#0f172a",
-              letterSpacing: "-0.02em",
-              margin: "0 0 4px",
-            }}
-          >
-            Promos &amp; Loyalty Rewards
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <h1
+              style={{
+                fontSize: 22,
+                fontWeight: 800,
+                color: "#0f172a",
+                letterSpacing: "-0.02em",
+                margin: 0,
+              }}
+            >
+              Discount Coupons &amp; Promo Codes
+            </h1>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                background: "#f1f5f9",
+                color: "#475569",
+                padding: "2px 7px",
+                borderRadius: 4,
+                letterSpacing: "0.5px",
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              COUPON ENGINE
+            </span>
+          </div>
           <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>
-            Drive repeat orders with discount coupons and customer loyalty cash-back points.
+            Create, manage, and delete promotional discount coupons that customers can apply during online checkout.
           </p>
         </div>
 
+        {/* Header Add Coupon Button */}
         <button
-          onClick={() => setShowAddModal(true)}
+          type="button"
+          onClick={() => {
+            setFormError(null);
+            setShowAddModal(true);
+          }}
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 6,
-            padding: "9px 16px",
-            borderRadius: 5,
+            gap: 8,
+            padding: "10px 18px",
+            borderRadius: 6,
             background: "#ea580c",
             color: "#ffffff",
             fontSize: 13,
             fontWeight: 700,
             border: "none",
             cursor: "pointer",
-            boxShadow: "0 2px 6px rgba(234, 88, 12, 0.2)",
+            boxShadow: "0 2px 8px rgba(234, 88, 12, 0.25)",
+            transition: "all 0.15s ease",
           }}
         >
-          <span>＋</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
           <span>Create Coupon Code</span>
         </button>
       </div>
 
-      {/* Grid: Promos Table + Loyalty Lookup */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))", gap: 24 }}>
-        {/* LEFT COLUMN: Active Promo Codes */}
-        <div>
-          <div
-            style={{
-              background: "#ffffff",
-              border: "1px solid #e2e8f0",
-              borderRadius: 6,
-              overflow: "hidden",
-              marginBottom: 24,
-            }}
-          >
-            <div
+      {/* Main Full-Width Coupon List Card */}
+      <div
+        style={{
+          background: "#ffffff",
+          border: "1px solid #e2e8f0",
+          borderRadius: 8,
+          overflow: "hidden",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+        }}
+      >
+        {/* Card Header Strip */}
+        <div
+          style={{
+            padding: "16px 22px",
+            borderBottom: "1px solid #e2e8f0",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+            background: "#fafafa",
+          }}
+        >
+          <div>
+            <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: "#0f172a" }}>
+              Active Coupon Codes ({promos.length})
+            </h3>
+            <p style={{ fontSize: 12, color: "#64748b", margin: "2px 0 0" }}>
+              Valid discount vouchers available for customers at checkout.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
               style={{
-                padding: "16px 20px",
-                borderBottom: "1px solid #e2e8f0",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+                background: "#f1f5f9",
+                border: "1px solid #e2e8f0",
+                padding: "4px 10px",
+                borderRadius: 5,
+                fontSize: 12,
+                fontWeight: 700,
+                color: "#475569",
               }}
             >
-              <div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: "#0f172a" }}>
-                  Active Coupon Codes
-                </h3>
-                <p style={{ fontSize: 12, color: "#64748b", margin: "2px 0 0" }}>
-                  Codes that customers can enter at online checkout.
-                </p>
-              </div>
-              <span
-                style={{
-                  background: "#f1f5f9",
-                  padding: "3px 8px",
-                  borderRadius: 4,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#475569",
-                }}
-              >
-                {promos.length > 0 ? `${promos.length} DB Codes` : "3 Default Codes Active"}
-              </span>
-            </div>
+              {promos.length} Total Coupons
+            </span>
 
-            {/* List or Table */}
-            {promos.length > 0 ? (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", textAlign: "left" }}>
-                      <th style={{ padding: "10px 16px", fontWeight: 700, color: "#475569" }}>Code</th>
-                      <th style={{ padding: "10px 16px", fontWeight: 700, color: "#475569" }}>Discount</th>
-                      <th style={{ padding: "10px 16px", fontWeight: 700, color: "#475569" }}>Min Order</th>
-                      <th style={{ padding: "10px 16px", fontWeight: 700, color: "#475569" }}>Usage</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {promos.map((p) => (
-                      <tr key={p.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: "12px 16px" }}>
-                          <span
-                            style={{
-                              fontFamily: "monospace",
-                              fontWeight: 800,
-                              color: "#ea580c",
-                              background: "#fff7ed",
-                              padding: "2px 6px",
-                              borderRadius: 3,
-                              border: "1px solid #fed7aa",
-                            }}
-                          >
-                            {p.code}
-                          </span>
-                          {p.description && (
-                            <p style={{ margin: "2px 0 0", fontSize: 11, color: "#64748b" }}>{p.description}</p>
-                          )}
-                        </td>
-                        <td style={{ padding: "12px 16px", fontWeight: 700, color: "#0f172a" }}>
-                          {p.discount_type === "percentage" ? `${p.discount_value}% OFF` : `Rs. ${p.discount_value} OFF`}
-                          {p.max_discount_amount && (
-                            <span style={{ display: "block", fontSize: 11, color: "#64748b", fontWeight: 500 }}>
-                              Max Rs. {p.max_discount_amount}
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ padding: "12px 16px", color: "#334155" }}>
-                          Rs. {p.min_order_amount || 0}
-                        </td>
-                        <td style={{ padding: "12px 16px", color: "#64748b" }}>
-                          {p.used_count || 0} / {p.usage_limit || "∞"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div style={{ padding: "20px" }}>
-                <p style={{ margin: "0 0 14px", fontSize: 13, color: "#475569" }}>
-                  Using system standard promo coupons:
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {[
-                    { code: "WELCOME20", desc: "20% OFF on orders above Rs. 500 (Max Rs. 400)" },
-                    { code: "FLAT100", desc: "Flat Rs. 100 OFF on orders above Rs. 800" },
-                    { code: "PIZZA500", desc: "Flat Rs. 500 OFF on party orders above Rs. 2,500" },
-                  ].map((c) => (
-                    <div
-                      key={c.code}
-                      style={{
-                        padding: "10px 12px",
-                        background: "#fffbeb",
-                        border: "1px solid #fef3c7",
-                        borderRadius: 4,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontFamily: "monospace",
-                          fontWeight: 800,
-                          color: "#b45309",
-                          fontSize: 13,
-                        }}
-                      >
-                        {c.code}
+            {/* Quick Add Button inside Card Header */}
+            <button
+              type="button"
+              onClick={() => {
+                setFormError(null);
+                setShowAddModal(true);
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "6px 12px",
+                borderRadius: 5,
+                background: "#0f172a",
+                color: "#ffffff",
+                fontSize: 12,
+                fontWeight: 700,
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Add Coupon</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Table of Coupon Codes */}
+        {promos.length > 0 ? (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, textAlign: "left" }}>
+              <thead>
+                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                  <th style={{ padding: "12px 18px", fontWeight: 700, color: "#475569", width: "26%" }}>Coupon Code</th>
+                  <th style={{ padding: "12px 18px", fontWeight: 700, color: "#475569", width: "18%" }}>Discount Value</th>
+                  <th style={{ padding: "12px 18px", fontWeight: 700, color: "#475569", width: "15%" }}>Min Order</th>
+                  <th style={{ padding: "12px 18px", fontWeight: 700, color: "#475569", width: "15%" }}>Usage Limit</th>
+                  <th style={{ padding: "12px 18px", fontWeight: 700, color: "#475569", width: "12%" }}>Status</th>
+                  <th style={{ padding: "12px 18px", fontWeight: 700, color: "#475569", width: "14%", textAlign: "right" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {promos.map((p) => (
+                  <tr
+                    key={p.id}
+                    style={{
+                      borderBottom: "1px solid #f1f5f9",
+                      background: p.is_active ? "#ffffff" : "#fbfbfb",
+                      opacity: p.is_active ? 1 : 0.65,
+                      transition: "background 0.15s ease",
+                    }}
+                  >
+                    {/* Code Column */}
+                    <td style={{ padding: "14px 18px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span
+                          style={{
+                            fontFamily: "monospace",
+                            fontWeight: 800,
+                            fontSize: 13.5,
+                            color: "#ea580c",
+                            background: "#fff7ed",
+                            padding: "3px 8px",
+                            borderRadius: 4,
+                            border: "1px solid #fed7aa",
+                            letterSpacing: "0.5px",
+                          }}
+                        >
+                          {p.code}
+                        </span>
+                      </div>
+                      {p.description && (
+                        <p style={{ margin: "4px 0 0", fontSize: 11.5, color: "#64748b", lineHeight: "1.4" }}>
+                          {p.description}
+                        </p>
+                      )}
+                    </td>
+
+                    {/* Discount Value */}
+                    <td style={{ padding: "14px 18px" }}>
+                      <span style={{ fontWeight: 800, color: "#0f172a", fontSize: 14 }}>
+                        {p.discount_type === "percentage" ? `${p.discount_value}% OFF` : `Rs. ${p.discount_value} OFF`}
                       </span>
-                      <span style={{ fontSize: 12, color: "#78350f", fontWeight: 600 }}>{c.desc}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                      {p.max_discount_amount && (
+                        <span style={{ display: "block", fontSize: 11, color: "#64748b", fontWeight: 500, marginTop: 2 }}>
+                          Max Cap: Rs. {p.max_discount_amount}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Min Order Required */}
+                    <td style={{ padding: "14px 18px", color: "#334155", fontWeight: 600 }}>
+                      Rs. {p.min_order_amount || 0}
+                    </td>
+
+                    {/* Usage Count / Limit */}
+                    <td style={{ padding: "14px 18px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ color: "#0f172a", fontWeight: 700 }}>
+                          {p.used_count || 0}
+                        </span>
+                        <span style={{ color: "#94a3b8" }}>/</span>
+                        <span style={{ color: "#64748b" }}>
+                          {p.usage_limit || "Unlimited"}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Status Toggle / Badge */}
+                    <td style={{ padding: "14px 18px" }}>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleActive(p)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 5,
+                          padding: "3px 8px",
+                          borderRadius: 4,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          border: p.is_active ? "1px solid #a7f3d0" : "1px solid #cbd5e1",
+                          background: p.is_active ? "#ecfdf5" : "#f1f5f9",
+                          color: p.is_active ? "#065f46" : "#64748b",
+                        }}
+                        title={p.is_active ? "Click to disable coupon" : "Click to activate coupon"}
+                      >
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            background: p.is_active ? "#10b981" : "#94a3b8",
+                          }}
+                        />
+                        <span>{p.is_active ? "Active" : "Disabled"}</span>
+                      </button>
+                    </td>
+
+                    {/* Actions Column: Delete Button */}
+                    <td style={{ padding: "14px 18px", textAlign: "right" }}>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(p)}
+                        disabled={deletingId === p.id}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 5,
+                          padding: "5px 11px",
+                          borderRadius: 5,
+                          background: "#fef2f2",
+                          border: "1px solid #fecaca",
+                          color: "#dc2626",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          cursor: deletingId === p.id ? "not-allowed" : "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                        title={`Delete coupon "${p.code}"`}
+                      >
+                        {deletingId === p.id ? (
+                          <span>Deleting...</span>
+                        ) : (
+                          <>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6"></polyline>
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                              <line x1="10" y1="11" x2="10" y2="17"></line>
+                              <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                            <span>Delete</span>
+                          </>
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-
-        {/* RIGHT COLUMN: Loyalty Program & Customer Lookup */}
-        <div>
-          {/* Loyalty Program Info Box */}
-          <div
-            style={{
-              background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
-              border: "1.5px solid #fde68a",
-              borderRadius: 6,
-              padding: "20px",
-              marginBottom: 24,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <span style={{ fontSize: 24 }}>🪙</span>
-              <div>
-                <h3 style={{ fontSize: 15, fontWeight: 800, color: "#78350f", margin: 0 }}>
-                  Automated Customer Loyalty Engine
-                </h3>
-                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#92400e" }}>
-                  Points are tracked automatically by customer WhatsApp phone number.
-                </p>
-              </div>
+        ) : (
+          /* Empty State */
+          <div style={{ padding: "48px 24px", textAlign: "center" }}>
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                background: "#fff7ed",
+                color: "#ea580c",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 12,
+              }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
             </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
-              <div style={{ background: "#ffffff", padding: "10px", borderRadius: 4, border: "1px solid #fde68a" }}>
-                <span style={{ fontSize: 10, fontWeight: 800, color: "#b45309", textTransform: "uppercase" }}>
-                  Earning Rule
-                </span>
-                <p style={{ margin: "4px 0 0", fontSize: 14, fontWeight: 900, color: "#0f172a" }}>
-                  1 Pt / Rs. 50
-                </p>
-                <p style={{ margin: "2px 0 0", fontSize: 10, color: "#64748b" }}>2% cashback return</p>
-              </div>
-
-              <div style={{ background: "#ffffff", padding: "10px", borderRadius: 4, border: "1px solid #fde68a" }}>
-                <span style={{ fontSize: 10, fontWeight: 800, color: "#b45309", textTransform: "uppercase" }}>
-                  Redemption Value
-                </span>
-                <p style={{ margin: "4px 0 0", fontSize: 14, fontWeight: 900, color: "#16a34a" }}>
-                  1 Pt = Rs. 1
-                </p>
-                <p style={{ margin: "2px 0 0", fontSize: 10, color: "#64748b" }}>Instant cart deduction</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Customer Loyalty Search Card */}
-          <div
-            style={{
-              background: "#ffffff",
-              border: "1px solid #e2e8f0",
-              borderRadius: 6,
-              padding: "20px",
-            }}
-          >
-            <h3 style={{ fontSize: 15, fontWeight: 700, margin: "0 0 4px", color: "#0f172a" }}>
-              Customer Loyalty Points Lookup
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: "0 0 6px" }}>
+              No Custom Coupons Found
             </h3>
-            <p style={{ fontSize: 12, color: "#64748b", margin: "0 0 16px" }}>
-              Search any customer's phone number to check their balance or order count.
+            <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 18px", maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
+              You haven't created any promotional discount coupons yet. Click below to add your first coupon code.
             </p>
-
-            <form onSubmit={handleLookupLoyalty} style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-              <input
-                type="text"
-                placeholder="e.g. 0300 1234567"
-                value={searchPhone}
-                onChange={(e) => setSearchPhone(e.target.value)}
-                style={{
-                  flex: 1,
-                  height: 38,
-                  padding: "0 12px",
-                  borderRadius: 4,
-                  border: "1px solid #cbd5e1",
-                  fontSize: 13,
-                  outline: "none",
-                }}
-              />
-              <button
-                type="submit"
-                disabled={searchLoading || !searchPhone.trim()}
-                style={{
-                  padding: "0 16px",
-                  height: 38,
-                  borderRadius: 4,
-                  background: "#0f172a",
-                  color: "#ffffff",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                {searchLoading ? "Checking..." : "Search"}
-              </button>
-            </form>
-
-            {searchError && (
-              <div
-                style={{
-                  padding: "10px",
-                  background: "#fef2f2",
-                  border: "1px solid #fecaca",
-                  color: "#b91c1c",
-                  borderRadius: 4,
-                  fontSize: 12,
-                }}
-              >
-                {searchError}
-              </div>
-            )}
-
-            {searchedCustomer && (
-              <div
-                style={{
-                  padding: "14px",
-                  background: "#ecfdf5",
-                  border: "1px solid #a7f3d0",
-                  borderRadius: 6,
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: "#065f46" }}>
-                    👤 {searchedCustomer.customerName || "Customer"}
-                  </span>
-                  <span style={{ fontSize: 11, fontFamily: "monospace", color: "#047857" }}>
-                    {searchedCustomer.phone}
-                  </span>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
-                  <div style={{ background: "#ffffff", padding: "8px", borderRadius: 4, textAlign: "center" }}>
-                    <span style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase" }}>Points</span>
-                    <p style={{ margin: "2px 0 0", fontSize: 16, fontWeight: 900, color: "#059669" }}>
-                      {searchedCustomer.pointsBalance}
-                    </p>
-                  </div>
-
-                  <div style={{ background: "#ffffff", padding: "8px", borderRadius: 4, textAlign: "center" }}>
-                    <span style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase" }}>Orders</span>
-                    <p style={{ margin: "2px 0 0", fontSize: 16, fontWeight: 900, color: "#0f172a" }}>
-                      {searchedCustomer.totalOrders}
-                    </p>
-                  </div>
-
-                  <div style={{ background: "#ffffff", padding: "8px", borderRadius: 4, textAlign: "center" }}>
-                    <span style={{ fontSize: 10, color: "#64748b", textTransform: "uppercase" }}>Total Spent</span>
-                    <p style={{ margin: "2px 0 0", fontSize: 14, fontWeight: 900, color: "#0f172a" }}>
-                      Rs. {searchedCustomer.totalSpent}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                setFormError(null);
+                setShowAddModal(true);
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "9px 18px",
+                borderRadius: 6,
+                background: "#ea580c",
+                color: "#ffffff",
+                fontSize: 13,
+                fontWeight: 700,
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              <span>＋ Add Your First Coupon</span>
+            </button>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* CREATE COUPON MODAL */}
+      {/* CREATE NEW COUPON MODAL */}
       {showAddModal && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.5)",
+            background: "rgba(15, 23, 42, 0.65)",
+            backdropFilter: "blur(4px)",
             zIndex: 9999,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             padding: 16,
           }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowAddModal(false);
+          }}
         >
           <div
             style={{
               background: "#ffffff",
               borderRadius: 8,
-              maxWidth: 480,
+              maxWidth: 500,
               width: "100%",
               padding: 24,
-              boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
+              border: "1px solid #cbd5e1",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: "#0f172a" }}>
-                Create New Promo Coupon
-              </h2>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+              <div>
+                <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0, color: "#0f172a" }}>
+                  Create New Promo Coupon
+                </h2>
+                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
+                  Configure discount rule and usage conditions for customer checkout.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#64748b" }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: 22,
+                  cursor: "pointer",
+                  color: "#64748b",
+                  lineHeight: 1,
+                  padding: 4,
+                }}
               >
                 ✕
               </button>
@@ -466,13 +571,14 @@ export default function AdminPromosClient({
             {formError && (
               <div
                 style={{
-                  padding: "8px 12px",
+                  padding: "10px 14px",
                   background: "#fef2f2",
                   border: "1px solid #fecaca",
                   color: "#b91c1c",
-                  borderRadius: 4,
-                  fontSize: 12,
-                  marginBottom: 14,
+                  borderRadius: 6,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  marginBottom: 16,
                 }}
               >
                 {formError}
@@ -480,52 +586,60 @@ export default function AdminPromosClient({
             )}
 
             <form onSubmit={handleCreateCoupon} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {/* Hidden Shop ID */}
+              <input type="hidden" name="shop_id" value={shopId || ""} />
+
+              {/* Coupon Code */}
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
-                  Coupon Code (e.g. FLASH30) <span style={{ color: "#dc2626" }}>*</span>
+                  Coupon Code (e.g. FLASH30, PIZZA500) <span style={{ color: "#dc2626" }}>*</span>
                 </label>
                 <input
                   name="code"
                   type="text"
                   required
-                  placeholder="e.g. SUMMER50"
+                  placeholder="e.g. SPECIAL50"
                   style={{
                     width: "100%",
                     height: 38,
                     padding: "0 12px",
-                    borderRadius: 4,
+                    borderRadius: 5,
                     border: "1px solid #cbd5e1",
                     fontSize: 13,
                     fontFamily: "monospace",
                     textTransform: "uppercase",
                     fontWeight: 700,
+                    outline: "none",
                   }}
                 />
               </div>
 
+              {/* Description */}
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
-                  Description
+                  Description / Subtitle
                 </label>
                 <input
                   name="description"
                   type="text"
-                  placeholder="e.g. Special Weekend 20% Discount"
+                  placeholder="e.g. 20% discount on orders above Rs. 500"
                   style={{
                     width: "100%",
                     height: 38,
                     padding: "0 12px",
-                    borderRadius: 4,
+                    borderRadius: 5,
                     border: "1px solid #cbd5e1",
                     fontSize: 13,
+                    outline: "none",
                   }}
                 />
               </div>
 
+              {/* Discount Type & Value */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 <div>
                   <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
-                    Type
+                    Discount Type
                   </label>
                   <select
                     name="discount_type"
@@ -534,10 +648,11 @@ export default function AdminPromosClient({
                       width: "100%",
                       height: 38,
                       padding: "0 10px",
-                      borderRadius: 4,
+                      borderRadius: 5,
                       border: "1px solid #cbd5e1",
                       fontSize: 13,
                       background: "#ffffff",
+                      outline: "none",
                     }}
                   >
                     <option value="fixed">Fixed Amount (Rs.)</option>
@@ -554,70 +669,100 @@ export default function AdminPromosClient({
                     type="number"
                     step="any"
                     required
-                    placeholder="e.g. 150 or 20"
+                    placeholder="e.g. 100 or 20"
                     style={{
                       width: "100%",
                       height: 38,
                       padding: "0 12px",
-                      borderRadius: 4,
+                      borderRadius: 5,
                       border: "1px solid #cbd5e1",
                       fontSize: 13,
+                      fontWeight: 700,
+                      outline: "none",
                     }}
                   />
                 </div>
               </div>
 
+              {/* Min Order & Max Discount */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 <div>
                   <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
-                    Min Order (Rs.)
+                    Min Order Required (Rs.)
                   </label>
                   <input
                     name="min_order_amount"
                     type="number"
                     defaultValue={0}
+                    placeholder="0"
                     style={{
                       width: "100%",
                       height: 38,
                       padding: "0 12px",
-                      borderRadius: 4,
+                      borderRadius: 5,
                       border: "1px solid #cbd5e1",
                       fontSize: 13,
+                      outline: "none",
                     }}
                   />
                 </div>
 
                 <div>
                   <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
-                    Max Discount (Rs.)
+                    Max Discount Cap (Rs.)
                   </label>
                   <input
                     name="max_discount_amount"
                     type="number"
-                    placeholder="Optional for %"
+                    placeholder="Optional (for %)"
                     style={{
                       width: "100%",
                       height: 38,
                       padding: "0 12px",
-                      borderRadius: 4,
+                      borderRadius: 5,
                       border: "1px solid #cbd5e1",
                       fontSize: 13,
+                      outline: "none",
                     }}
                   />
                 </div>
               </div>
 
+              {/* Usage Limit */}
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
+                  Maximum Total Uses
+                </label>
+                <input
+                  name="usage_limit"
+                  type="number"
+                  defaultValue={500}
+                  placeholder="500"
+                  style={{
+                    width: "100%",
+                    height: 38,
+                    padding: "0 12px",
+                    borderRadius: 5,
+                    border: "1px solid #cbd5e1",
+                    fontSize: 13,
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              {/* Modal Buttons */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 10 }}>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
                   style={{
                     padding: "9px 16px",
-                    borderRadius: 4,
+                    borderRadius: 5,
                     border: "1px solid #cbd5e1",
                     background: "#ffffff",
                     color: "#475569",
                     fontSize: 13,
+                    fontWeight: 600,
                     cursor: "pointer",
                   }}
                 >
@@ -628,16 +773,17 @@ export default function AdminPromosClient({
                   disabled={isSubmitting}
                   style={{
                     padding: "9px 20px",
-                    borderRadius: 4,
+                    borderRadius: 5,
                     border: "none",
                     background: "#ea580c",
                     color: "#ffffff",
                     fontSize: 13,
                     fontWeight: 700,
                     cursor: isSubmitting ? "not-allowed" : "pointer",
+                    boxShadow: "0 2px 6px rgba(234, 88, 12, 0.25)",
                   }}
                 >
-                  {isSubmitting ? "Saving..." : "Save Coupon"}
+                  {isSubmitting ? "Saving..." : "Save Coupon Code"}
                 </button>
               </div>
             </form>

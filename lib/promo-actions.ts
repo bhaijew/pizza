@@ -300,7 +300,7 @@ export async function fetchAdminPromoCodes(shopId?: number | null) {
 /**
  * Admin: Create a new promo code
  */
-export async function createPromoCode(formData: FormData): Promise<{ error: string | null; success: boolean }> {
+export async function createPromoCode(formData: FormData): Promise<{ error: string | null; success: boolean; promo?: any }> {
   if (!isServiceRoleConfigured()) return { error: "Database not configured.", success: false };
 
   const code = (formData.get("code") as string)?.trim().toUpperCase();
@@ -310,6 +310,8 @@ export async function createPromoCode(formData: FormData): Promise<{ error: stri
   const min_order_amount = Number(formData.get("min_order_amount")) || 0;
   const max_discount_amount = Number(formData.get("max_discount_amount")) || null;
   const usage_limit = Number(formData.get("usage_limit")) || 500;
+  const rawShopId = formData.get("shop_id");
+  const shop_id = rawShopId ? Number(rawShopId) : null;
 
   if (!code || discount_value <= 0) {
     return { error: "Coupon code and positive discount value are required.", success: false };
@@ -317,7 +319,7 @@ export async function createPromoCode(formData: FormData): Promise<{ error: stri
 
   try {
     const db = createAdminClient();
-    const { error } = await db.from("promo_codes").insert({
+    const payload: any = {
       code,
       description,
       discount_type,
@@ -326,8 +328,45 @@ export async function createPromoCode(formData: FormData): Promise<{ error: stri
       max_discount_amount,
       usage_limit,
       is_active: true,
-    });
+    };
+    if (shop_id) {
+      payload.shop_id = shop_id;
+    }
 
+    const { data, error } = await db.from("promo_codes").insert(payload).select().single();
+
+    if (error) return { error: error.message, success: false };
+    revalidatePath("/admin/promos");
+    return { error: null, success: true, promo: data };
+  } catch (err: any) {
+    return { error: err.message, success: false };
+  }
+}
+
+/**
+ * Admin: Delete a promo code by ID
+ */
+export async function deletePromoCode(id: number): Promise<{ error: string | null; success: boolean }> {
+  if (!isServiceRoleConfigured()) return { error: "Database not configured.", success: false };
+  try {
+    const db = createAdminClient();
+    const { error } = await db.from("promo_codes").delete().eq("id", id);
+    if (error) return { error: error.message, success: false };
+    revalidatePath("/admin/promos");
+    return { error: null, success: true };
+  } catch (err: any) {
+    return { error: err.message, success: false };
+  }
+}
+
+/**
+ * Admin: Toggle promo code active status
+ */
+export async function togglePromoCodeActive(id: number, is_active: boolean): Promise<{ error: string | null; success: boolean }> {
+  if (!isServiceRoleConfigured()) return { error: "Database not configured.", success: false };
+  try {
+    const db = createAdminClient();
+    const { error } = await db.from("promo_codes").update({ is_active }).eq("id", id);
     if (error) return { error: error.message, success: false };
     revalidatePath("/admin/promos");
     return { error: null, success: true };
