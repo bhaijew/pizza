@@ -31,9 +31,27 @@ export default function AdminPromosClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Deletion state
+  // Deletion and notification state
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Modal controlled form state for live interactive preview
+  const [discountType, setDiscountType] = useState<"fixed" | "percentage">("fixed");
+  const [modalCode, setModalCode] = useState("");
+  const [modalValue, setModalValue] = useState("");
+  const [modalMinOrder, setModalMinOrder] = useState("0");
+  const [modalMaxDiscount, setModalMaxDiscount] = useState("");
+  const [modalDesc, setModalDesc] = useState("");
+
+  const resetModalState = () => {
+    setDiscountType("fixed");
+    setModalCode("");
+    setModalValue("");
+    setModalMinOrder("0");
+    setModalMaxDiscount("");
+    setModalDesc("");
+    setFormError(null);
+  };
 
   // Quick feedback timer
   const notify = (type: "success" | "error", text: string) => {
@@ -103,6 +121,7 @@ export default function AdminPromosClient({
 
       if (res.success) {
         setShowAddModal(false);
+        resetModalState();
         form.reset();
         if (res.promo) {
           setPromos((prev) => [res.promo, ...prev]);
@@ -520,54 +539,96 @@ export default function AdminPromosClient({
             position: "fixed",
             inset: 0,
             background: "rgba(15, 23, 42, 0.65)",
-            backdropFilter: "blur(4px)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
             zIndex: 9999,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: 16,
+            padding: "16px",
           }}
           onClick={(e) => {
-            if (e.target === e.currentTarget) setShowAddModal(false);
+            if (e.target === e.currentTarget) {
+              setShowAddModal(false);
+              resetModalState();
+            }
           }}
         >
           <div
             style={{
               background: "#ffffff",
-              borderRadius: 8,
-              maxWidth: 500,
+              borderRadius: 14,
+              maxWidth: 540,
               width: "100%",
-              padding: 24,
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
+              maxHeight: "92vh",
+              overflowY: "auto",
+              padding: "26px",
+              boxShadow: "0 25px 60px -15px rgba(15, 23, 42, 0.35)",
               border: "1px solid #cbd5e1",
+              fontFamily: "inherit",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-              <div>
-                <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0, color: "#0f172a" }}>
-                  Create New Promo Coupon
-                </h2>
-                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
-                  Configure discount rule and usage conditions for customer checkout.
-                </p>
+            {/* Modal Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: 10,
+                    background: "#fff7ed",
+                    border: "1.5px solid #fed7aa",
+                    color: "#ea580c",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                  </svg>
+                </div>
+                <div>
+                  <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: "#0f172a", letterSpacing: "-0.2px" }}>
+                    Create Discount Coupon
+                  </h2>
+                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
+                    Configure code rules and checkout conditions for customers.
+                  </p>
+                </div>
               </div>
+
               <button
                 type="button"
-                onClick={() => setShowAddModal(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  fontSize: 22,
-                  cursor: "pointer",
-                  color: "#64748b",
-                  lineHeight: 1,
-                  padding: 4,
+                onClick={() => {
+                  setShowAddModal(false);
+                  resetModalState();
                 }}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  background: "#f1f5f9",
+                  border: "none",
+                  color: "#64748b",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  transition: "background 0.15s ease",
+                }}
+                title="Close"
               >
-                ✕
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
               </button>
             </div>
 
+            {/* Error Banner */}
             {formError && (
               <div
                 style={{
@@ -575,215 +636,500 @@ export default function AdminPromosClient({
                   background: "#fef2f2",
                   border: "1px solid #fecaca",
                   color: "#b91c1c",
-                  borderRadius: 6,
+                  borderRadius: 8,
                   fontSize: 12.5,
                   fontWeight: 600,
                   marginBottom: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
                 }}
               >
-                {formError}
+                <span style={{ fontSize: 15 }}>⚠</span>
+                <span>{formError}</span>
               </div>
             )}
+
+            {/* Live Interactive Coupon Voucher Preview */}
+            <div
+              style={{
+                background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
+                border: "1.5px dashed #fb923c",
+                borderRadius: 10,
+                padding: "12px 16px",
+                marginBottom: 18,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 10,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span
+                  style={{
+                    fontFamily: "monospace",
+                    fontWeight: 900,
+                    fontSize: 15,
+                    color: "#c2410c",
+                    background: "#ffffff",
+                    padding: "4px 10px",
+                    borderRadius: 6,
+                    border: "1px solid #fed7aa",
+                    letterSpacing: "1px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                  }}
+                >
+                  {modalCode.trim().toUpperCase() || "YOUR_CODE"}
+                </span>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 800, color: "#9a3412" }}>
+                    {modalValue
+                      ? discountType === "percentage"
+                        ? `${modalValue}% OFF` + (modalMaxDiscount ? ` (Max Rs. ${modalMaxDiscount})` : "")
+                        : `Rs. ${modalValue} OFF`
+                      : "Discount Value"}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#c2410c", marginTop: 1 }}>
+                    {Number(modalMinOrder) > 0 ? `Min. order: Rs. ${modalMinOrder}` : "No minimum order requirement"}
+                  </div>
+                </div>
+              </div>
+
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  color: "#15803d",
+                  background: "#dcfce7",
+                  border: "1px solid #86efac",
+                  padding: "3px 8px",
+                  borderRadius: 4,
+                  textTransform: "uppercase",
+                }}
+              >
+                Checkout Ready ✓
+              </span>
+            </div>
+
+            {/* Quick 1-Click Preset Buttons */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>
+                Quick Presets:
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {[
+                  { label: "10% OFF", code: "SAVE10", type: "percentage", val: "10", min: "500", cap: "200" },
+                  { label: "20% OFF", code: "WELCOME20", type: "percentage", val: "20", min: "600", cap: "400" },
+                  { label: "Rs. 100 FLAT", code: "FLAT100", type: "fixed", val: "100", min: "800", cap: "" },
+                  { label: "Rs. 200 FLAT", code: "SUPER200", type: "fixed", val: "200", min: "1200", cap: "" },
+                  { label: "Rs. 500 PARTY", code: "PIZZA500", type: "fixed", val: "500", min: "2500", cap: "" },
+                ].map((preset) => (
+                  <button
+                    key={preset.code}
+                    type="button"
+                    onClick={() => {
+                      setModalCode(preset.code);
+                      setDiscountType(preset.type as any);
+                      setModalValue(preset.val);
+                      setModalMinOrder(preset.min);
+                      setModalMaxDiscount(preset.cap);
+                    }}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "4px 9px",
+                      borderRadius: 6,
+                      background: modalCode === preset.code ? "#ea580c" : "#f1f5f9",
+                      color: modalCode === preset.code ? "#ffffff" : "#475569",
+                      border: modalCode === preset.code ? "1px solid #c2410c" : "1px solid #e2e8f0",
+                      cursor: "pointer",
+                      transition: "all 0.12s ease",
+                    }}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <form onSubmit={handleCreateCoupon} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {/* Hidden Shop ID */}
               <input type="hidden" name="shop_id" value={shopId || ""} />
+              <input type="hidden" name="discount_type" value={discountType} />
 
-              {/* Coupon Code */}
+              {/* Coupon Code Input with Generate Button */}
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
-                  Coupon Code (e.g. FLASH30, PIZZA500) <span style={{ color: "#dc2626" }}>*</span>
+                <label style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                  <span>Coupon Code <span style={{ color: "#dc2626" }}>*</span></span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Uppercase, no spaces</span>
                 </label>
-                <input
-                  name="code"
-                  type="text"
-                  required
-                  placeholder="e.g. SPECIAL50"
-                  style={{
-                    width: "100%",
-                    height: 38,
-                    padding: "0 12px",
-                    borderRadius: 5,
-                    border: "1px solid #cbd5e1",
-                    fontSize: 13,
-                    fontFamily: "monospace",
-                    textTransform: "uppercase",
-                    fontWeight: 700,
-                    outline: "none",
-                  }}
-                />
+                <div style={{ position: "relative", display: "flex" }}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#94a3b8",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="4" y1="9" x2="20" y2="9"></line>
+                      <line x1="4" y1="15" x2="20" y2="15"></line>
+                      <line x1="10" y1="3" x2="8" y2="21"></line>
+                      <line x1="16" y1="3" x2="14" y2="21"></line>
+                    </svg>
+                  </div>
+                  <input
+                    name="code"
+                    type="text"
+                    required
+                    value={modalCode}
+                    onChange={(e) => setModalCode(e.target.value.toUpperCase())}
+                    placeholder="e.g. SPECIAL50"
+                    style={{
+                      width: "100%",
+                      height: 42,
+                      paddingLeft: 38,
+                      paddingRight: 90,
+                      borderRadius: 8,
+                      border: "1.5px solid #cbd5e1",
+                      fontSize: 14,
+                      fontFamily: "monospace",
+                      fontWeight: 800,
+                      letterSpacing: "0.5px",
+                      outline: "none",
+                      color: "#0f172a",
+                      background: "#ffffff",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const randomCode = "SAVE" + Math.floor(100 + Math.random() * 900);
+                      setModalCode(randomCode);
+                    }}
+                    style={{
+                      position: "absolute",
+                      right: 6,
+                      top: 6,
+                      bottom: 6,
+                      padding: "0 10px",
+                      background: "#f1f5f9",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: 5,
+                      color: "#475569",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                    title="Generate random code"
+                  >
+                    Random
+                  </button>
+                </div>
               </div>
 
               {/* Description */}
               <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
-                  Description / Subtitle
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                  Description / Subtitle <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>(Optional customer note)</span>
                 </label>
                 <input
                   name="description"
                   type="text"
-                  placeholder="e.g. 20% discount on orders above Rs. 500"
+                  value={modalDesc}
+                  onChange={(e) => setModalDesc(e.target.value)}
+                  placeholder="e.g. 20% discount on entire pizza menu"
                   style={{
                     width: "100%",
-                    height: 38,
-                    padding: "0 12px",
-                    borderRadius: 5,
-                    border: "1px solid #cbd5e1",
+                    height: 40,
+                    padding: "0 14px",
+                    borderRadius: 8,
+                    border: "1.5px solid #cbd5e1",
                     fontSize: 13,
                     outline: "none",
+                    color: "#0f172a",
                   }}
                 />
               </div>
 
-              {/* Discount Type & Value */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
-                    Discount Type
-                  </label>
-                  <select
-                    name="discount_type"
-                    defaultValue="fixed"
+              {/* Discount Type: Segmented Modern Pill Switcher */}
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                  Discount Calculation Method <span style={{ color: "#dc2626" }}>*</span>
+                </label>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    background: "#f1f5f9",
+                    padding: 3,
+                    borderRadius: 8,
+                    gap: 4,
+                    border: "1px solid #e2e8f0",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setDiscountType("fixed")}
                     style={{
-                      width: "100%",
-                      height: 38,
-                      padding: "0 10px",
-                      borderRadius: 5,
-                      border: "1px solid #cbd5e1",
-                      fontSize: 13,
-                      background: "#ffffff",
-                      outline: "none",
+                      padding: "9px 12px",
+                      borderRadius: 6,
+                      border: "none",
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      background: discountType === "fixed" ? "#0f172a" : "transparent",
+                      color: discountType === "fixed" ? "#ffffff" : "#475569",
+                      boxShadow: discountType === "fixed" ? "0 2px 6px rgba(0,0,0,0.15)" : "none",
+                      transition: "all 0.15s ease",
                     }}
                   >
-                    <option value="fixed">Fixed Amount (Rs.)</option>
-                    <option value="percentage">Percentage (%)</option>
-                  </select>
-                </div>
+                    <span>💵</span>
+                    <span>Fixed Rupee (Rs.)</span>
+                  </button>
 
-                <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
-                    Discount Value <span style={{ color: "#dc2626" }}>*</span>
-                  </label>
-                  <input
-                    name="discount_value"
-                    type="number"
-                    step="any"
-                    required
-                    placeholder="e.g. 100 or 20"
+                  <button
+                    type="button"
+                    onClick={() => setDiscountType("percentage")}
                     style={{
-                      width: "100%",
-                      height: 38,
-                      padding: "0 12px",
-                      borderRadius: 5,
-                      border: "1px solid #cbd5e1",
-                      fontSize: 13,
+                      padding: "9px 12px",
+                      borderRadius: 6,
+                      border: "none",
+                      fontSize: 12.5,
                       fontWeight: 700,
-                      outline: "none",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      background: discountType === "percentage" ? "#0f172a" : "transparent",
+                      color: discountType === "percentage" ? "#ffffff" : "#475569",
+                      boxShadow: discountType === "percentage" ? "0 2px 6px rgba(0,0,0,0.15)" : "none",
+                      transition: "all 0.15s ease",
                     }}
-                  />
+                  >
+                    <span>％</span>
+                    <span>Percentage (%)</span>
+                  </button>
                 </div>
               </div>
 
-              {/* Min Order & Max Discount */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {/* Discount Value & Max Cap Grid */}
+              <div style={{ display: "grid", gridTemplateColumns: discountType === "percentage" ? "1fr 1fr" : "1fr", gap: 12 }}>
+                {/* Value Input */}
                 <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
-                    Min Order Required (Rs.)
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                    {discountType === "fixed" ? "Discount Amount (Rs.)" : "Discount Percentage (%)"} <span style={{ color: "#dc2626" }}>*</span>
+                  </label>
+                  <div style={{ position: "relative" }}>
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 12,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        fontSize: 12.5,
+                        fontWeight: 700,
+                        color: "#64748b",
+                      }}
+                    >
+                      {discountType === "fixed" ? "Rs." : "%"}
+                    </div>
+                    <input
+                      name="discount_value"
+                      type="number"
+                      step="any"
+                      required
+                      value={modalValue}
+                      onChange={(e) => setModalValue(e.target.value)}
+                      placeholder={discountType === "fixed" ? "e.g. 150" : "e.g. 20"}
+                      style={{
+                        width: "100%",
+                        height: 42,
+                        paddingLeft: 38,
+                        paddingRight: 14,
+                        borderRadius: 8,
+                        border: "1.5px solid #cbd5e1",
+                        fontSize: 14,
+                        fontWeight: 800,
+                        color: "#0f172a",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Max Cap (Only if percentage) */}
+                {discountType === "percentage" && (
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                      Maximum Cap Limit (Rs.) <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>(Optional)</span>
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: 12,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          fontSize: 12.5,
+                          fontWeight: 700,
+                          color: "#64748b",
+                        }}
+                      >
+                        Rs.
+                      </div>
+                      <input
+                        name="max_discount_amount"
+                        type="number"
+                        value={modalMaxDiscount}
+                        onChange={(e) => setModalMaxDiscount(e.target.value)}
+                        placeholder="e.g. 400"
+                        style={{
+                          width: "100%",
+                          height: 42,
+                          paddingLeft: 38,
+                          paddingRight: 14,
+                          borderRadius: 8,
+                          border: "1.5px solid #cbd5e1",
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: "#0f172a",
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Min Order & Total Uses Grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                    Min. Order Amount (Rs.)
+                  </label>
+                  <div style={{ position: "relative" }}>
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 12,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "#64748b",
+                      }}
+                    >
+                      Rs.
+                    </div>
+                    <input
+                      name="min_order_amount"
+                      type="number"
+                      value={modalMinOrder}
+                      onChange={(e) => setModalMinOrder(e.target.value)}
+                      placeholder="0"
+                      style={{
+                        width: "100%",
+                        height: 42,
+                        paddingLeft: 38,
+                        paddingRight: 14,
+                        borderRadius: 8,
+                        border: "1.5px solid #cbd5e1",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#0f172a",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                    Total Usage Cap
                   </label>
                   <input
-                    name="min_order_amount"
+                    name="usage_limit"
                     type="number"
-                    defaultValue={0}
-                    placeholder="0"
+                    defaultValue={500}
+                    placeholder="500"
                     style={{
                       width: "100%",
-                      height: 38,
-                      padding: "0 12px",
-                      borderRadius: 5,
-                      border: "1px solid #cbd5e1",
+                      height: 42,
+                      padding: "0 14px",
+                      borderRadius: 8,
+                      border: "1.5px solid #cbd5e1",
                       fontSize: 13,
-                      outline: "none",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
-                    Max Discount Cap (Rs.)
-                  </label>
-                  <input
-                    name="max_discount_amount"
-                    type="number"
-                    placeholder="Optional (for %)"
-                    style={{
-                      width: "100%",
-                      height: 38,
-                      padding: "0 12px",
-                      borderRadius: 5,
-                      border: "1px solid #cbd5e1",
-                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#0f172a",
                       outline: "none",
                     }}
                   />
                 </div>
               </div>
 
-              {/* Usage Limit */}
-              <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 4 }}>
-                  Maximum Total Uses
-                </label>
-                <input
-                  name="usage_limit"
-                  type="number"
-                  defaultValue={500}
-                  placeholder="500"
-                  style={{
-                    width: "100%",
-                    height: 38,
-                    padding: "0 12px",
-                    borderRadius: 5,
-                    border: "1px solid #cbd5e1",
-                    fontSize: 13,
-                    outline: "none",
-                  }}
-                />
-              </div>
-
-              {/* Modal Buttons */}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 10 }}>
+              {/* Form Action Buttons */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 14, paddingTop: 14, borderTop: "1px solid #f1f5f9" }}>
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false);
+                    resetModalState();
+                  }}
                   style={{
-                    padding: "9px 16px",
-                    borderRadius: 5,
+                    padding: "10px 18px",
+                    borderRadius: 8,
                     border: "1px solid #cbd5e1",
                     background: "#ffffff",
                     color: "#475569",
                     fontSize: 13,
-                    fontWeight: 600,
+                    fontWeight: 700,
                     cursor: "pointer",
+                    transition: "all 0.15s ease",
                   }}
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   style={{
-                    padding: "9px 20px",
-                    borderRadius: 5,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "10px 24px",
+                    borderRadius: 8,
                     border: "none",
-                    background: "#ea580c",
+                    background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
                     color: "#ffffff",
                     fontSize: 13,
-                    fontWeight: 700,
+                    fontWeight: 800,
                     cursor: isSubmitting ? "not-allowed" : "pointer",
-                    boxShadow: "0 2px 6px rgba(234, 88, 12, 0.25)",
+                    boxShadow: "0 4px 12px rgba(234, 88, 12, 0.35)",
+                    transition: "all 0.15s ease",
                   }}
                 >
-                  {isSubmitting ? "Saving..." : "Save Coupon Code"}
+                  {isSubmitting ? (
+                    <span>Saving Coupon...</span>
+                  ) : (
+                    <>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      <span>Save &amp; Activate Coupon</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
