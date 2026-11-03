@@ -422,24 +422,25 @@ export default function AdminLiveCharts({
   }, [dailySalesTrend]);
 
   return (
-    <section className="mb-8">
-      {/* ─── EXECUTIVE ANALYTICS COMMAND BAR (5px Square UI) ─── */}
+    <section className="mb-8" style={{ fontFamily: "var(--font-poppins), system-ui, sans-serif" }}>
+      {/* ─── EXECUTIVE ANALYTICS COMMAND BAR (Modern SaaS UI) ─── */}
       <div
         style={{
           background: "#ffffff",
-          border: "1px solid #cbd5e1",
-          borderRadius: 5,
+          border: "1px solid #e2e8f0",
+          borderRadius: 14,
           overflow: "hidden",
-          marginBottom: 18,
-          boxShadow: "0 2px 10px rgba(15, 23, 42, 0.04)",
+          marginBottom: 20,
+          boxShadow: "0 4px 20px -2px rgba(15, 23, 42, 0.05)",
         }}
       >
         {/* Top Title Strip */}
         <div
           style={{
-            padding: "14px 20px",
-            background: "#0f172a",
+            padding: "16px 22px",
+            background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
             color: "#ffffff",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -511,8 +512,8 @@ export default function AdminLiveCharts({
               }
               title="Set chart to start fresh from Today (hides earlier test orders) or restore all shop history"
               style={{
-                padding: "5px 10px",
-                borderRadius: 5,
+                padding: "5px 12px",
+                borderRadius: 8,
                 border: "1px solid #334155",
                 background:
                   activeSinceIso && getPakistaniDateKey(activeSinceIso) === todayDateKey
@@ -534,10 +535,10 @@ export default function AdminLiveCharts({
             <div
               style={{
                 display: "inline-flex",
-                background: "#1e293b",
+                background: "rgba(15, 23, 42, 0.7)",
                 padding: 3,
-                borderRadius: 5,
-                border: "1px solid #334155",
+                borderRadius: 8,
+                border: "1px solid rgba(255, 255, 255, 0.12)",
               }}
             >
               {(
@@ -556,9 +557,10 @@ export default function AdminLiveCharts({
                     onClick={() => setRange(tab.id)}
                     style={{
                       padding: "5px 12px",
-                      borderRadius: 5,
+                      borderRadius: 6,
                       border: "none",
-                      background: active ? "#ea580c" : "transparent",
+                      background: active ? "linear-gradient(135deg, #f97316 0%, #ea580c 100%)" : "transparent",
+                      boxShadow: active ? "0 2px 6px rgba(234, 88, 12, 0.4)" : "none",
                       color: active ? "#ffffff" : "#cbd5e1",
                       fontSize: 11,
                       fontWeight: 800,
@@ -583,7 +585,7 @@ export default function AdminLiveCharts({
             <div style={{ fontSize: 10, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Net Period Revenue
             </div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#059669", marginTop: 2 }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#059669", marginTop: 2, fontFamily: "var(--font-poppins), sans-serif" }}>
               {currencySymbol} {summary.totalRev.toLocaleString()}
             </div>
           </div>
@@ -592,7 +594,7 @@ export default function AdminLiveCharts({
             <div style={{ fontSize: 10, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Valid Orders Processed
             </div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#0f172a", marginTop: 2 }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#0f172a", marginTop: 2, fontFamily: "var(--font-poppins), sans-serif" }}>
               {summary.count} <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>orders</span>
             </div>
           </div>
@@ -601,7 +603,7 @@ export default function AdminLiveCharts({
             <div style={{ fontSize: 10, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Average Order Basket
             </div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#ea580c", marginTop: 2 }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#ea580c", marginTop: 2, fontFamily: "var(--font-poppins), sans-serif" }}>
               {currencySymbol} {summary.aov.toLocaleString()}
             </div>
           </div>
@@ -625,10 +627,10 @@ export default function AdminLiveCharts({
         <div
           style={{
             background: "#ffffff",
-            border: "1px solid #cbd5e1",
-            borderRadius: 5,
+            border: "1px solid #e2e8f0",
+            borderRadius: 14,
             overflow: "hidden",
-            boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
+            boxShadow: "0 4px 20px -2px rgba(15, 23, 42, 0.05)",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
@@ -676,9 +678,10 @@ export default function AdminLiveCharts({
             <div
               style={{
                 display: "inline-flex",
-                background: "#e2e8f0",
+                background: "#f1f5f9",
                 padding: 2,
-                borderRadius: 5,
+                borderRadius: 8,
+                border: "1px solid #e2e8f0",
               }}
             >
               <button
@@ -1350,10 +1353,10 @@ export default function AdminLiveCharts({
         <div
           style={{
             background: "#ffffff",
-            border: "1px solid #cbd5e1",
-            borderRadius: 5,
+            border: "1px solid #e2e8f0",
+            borderRadius: 14,
             overflow: "hidden",
-            boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
+            boxShadow: "0 4px 20px -2px rgba(15, 23, 42, 0.05)",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
@@ -1399,8 +1402,8 @@ export default function AdminLiveCharts({
                 style={{
                   fontSize: 11,
                   fontWeight: 800,
-                  padding: "3px 9px",
-                  borderRadius: 5,
+                  padding: "3px 10px",
+                  borderRadius: 20,
                   background: "#eff6ff",
                   color: "#1d4ed8",
                   border: "1px solid #bfdbfe",
@@ -1414,14 +1417,14 @@ export default function AdminLiveCharts({
               {/* Stacked Horizontal Distribution Bar */}
               <div
                 style={{
-                  height: 14,
+                  height: 10,
                   width: "100%",
-                  borderRadius: 5,
+                  borderRadius: 10,
                   background: "#f1f5f9",
                   overflow: "hidden",
                   display: "flex",
                   marginBottom: 16,
-                  border: "1px solid #e2e8f0",
+                  border: "none",
                 }}
               >
                 {channelBreakdown.list.map((ch) =>
@@ -1449,19 +1452,22 @@ export default function AdminLiveCharts({
                       background: "#ffffff",
                       border: "1px solid #e2e8f0",
                       borderLeft: `4px solid ${ch.color}`,
-                      borderRadius: 5,
-                      padding: "12px 14px",
+                      borderRadius: 10,
+                      padding: "12px 16px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+                      transition: "all 0.15s ease",
                     }}
+                    className="hover:border-slate-300 hover:shadow-sm"
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div
                         style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: 5,
+                          width: 38,
+                          height: 38,
+                          borderRadius: 9,
                           background: ch.bg,
                           color: ch.color,
                           display: "flex",
@@ -1519,7 +1525,7 @@ export default function AdminLiveCharts({
               Cancelled orders excluded from net revenue
             </span>
             <span style={{ fontWeight: 800, color: "#0f172a" }}>
-              5px Square Telemetry
+              ⚡ Live Channel Telemetry
             </span>
           </div>
         </div>

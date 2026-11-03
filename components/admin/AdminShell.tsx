@@ -607,42 +607,53 @@ export default function AdminShell({
             <div
               style={{
                 fontWeight: 900,
-                fontSize: "17px",
+                fontSize: "18px",
                 color: isLight ? "#0f172a" : "#ffffff",
-                letterSpacing: "-0.02em",
+                letterSpacing: "-0.025em",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 lineHeight: 1.2,
+                fontFamily: "var(--font-poppins), sans-serif",
               }}
             >
               {activeBranch}
             </div>
             <div
               style={{
-                fontSize: "11.5px",
-                color: "#10b981",
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "5px",
-                fontWeight: 800,
-                marginTop: "4px",
-                letterSpacing: "0.04em",
-                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                gap: "6px",
+                marginTop: "5px",
+                padding: "2px 8px",
+                borderRadius: "20px",
+                background: "rgba(16, 185, 129, 0.12)",
+                border: "1px solid rgba(16, 185, 129, 0.28)",
               }}
             >
               <span
                 style={{
-                  width: 7,
-                  height: 7,
+                  width: 6.5,
+                  height: 6.5,
                   borderRadius: "50%",
                   background: "#10b981",
                   display: "inline-block",
-                  boxShadow: "0 0 8px rgba(16, 185, 129, 0.7)",
+                  boxShadow: "0 0 8px #10b981",
                 }}
                 className="admin-pulse-green"
               />
-              <span>Live Terminal</span>
+              <span
+                style={{
+                  fontSize: "10.5px",
+                  fontWeight: 800,
+                  color: "#059669",
+                  letterSpacing: "0.05em",
+                  fontFamily: "var(--font-poppins), sans-serif",
+                  textTransform: "uppercase",
+                }}
+              >
+                Live Terminal
+              </span>
             </div>
           </div>
         </div>
@@ -1432,28 +1443,28 @@ export default function AdminShell({
                 <div
                   style={{
                     fontWeight: 900,
-                    fontSize: "16px",
+                    fontSize: "17px",
                     color: isLight ? "#0f172a" : "#ffffff",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     maxWidth: "180px",
                     lineHeight: 1.2,
+                    fontFamily: "var(--font-poppins), sans-serif",
                   }}
                 >
                   {activeBranch}
                 </div>
                 <div
                   style={{
-                    fontSize: "11px",
-                    color: "#10b981",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "5px",
-                    fontWeight: 800,
-                    marginTop: "3px",
-                    letterSpacing: "0.04em",
-                    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                    marginTop: "4px",
+                    padding: "2px 7px",
+                    borderRadius: "20px",
+                    background: "rgba(16, 185, 129, 0.12)",
+                    border: "1px solid rgba(16, 185, 129, 0.28)",
                   }}
                 >
                   <span
@@ -1462,11 +1473,22 @@ export default function AdminShell({
                       height: 6,
                       borderRadius: "50%",
                       background: "#10b981",
-                      boxShadow: "0 0 6px rgba(16, 185, 129, 0.7)",
+                      boxShadow: "0 0 6px #10b981",
                     }}
                     className="admin-pulse-green"
                   />
-                  <span>Live Terminal</span>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: 800,
+                      color: "#059669",
+                      letterSpacing: "0.05em",
+                      fontFamily: "var(--font-poppins), sans-serif",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Live Terminal
+                  </span>
                 </div>
               </div>
             </div>
