@@ -10,7 +10,7 @@
  * - Dynamic Category Filter Pills in the Table
  * - Financial KPIs & Daily Closing Integration
  */
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import type { Expense, ExpenseCategory } from "@/types/menu";
 import { createExpense, deleteExpense } from "@/lib/admin-actions";
 
@@ -68,6 +68,17 @@ export default function ExpenseManager({
   const [showAddModal, setShowAddModal] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Prevent page scroll when expense modal is open
+  useEffect(() => {
+    if (showAddModal) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [showAddModal]);
 
   // Form state
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
@@ -522,27 +533,28 @@ export default function ExpenseManager({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "16px",
+            padding: "10px",
+            overflow: "hidden",
           }}
           onClick={() => setShowAddModal(false)}
         >
           <div
             style={{
               background: "#ffffff",
-              borderRadius: 16,
-              maxWidth: 850,
+              borderRadius: 14,
+              maxWidth: 750,
               width: "100%",
-              boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.06)",
+              boxShadow: "0 20px 50px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.06)",
               border: "1px solid #e2e8f0",
               overflow: "hidden",
               animation: "fadeIn 0.18s ease-out",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
+            {/* Modal Header (Compact) */}
             <div
               style={{
-                padding: "18px 24px",
+                padding: "10px 18px",
                 borderBottom: "1px solid #f1f5f9",
                 display: "flex",
                 alignItems: "center",
@@ -550,12 +562,12 @@ export default function ExpenseManager({
                 background: "#ffffff",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div
                   style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 12,
+                    width: 34,
+                    height: 34,
+                    borderRadius: 9,
                     background: "#ecfdf5",
                     border: "1.5px solid #a7f3d0",
                     color: "#059669",
@@ -565,7 +577,7 @@ export default function ExpenseManager({
                     flexShrink: 0,
                   }}
                 >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
                     <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
                   </svg>
@@ -573,16 +585,17 @@ export default function ExpenseManager({
                 <div>
                   <h2
                     style={{
-                      fontSize: 18,
+                      fontSize: 15.5,
                       fontWeight: 900,
                       margin: 0,
                       color: "#0f172a",
-                      letterSpacing: "-0.3px",
+                      letterSpacing: "-0.2px",
+                      lineHeight: 1.2,
                     }}
                   >
                     Record Expense
                   </h2>
-                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
+                  <p style={{ margin: "1px 0 0", fontSize: 11, color: "#64748b" }}>
                     Enter restaurant outgoing, e.g. spices, fuel, or daily operational costs.
                   </p>
                 </div>
@@ -592,16 +605,16 @@ export default function ExpenseManager({
                 type="button"
                 onClick={() => setShowAddModal(false)}
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
+                  width: 28,
+                  height: 28,
+                  borderRadius: 7,
                   background: "#f1f5f9",
                   border: "none",
                   color: "#64748b",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: 800,
                   cursor: "pointer",
                   transition: "background 0.15s ease",
@@ -617,16 +630,16 @@ export default function ExpenseManager({
             {formError && (
               <div
                 style={{
-                  margin: "12px 24px 0",
-                  padding: "9px 12px",
-                  borderRadius: 8,
+                  margin: "8px 18px 0",
+                  padding: "6px 10px",
+                  borderRadius: 6,
                   background: "#fef2f2",
                   border: "1px solid #fecaca",
                   color: "#991b1b",
-                  fontSize: 12,
+                  fontSize: 11.5,
                   display: "flex",
                   alignItems: "center",
-                  gap: 8,
+                  gap: 6,
                 }}
               >
                 <span>⚠️</span>
@@ -636,27 +649,27 @@ export default function ExpenseManager({
 
             {/* Non-Scrollable Form Content */}
             <form onSubmit={handleAddExpense} style={{ margin: 0 }}>
-              <div style={{ padding: "18px 24px 20px" }}>
+              <div style={{ padding: "12px 18px 12px" }}>
                 <div
                   style={{
                     display: "grid",
                     gridTemplateColumns: "1.1fr 1fr",
-                    gap: 20,
+                    gap: 14,
                   }}
                 >
                   {/* Left Column: Description & Notes */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {/* Expense Description */}
                     <div>
                       <label
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 6,
-                          fontSize: 12,
+                          gap: 5,
+                          fontSize: 11,
                           fontWeight: 800,
                           color: "#0f172a",
-                          marginBottom: 6,
+                          marginBottom: 4,
                         }}
                       >
                         <span style={{ color: "#059669" }}>🏷️</span>
@@ -664,8 +677,8 @@ export default function ExpenseManager({
                         <span style={{ color: "#dc2626" }}>*</span>
                       </label>
                       <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                        <span style={{ position: "absolute", left: 12, color: "#94a3b8", display: "flex", alignItems: "center" }}>
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <span style={{ position: "absolute", left: 10, color: "#94a3b8", display: "flex", alignItems: "center" }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
                             <line x1="7" y1="7" x2="7.01" y2="7" />
                           </svg>
@@ -673,15 +686,16 @@ export default function ExpenseManager({
                         <input
                           type="text"
                           required
-                          placeholder="e.g. Cooking Oil, Mozzarella Cheese, Gas Cylinder, etc."
+                          placeholder="e.g. Cooking Oil, Mozzarella Cheese, Gas Cylinder..."
                           value={formData.title}
                           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                           style={{
                             width: "100%",
-                            padding: "9px 14px 9px 36px",
-                            borderRadius: 8,
+                            padding: "6px 12px 6px 32px",
+                            height: 35,
+                            borderRadius: 7,
                             border: "1.5px solid #cbd5e1",
-                            fontSize: 13,
+                            fontSize: 12.5,
                             color: "#0f172a",
                             outline: "none",
                             boxSizing: "border-box",
@@ -697,54 +711,57 @@ export default function ExpenseManager({
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 6,
-                          fontSize: 12,
+                          gap: 5,
+                          fontSize: 11,
                           fontWeight: 800,
                           color: "#0f172a",
-                          marginBottom: 6,
+                          marginBottom: 4,
                         }}
                       >
                         <span style={{ color: "#059669" }}>📃</span>
                         <span>Notes / Vendor / Bill #</span>
-                        <span style={{ color: "#94a3b8", fontWeight: 500, fontSize: 11 }}>(Optional)</span>
+                        <span style={{ color: "#94a3b8", fontWeight: 500, fontSize: 10.5 }}>(Optional)</span>
                       </label>
                       <textarea
-                        rows={4}
+                        rows={2}
                         placeholder="Supplier name, receipt number, cash via online payment details..."
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                         style={{
                           width: "100%",
-                          padding: "9px 12px",
-                          borderRadius: 8,
+                          height: 60,
+                          minHeight: 60,
+                          maxHeight: 60,
+                          padding: "6px 10px",
+                          borderRadius: 7,
                           border: "1.5px solid #cbd5e1",
-                          fontSize: 12.5,
+                          fontSize: 11.5,
                           color: "#0f172a",
                           outline: "none",
                           resize: "none",
                           boxSizing: "border-box",
                           fontFamily: "inherit",
-                          lineHeight: 1.4,
+                          lineHeight: 1.35,
                         }}
                       />
                     </div>
                   </div>
 
                   {/* Right Column: Amount, Date, and Expense Preview */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {/* Amount & Date Row */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 12 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 10 }}>
                       {/* Amount */}
                       <div>
                         <label
                           style={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 5,
-                            fontSize: 12,
+                            gap: 4,
+                            fontSize: 11,
                             fontWeight: 800,
                             color: "#0f172a",
-                            marginBottom: 6,
+                            marginBottom: 4,
                           }}
                         >
                           <span style={{ color: "#059669" }}>💸</span>
@@ -756,17 +773,21 @@ export default function ExpenseManager({
                             display: "flex",
                             alignItems: "center",
                             border: "1.5px solid #cbd5e1",
-                            borderRadius: 8,
+                            borderRadius: 7,
                             overflow: "hidden",
                             background: "#ffffff",
+                            height: 35,
                           }}
                         >
                           <span
                             style={{
-                              padding: "8px 10px",
+                              padding: "0 8px",
+                              height: "100%",
+                              display: "flex",
+                              alignItems: "center",
                               background: "#f1f5f9",
                               color: "#334155",
-                              fontSize: 12,
+                              fontSize: 11.5,
                               fontWeight: 800,
                               borderRight: "1.5px solid #cbd5e1",
                               fontFamily: "monospace",
@@ -784,9 +805,10 @@ export default function ExpenseManager({
                             onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                             style={{
                               flex: 1,
-                              padding: "8px 10px",
+                              padding: "0 8px",
+                              height: "100%",
                               border: "none",
-                              fontSize: 13.5,
+                              fontSize: 13,
                               fontWeight: 800,
                               color: "#0f172a",
                               outline: "none",
@@ -796,17 +818,17 @@ export default function ExpenseManager({
                           />
                         </div>
                         {/* Quick Presets */}
-                        <div style={{ display: "flex", gap: 5, marginTop: 5 }}>
+                        <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
                           <button
                             type="button"
                             onClick={() => handleQuickAmount(500)}
                             style={{
                               flex: 1,
-                              padding: "3px 0",
-                              borderRadius: 5,
+                              padding: "2px 0",
+                              borderRadius: 4,
                               background: "#f1f5f9",
                               border: "1px solid #e2e8f0",
-                              fontSize: 10.5,
+                              fontSize: 10,
                               fontWeight: 700,
                               color: "#475569",
                               cursor: "pointer",
@@ -820,11 +842,11 @@ export default function ExpenseManager({
                             onClick={() => handleQuickAmount(1000)}
                             style={{
                               flex: 1,
-                              padding: "3px 0",
-                              borderRadius: 5,
+                              padding: "2px 0",
+                              borderRadius: 4,
                               background: "#f1f5f9",
                               border: "1px solid #e2e8f0",
-                              fontSize: 10.5,
+                              fontSize: 10,
                               fontWeight: 700,
                               color: "#475569",
                               cursor: "pointer",
@@ -838,11 +860,11 @@ export default function ExpenseManager({
                             onClick={() => handleQuickAmount(5000)}
                             style={{
                               flex: 1,
-                              padding: "3px 0",
-                              borderRadius: 5,
+                              padding: "2px 0",
+                              borderRadius: 4,
                               background: "#f1f5f9",
                               border: "1px solid #e2e8f0",
-                              fontSize: 10.5,
+                              fontSize: 10,
                               fontWeight: 700,
                               color: "#475569",
                               cursor: "pointer",
@@ -861,15 +883,15 @@ export default function ExpenseManager({
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            marginBottom: 6,
+                            marginBottom: 4,
                           }}
                         >
                           <label
                             style={{
                               display: "flex",
                               alignItems: "center",
-                              gap: 4,
-                              fontSize: 12,
+                              gap: 3,
+                              fontSize: 11,
                               fontWeight: 800,
                               color: "#0f172a",
                             }}
@@ -884,18 +906,18 @@ export default function ExpenseManager({
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: 4,
-                              padding: "1px 7px",
-                              borderRadius: 10,
+                              gap: 3,
+                              padding: "1px 6px",
+                              borderRadius: 8,
                               background: "#ecfdf5",
                               border: "1px solid #a7f3d0",
                               color: "#059669",
-                              fontSize: 10,
+                              fontSize: 9.5,
                               fontWeight: 800,
                               cursor: "pointer",
                             }}
                           >
-                            <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10b981" }} />
+                            <span style={{ width: 4, height: 4, borderRadius: "50%", background: "#10b981" }} />
                             Today
                           </button>
                         </div>
@@ -906,10 +928,11 @@ export default function ExpenseManager({
                           onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
                           style={{
                             width: "100%",
-                            padding: "8px 10px",
-                            borderRadius: 8,
+                            height: 35,
+                            padding: "0 8px",
+                            borderRadius: 7,
                             border: "1.5px solid #cbd5e1",
-                            fontSize: 12.5,
+                            fontSize: 11.5,
                             fontWeight: 700,
                             color: "#0f172a",
                             outline: "none",
@@ -926,52 +949,51 @@ export default function ExpenseManager({
                       style={{
                         background: "#f0fdf4",
                         border: "1.5px dashed #86efac",
-                        borderRadius: 12,
-                        padding: "12px 16px",
+                        borderRadius: 10,
+                        padding: "8px 12px",
                         display: "flex",
                         flexDirection: "column",
-                        gap: 6,
+                        gap: 4,
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 800, color: "#166534" }}>
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 800, color: "#166534" }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                             <circle cx="12" cy="12" r="3" />
                           </svg>
                           <span>Expense Preview</span>
                         </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#15803d", fontFamily: "monospace" }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: "#15803d", fontFamily: "monospace" }}>
                           {formData.expense_date || todayStr}
                         </span>
                       </div>
 
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 2 }}>
-                        <div style={{ minWidth: 0, flex: 1, paddingRight: 10 }}>
-                          <div style={{ fontSize: 10.5, color: "#475569", fontWeight: 600 }}>Description</div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 1 }}>
+                        <div style={{ minWidth: 0, flex: 1, paddingRight: 8 }}>
+                          <div style={{ fontSize: 9.5, color: "#475569", fontWeight: 600 }}>Description</div>
                           <div
                             style={{
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: 800,
                               color: "#0f172a",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
-                              marginTop: 1,
+                              lineHeight: 1.2,
                             }}
                           >
                             {formData.title?.trim() || "Untitled Expense"}
                           </div>
 
-                          <div style={{ fontSize: 10.5, color: "#475569", fontWeight: 600, marginTop: 6 }}>Amount</div>
+                          <div style={{ fontSize: 9.5, color: "#475569", fontWeight: 600, marginTop: 4 }}>Amount</div>
                           <div
                             style={{
-                              fontSize: 22,
+                              fontSize: 18,
                               fontWeight: 900,
                               color: "#0f172a",
                               fontFamily: "monospace",
-                              marginTop: 1,
-                              letterSpacing: "-0.5px",
+                              lineHeight: 1.1,
                             }}
                           >
                             {currencySymbol} {Number(formData.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -979,8 +1001,8 @@ export default function ExpenseManager({
                         </div>
 
                         {/* Aesthetic Receipt Slip Illustration with Checkmark */}
-                        <div style={{ flexShrink: 0, position: "relative" }}>
-                          <svg width="64" height="64" viewBox="0 0 68 68" fill="none">
+                        <div style={{ flexShrink: 0 }}>
+                          <svg width="48" height="48" viewBox="0 0 68 68" fill="none">
                             <rect x="10" y="6" width="44" height="54" rx="6" fill="#ffffff" stroke="#86efac" strokeWidth="2" />
                             <line x1="18" y1="16" x2="38" y2="16" stroke="#86efac" strokeWidth="2.5" strokeLinecap="round" />
                             <line x1="18" y1="24" x2="46" y2="24" stroke="#bbf7d0" strokeWidth="2" strokeLinecap="round" />
@@ -999,32 +1021,32 @@ export default function ExpenseManager({
               {/* Fixed Footer Bar */}
               <div
                 style={{
-                  padding: "12px 24px",
+                  padding: "9px 18px",
                   borderTop: "1px solid #f1f5f9",
                   background: "#fafbfc",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
                   flexWrap: "wrap",
-                  gap: 10,
+                  gap: 8,
                 }}
               >
-                <span style={{ fontSize: 11.5, color: "#64748b", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <span style={{ fontSize: 11, color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
                   <span style={{ color: "#3b82f6" }}>ℹ️</span>
                   <span>Fields with <span style={{ color: "#dc2626" }}>*</span> are required</span>
                 </span>
 
-                <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ display: "flex", gap: 8 }}>
                   <button
                     type="button"
                     onClick={() => setShowAddModal(false)}
                     style={{
-                      padding: "8px 20px",
-                      borderRadius: 8,
+                      padding: "6px 16px",
+                      borderRadius: 7,
                       border: "1px solid #cbd5e1",
                       background: "#ffffff",
                       color: "#334155",
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: 700,
                       cursor: "pointer",
                       transition: "all 0.15s ease",
@@ -1040,16 +1062,16 @@ export default function ExpenseManager({
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: 6,
-                      padding: "8px 22px",
-                      borderRadius: 8,
+                      gap: 5,
+                      padding: "6px 18px",
+                      borderRadius: 7,
                       border: "none",
                       background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
                       color: "#ffffff",
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: 800,
                       cursor: isPending ? "not-allowed" : "pointer",
-                      boxShadow: "0 2px 8px rgba(5, 150, 105, 0.3)",
+                      boxShadow: "0 2px 6px rgba(5, 150, 105, 0.3)",
                       transition: "all 0.15s ease",
                     }}
                     className="hover:brightness-110 active:scale-[0.98]"
@@ -1059,8 +1081,8 @@ export default function ExpenseManager({
                     ) : (
                       <>
                         <svg
-                          width="14"
-                          height="14"
+                          width="13"
+                          height="13"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
