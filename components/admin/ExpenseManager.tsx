@@ -21,125 +21,28 @@ interface ExpenseManagerProps {
   shopName?: string;
 }
 
-const STANDARD_CATEGORIES: Record<
-  string,
-  { label: string; icon: string; bg: string; text: string; border: string }
-> = {
-  ingredients: {
-    label: "Ingredients",
-    icon: "🍅",
-    bg: "bg-red-50",
-    text: "text-red-700",
-    border: "border-red-200",
-  },
-  utilities: {
-    label: "Utilities",
-    icon: "⚡",
-    bg: "bg-amber-50",
-    text: "text-amber-800",
-    border: "border-amber-200",
-  },
-  wages: {
-    label: "Wages & Staff",
-    icon: "👨‍🍳",
-    bg: "bg-blue-50",
-    text: "text-blue-700",
-    border: "border-blue-200",
-  },
-  packaging: {
-    label: "Packaging",
-    icon: "📦",
-    bg: "bg-orange-50",
-    text: "text-orange-800",
-    border: "border-orange-200",
-  },
-  rent: {
-    label: "Rent",
-    icon: "🏢",
-    bg: "bg-purple-50",
-    text: "text-purple-700",
-    border: "border-purple-200",
-  },
-  maintenance: {
-    label: "Maintenance & Repair",
-    icon: "🔧",
-    bg: "bg-cyan-50",
-    text: "text-cyan-800",
-    border: "border-cyan-200",
-  },
-  fuel: {
-    label: "Fuel / Petrol",
-    icon: "⛽",
-    bg: "bg-yellow-50",
-    text: "text-yellow-800",
-    border: "border-yellow-200",
-  },
-  delivery: {
-    label: "Delivery / Bike",
-    icon: "🛵",
-    bg: "bg-emerald-50",
-    text: "text-emerald-800",
-    border: "border-emerald-200",
-  },
-  cleaning: {
-    label: "Cleaning & Supplies",
-    icon: "🧹",
-    bg: "bg-teal-50",
-    text: "text-teal-800",
-    border: "border-teal-200",
-  },
-  grocery: {
-    label: "Grocery",
-    icon: "🛒",
-    bg: "bg-lime-50",
-    text: "text-lime-800",
-    border: "border-lime-200",
-  },
-  marketing: {
-    label: "Marketing & Ads",
-    icon: "📢",
-    bg: "bg-pink-50",
-    text: "text-pink-800",
-    border: "border-pink-200",
-  },
-  misc: {
-    label: "Miscellaneous",
-    icon: "📌",
-    bg: "bg-gray-50",
-    text: "text-gray-700",
-    border: "border-gray-200",
-  },
-  other: {
-    label: "Other Expenses",
-    icon: "🏷️",
-    bg: "bg-slate-50",
-    text: "text-slate-700",
-    border: "border-slate-200",
-  },
-};
-
-/** Format category key into a friendly label and icon (standard or custom) */
+// Keyword-based emoji and color matching for any custom category
 function getCategoryInfo(categoryKey: string) {
   const raw = (categoryKey || "misc").trim();
   const lower = raw.toLowerCase();
 
-  if (STANDARD_CATEGORIES[lower]) {
-    return STANDARD_CATEGORIES[lower];
-  }
-
-  // Keyword-based emoji matching for custom categories
   let icon = "🏷️";
-  if (lower.includes("ingredient") || lower.includes("cheese") || lower.includes("sauce") || lower.includes("flour") || lower.includes("meat")) icon = "🍅";
-  else if (lower.includes("electric") || lower.includes("utility") || lower.includes("gas") || lower.includes("water") || lower.includes("bill")) icon = "⚡";
-  else if (lower.includes("wage") || lower.includes("salary") || lower.includes("staff") || lower.includes("worker") || lower.includes("cook")) icon = "👨‍🍳";
-  else if (lower.includes("pack") || lower.includes("box")) icon = "📦";
-  else if (lower.includes("rent")) icon = "🏢";
+  if (lower.includes("oil") || lower.includes("tel") || lower.includes("ghee")) icon = "🫒";
+  else if (lower.includes("ingredient") || lower.includes("cheese") || lower.includes("sauce") || lower.includes("flour") || lower.includes("atta") || lower.includes("dough")) icon = "🍅";
+  else if (lower.includes("electric") || lower.includes("utility") || lower.includes("water") || lower.includes("bill") || lower.includes("power")) icon = "⚡";
+  else if (lower.includes("gas") || lower.includes("cylinder") || lower.includes("lpg")) icon = "🔥";
+  else if (lower.includes("wage") || lower.includes("salary") || lower.includes("staff") || lower.includes("worker") || lower.includes("cook") || lower.includes("labor")) icon = "👨‍🍳";
+  else if (lower.includes("pack") || lower.includes("box") || lower.includes("carton") || lower.includes("bag")) icon = "📦";
+  else if (lower.includes("rent") || lower.includes("shop rent")) icon = "🏢";
   else if (lower.includes("fuel") || lower.includes("petrol") || lower.includes("diesel")) icon = "⛽";
   else if (lower.includes("bike") || lower.includes("rider") || lower.includes("delivery")) icon = "🛵";
   else if (lower.includes("repair") || lower.includes("maintenance")) icon = "🔧";
-  else if (lower.includes("clean")) icon = "🧹";
-  else if (lower.includes("market") || lower.includes("ad")) icon = "📢";
-  else if (lower.includes("grocery") || lower.includes("sabzi") || lower.includes("dahi")) icon = "🛒";
+  else if (lower.includes("clean") || lower.includes("detergent") || lower.includes("wash") || lower.includes("soap")) icon = "🧹";
+  else if (lower.includes("market") || lower.includes("ad") || lower.includes("facebook") || lower.includes("print")) icon = "📢";
+  else if (lower.includes("grocery") || lower.includes("sabzi") || lower.includes("vegetable") || lower.includes("onion") || lower.includes("tomato")) icon = "🛒";
+  else if (lower.includes("chicken") || lower.includes("meat") || lower.includes("beef") || lower.includes("mutton")) icon = "🥩";
+  else if (lower.includes("dairy") || lower.includes("milk") || lower.includes("dahi") || lower.includes("cream")) icon = "🥛";
+  else if (lower.includes("drink") || lower.includes("beverage") || lower.includes("cold drink") || lower.includes("soda")) icon = "🥤";
 
   const formatted = raw
     .replace(/[_-]/g, " ")
@@ -148,9 +51,9 @@ function getCategoryInfo(categoryKey: string) {
   return {
     label: formatted,
     icon,
-    bg: "bg-rose-50",
-    text: "text-rose-700",
-    border: "border-rose-200",
+    bg: "bg-red-50",
+    text: "text-red-700",
+    border: "border-red-200",
   };
 }
 
@@ -167,8 +70,8 @@ export default function ExpenseManager({
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Category Input state: directly typed or chosen by user
-  const [categoryInput, setCategoryInput] = useState("Ingredients");
+  // Category Input state: directly typed by user (no pre-added default)
+  const [categoryInput, setCategoryInput] = useState("");
 
   // Form state
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
@@ -179,17 +82,16 @@ export default function ExpenseManager({
     notes: "",
   });
 
-  // Extract all distinct custom categories logged in expenses
-  const customCategoriesList = useMemo(() => {
-    const standardKeys = new Set(Object.keys(STANDARD_CATEGORIES));
+  // Extract distinct categories actually present in logged expenses
+  const availableCategories = useMemo(() => {
     const set = new Set<string>();
     for (const exp of expenses) {
       const cat = (exp.category || "").trim();
-      if (cat && !standardKeys.has(cat.toLowerCase()) && cat.toLowerCase() !== "other") {
+      if (cat) {
         set.add(cat);
       }
     }
-    return Array.from(set);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [expenses]);
 
   // KPI Calculations
@@ -262,7 +164,7 @@ export default function ExpenseManager({
   // Open Modal with clean reset
   const handleOpenAddModal = () => {
     setFormError(null);
-    setCategoryInput("Ingredients");
+    setCategoryInput("");
     setFormData({
       title: "",
       amount: "",
@@ -282,12 +184,16 @@ export default function ExpenseManager({
       setFormError("Please enter an expense description / title.");
       return;
     }
+    if (!categoryInput.trim()) {
+      setFormError("Please enter an expense category (e.g. Oil, Meat, Vegetables, Wages).");
+      return;
+    }
     if (isNaN(amt) || amt <= 0) {
       setFormError("Please enter a valid amount greater than 0.");
       return;
     }
 
-    const finalCategory = categoryInput.trim() || "Miscellaneous";
+    const finalCategory = categoryInput.trim();
 
     startTransition(async () => {
       const fd = new FormData();
@@ -312,7 +218,7 @@ export default function ExpenseManager({
         };
         setExpenses((prev) => [newRecord, ...prev]);
         setShowAddModal(false);
-        setCategoryInput("Ingredients");
+        setCategoryInput("");
         setFormData({
           title: "",
           amount: "",
@@ -423,7 +329,7 @@ export default function ExpenseManager({
           />
         </div>
 
-        {/* Category Tabs (Includes standard + any custom categories) */}
+        {/* Category Tabs (All + categories actually logged in expenses) */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-thin">
           <button
             onClick={() => setSelectedCategory("all")}
@@ -435,34 +341,16 @@ export default function ExpenseManager({
           >
             All
           </button>
-          {Object.entries(STANDARD_CATEGORIES)
-            .filter(([key]) => key !== "other" && key !== "misc")
-            .map(([key, meta]) => (
-              <button
-                key={key}
-                onClick={() => setSelectedCategory(key)}
-                className={`px-2.5 py-1.5 text-xs font-bold transition-all whitespace-nowrap rounded-lg flex items-center gap-1.5 cursor-pointer ${
-                  selectedCategory.toLowerCase() === key.toLowerCase()
-                    ? "bg-red-100 text-red-800 border border-red-200 shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                <span>{meta.icon}</span>
-                <span>{meta.label}</span>
-              </button>
-            ))}
-
-          {/* Dynamic custom categories tabs */}
-          {customCategoriesList.map((customCat) => {
-            const info = getCategoryInfo(customCat);
-            const isSelected = selectedCategory.toLowerCase() === customCat.toLowerCase();
+          {availableCategories.map((catName) => {
+            const info = getCategoryInfo(catName);
+            const isSelected = selectedCategory.toLowerCase() === catName.toLowerCase();
             return (
               <button
-                key={customCat}
-                onClick={() => setSelectedCategory(customCat)}
+                key={catName}
+                onClick={() => setSelectedCategory(catName)}
                 className={`px-2.5 py-1.5 text-xs font-bold transition-all whitespace-nowrap rounded-lg flex items-center gap-1.5 cursor-pointer ${
                   isSelected
-                    ? "bg-rose-100 text-rose-800 border border-rose-300 shadow-sm"
+                    ? "bg-red-100 text-red-800 border border-red-300 shadow-sm"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -543,31 +431,105 @@ export default function ExpenseManager({
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* Modern Add Expense Modal (Direct Custom & Preset Category)   */}
+      {/* Modern Add Expense Modal (Full View 2-Column Executive Popup)  */}
       {/* ───────────────────────────────────────────────────────────── */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 overflow-hidden relative my-6">
-            
-            {/* Header Banner with Sole What Branding */}
-            <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-6 py-4 text-white flex items-center justify-between shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl shadow-inner border border-white/20">
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.75)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+          onClick={() => setShowAddModal(false)}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: 16,
+              maxWidth: 820,
+              width: "100%",
+              maxHeight: "90vh",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.45)",
+              border: "1px solid #cbd5e1",
+              overflow: "hidden",
+              animation: "fadeIn 0.18s ease-out",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: "18px 24px",
+                borderBottom: "1px solid #e2e8f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "#ffffff",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    background: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    color: "#dc2626",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 20,
+                    flexShrink: 0,
+                  }}
+                >
                   💸
                 </div>
                 <div>
-                  <h3 className="text-base font-black tracking-tight text-white uppercase">
+                  <h2
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 800,
+                      margin: 0,
+                      color: "#0f172a",
+                      letterSpacing: "-0.2px",
+                    }}
+                  >
                     Record New Expense
-                  </h3>
-                  <p className="text-xs text-red-100 font-medium">
-                    Add any shop cost, supplies, wages, or custom category
+                  </h2>
+                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
+                    Log shop outgoings, supplies, bills, or operational costs.
                   </p>
                 </div>
               </div>
+
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center text-sm font-bold transition-colors cursor-pointer"
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 6,
+                  background: "#f1f5f9",
+                  border: "none",
+                  color: "#64748b",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "background 0.15s ease",
+                }}
                 title="Close"
               >
                 ✕
@@ -576,238 +538,545 @@ export default function ExpenseManager({
 
             {/* Error Banner */}
             {formError && (
-              <div className="mx-6 mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 font-medium flex items-center gap-2">
+              <div
+                style={{
+                  margin: "16px 24px 0",
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  background: "#fef2f2",
+                  border: "1px solid #fecaca",
+                  color: "#991b1b",
+                  fontSize: 12.5,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
                 <span>⚠️</span>
                 <span>{formError}</span>
               </div>
             )}
 
-            {/* Form */}
-            <form onSubmit={handleAddExpense} className="p-6 space-y-4">
-              
-              {/* Expense Title */}
-              <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider text-gray-700 mb-1">
-                  Expense Description / Title *
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. 50kg Mozzarella Cheese, Gas Cylinder, Bike Petrol, Staff Lunch..."
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 placeholder-gray-400 focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition-all shadow-sm"
-                  />
-                </div>
-              </div>
+            {/* Form & Scrollable Content Body */}
+            <form
+              onSubmit={handleAddExpense}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+                overflow: "hidden",
+                margin: 0,
+              }}
+            >
+              <div
+                style={{
+                  padding: "20px 24px",
+                  overflowY: "auto",
+                  flex: 1,
+                }}
+              >
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                    gap: 20,
+                  }}
+                >
+                  {/* Left Column: Title, Category, Notes */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                    {/* Expense Title */}
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.5px",
+                          color: "#334155",
+                          marginBottom: 6,
+                        }}
+                      >
+                        Expense Description / Title <span style={{ color: "#dc2626" }}>*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. 50kg Mozzarella Cheese, Cooking Oil, Gas Cylinder..."
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        style={{
+                          width: "100%",
+                          padding: "10px 14px",
+                          borderRadius: 8,
+                          border: "1.5px solid #cbd5e1",
+                          fontSize: 13,
+                          color: "#0f172a",
+                          outline: "none",
+                          transition: "border-color 0.15s ease",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
 
-              {/* Amount and Date (2 Columns) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block text-[11px] font-black uppercase tracking-wider text-gray-700 mb-1">
-                    Amount ({currencySymbol}) *
-                  </label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3 text-xs font-bold text-gray-500 font-mono">
-                      {currencySymbol}
-                    </span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      required
-                      placeholder="0.00"
-                      value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      className="w-full bg-white border border-gray-300 rounded-xl pl-10 pr-3 py-2.5 text-xs text-gray-900 font-mono font-bold focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition-all shadow-sm"
-                    />
-                  </div>
-                  {/* Quick amount increment pills */}
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleQuickAmount(500)}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
-                    >
-                      +500
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickAmount(1000)}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
-                    >
-                      +1,000
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickAmount(5000)}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
-                    >
-                      +5,000
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-[11px] font-black uppercase tracking-wider text-gray-700">
-                      Expense Date *
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, expense_date: todayStr })}
-                      className="text-[10px] font-bold text-red-600 hover:underline cursor-pointer"
-                    >
-                      Today
-                    </button>
-                  </div>
-                  <input
-                    type="date"
-                    required
-                    value={formData.expense_date}
-                    onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
-                    className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 font-mono font-medium focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none transition-all shadow-sm"
-                  />
-                </div>
-              </div>
-
-              {/* ───────────────────────────────────────────────────────────── */}
-              {/* Category: User Can Directly Type ANY Custom Category or Tap Preset */}
-              {/* ───────────────────────────────────────────────────────────── */}
-              <div className="bg-gray-50/80 border border-gray-200 rounded-xl p-3.5 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-black uppercase tracking-wider text-gray-800 flex items-center gap-1.5">
-                    <span>🏷️</span>
-                    <span>Category (Type Custom or Tap Preset) *</span>
-                  </label>
-                  <span className="text-[10px] font-semibold text-gray-400">
-                    Fully customizable
-                  </span>
-                </div>
-
-                {/* Direct Editable Category Input with Suggestions */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    list="expense-category-suggestions"
-                    value={categoryInput}
-                    onChange={(e) => setCategoryInput(e.target.value)}
-                    placeholder="Type any category (e.g. Fuel, Delivery, Staff Tea, Grocery, Rent)..."
-                    className="w-full bg-white border-2 border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 font-bold placeholder-gray-400 focus:outline-none transition-all shadow-sm"
-                  />
-                  <datalist id="expense-category-suggestions">
-                    <option value="Ingredients" />
-                    <option value="Utilities" />
-                    <option value="Wages & Staff" />
-                    <option value="Packaging" />
-                    <option value="Rent" />
-                    <option value="Fuel / Petrol" />
-                    <option value="Delivery / Bike" />
-                    <option value="Maintenance & Repair" />
-                    <option value="Cleaning & Supplies" />
-                    <option value="Grocery" />
-                    <option value="Marketing & Ads" />
-                    <option value="Miscellaneous" />
-                    {customCategoriesList.map((c) => (
-                      <option key={c} value={c} />
-                    ))}
-                  </datalist>
-                </div>
-
-                {/* Quick 1-Tap Category Pills */}
-                <div className="space-y-1.5 pt-1">
-                  <div className="text-[10px] font-black uppercase tracking-wider text-gray-400">
-                    Quick Presets (Tap to Fill):
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      { label: "Ingredients", icon: "🍅" },
-                      { label: "Utilities", icon: "⚡" },
-                      { label: "Wages & Staff", icon: "👨‍🍳" },
-                      { label: "Packaging", icon: "📦" },
-                      { label: "Rent", icon: "🏢" },
-                      { label: "Fuel / Petrol", icon: "⛽" },
-                      { label: "Delivery / Bike", icon: "🛵" },
-                      { label: "Maintenance & Repair", icon: "🔧" },
-                      { label: "Cleaning", icon: "🧹" },
-                      { label: "Grocery", icon: "🛒" },
-                      ...customCategoriesList.slice(0, 5).map((c) => ({ label: c, icon: "🏷️" })),
-                    ].map((preset) => {
-                      const isSelected =
-                        categoryInput.trim().toLowerCase() === preset.label.toLowerCase();
-                      return (
-                        <button
-                          key={preset.label}
-                          type="button"
-                          onClick={() => setCategoryInput(preset.label)}
-                          className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all flex items-center gap-1 border cursor-pointer ${
-                            isSelected
-                              ? "bg-red-600 text-white border-red-600 shadow-sm ring-1 ring-red-300"
-                              : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
-                          }`}
+                    {/* Expense Category (Custom, No Pre-added Clutter) */}
+                    <div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: 6,
+                        }}
+                      >
+                        <label
+                          style={{
+                            fontSize: 11.5,
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px",
+                            color: "#334155",
+                          }}
                         >
-                          <span>{preset.icon}</span>
-                          <span>{preset.label}</span>
-                        </button>
-                      );
-                    })}
+                          Category <span style={{ color: "#dc2626" }}>*</span>
+                        </label>
+                        <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                          Custom Category
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        list="expense-category-suggestions"
+                        value={categoryInput}
+                        onChange={(e) => setCategoryInput(e.target.value)}
+                        placeholder="e.g. Oil, Meat, Vegetables, Utilities, Wages..."
+                        style={{
+                          width: "100%",
+                          padding: "10px 14px",
+                          borderRadius: 8,
+                          border: "1.5px solid #cbd5e1",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: "#0f172a",
+                          outline: "none",
+                          transition: "border-color 0.15s ease",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                      <datalist id="expense-category-suggestions">
+                        {availableCategories.map((c) => (
+                          <option key={c} value={c} />
+                        ))}
+                      </datalist>
+                      <p style={{ margin: "5px 0 0", fontSize: 11, color: "#64748b" }}>
+                        Type any custom category name directly (no pre-added preset limits).
+                      </p>
+                    </div>
+
+                    {/* Notes / Vendor / Invoice # */}
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.5px",
+                          color: "#334155",
+                          marginBottom: 6,
+                        }}
+                      >
+                        Notes / Vendor / Invoice # <span style={{ color: "#94a3b8", fontWeight: 400 }}>(Optional)</span>
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder="Supplier name, receipt number, cash vs online payment..."
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        style={{
+                          width: "100%",
+                          padding: "10px 14px",
+                          borderRadius: 8,
+                          border: "1.5px solid #cbd5e1",
+                          fontSize: 12.5,
+                          color: "#0f172a",
+                          outline: "none",
+                          resize: "none",
+                          transition: "border-color 0.15s ease",
+                          boxSizing: "border-box",
+                          fontFamily: "inherit",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Column: Amount, Date, Live Voucher Preview */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                    {/* Amount & Date in a 2-col mini grid */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <div>
+                        <label
+                          style={{
+                            display: "block",
+                            fontSize: 11.5,
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px",
+                            color: "#334155",
+                            marginBottom: 6,
+                          }}
+                        >
+                          Amount ({currencySymbol}) <span style={{ color: "#dc2626" }}>*</span>
+                        </label>
+                        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                          <span
+                            style={{
+                              position: "absolute",
+                              left: 12,
+                              fontSize: 12,
+                              fontWeight: 700,
+                              color: "#64748b",
+                              fontFamily: "monospace",
+                            }}
+                          >
+                            {currencySymbol}
+                          </span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            required
+                            placeholder="0.00"
+                            value={formData.amount}
+                            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                            style={{
+                              width: "100%",
+                              padding: "10px 12px 10px 38px",
+                              borderRadius: 8,
+                              border: "1.5px solid #cbd5e1",
+                              fontSize: 13,
+                              fontWeight: 700,
+                              color: "#0f172a",
+                              outline: "none",
+                              boxSizing: "border-box",
+                              fontFamily: "monospace",
+                            }}
+                          />
+                        </div>
+                        {/* Quick increments */}
+                        <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                          <button
+                            type="button"
+                            onClick={() => handleQuickAmount(500)}
+                            style={{
+                              padding: "3px 8px",
+                              borderRadius: 5,
+                              background: "#f1f5f9",
+                              border: "1px solid #e2e8f0",
+                              fontSize: 10.5,
+                              fontWeight: 700,
+                              color: "#475569",
+                              cursor: "pointer",
+                            }}
+                          >
+                            +500
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleQuickAmount(1000)}
+                            style={{
+                              padding: "3px 8px",
+                              borderRadius: 5,
+                              background: "#f1f5f9",
+                              border: "1px solid #e2e8f0",
+                              fontSize: 10.5,
+                              fontWeight: 700,
+                              color: "#475569",
+                              cursor: "pointer",
+                            }}
+                          >
+                            +1,000
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleQuickAmount(5000)}
+                            style={{
+                              padding: "3px 8px",
+                              borderRadius: 5,
+                              background: "#f1f5f9",
+                              border: "1px solid #e2e8f0",
+                              fontSize: 10.5,
+                              fontWeight: 700,
+                              color: "#475569",
+                              cursor: "pointer",
+                            }}
+                          >
+                            +5,000
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: 6,
+                          }}
+                        >
+                          <label
+                            style={{
+                              fontSize: 11.5,
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
+                              color: "#334155",
+                            }}
+                          >
+                            Date <span style={{ color: "#dc2626" }}>*</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, expense_date: todayStr })}
+                            style={{
+                              fontSize: 10.5,
+                              fontWeight: 700,
+                              color: "#dc2626",
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: 0,
+                            }}
+                          >
+                            Today
+                          </button>
+                        </div>
+                        <input
+                          type="date"
+                          required
+                          value={formData.expense_date}
+                          onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
+                          style={{
+                            width: "100%",
+                            padding: "10px 12px",
+                            borderRadius: 8,
+                            border: "1.5px solid #cbd5e1",
+                            fontSize: 12.5,
+                            fontWeight: 600,
+                            color: "#0f172a",
+                            outline: "none",
+                            boxSizing: "border-box",
+                            fontFamily: "monospace",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Live Digital Expense Receipt Preview Card */}
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+                        borderRadius: 12,
+                        padding: "16px 18px",
+                        color: "#ffffff",
+                        boxShadow: "0 4px 14px rgba(15, 23, 42, 0.15)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
+                          paddingBottom: 8,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 800,
+                            letterSpacing: "1px",
+                            color: "#94a3b8",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          Expense Voucher Preview
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            color: "#cbd5e1",
+                            fontFamily: "monospace",
+                          }}
+                        >
+                          {formData.expense_date || todayStr}
+                        </span>
+                      </div>
+
+                      <div>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: "#94a3b8",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px",
+                            marginBottom: 2,
+                          }}
+                        >
+                          Amount
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 24,
+                            fontWeight: 900,
+                            color: "#f87171",
+                            fontFamily: "monospace",
+                          }}
+                        >
+                          {currencySymbol} {Number(formData.amount || 0).toFixed(2)}
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-end",
+                          gap: 10,
+                          paddingTop: 4,
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 10.5, color: "#94a3b8", marginBottom: 2 }}>
+                            Item / Title:
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 700,
+                              color: "#f8fafc",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {formData.title || "Untitled Expense"}
+                          </div>
+                        </div>
+
+                        <div>
+                          {(() => {
+                            const cat = getCategoryInfo(categoryInput || "Custom");
+                            return (
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 5,
+                                  padding: "4px 10px",
+                                  borderRadius: 6,
+                                  background: "rgba(255, 255, 255, 0.12)",
+                                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  color: "#ffffff",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                <span>{cat.icon}</span>
+                                <span>{categoryInput.trim() || "Uncategorized"}</span>
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Notes / Vendor / Bill # */}
-              <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider text-gray-700 mb-1">
-                  Notes / Vendor / Invoice # (Optional)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Supplier name, receipt / invoice number, cash vs online payment..."
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full bg-white border border-gray-300 rounded-xl px-3.5 py-2 text-xs text-gray-900 placeholder-gray-400 focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none resize-none transition-all shadow-sm"
-                />
-              </div>
+              {/* Fixed Footer Bar */}
+              <div
+                style={{
+                  padding: "14px 24px",
+                  borderTop: "1px solid #e2e8f0",
+                  background: "#f8fafc",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 10,
+                }}
+              >
+                <span style={{ fontSize: 11.5, color: "#64748b" }}>
+                  Fields with <span style={{ color: "#dc2626" }}>*</span> are required
+                </span>
 
-              {/* Live Preview Strip */}
-              <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500 font-bold">Selected Category:</span>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-md text-[11px] font-black border ${getCategoryInfo(categoryInput).bg} ${getCategoryInfo(categoryInput).text} ${getCategoryInfo(categoryInput).border}`}
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: 6,
+                      border: "1px solid #cbd5e1",
+                      background: "#ffffff",
+                      color: "#475569",
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
                   >
-                    {getCategoryInfo(categoryInput).icon} {getCategoryInfo(categoryInput).label}
-                  </span>
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "8px 20px",
+                      borderRadius: 6,
+                      border: "none",
+                      background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+                      color: "#ffffff",
+                      fontSize: 12.5,
+                      fontWeight: 800,
+                      cursor: isPending ? "not-allowed" : "pointer",
+                      boxShadow: "0 2px 8px rgba(220, 38, 38, 0.3)",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {isPending ? (
+                      <span>Saving...</span>
+                    ) : (
+                      <>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>Save Expense</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-
-                {Number(formData.amount) > 0 && (
-                  <div className="font-mono font-black text-red-600 text-sm">
-                    {currencySymbol} {Number(formData.amount).toFixed(2)}
-                  </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isPending}
-                  className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-6 py-2.5 transition-all rounded-xl shadow-md shadow-red-500/20 hover:shadow-lg disabled:opacity-50 flex items-center gap-2 cursor-pointer"
-                >
-                  {isPending && (
-                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  )}
-                  <span>{isPending ? "Saving..." : "Save Expense"}</span>
-                </button>
               </div>
             </form>
           </div>
