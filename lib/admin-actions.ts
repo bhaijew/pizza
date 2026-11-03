@@ -2049,7 +2049,12 @@ export async function recreateOrder(params: RecreateOrderParams): Promise<{
   });
 
   const nowIso = new Date().toISOString();
-  const timeFormatted = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const timeFormatted = new Date().toLocaleTimeString("en-US", {
+    timeZone: "Asia/Karachi",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   // 3. Build enriched notes — preserves delivery/dine-in metadata while appending recreate audit tag
   const existingNotes = currentOrder.notes || "";
@@ -3738,7 +3743,12 @@ export async function verifyMenuOrder(
 
   const nowIso = new Date().toISOString();
   const staff = options?.cashierName || activeShop.staffName || "Admin";
-  const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const nowStr = new Date().toLocaleTimeString("en-US", {
+    timeZone: "Asia/Karachi",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   let updatedNotes = order.notes || "";
   updatedNotes = updatedNotes.replace(/\[ONLINE_MENU:\s*AWAITING_VERIFICATION\]\s*/gi, "");
@@ -3808,7 +3818,12 @@ export async function rejectMenuOrder(
   }
 
   const staff = cashierName || activeShop.staffName || "Admin";
-  const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const nowStr = new Date().toLocaleTimeString("en-US", {
+    timeZone: "Asia/Karachi",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
   const cleanReason = reason?.trim() || "Unverified / Prank / Cancelled by Shop";
 
   let updatedNotes = order.notes || "";

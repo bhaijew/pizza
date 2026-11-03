@@ -726,7 +726,12 @@ export async function confirmDeliveryByRider(
       return { success: true, order, alreadyDelivered: true };
     }
 
-    const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const nowStr = new Date().toLocaleTimeString("en-US", {
+      timeZone: "Asia/Karachi",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
     const riderTag = riderName ? ` by ${riderName}` : "";
     const cleanTxn = transactionId?.trim() || "";
     const payModeTag = paymentMethod === "Card"
