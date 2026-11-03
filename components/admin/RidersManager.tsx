@@ -268,27 +268,6 @@ GRANT ALL ON public.delivery_riders TO anon, authenticated, service_role;`;
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <button
-            type="button"
-            onClick={() => setShowSqlModal(true)}
-            style={{
-              height: "36px",
-              padding: "0 12px",
-              borderRadius: "6px",
-              background: "#f8fafc",
-              border: "1px solid #cbd5e1",
-              color: "#475569",
-              fontSize: "12px",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-            title="View database migration SQL for cloud synchronization"
-          >
-            <span>🗄️ SQL Sync</span>
-          </button>
 
           <button
             type="button"

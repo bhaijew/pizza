@@ -197,14 +197,7 @@ const NAV_GROUPS: NavGroup[] = [
         icon: TicketPercent,
       },
       {
-        label: "Menu UI & Theme",
-        href: "/admin/menu-ui",
-        badge: "UI",
-        badgeColor: "#7c3aed",
-        icon: Palette,
-      },
-      {
-        label: "Store Logo & Branding",
+        label: "Store Logo",
         href: "/admin/menu-layout",
         badge: "LOGO",
         badgeColor: "#ec4899",
@@ -759,7 +752,7 @@ export default function AdminShell({
                         >
                           <IconComponent size={18} />
                         </span>
-                        <span>{item.label}</span>
+                        <span style={{ whiteSpace: "nowrap" }}>{item.label}</span>
                       </div>
 
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1616,7 +1609,7 @@ export default function AdminShell({
                           >
                             <IconComponent size={18} />
                           </span>
-                          <span>{item.label}</span>
+                          <span style={{ whiteSpace: "nowrap" }}>{item.label}</span>
                         </div>
 
                                                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
