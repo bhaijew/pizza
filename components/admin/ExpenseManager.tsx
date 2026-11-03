@@ -64,14 +64,10 @@ export default function ExpenseManager({
   shopName,
 }: ExpenseManagerProps) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
-
-  // Category Input state: directly typed by user (no pre-added default)
-  const [categoryInput, setCategoryInput] = useState("");
 
   // Form state
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
@@ -140,20 +136,15 @@ export default function ExpenseManager({
   // Filtered expenses
   const filteredExpenses = useMemo(() => {
     return expenses.filter((e) => {
-      const catKey = (e.category || "").toLowerCase().trim();
-      const matchesCat =
-        selectedCategory === "all" ||
-        catKey === selectedCategory.toLowerCase().trim();
-
-      const matchesSearch =
-        !searchQuery ||
-        e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (e.notes && e.notes.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        catKey.includes(searchQuery.toLowerCase());
-
-      return matchesCat && matchesSearch;
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return true;
+      return (
+        e.title.toLowerCase().includes(q) ||
+        (e.notes && e.notes.toLowerCase().includes(q)) ||
+        (e.expense_date && e.expense_date.includes(q))
+      );
     });
-  }, [expenses, selectedCategory, searchQuery]);
+  }, [expenses, searchQuery]);
 
   // Quick Amount Helper
   const handleQuickAmount = (increment: number) => {
@@ -164,7 +155,6 @@ export default function ExpenseManager({
   // Open Modal with clean reset
   const handleOpenAddModal = () => {
     setFormError(null);
-    setCategoryInput("");
     setFormData({
       title: "",
       amount: "",
@@ -184,16 +174,12 @@ export default function ExpenseManager({
       setFormError("Please enter an expense description / title.");
       return;
     }
-    if (!categoryInput.trim()) {
-      setFormError("Please enter an expense category (e.g. Oil, Meat, Vegetables, Wages).");
-      return;
-    }
     if (isNaN(amt) || amt <= 0) {
       setFormError("Please enter a valid amount greater than 0.");
       return;
     }
 
-    const finalCategory = categoryInput.trim();
+    const finalCategory = "General";
 
     startTransition(async () => {
       const fd = new FormData();
@@ -218,7 +204,6 @@ export default function ExpenseManager({
         };
         setExpenses((prev) => [newRecord, ...prev]);
         setShowAddModal(false);
-        setCategoryInput("");
         setFormData({
           title: "",
           amount: "",
@@ -227,6 +212,107 @@ export default function ExpenseManager({
         });
       }
     });
+  };
+
+  // Print Expenses Slip / Voucher (Thermal or A4)
+  const handlePrintExpensesSlip = (itemsToPrint?: Expense[]) => {
+    const list = itemsToPrint || filteredExpenses;
+    const printWindow = window.open("", "_blank", "width=840,height=900");
+    if (!printWindow) {
+      alert("Please allow pop-ups to open the print view.");
+      return;
+    }
+
+    const total = list.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const dateFormatted = new Date().toLocaleDateString("en-PK", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+
+    const rows = list
+      .map(
+        (item, idx) => `
+      <tr>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-family: monospace; font-size: 11px;">#${idx + 1}</td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-weight: 700; font-size: 12px; color: #0f172a;">${item.title}</td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #64748b; font-family: monospace;">${item.expense_date}</td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #475569;">${item.notes || "—"}</td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-weight: 800; font-size: 12px; text-align: right; color: #dc2626; font-family: monospace;">${currencySymbol} ${Number(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+      </tr>
+    `
+      )
+      .join("");
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Expense Voucher Slip - ${shopName || "Restaurant"}</title>
+  <style>
+    @page { size: A4; margin: 12mm; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; margin: 0; padding: 20px; background: #fff; }
+    .header { border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .title { font-size: 20px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: -0.5px; }
+    .subtitle { font-size: 12px; color: #64748b; margin-top: 4px; }
+    .total-box { background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 12px 18px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { background: #f1f5f9; padding: 8px 10px; font-size: 11px; text-align: left; text-transform: uppercase; color: #475569; border-bottom: 1.5px solid #cbd5e1; }
+    @media print { .no-print { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="margin-bottom: 16px; display: flex; gap: 10px;">
+    <button onclick="window.print()" style="padding: 8px 18px; background: #dc2626; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">
+      🖨️ Print Slip
+    </button>
+  </div>
+  <div class="header">
+    <div>
+      <h1 class="title">${shopName || "RESTAURANT"}</h1>
+      <div class="subtitle">OFFICIAL EXPENSES &amp; OUTGOINGS VOUCHER SLIP</div>
+      <div style="font-size: 11px; color: #475569; margin-top: 4px;">Generated on: ${dateFormatted}</div>
+    </div>
+    <div style="text-align: right;">
+      <div style="font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase;">Total Entries</div>
+      <div style="font-size: 16px; font-weight: 800;">${list.length} Items</div>
+    </div>
+  </div>
+  <div class="total-box">
+    <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #475569;">Total Outgoings Amount:</div>
+    <div style="font-size: 22px; font-weight: 900; color: #dc2626; font-family: monospace;">${currencySymbol} ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 40px;">#</th>
+        <th>Expense Description / Title</th>
+        <th>Date</th>
+        <th>Notes / Vendor / Bill #</th>
+        <th style="text-align: right;">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows || `<tr><td colspan="5" style="padding: 16px; text-align: center; color: #94a3b8;">No expenses recorded.</td></tr>`}
+    </tbody>
+  </table>
+  <div style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+    <div>
+      <div style="font-size: 11px; font-weight: 700; margin-bottom: 30px;">Cashier / Operator Signature</div>
+      <div style="border-bottom: 1px solid #94a3b8; width: 80%;"></div>
+    </div>
+    <div>
+      <div style="font-size: 11px; font-weight: 700; margin-bottom: 30px;">Manager / Owner Approval</div>
+      <div style="border-bottom: 1px solid #94a3b8; width: 80%;"></div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
   };
 
   // Handle Delete Expense
@@ -259,15 +345,24 @@ export default function ExpenseManager({
             )}
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Log ingredients, daily supplies, utilities, wages, fuel, repairs, and custom restaurant overheads.
+            Log shop outgoings, supplies, utilities, wages, fuel, repairs, and daily operational overheads.
           </p>
         </div>
-        <button
-          onClick={handleOpenAddModal}
-          className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-5 py-2.5 flex items-center justify-center gap-2 transition-all rounded-xl shadow-md shadow-red-500/20 hover:shadow-lg cursor-pointer"
-        >
-          <span className="text-base font-bold">＋</span> Record New Expense
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handlePrintExpensesSlip()}
+            className="bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs uppercase tracking-wider px-3.5 py-2.5 flex items-center justify-center gap-1.5 transition-all rounded-xl border border-gray-300 shadow-sm cursor-pointer"
+            title="Print expenses voucher slip"
+          >
+            <span>🖨️</span> Print Slip
+          </button>
+          <button
+            onClick={handleOpenAddModal}
+            className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 flex items-center justify-center gap-1.5 transition-all rounded-xl shadow-md shadow-red-500/20 hover:shadow-lg cursor-pointer"
+          >
+            <span className="text-base font-bold">＋</span> Record Expense
+          </button>
+        </div>
       </div>
 
       {/* Metric KPI Cards (Clean White) */}
@@ -317,49 +412,25 @@ export default function ExpenseManager({
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+      {/* Search Bar */}
+      <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm flex items-center justify-between gap-3">
         <div className="flex-1">
           <input
             type="text"
-            placeholder="Search expense title, category, supplier, notes..."
+            placeholder="Search expense description, notes, vendor, or date..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-gray-50 border border-gray-300 rounded-lg px-3.5 py-2 text-xs text-gray-900 placeholder-gray-400 focus:border-red-500 focus:bg-white focus:outline-none transition-colors"
           />
         </div>
-
-        {/* Category Tabs (All + categories actually logged in expenses) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-thin">
+        {searchQuery && (
           <button
-            onClick={() => setSelectedCategory("all")}
-            className={`px-3 py-1.5 text-xs font-bold uppercase transition-all whitespace-nowrap rounded-lg cursor-pointer ${
-              selectedCategory === "all"
-                ? "bg-red-600 text-white shadow-sm"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+            onClick={() => setSearchQuery("")}
+            className="text-xs font-bold text-gray-500 hover:text-gray-800 px-2.5 py-1.5 rounded-lg bg-gray-100 cursor-pointer"
           >
-            All
+            Clear
           </button>
-          {availableCategories.map((catName) => {
-            const info = getCategoryInfo(catName);
-            const isSelected = selectedCategory.toLowerCase() === catName.toLowerCase();
-            return (
-              <button
-                key={catName}
-                onClick={() => setSelectedCategory(catName)}
-                className={`px-2.5 py-1.5 text-xs font-bold transition-all whitespace-nowrap rounded-lg flex items-center gap-1.5 cursor-pointer ${
-                  isSelected
-                    ? "bg-red-100 text-red-800 border border-red-300 shadow-sm"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                <span>{info.icon}</span>
-                <span>{info.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        )}
       </div>
 
       {/* Expenses Table */}
@@ -369,7 +440,7 @@ export default function ExpenseManager({
             <span className="text-4xl block mb-2">🧾</span>
             <p className="text-gray-900 font-bold text-sm">No expenses found</p>
             <p className="text-gray-500 text-xs mt-1">
-              Click &quot;Record New Expense&quot; to log your shop costs, raw materials, or bills.
+              Click &quot;Record Expense&quot; to log shop costs, raw materials, or bills.
             </p>
           </div>
         ) : (
@@ -378,40 +449,37 @@ export default function ExpenseManager({
               <thead className="bg-gray-50 text-gray-500 uppercase tracking-wider text-[10px] border-b border-gray-200">
                 <tr>
                   <th className="py-3 px-4 font-bold">Date</th>
-                  <th className="py-3 px-4 font-bold">Expense Title</th>
-                  <th className="py-3 px-4 font-bold">Category</th>
-                  <th className="py-3 px-4 font-bold">Notes / Vendor</th>
+                  <th className="py-3 px-4 font-bold">Expense Title / Description</th>
+                  <th className="py-3 px-4 font-bold">Notes / Vendor / Bill #</th>
                   <th className="py-3 px-4 font-bold text-right">Amount</th>
                   <th className="py-3 px-4 font-bold text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredExpenses.map((exp) => {
-                  const cat = getCategoryInfo(exp.category);
-                  return (
-                    <tr key={exp.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="py-3.5 px-4 font-mono text-gray-600 whitespace-nowrap">
-                        {exp.expense_date}
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-gray-900">
-                        {exp.title}
-                      </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-md border ${cat.bg} ${cat.text} ${cat.border}`}
+                {filteredExpenses.map((exp) => (
+                  <tr key={exp.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="py-3.5 px-4 font-mono text-gray-600 whitespace-nowrap">
+                      {exp.expense_date}
+                    </td>
+                    <td className="py-3.5 px-4 font-bold text-gray-900">
+                      {exp.title}
+                    </td>
+                    <td className="py-3.5 px-4 text-gray-600 max-w-xs truncate">
+                      {exp.notes || "—"}
+                    </td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-red-600 text-right text-sm whitespace-nowrap">
+                      {currencySymbol}
+                      {Number(exp.amount).toFixed(2)}
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => handlePrintExpensesSlip([exp])}
+                          title="Print single voucher slip"
+                          className="text-gray-500 hover:text-gray-800 transition-colors p-1.5 rounded hover:bg-gray-100 cursor-pointer text-xs"
                         >
-                          <span>{cat.icon}</span>
-                          <span>{cat.label}</span>
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-gray-600 max-w-xs truncate">
-                        {exp.notes || "—"}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-red-600 text-right text-sm whitespace-nowrap">
-                        {currencySymbol}
-                        {Number(exp.amount).toFixed(2)}
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
+                          🖨️
+                        </button>
                         <button
                           onClick={() => handleDelete(exp.id)}
                           disabled={isPending}
@@ -420,10 +488,10 @@ export default function ExpenseManager({
                         >
                           ✕
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -431,14 +499,14 @@ export default function ExpenseManager({
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* Modern Add Expense Modal (Full View 2-Column Executive Popup)  */}
+      {/* Modern Add Expense Modal (Full View Frosted-White Executive)   */}
       {/* ───────────────────────────────────────────────────────────── */}
       {showAddModal && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(15, 23, 42, 0.75)",
+            background: "rgba(255, 255, 255, 0.78)",
             backdropFilter: "blur(8px)",
             WebkitBackdropFilter: "blur(8px)",
             zIndex: 99999,
@@ -452,14 +520,14 @@ export default function ExpenseManager({
           <div
             style={{
               background: "#ffffff",
-              borderRadius: 16,
-              maxWidth: 820,
+              borderRadius: 14,
+              maxWidth: 780,
               width: "100%",
               maxHeight: "90vh",
               display: "flex",
               flexDirection: "column",
-              boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.45)",
-              border: "1px solid #cbd5e1",
+              boxShadow: "0 20px 50px -10px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.08)",
+              border: "1px solid #e2e8f0",
               overflow: "hidden",
               animation: "fadeIn 0.18s ease-out",
             }}
@@ -468,7 +536,7 @@ export default function ExpenseManager({
             {/* Modal Header */}
             <div
               style={{
-                padding: "18px 24px",
+                padding: "16px 22px",
                 borderBottom: "1px solid #e2e8f0",
                 display: "flex",
                 alignItems: "center",
@@ -476,19 +544,19 @@ export default function ExpenseManager({
                 background: "#ffffff",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 10,
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
                     background: "#fef2f2",
                     border: "1px solid #fecaca",
                     color: "#dc2626",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: 20,
+                    fontSize: 18,
                     flexShrink: 0,
                   }}
                 >
@@ -497,17 +565,17 @@ export default function ExpenseManager({
                 <div>
                   <h2
                     style={{
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: 800,
                       margin: 0,
                       color: "#0f172a",
                       letterSpacing: "-0.2px",
                     }}
                   >
-                    Record New Expense
+                    Record Expense
                   </h2>
-                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
-                    Log shop outgoings, supplies, bills, or operational costs.
+                  <p style={{ margin: "2px 0 0", fontSize: 11.5, color: "#64748b" }}>
+                    Enter restaurant outgoings, supplies, fuel, or daily operational costs.
                   </p>
                 </div>
               </div>
@@ -516,8 +584,8 @@ export default function ExpenseManager({
                 type="button"
                 onClick={() => setShowAddModal(false)}
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 30,
+                  height: 30,
                   borderRadius: 6,
                   background: "#f1f5f9",
                   border: "none",
@@ -525,7 +593,7 @@ export default function ExpenseManager({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: 700,
                   cursor: "pointer",
                   transition: "background 0.15s ease",
@@ -540,13 +608,13 @@ export default function ExpenseManager({
             {formError && (
               <div
                 style={{
-                  margin: "16px 24px 0",
-                  padding: "10px 14px",
+                  margin: "14px 22px 0",
+                  padding: "9px 12px",
                   borderRadius: 8,
                   background: "#fef2f2",
                   border: "1px solid #fecaca",
                   color: "#991b1b",
-                  fontSize: 12.5,
+                  fontSize: 12,
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
@@ -570,7 +638,7 @@ export default function ExpenseManager({
             >
               <div
                 style={{
-                  padding: "20px 24px",
+                  padding: "18px 22px",
                   overflowY: "auto",
                   flex: 1,
                 }}
@@ -578,23 +646,23 @@ export default function ExpenseManager({
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-                    gap: 20,
+                    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                    gap: 18,
                   }}
                 >
-                  {/* Left Column: Title, Category, Notes */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                    {/* Expense Title */}
+                  {/* Left Column: Title & Notes (Category Removed) */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {/* Expense Description */}
                     <div>
                       <label
                         style={{
                           display: "block",
-                          fontSize: 11.5,
+                          fontSize: 11,
                           fontWeight: 700,
                           textTransform: "uppercase",
                           letterSpacing: "0.5px",
                           color: "#334155",
-                          marginBottom: 6,
+                          marginBottom: 5,
                         }}
                       >
                         Expense Description / Title <span style={{ color: "#dc2626" }}>*</span>
@@ -602,108 +670,51 @@ export default function ExpenseManager({
                       <input
                         type="text"
                         required
-                        placeholder="e.g. 50kg Mozzarella Cheese, Cooking Oil, Gas Cylinder..."
+                        placeholder="e.g. Cooking Oil, Mozzarella Cheese, Gas Cylinder, Staff Lunch..."
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         style={{
                           width: "100%",
-                          padding: "10px 14px",
-                          borderRadius: 8,
+                          padding: "9px 12px",
+                          borderRadius: 7,
                           border: "1.5px solid #cbd5e1",
                           fontSize: 13,
                           color: "#0f172a",
                           outline: "none",
-                          transition: "border-color 0.15s ease",
                           boxSizing: "border-box",
                         }}
                       />
                     </div>
 
-                    {/* Expense Category (Custom, No Pre-added Clutter) */}
-                    <div>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: 6,
-                        }}
-                      >
-                        <label
-                          style={{
-                            fontSize: 11.5,
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.5px",
-                            color: "#334155",
-                          }}
-                        >
-                          Category <span style={{ color: "#dc2626" }}>*</span>
-                        </label>
-                        <span style={{ fontSize: 11, color: "#94a3b8" }}>
-                          Custom Category
-                        </span>
-                      </div>
-                      <input
-                        type="text"
-                        required
-                        list="expense-category-suggestions"
-                        value={categoryInput}
-                        onChange={(e) => setCategoryInput(e.target.value)}
-                        placeholder="e.g. Oil, Meat, Vegetables, Utilities, Wages..."
-                        style={{
-                          width: "100%",
-                          padding: "10px 14px",
-                          borderRadius: 8,
-                          border: "1.5px solid #cbd5e1",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: "#0f172a",
-                          outline: "none",
-                          transition: "border-color 0.15s ease",
-                          boxSizing: "border-box",
-                        }}
-                      />
-                      <datalist id="expense-category-suggestions">
-                        {availableCategories.map((c) => (
-                          <option key={c} value={c} />
-                        ))}
-                      </datalist>
-                      <p style={{ margin: "5px 0 0", fontSize: 11, color: "#64748b" }}>
-                        Type any custom category name directly (no pre-added preset limits).
-                      </p>
-                    </div>
-
-                    {/* Notes / Vendor / Invoice # */}
+                    {/* Notes / Vendor / Bill # */}
                     <div>
                       <label
                         style={{
                           display: "block",
-                          fontSize: 11.5,
+                          fontSize: 11,
                           fontWeight: 700,
                           textTransform: "uppercase",
                           letterSpacing: "0.5px",
                           color: "#334155",
-                          marginBottom: 6,
+                          marginBottom: 5,
                         }}
                       >
-                        Notes / Vendor / Invoice # <span style={{ color: "#94a3b8", fontWeight: 400 }}>(Optional)</span>
+                        Notes / Vendor / Bill # <span style={{ color: "#94a3b8", fontWeight: 400 }}>(Optional)</span>
                       </label>
                       <textarea
-                        rows={3}
-                        placeholder="Supplier name, receipt number, cash vs online payment..."
+                        rows={4}
+                        placeholder="Supplier name, receipt number, cash vs online payment details..."
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                         style={{
                           width: "100%",
-                          padding: "10px 14px",
-                          borderRadius: 8,
+                          padding: "9px 12px",
+                          borderRadius: 7,
                           border: "1.5px solid #cbd5e1",
-                          fontSize: 12.5,
+                          fontSize: 12,
                           color: "#0f172a",
                           outline: "none",
                           resize: "none",
-                          transition: "border-color 0.15s ease",
                           boxSizing: "border-box",
                           fontFamily: "inherit",
                         }}
@@ -711,20 +722,20 @@ export default function ExpenseManager({
                     </div>
                   </div>
 
-                  {/* Right Column: Amount, Date, Live Voucher Preview */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                    {/* Amount & Date in a 2-col mini grid */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  {/* Right Column: Amount, Date, Clean Restaurant Receipt Voucher */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {/* Amount & Date Grid */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 10 }}>
                       <div>
                         <label
                           style={{
                             display: "block",
-                            fontSize: 11.5,
+                            fontSize: 11,
                             fontWeight: 700,
                             textTransform: "uppercase",
                             letterSpacing: "0.5px",
                             color: "#334155",
-                            marginBottom: 6,
+                            marginBottom: 5,
                           }}
                         >
                           Amount ({currencySymbol}) <span style={{ color: "#dc2626" }}>*</span>
@@ -733,7 +744,7 @@ export default function ExpenseManager({
                           <span
                             style={{
                               position: "absolute",
-                              left: 12,
+                              left: 10,
                               fontSize: 12,
                               fontWeight: 700,
                               color: "#64748b",
@@ -752,8 +763,8 @@ export default function ExpenseManager({
                             onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                             style={{
                               width: "100%",
-                              padding: "10px 12px 10px 38px",
-                              borderRadius: 8,
+                              padding: "9px 10px 9px 36px",
+                              borderRadius: 7,
                               border: "1.5px solid #cbd5e1",
                               fontSize: 13,
                               fontWeight: 700,
@@ -764,17 +775,17 @@ export default function ExpenseManager({
                             }}
                           />
                         </div>
-                        {/* Quick increments */}
-                        <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                        {/* Quick increment buttons */}
+                        <div style={{ display: "flex", gap: 5, marginTop: 5 }}>
                           <button
                             type="button"
                             onClick={() => handleQuickAmount(500)}
                             style={{
-                              padding: "3px 8px",
-                              borderRadius: 5,
+                              padding: "2px 7px",
+                              borderRadius: 4,
                               background: "#f1f5f9",
                               border: "1px solid #e2e8f0",
-                              fontSize: 10.5,
+                              fontSize: 10,
                               fontWeight: 700,
                               color: "#475569",
                               cursor: "pointer",
@@ -786,11 +797,11 @@ export default function ExpenseManager({
                             type="button"
                             onClick={() => handleQuickAmount(1000)}
                             style={{
-                              padding: "3px 8px",
-                              borderRadius: 5,
+                              padding: "2px 7px",
+                              borderRadius: 4,
                               background: "#f1f5f9",
                               border: "1px solid #e2e8f0",
-                              fontSize: 10.5,
+                              fontSize: 10,
                               fontWeight: 700,
                               color: "#475569",
                               cursor: "pointer",
@@ -802,11 +813,11 @@ export default function ExpenseManager({
                             type="button"
                             onClick={() => handleQuickAmount(5000)}
                             style={{
-                              padding: "3px 8px",
-                              borderRadius: 5,
+                              padding: "2px 7px",
+                              borderRadius: 4,
                               background: "#f1f5f9",
                               border: "1px solid #e2e8f0",
-                              fontSize: 10.5,
+                              fontSize: 10,
                               fontWeight: 700,
                               color: "#475569",
                               cursor: "pointer",
@@ -823,12 +834,12 @@ export default function ExpenseManager({
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            marginBottom: 6,
+                            marginBottom: 5,
                           }}
                         >
                           <label
                             style={{
-                              fontSize: 11.5,
+                              fontSize: 11,
                               fontWeight: 700,
                               textTransform: "uppercase",
                               letterSpacing: "0.5px",
@@ -841,7 +852,7 @@ export default function ExpenseManager({
                             type="button"
                             onClick={() => setFormData({ ...formData, expense_date: todayStr })}
                             style={{
-                              fontSize: 10.5,
+                              fontSize: 10,
                               fontWeight: 700,
                               color: "#dc2626",
                               background: "none",
@@ -860,10 +871,10 @@ export default function ExpenseManager({
                           onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
                           style={{
                             width: "100%",
-                            padding: "10px 12px",
-                            borderRadius: 8,
+                            padding: "9px 10px",
+                            borderRadius: 7,
                             border: "1.5px solid #cbd5e1",
-                            fontSize: 12.5,
+                            fontSize: 12,
                             fontWeight: 600,
                             color: "#0f172a",
                             outline: "none",
@@ -874,17 +885,16 @@ export default function ExpenseManager({
                       </div>
                     </div>
 
-                    {/* Live Digital Expense Receipt Preview Card */}
+                    {/* Clean Authentic POS Receipt Voucher (No AI slop) */}
                     <div
                       style={{
-                        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-                        borderRadius: 12,
-                        padding: "16px 18px",
-                        color: "#ffffff",
-                        boxShadow: "0 4px 14px rgba(15, 23, 42, 0.15)",
+                        background: "#f8fafc",
+                        border: "1.5px dashed #cbd5e1",
+                        borderRadius: 9,
+                        padding: "12px 15px",
                         display: "flex",
                         flexDirection: "column",
-                        gap: 12,
+                        gap: 8,
                       }}
                     >
                       <div
@@ -892,26 +902,26 @@ export default function ExpenseManager({
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
-                          borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
-                          paddingBottom: 8,
+                          borderBottom: "1px solid #e2e8f0",
+                          paddingBottom: 6,
                         }}
                       >
                         <span
                           style={{
                             fontSize: 10,
-                            fontWeight: 800,
-                            letterSpacing: "1px",
-                            color: "#94a3b8",
+                            fontWeight: 700,
+                            letterSpacing: "0.5px",
+                            color: "#64748b",
                             textTransform: "uppercase",
                           }}
                         >
-                          Expense Voucher Preview
+                          Voucher Slip Preview
                         </span>
                         <span
                           style={{
                             fontSize: 10,
-                            fontWeight: 700,
-                            color: "#cbd5e1",
+                            fontWeight: 600,
+                            color: "#64748b",
                             fontFamily: "monospace",
                           }}
                         >
@@ -922,45 +932,45 @@ export default function ExpenseManager({
                       <div>
                         <div
                           style={{
-                            fontSize: 11,
-                            color: "#94a3b8",
+                            fontSize: 9.5,
+                            color: "#64748b",
                             textTransform: "uppercase",
-                            letterSpacing: "0.5px",
-                            marginBottom: 2,
+                            fontWeight: 700,
                           }}
                         >
-                          Amount
+                          Outgoings Amount
                         </div>
                         <div
                           style={{
-                            fontSize: 24,
+                            fontSize: 22,
                             fontWeight: 900,
-                            color: "#f87171",
+                            color: "#0f172a",
                             fontFamily: "monospace",
+                            marginTop: 1,
                           }}
                         >
-                          {currencySymbol} {Number(formData.amount || 0).toFixed(2)}
+                          {currencySymbol} {Number(formData.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                       </div>
 
                       <div
                         style={{
+                          borderTop: "1px solid #e2e8f0",
+                          paddingTop: 6,
                           display: "flex",
                           justifyContent: "space-between",
-                          alignItems: "flex-end",
-                          gap: 10,
-                          paddingTop: 4,
+                          alignItems: "center",
                         }}
                       >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 10.5, color: "#94a3b8", marginBottom: 2 }}>
-                            Item / Title:
+                        <div style={{ minWidth: 0, flex: 1, paddingRight: 8 }}>
+                          <div style={{ fontSize: 9.5, color: "#64748b", textTransform: "uppercase" }}>
+                            Description:
                           </div>
                           <div
                             style={{
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: 700,
-                              color: "#f8fafc",
+                              color: "#0f172a",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -970,31 +980,19 @@ export default function ExpenseManager({
                           </div>
                         </div>
 
-                        <div>
-                          {(() => {
-                            const cat = getCategoryInfo(categoryInput || "Custom");
-                            return (
-                              <span
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 5,
-                                  padding: "4px 10px",
-                                  borderRadius: 6,
-                                  background: "rgba(255, 255, 255, 0.12)",
-                                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  color: "#ffffff",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                <span>{cat.icon}</span>
-                                <span>{categoryInput.trim() || "Uncategorized"}</span>
-                              </span>
-                            );
-                          })()}
-                        </div>
+                        <span
+                          style={{
+                            fontSize: 9.5,
+                            fontWeight: 700,
+                            padding: "2px 7px",
+                            borderRadius: 4,
+                            background: Number(formData.amount) > 0 ? "#ecfdf5" : "#f1f5f9",
+                            color: Number(formData.amount) > 0 ? "#047857" : "#64748b",
+                            border: `1px solid ${Number(formData.amount) > 0 ? "#a7f3d0" : "#cbd5e1"}`,
+                          }}
+                        >
+                          {Number(formData.amount) > 0 ? "Ready to Record" : "Awaiting Amount"}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -1004,7 +1002,7 @@ export default function ExpenseManager({
               {/* Fixed Footer Bar */}
               <div
                 style={{
-                  padding: "14px 24px",
+                  padding: "12px 22px",
                   borderTop: "1px solid #e2e8f0",
                   background: "#f8fafc",
                   display: "flex",
@@ -1014,21 +1012,21 @@ export default function ExpenseManager({
                   gap: 10,
                 }}
               >
-                <span style={{ fontSize: 11.5, color: "#64748b" }}>
+                <span style={{ fontSize: 11, color: "#64748b" }}>
                   Fields with <span style={{ color: "#dc2626" }}>*</span> are required
                 </span>
 
-                <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ display: "flex", gap: 8 }}>
                   <button
                     type="button"
                     onClick={() => setShowAddModal(false)}
                     style={{
-                      padding: "8px 16px",
+                      padding: "7px 15px",
                       borderRadius: 6,
                       border: "1px solid #cbd5e1",
                       background: "#ffffff",
                       color: "#475569",
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: 700,
                       cursor: "pointer",
                       transition: "all 0.15s ease",
@@ -1043,16 +1041,16 @@ export default function ExpenseManager({
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: 6,
-                      padding: "8px 20px",
+                      gap: 5,
+                      padding: "7px 18px",
                       borderRadius: 6,
                       border: "none",
-                      background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+                      background: "#dc2626",
                       color: "#ffffff",
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: 800,
                       cursor: isPending ? "not-allowed" : "pointer",
-                      boxShadow: "0 2px 8px rgba(220, 38, 38, 0.3)",
+                      boxShadow: "0 2px 6px rgba(220, 38, 38, 0.25)",
                       transition: "all 0.15s ease",
                     }}
                   >
@@ -1061,8 +1059,8 @@ export default function ExpenseManager({
                     ) : (
                       <>
                         <svg
-                          width="14"
-                          height="14"
+                          width="13"
+                          height="13"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"

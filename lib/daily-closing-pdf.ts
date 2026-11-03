@@ -371,6 +371,65 @@ export function exportDailyClosingPDF(report: DailyClosingReportPDFInput): void 
     });
   }
 
+  // ─── ITEMIZED EXPENSES BREAKDOWN TABLE ──────────────────────────
+  const expensesList = report.expenses || [];
+  if (expensesList.length > 0) {
+    if (y < 160) {
+      pdf.addPage();
+      drawHeaderOnPage(pdf.pages.length);
+      y = 700;
+    } else {
+      y -= 12;
+    }
+
+    const drawExpenseTableHeader = (curY: number) => {
+      pdf.rect(30, curY, 535, 18, [0.99, 0.93, 0.93]);
+      pdf.text("EXPENSE ITEM / DESCRIPTION", 36, curY + 6, 7.5, true, [0.7, 0.15, 0.15]);
+      pdf.text("DATE", 240, curY + 6, 7.5, true, [0.7, 0.15, 0.15]);
+      pdf.text("NOTES / VENDOR / BILL #", 330, curY + 6, 7.5, true, [0.7, 0.15, 0.15]);
+      pdf.text("AMOUNT", 515, curY + 6, 7.5, true, [0.7, 0.15, 0.15]);
+    };
+
+    pdf.text(
+      `ITEMIZED DAY EXPENSES (${expensesList.length} Items | Total: ${curr} ${Number(report.totalExpenses || 0).toLocaleString()})`,
+      30,
+      y + 6,
+      8.5,
+      true,
+      [0.7, 0.15, 0.15]
+    );
+    y -= 14;
+    drawExpenseTableHeader(y);
+    y -= 18;
+
+    expensesList.forEach((exp, idx) => {
+      if (y < 120) {
+        pdf.addPage();
+        drawHeaderOnPage(pdf.pages.length);
+        y = 700;
+        drawExpenseTableHeader(y);
+        y -= 18;
+      }
+
+      if (idx % 2 === 1) {
+        pdf.rect(30, y - 3, 535, 16, [0.99, 0.97, 0.97]);
+      }
+
+      const title = String(exp.title || "Expense").slice(0, 36);
+      const dateStr = exp.expense_date || report.date;
+      const notes = String(exp.notes || "—").slice(0, 30);
+      const amtStr = `${curr} ${Number(exp.amount || 0).toLocaleString()}`;
+
+      pdf.text(title, 36, y + 4, 7.5, true, [0.15, 0.2, 0.25]);
+      pdf.text(dateStr, 240, y + 4, 7, false, [0.35, 0.4, 0.45]);
+      pdf.text(notes, 330, y + 4, 7, false, [0.4, 0.45, 0.5]);
+      pdf.text(amtStr, 515, y + 4, 7.5, true, [0.7, 0.1, 0.1]);
+
+      pdf.line(30, y - 3, 565, y - 3, [0.95, 0.9, 0.9], 0.5);
+      y -= 16;
+    });
+  }
+
   // ─── DUAL AUDIT SIGN-OFF BLOCKS (BOTTOM OF PAGE) ────────────────
   const signY = 65;
   pdf.line(30, signY + 30, 565, signY + 30, [0.8, 0.85, 0.9], 1);
@@ -443,6 +502,23 @@ export function openDailyClosingPrintView(report: DailyClosingReportPDFInput): v
           })
           .join("")
       : `<tr><td colspan="7" style="padding: 16px; text-align: center; color: #94a3b8; font-size: 12px;">No orders found in this operational window.</td></tr>`;
+
+  const expensesRows =
+    report.expenses && report.expenses.length > 0
+      ? report.expenses
+          .map((exp: any, i: number) => {
+            return `
+            <tr>
+              <td style="padding: 7px 9px; border-bottom: 1px solid #e2e8f0; font-family: monospace; font-size: 11px;">#${i + 1}</td>
+              <td style="padding: 7px 9px; border-bottom: 1px solid #e2e8f0; font-size: 11px; font-weight: 700; color: #0f172a;">${exp.title || "Expense"}</td>
+              <td style="padding: 7px 9px; border-bottom: 1px solid #e2e8f0; font-size: 10px; color: #64748b; font-family: monospace;">${exp.expense_date || report.date}</td>
+              <td style="padding: 7px 9px; border-bottom: 1px solid #e2e8f0; font-size: 10px; color: #475569;">${exp.notes || "—"}</td>
+              <td style="padding: 7px 9px; border-bottom: 1px solid #e2e8f0; font-weight: 800; text-align: right; font-size: 11px; color: #dc2626; font-family: monospace;">${curr} ${Number(exp.amount || 0).toLocaleString()}</td>
+            </tr>
+          `;
+          })
+          .join("")
+      : `<tr><td colspan="5" style="padding: 12px; text-align: center; color: #94a3b8; font-size: 11px;">No expenses recorded for this date.</td></tr>`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -519,6 +595,26 @@ export function openDailyClosingPrintView(report: DailyClosingReportPDFInput): v
       </thead>
       <tbody>
         ${ordersRows}
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top: 24px;">
+    <h2 style="font-size: 13px; font-weight: 800; color: #b91c1c; margin: 0 0 8px; text-transform: uppercase;">
+      💸 Itemized Day Expenses Breakdown (${report.expenses?.length || 0} Items — Total: ${curr} ${Number(report.totalExpenses || 0).toLocaleString()})
+    </h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Expense Description</th>
+          <th>Date</th>
+          <th>Notes / Vendor / Bill #</th>
+          <th style="text-align: right;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${expensesRows}
       </tbody>
     </table>
   </div>
