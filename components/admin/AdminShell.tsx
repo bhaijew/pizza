@@ -589,9 +589,9 @@ export default function AdminShell({
               src={logoUrl}
               alt={activeBranch}
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: "8px",
+                width: 48,
+                height: 48,
+                borderRadius: "10px",
                 objectFit: "cover",
                 border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.18)",
                 background: "#ffffff",
@@ -600,84 +600,49 @@ export default function AdminShell({
               }}
             />
           ) : (
-            <BrandLogo size={36} variant="iconOnly" />
+            <BrandLogo size={48} variant="iconOnly" />
           )}
 
           <div style={{ minWidth: 0, flex: 1 }}>
             <div
               style={{
-                fontWeight: 800,
-                fontSize: "13px",
+                fontWeight: 900,
+                fontSize: "17px",
                 color: isLight ? "#0f172a" : "#ffffff",
-                letterSpacing: "-0.01em",
+                letterSpacing: "-0.02em",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
+                lineHeight: 1.2,
               }}
             >
               {activeBranch}
             </div>
             <div
               style={{
-                fontSize: "11px",
-                color: "#16a34a",
-                display: "flex",
+                fontSize: "11.5px",
+                color: "#10b981",
+                display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                fontWeight: 700,
-                marginTop: "3px",
-                flexWrap: "wrap",
+                gap: "5px",
+                fontWeight: 800,
+                marginTop: "4px",
+                letterSpacing: "0.04em",
+                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <span
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: "50%",
-                    background: "#10b981",
-                    display: "inline-block",
-                  }}
-                  className="admin-pulse-green"
-                />
-                <span>Live Terminal</span>
-              </div>
-
               <span
                 style={{
-                  fontSize: "9px",
-                  fontWeight: 900,
-                  padding: "1px 6px",
-                  borderRadius: "5px",
-                  background: isAdmin ? "rgba(245, 158, 11, 0.2)" : "rgba(16, 185, 129, 0.2)",
-                  color: isAdmin ? "#fde047" : "#6ee7b7",
-                  border: `1px solid ${isAdmin ? "rgba(245, 158, 11, 0.4)" : "rgba(16, 185, 129, 0.4)"}`,
-                  letterSpacing: "0.03em",
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: "#10b981",
+                  display: "inline-block",
+                  boxShadow: "0 0 8px rgba(16, 185, 129, 0.7)",
                 }}
-              >
-                {isAdmin ? "👑 ADMIN" : "👤 STAFF"}
-              </span>
-            </div>
-
-            <div style={{ marginTop: "5px" }}>
-              <span
-                style={{
-                  fontSize: "9.5px",
-                  fontWeight: 800,
-                  padding: "2px 7px",
-                  borderRadius: "4px",
-                  background: theme.badgeBg,
-                  color: theme.badgeText,
-                  border: `1px solid ${theme.badgeBorder}`,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                <span>{theme.accentEmoji}</span>
-                <span>{theme.name}</span>
-              </span>
+                className="admin-pulse-green"
+              />
+              <span>Live Terminal</span>
             </div>
           </div>
         </div>
@@ -1467,50 +1432,41 @@ export default function AdminShell({
                 <div
                   style={{
                     fontWeight: 900,
-                    fontSize: "14px",
+                    fontSize: "16px",
                     color: isLight ? "#0f172a" : "#ffffff",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    maxWidth: "160px",
+                    maxWidth: "180px",
+                    lineHeight: 1.2,
                   }}
                 >
                   {activeBranch}
                 </div>
                 <div
                   style={{
-                    fontSize: "10px",
-                    color: "#16a34a",
-                    display: "flex",
+                    fontSize: "11px",
+                    color: "#10b981",
+                    display: "inline-flex",
                     alignItems: "center",
-                    gap: "4px",
-                    fontWeight: 700,
+                    gap: "5px",
+                    fontWeight: 800,
+                    marginTop: "3px",
+                    letterSpacing: "0.04em",
+                    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
                   }}
                 >
                   <span
-                    style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }}
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: "#10b981",
+                      boxShadow: "0 0 6px rgba(16, 185, 129, 0.7)",
+                    }}
                     className="admin-pulse-green"
                   />
                   <span>Live Terminal</span>
-                </div>
-                <div style={{ marginTop: "3px" }}>
-                  <span
-                    style={{
-                      fontSize: "9px",
-                      fontWeight: 800,
-                      padding: "1px 6px",
-                      borderRadius: "4px",
-                      background: theme.badgeBg,
-                      color: theme.badgeText,
-                      border: `1px solid ${theme.badgeBorder}`,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "3px",
-                    }}
-                  >
-                    <span>{theme.accentEmoji}</span>
-                    <span>{theme.name}</span>
-                  </span>
                 </div>
               </div>
             </div>
