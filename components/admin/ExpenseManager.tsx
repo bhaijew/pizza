@@ -297,14 +297,23 @@ export default function ExpenseManager({
       ${rows || `<tr><td colspan="5" style="padding: 16px; text-align: center; color: #94a3b8;">No expenses recorded.</td></tr>`}
     </tbody>
   </table>
-  <div style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+  <div style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #cbd5e1; display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center;">
     <div>
       <div style="font-size: 11px; font-weight: 700; margin-bottom: 30px;">Cashier / Operator Signature</div>
       <div style="border-bottom: 1px solid #94a3b8; width: 80%;"></div>
     </div>
+    <div style="text-align: center;">
+      <div style="display: inline-block; border: 2.5px double #dc2626; outline: 1.5px dashed #dc2626; outline-offset: -5px; border-radius: 8px; padding: 10px 16px; text-align: center; color: #dc2626; transform: rotate(-3deg); background: rgba(220, 38, 38, 0.04); min-width: 175px;">
+        <div style="font-size: 8.5px; letter-spacing: 2px;">★ ★ ★</div>
+        <div style="font-size: 13px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; margin: 3px 0;">${(shopName || "RESTAURANT").toUpperCase()}</div>
+        <div style="font-size: 8px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase;">EXPENSE AUDIT VOUCHER</div>
+        <div style="font-size: 9px; font-weight: 800; color: #047857; margin-top: 3px;">VERIFIED &amp; APPROVED</div>
+        <div style="font-size: 8.5px; font-family: monospace; color: #64748b; margin-top: 2px;">${dateFormatted}</div>
+      </div>
+    </div>
     <div>
-      <div style="font-size: 11px; font-weight: 700; margin-bottom: 30px;">Manager / Owner Approval</div>
-      <div style="border-bottom: 1px solid #94a3b8; width: 80%;"></div>
+      <div style="font-size: 11px; font-weight: 700; margin-bottom: 30px; text-align: right;">Manager / Owner Approval</div>
+      <div style="border-bottom: 1px solid #94a3b8; width: 80%; margin-left: auto;"></div>
     </div>
   </div>
 </body>

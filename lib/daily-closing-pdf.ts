@@ -430,17 +430,29 @@ export function exportDailyClosingPDF(report: DailyClosingReportPDFInput): void 
     });
   }
 
-  // ─── DUAL AUDIT SIGN-OFF BLOCKS (BOTTOM OF PAGE) ────────────────
+  // ─── DUAL AUDIT SIGN-OFF BLOCKS & OFFICIAL SHOP AUDIT STAMP ──────
   const signY = 65;
   pdf.line(30, signY + 30, 565, signY + 30, [0.8, 0.85, 0.9], 1);
 
   pdf.text(`Closing Operator Sign-off (${report.closedBy || "Staff / Cashier"})`, 35, signY + 18, 7.5, true);
-  pdf.line(35, signY + 4, 250, signY + 4, [0.3, 0.35, 0.4], 1);
-  pdf.text("Physical Cash Counted & Register Reconciliation Verified", 35, signY - 6, 6.5, false, [0.5, 0.55, 0.6]);
+  pdf.line(35, signY + 4, 195, signY + 4, [0.3, 0.35, 0.4], 1);
+  pdf.text("Physical Cash Counted & Verified", 35, signY - 6, 6.5, false, [0.5, 0.55, 0.6]);
 
-  pdf.text("Store Manager / Owner Audit Acceptance", 320, signY + 18, 7.5, true);
-  pdf.line(320, signY + 4, 535, signY + 4, [0.3, 0.35, 0.4], 1);
-  pdf.text("Final Ledger Audit Approved & Safe Deposit Confirmed", 320, signY - 6, 6.5, false, [0.5, 0.55, 0.6]);
+  // OFFICIAL SHOP SEAL / STAMP (CENTERED)
+  const stampX = 220;
+  const stampY = signY - 8;
+  const stampW = 155;
+  const stampH = 38;
+  pdf.rect(stampX, stampY, stampW, stampH, [0.96, 0.98, 1], [0.12, 0.25, 0.6], 1.2);
+  pdf.rect(stampX + 2, stampY + 2, stampW - 4, stampH - 4, null, [0.12, 0.25, 0.6], 0.6);
+  pdf.text("★ OFFICIAL REGISTER AUDIT ★", stampX + 20, stampY + 28, 6.5, true, [0.12, 0.25, 0.6]);
+  const safeStampName = (shopName || "STORE").toUpperCase().slice(0, 22);
+  pdf.text(safeStampName, stampX + 16, stampY + 17, 8.5, true, [0.08, 0.18, 0.48]);
+  pdf.text(`VERIFIED & AUDITED • ${report.date}`, stampX + 22, stampY + 7, 6, true, [0.02, 0.45, 0.3]);
+
+  pdf.text("Store Manager / Owner Audit Acceptance", 395, signY + 18, 7.5, true);
+  pdf.line(395, signY + 4, 555, signY + 4, [0.3, 0.35, 0.4], 1);
+  pdf.text("Final Ledger Audit Approved & Confirmed", 395, signY - 6, 6.5, false, [0.5, 0.55, 0.6]);
 
   // Build binary buffer
   const binaryData = pdf.build();
@@ -619,7 +631,7 @@ export function openDailyClosingPrintView(report: DailyClosingReportPDFInput): v
     </table>
   </div>
 
-  <div style="margin-top: 36px; padding-top: 20px; border-top: 1.5px dashed #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+  <div style="margin-top: 36px; padding-top: 20px; border-top: 1.5px dashed #cbd5e1; display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center;">
     <div>
       <div style="font-size: 11px; font-weight: 800; margin-bottom: 30px;">
         Closing Operator Sign-off (${report.closedBy || "Staff / Cashier"})
@@ -627,12 +639,24 @@ export function openDailyClosingPrintView(report: DailyClosingReportPDFInput): v
       <div style="border-bottom: 1px solid #475569; width: 85%;"></div>
       <div style="font-size: 9px; color: #64748b; margin-top: 4px;">Physical Cash Counted &amp; Register Reconciliation Verified</div>
     </div>
+
+    <!-- Official Shop Seal / Stamp -->
+    <div style="text-align: center;">
+      <div style="display: inline-block; border: 2.5px double #1e3a8a; outline: 1.5px dashed #1e3a8a; outline-offset: -5px; border-radius: 8px; padding: 10px 16px; text-align: center; color: #1e3a8a; transform: rotate(-3deg); background: rgba(30, 58, 138, 0.04); min-width: 175px;">
+        <div style="font-size: 8.5px; letter-spacing: 2px;">★ ★ ★</div>
+        <div style="font-size: 13px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; margin: 3px 0;">${shopName.toUpperCase()}</div>
+        <div style="font-size: 8px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase;">OFFICIAL AUDIT SEAL</div>
+        <div style="font-size: 9px; font-weight: 800; color: #059669; margin-top: 3px;">VERIFIED &amp; CLOSED</div>
+        <div style="font-size: 8.5px; font-family: monospace; color: #64748b; margin-top: 2px;">${report.date}</div>
+      </div>
+    </div>
+
     <div>
-      <div style="font-size: 11px; font-weight: 800; margin-bottom: 30px;">
+      <div style="font-size: 11px; font-weight: 800; margin-bottom: 30px; text-align: right;">
         Store Manager / Owner Audit Acceptance
       </div>
-      <div style="border-bottom: 1px solid #475569; width: 85%;"></div>
-      <div style="font-size: 9px; color: #64748b; margin-top: 4px;">Audit Verified &amp; Ledger Archival Confirmed</div>
+      <div style="border-bottom: 1px solid #475569; width: 85%; margin-left: auto;"></div>
+      <div style="font-size: 9px; color: #64748b; margin-top: 4px; text-align: right;">Audit Verified &amp; Ledger Archival Confirmed</div>
     </div>
   </div>
 
