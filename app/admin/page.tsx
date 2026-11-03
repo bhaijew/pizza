@@ -84,7 +84,9 @@ export default async function AdminDashboardPage() {
         let pendingCountQuery = db
           .from("orders")
           .select("id", { count: "exact", head: true })
-          .in("status", ["pending", "preparing"]);
+          .in("status", ["pending", "preparing"])
+          .gte("created_at", shiftRange.startUtc)
+          .lte("created_at", shiftRange.endUtc);
         let todayQuery = db
           .from("orders")
           .select("*")

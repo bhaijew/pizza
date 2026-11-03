@@ -2878,6 +2878,32 @@ export async function recordDailyClosing(
 
   if (error) return { error: error.message, success: false };
 
+  // Auto-complete any unconfirmed orders from this shift so they don't get stuck in active orders next day
+  try {
+    let autoCloseQuery = db
+      .from("orders")
+      .update({
+        status: "delivered",
+        payment_status: "paid",
+      })
+      .in("status", ["pending", "preparing", "ready"]);
+
+    if (activeShop.shopId) {
+      autoCloseQuery = autoCloseQuery.eq("shop_id", activeShop.shopId);
+    } else {
+      autoCloseQuery = autoCloseQuery.is("shop_id", null);
+    }
+
+    const shiftRange = getBusinessShiftUtcRange(dateStr, summary.openingTime, summary.closingTime);
+    if (shiftRange?.endUtc) {
+      autoCloseQuery = autoCloseQuery.lte("created_at", shiftRange.endUtc);
+    }
+
+    await autoCloseQuery;
+  } catch (e) {
+    console.warn("[recordDailyClosing] auto-complete pending orders error:", e);
+  }
+
   dbCache.invalidateTag("daily_closings", "closings", "orders");
   revalidatePath("/admin/closing");
   revalidatePath("/admin/orders");
