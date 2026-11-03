@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   Smartphone,
   ExternalLink,
-  Download,
   Users,
   Settings,
   Flame,
@@ -229,30 +228,6 @@ server.listen(CONFIG.port, () => {
           </div>
 
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-            <button
-              type="button"
-              onClick={handleDownloadBridge}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "7px",
-                padding: "8px 15px",
-                borderRadius: "5px",
-                background: "#ffffff",
-                color: "#1e293b",
-                fontSize: "12px",
-                fontWeight: 800,
-                border: "1px solid #cbd5e1",
-                cursor: "pointer",
-                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
-                transition: "all 0.15s ease",
-              }}
-              className="hover:bg-slate-50 hover:border-slate-400"
-            >
-              <Download size={14} className="text-emerald-600" />
-              <span>Download Sole-What Bridge (.JS)</span>
-            </button>
-
             <a
               href="https://solewhat-production-33f6.up.railway.app/dashboard"
               target="_blank"
