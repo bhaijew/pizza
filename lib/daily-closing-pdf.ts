@@ -269,25 +269,60 @@ export function exportDailyClosingPDF(report: DailyClosingReportPDFInput): void 
   // Draw Page 1 Header
   drawHeaderOnPage(1);
 
-  // ─── FINANCIAL KPI CARDS ─────────────────────────────────────────
-  // Gross Sales
-  pdf.rect(30, 680, 170, 50, [0.97, 0.98, 0.99], [0.88, 0.91, 0.94]);
-  pdf.text(`GROSS SALES (${report.totalOrders} Orders)`, 40, 715, 7.5, true, [0.4, 0.45, 0.55]);
-  pdf.text(`${curr} ${Number(report.totalSales).toLocaleString()}`, 40, 695, 13, true, [0.06, 0.09, 0.16]);
+  // ─── CALCULATE CASH & ONLINE SALES FOR PDF ───────────────────────
+  let pdfCashSales = report.cashSales !== undefined ? report.cashSales : 0;
+  let pdfOnlineSales = report.onlineSales !== undefined ? report.onlineSales : 0;
+  let pdfCashCount = report.cashOrdersCount !== undefined ? report.cashOrdersCount : 0;
+  let pdfOnlineCount = report.onlineOrdersCount !== undefined ? report.onlineOrdersCount : 0;
 
-  // Net Cash / Profit
-  const isNetPos = report.netProfit >= 0;
-  const netBg: [number, number, number] = isNetPos ? [0.94, 0.99, 0.96] : [0.99, 0.95, 0.95];
-  const netBorder: [number, number, number] = isNetPos ? [0.73, 0.97, 0.82] : [0.99, 0.79, 0.79];
-  const netText: [number, number, number] = isNetPos ? [0.08, 0.4, 0.2] : [0.7, 0.1, 0.1];
-  pdf.rect(212, 680, 170, 50, netBg, netBorder);
-  pdf.text("NET CASH / PROFIT", 222, 715, 7.5, true, netText);
-  pdf.text(`${curr} ${Number(report.netProfit).toLocaleString()}`, 222, 695, 13, true, netText);
+  if (report.cashSales === undefined && Array.isArray(report.orders)) {
+    pdfCashSales = 0;
+    pdfOnlineSales = 0;
+    pdfCashCount = 0;
+    pdfOnlineCount = 0;
+    report.orders.filter(o => o.status !== 'cancelled').forEach(o => {
+      const tot = Number(o.total) || 0;
+      const pm = (o.payment_method || '').toLowerCase();
+      const nts = (o.notes || '').toLowerCase();
+      if (pm.includes('split') || nts.includes('split')) {
+        const cMatch = (o.notes || '').match(/cash:\s*(?:rs\.?\s*)?([0-9.]+)/i) || (o.payment_method || '').match(/cash:\s*(?:rs\.?\s*)?([0-9.]+)/i);
+        const oMatch = (o.notes || '').match(/online:\s*(?:rs\.?\s*)?([0-9.]+)/i) || (o.payment_method || '').match(/online:\s*(?:rs\.?\s*)?([0-9.]+)/i);
+        const c = cMatch ? parseFloat(cMatch[1]) : 0;
+        const onl = oMatch ? parseFloat(oMatch[1]) : Math.max(0, tot - c);
+        pdfCashSales += c;
+        pdfOnlineSales += onl;
+        if (c > 0) pdfCashCount++;
+        if (onl > 0) pdfOnlineCount++;
+      } else if (pm.includes('card') || pm.includes('online') || pm.includes('bank') || pm.includes('transfer') || nts.includes('payment: card') || nts.includes('payment: online') || nts.includes('paid via online') || nts.includes('paid via card')) {
+        pdfOnlineSales += tot;
+        pdfOnlineCount++;
+      } else {
+        pdfCashSales += tot;
+        pdfCashCount++;
+      }
+    });
+  }
 
-  // Day Expenses
-  pdf.rect(395, 680, 170, 50, [0.99, 0.95, 0.95], [0.99, 0.79, 0.79]);
-  pdf.text("TOTAL DAY EXPENSES", 405, 715, 7.5, true, [0.7, 0.1, 0.1]);
-  pdf.text(`-${curr} ${Number(report.totalExpenses).toLocaleString()}`, 405, 695, 13, true, [0.7, 0.1, 0.1]);
+  // ─── FINANCIAL KPI CARDS: 4 ROW CARDS ─────────────────────────────
+  // 1. Gross Sales (Width: 125)
+  pdf.rect(30, 680, 128, 50, [0.97, 0.98, 0.99], [0.88, 0.91, 0.94]);
+  pdf.text(`GROSS TOTAL (${report.totalOrders})`, 36, 715, 7, true, [0.4, 0.45, 0.55]);
+  pdf.text(`${curr} ${Number(report.totalSales).toLocaleString()}`, 36, 695, 11, true, [0.06, 0.09, 0.16]);
+
+  // 2. Cash Collected (Width: 128)
+  pdf.rect(165, 680, 128, 50, [0.94, 0.99, 0.96], [0.73, 0.97, 0.82]);
+  pdf.text(`CASH COLLECTED (${pdfCashCount})`, 171, 715, 7, true, [0.08, 0.4, 0.2]);
+  pdf.text(`${curr} ${Number(pdfCashSales).toLocaleString()}`, 171, 695, 11, true, [0.08, 0.4, 0.2]);
+
+  // 3. Online / Digital Sales (Width: 128)
+  pdf.rect(300, 680, 128, 50, [0.94, 0.98, 1], [0.73, 0.9, 0.99]);
+  pdf.text(`ONLINE / CARD (${pdfOnlineCount})`, 306, 715, 7, true, [0.01, 0.41, 0.63]);
+  pdf.text(`${curr} ${Number(pdfOnlineSales).toLocaleString()}`, 306, 695, 11, true, [0.01, 0.41, 0.63]);
+
+  // 4. Day Expenses (Width: 102)
+  pdf.rect(435, 680, 130, 50, [0.99, 0.95, 0.95], [0.99, 0.79, 0.79]);
+  pdf.text(`EXPENSES (${report.expenses?.length || 0})`, 441, 715, 7, true, [0.7, 0.1, 0.1]);
+  pdf.text(`-${curr} ${Number(report.totalExpenses).toLocaleString()}`, 441, 695, 11, true, [0.7, 0.1, 0.1]);
 
   // Sub-cards: Dine-In vs Takeaway
   pdf.rect(30, 642, 260, 26, [0.94, 0.98, 1], [0.73, 0.9, 0.99]);
@@ -585,7 +620,7 @@ export function openDailyClosingPrintView(report: DailyClosingReportPDFInput): v
           `;
           })
           .join("")
-      : `<tr><td colspan="7" style="padding: 16px; text-align: center; color: #94a3b8; font-size: 12px;">No orders found in this operational window.</td></tr>`;
+      : `<tr><td colspan="8" style="padding: 16px; text-align: center; color: #94a3b8; font-size: 12px;">No orders found in this operational window.</td></tr>`;
 
   const expensesRows =
     report.expenses && report.expenses.length > 0
@@ -643,22 +678,49 @@ export function openDailyClosingPrintView(report: DailyClosingReportPDFInput): v
     </div>
   </div>
 
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Gross Total Sales</div>
+  <!-- 5-Box Executive Financial Telemetry Grid: Gross, Cash, Online, Expenses, Net Profit -->
+  <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px;">
+    <!-- 1. Gross Revenue -->
+    <div class="kpi-card" style="border-top: 3.5px solid #0f172a; background: #ffffff;">
+      <div style="font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 800; letter-spacing: 0.5px;">Gross Total Sales</div>
       <div style="font-size: 20px; font-weight: 900; color: #0f172a; margin-top: 4px;">${curr} ${Number(report.totalSales).toLocaleString()}</div>
-      <div style="font-size: 11px; color: #64748b; margin-top: 2px;">${report.totalOrders} Completed Orders</div>
+      <div style="font-size: 10px; color: #64748b; margin-top: 2px;">${report.totalOrders} Completed Orders</div>
     </div>
-    <div class="kpi-card" style="background: ${report.netProfit >= 0 ? "#f0fdf4" : "#fef2f2"}; border-color: ${report.netProfit >= 0 ? "#bbf7d0" : "#fecaca"};">
-      <div style="font-size: 11px; color: ${report.netProfit >= 0 ? "#15803d" : "#b91c1c"}; font-weight: 700; text-transform: uppercase;">Net Cash / Profit</div>
-      <div style="font-size: 20px; font-weight: 900; color: ${report.netProfit >= 0 ? "#15803d" : "#b91c1c"}; margin-top: 4px;">${curr} ${Number(report.netProfit).toLocaleString()}</div>
-      <div style="font-size: 11px; color: #64748b; margin-top: 2px;">After all expense deductions</div>
+
+    <!-- 2. Cash Collected -->
+    <div class="kpi-card" style="border-top: 3.5px solid #059669; background: #f0fdf4; border-color: #bbf7d0;">
+      <div style="font-size: 10px; text-transform: uppercase; color: #047857; font-weight: 800; letter-spacing: 0.5px;">💵 Cash Collected</div>
+      <div style="font-size: 20px; font-weight: 900; color: #047857; margin-top: 4px;">${curr} ${Number(calculatedCashSales).toLocaleString()}</div>
+      <div style="font-size: 10px; color: #059669; margin-top: 2px;">${cashOrdersCount} Cash In-Till Orders</div>
     </div>
-    <div class="kpi-card" style="background: #fef2f2; border-color: #fecaca;">
-      <div style="font-size: 11px; color: #b91c1c; font-weight: 700; text-transform: uppercase;">Day Expenses</div>
+
+    <!-- 3. Online / Digital Sales -->
+    <div class="kpi-card" style="border-top: 3.5px solid #2563eb; background: #eff6ff; border-color: #bfdbfe;">
+      <div style="font-size: 10px; text-transform: uppercase; color: #1d4ed8; font-weight: 800; letter-spacing: 0.5px;">💳 Online / Transfer</div>
+      <div style="font-size: 20px; font-weight: 900; color: #1d4ed8; margin-top: 4px;">${curr} ${Number(calculatedOnlineSales).toLocaleString()}</div>
+      <div style="font-size: 10px; color: #2563eb; margin-top: 2px;">${onlineOrdersCount} Bank / Digital Orders</div>
+    </div>
+
+    <!-- 4. Operational Expenses -->
+    <div class="kpi-card" style="border-top: 3.5px solid #dc2626; background: #fef2f2; border-color: #fecaca;">
+      <div style="font-size: 10px; text-transform: uppercase; color: #b91c1c; font-weight: 800; letter-spacing: 0.5px;">Day Expenses</div>
       <div style="font-size: 20px; font-weight: 900; color: #b91c1c; margin-top: 4px;">-${curr} ${Number(report.totalExpenses).toLocaleString()}</div>
-      <div style="font-size: 11px; color: #64748b; margin-top: 2px;">${report.expenses?.length || 0} Expense items</div>
+      <div style="font-size: 10px; color: #991b1b; margin-top: 2px;">${report.expenses?.length || 0} Expense items</div>
     </div>
+
+    <!-- 5. Net Cash / Profit -->
+    <div class="kpi-card" style="border-top: 3.5px solid #7c3aed; background: #faf5ff; border-color: #e9d5ff;">
+      <div style="font-size: 10px; text-transform: uppercase; color: #6d28d9; font-weight: 800; letter-spacing: 0.5px;">Net Cash / Profit</div>
+      <div style="font-size: 20px; font-weight: 900; color: #6d28d9; margin-top: 4px;">${curr} ${Number(report.netProfit).toLocaleString()}</div>
+      <div style="font-size: 10px; font-weight: 700; color: #7c3aed; margin-top: 2px;">Till Cash: ${curr} ${Number(Math.max(0, calculatedCashSales - report.totalExpenses)).toLocaleString()}</div>
+    </div>
+  </div>
+
+  <!-- Channel Split Banner -->
+  <div style="display: flex; gap: 20px; font-size: 11px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 5px; padding: 6px 12px; margin-bottom: 16px;">
+    <div><strong>🍽️ Dine-In Table Sales:</strong> ${curr} ${Number(report.dineInSales).toLocaleString()} (${report.dineInOrdersCount} Orders)</div>
+    <div style="color: #cbd5e1;">|</div>
+    <div><strong>📦 Takeaway &amp; Delivery:</strong> ${curr} ${Number(report.takeawaySales).toLocaleString()} (${report.takeawayOrdersCount} Orders)</div>
   </div>
 
   <div style="margin-top: 20px;">
@@ -673,6 +735,7 @@ export function openDailyClosingPrintView(report: DailyClosingReportPDFInput): v
           <th>Type / Table</th>
           <th>Customer</th>
           <th>Items Summary</th>
+          <th style="text-align: center;">Payment Mode</th>
           <th>Status</th>
           <th style="text-align: right;">Total</th>
         </tr>
