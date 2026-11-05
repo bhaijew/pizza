@@ -2683,7 +2683,7 @@ export async function getShopActiveShiftBoundary(shopId?: number | null): Promis
 
 
 // Helper function to extract exact cash vs online vs split payment breakdown from an order
-export function parseOrderPaymentBreakdown(o: any): { cash: number; online: number; type: 'cash' | 'online' | 'split' } {
+function parseOrderPaymentBreakdown(o: any): { cash: number; online: number; type: 'cash' | 'online' | 'split' } {
   const total = Number(o.total) || 0;
   const pm = (o.payment_method || '').toLowerCase();
   const notes = (o.notes || '').toLowerCase();
