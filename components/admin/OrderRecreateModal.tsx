@@ -27,6 +27,8 @@ import {
   Edit2,
   Check,
   ExternalLink,
+  ChefHat,
+  Filter,
 } from "lucide-react";
 
 export interface RecreateItemState {
@@ -75,7 +77,9 @@ export default function OrderRecreateModal({
   const [deliveryAddress, setDeliveryAddress] = useState<string>("");
   const [isEditingCustomer, setIsEditingCustomer] = useState(false);
 
-  // Add Item state
+  // Product Catalog & Filter State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [addMode, setAddMode] = useState<"menu" | "custom">("menu");
   const [selectedProductId, setSelectedProductId] = useState<string | number>("");
   const [selectedVariation, setSelectedVariation] = useState<any>(null);
@@ -117,6 +121,8 @@ export default function OrderRecreateModal({
     setCustomPrice("");
     setCustomQty(1);
     setIsEditingCustomer(false);
+    setSearchQuery("");
+    setSelectedCategory("all");
 
     // Initialize Customer Info
     let initialAddress = order.delivery_address || "";
@@ -165,6 +171,33 @@ export default function OrderRecreateModal({
       setSelectedVariation(null);
     }
   }, [currentSelectedProduct]);
+
+  // Categories list
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    availableProducts.forEach((p) => {
+      if (p.category_name && p.category_name.trim()) {
+        set.add(p.category_name.trim());
+      }
+    });
+    return ["all", ...Array.from(set)];
+  }, [availableProducts]);
+
+  // Filtered products
+  const filteredProducts = useMemo(() => {
+    return availableProducts.filter((p) => {
+      const matchesSearch =
+        !searchQuery.trim() ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.category_name && p.category_name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      const matchesCat =
+        selectedCategory === "all" ||
+        (p.category_name && p.category_name.toLowerCase() === selectedCategory.toLowerCase());
+
+      return matchesSearch && matchesCat;
+    });
+  }, [availableProducts, searchQuery, selectedCategory]);
 
   // Calculate live totals
   const itemsSubtotal = useMemo(() => {
@@ -223,7 +256,18 @@ export default function OrderRecreateModal({
     );
   };
 
-  // Add Product from Menu dropdown
+  // Select a product from the visual grid
+  const handleSelectProductCard = (product: ShopMenuProduct) => {
+    setSelectedProductId(product.id);
+    setAddQty(1);
+    if (product.variations && product.variations.length > 0) {
+      setSelectedVariation(product.variations[0]);
+    } else {
+      setSelectedVariation(null);
+    }
+  };
+
+  // Add Product from Menu
   const handleAddSelectedProduct = () => {
     if (!currentSelectedProduct) return;
 
@@ -250,8 +294,6 @@ export default function OrderRecreateModal({
       ]);
     }
 
-    setSelectedProductId("");
-    setSelectedVariation(null);
     setAddQty(1);
   };
 
@@ -327,14 +369,16 @@ export default function OrderRecreateModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-hidden"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isPending) onClose();
       }}
     >
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        {/* ─── MODAL HEADER ────────────────────────────────────────── */}
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-20 shrink-0">
+      {/* ─── FULL SIZE MODAL CONTAINER (EXPANSIVE WIDESCREEN) ────── */}
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 w-full max-w-6xl xl:max-w-7xl h-[94vh] max-h-[94vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        
+        {/* ─── HEADER BAR ────────────────────────────────────────── */}
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-20 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-600 via-amber-500 to-orange-500 text-white flex items-center justify-center shadow-md shadow-orange-500/20 shrink-0">
               <RefreshCw size={20} className={isPending ? "animate-spin" : ""} />
@@ -342,11 +386,15 @@ export default function OrderRecreateModal({
             <div>
               <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                 <span className="bg-gradient-to-r from-orange-600 to-amber-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
-                  Order Recreate System
+                  Recreate Order Window
                 </span>
                 <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-mono font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
                   <Lock size={10} className="text-emerald-600" />
-                  {order.order_number} <span className="text-emerald-600/70 font-sans font-medium">(ID Kept Same)</span>
+                  Order #{order.order_number}
+                  <span className="text-emerald-600/70 font-sans font-medium hidden sm:inline">(ID Kept Same)</span>
+                </span>
+                <span className="bg-slate-100 text-slate-700 text-[11px] font-bold px-2 py-0.5 rounded-full capitalize">
+                  {(order as any).type || (order as any).order_type || "takeaway"}
                 </span>
               </div>
               <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug">
@@ -355,482 +403,645 @@ export default function OrderRecreateModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Link
               href={`/admin/orders/recreate/${order.id}`}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 font-extrabold text-xs border border-orange-200 transition-colors shadow-2xs"
-              title="Open dedicated Full Page Order Recreator"
+              title="Open full page recreate view"
             >
               <ExternalLink size={13} />
-              <span>Full Page View</span>
+              <span className="hidden sm:inline">Full Page View</span>
             </Link>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isPending}
-            className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-all cursor-pointer"
-            title="Close"
-          >
-            <X size={20} />
-          </button>
-          </div>
-        </div>
-
-        {/* ─── SCROLLABLE CONTENT BODY ─────────────────────────────── */}
-        <div className="p-4 sm:p-6 overflow-y-auto space-y-4">
-          {errorMsg && (
-            <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-xs font-semibold flex items-center gap-2.5 shadow-xs">
-              <AlertCircle size={17} className="shrink-0 text-red-600" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          {/* ─── CUSTOMER & TIME CARD ──────────────────────────────── */}
-          <div className="bg-gradient-to-br from-amber-50/60 via-orange-50/30 to-amber-50/50 border border-amber-200/80 rounded-2xl p-4 space-y-3 shadow-xs">
-            {/* Top: Customer Details Header & Edit Button */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5 text-xs text-slate-800 flex-1 min-w-0">
-                <div className="w-7 h-7 rounded-full bg-orange-100 border border-orange-200 text-orange-700 flex items-center justify-center shrink-0">
-                  <User size={13} />
-                </div>
-                <div className="truncate flex items-center gap-2 flex-wrap">
-                  <span className="font-extrabold text-slate-900 text-sm truncate">
-                    {customerName || order.customer_name || "Guest Customer"}
-                  </span>
-                  {(customerPhone || order.customer_phone) && (
-                    <span className="bg-white/80 border border-amber-200 text-amber-900 font-mono font-bold text-xs px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1 shadow-2xs">
-                      <Phone size={10} className="text-orange-600" />
-                      {customerPhone || order.customer_phone}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsEditingCustomer(!isEditingCustomer)}
-                className="text-[11px] font-bold text-orange-800 hover:text-orange-950 bg-white border border-amber-300 hover:bg-orange-100/60 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-2xs active:scale-95"
-              >
-                <Edit2 size={11} className="text-orange-600" />
-                <span>{isEditingCustomer ? "Done Editing" : "Change Info"}</span>
-              </button>
-            </div>
-
-            {/* Editable Customer Fields (Toggled) */}
-            {isEditingCustomer && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-amber-200/70 animate-in fade-in duration-150">
-                <div>
-                  <label className="text-[10px] font-extrabold text-amber-900 uppercase tracking-wider block mb-1">
-                    Customer Name
-                  </label>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Customer Name"
-                    className="w-full px-3 py-1.5 text-xs font-semibold bg-white border border-amber-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-2xs"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-extrabold text-amber-900 uppercase tracking-wider block mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="e.g. 03334867615"
-                    className="w-full px-3 py-1.5 text-xs font-mono font-bold bg-white border border-amber-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-2xs"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-extrabold text-amber-900 uppercase tracking-wider block mb-1">
-                    Delivery Address
-                  </label>
-                  <input
-                    type="text"
-                    value={deliveryAddress}
-                    onChange={(e) => setDeliveryAddress(e.target.value)}
-                    placeholder="House, Street, Area"
-                    className="w-full px-3 py-1.5 text-xs font-semibold bg-white border border-amber-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-2xs"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Delivery address display if present and not editing */}
-            {!isEditingCustomer && (deliveryAddress || order.delivery_address) && (
-              <div className="flex items-center gap-1.5 text-xs text-slate-700 bg-white/60 border border-amber-100 rounded-xl px-2.5 py-1">
-                <MapPin size={12} className="text-orange-600 shrink-0" />
-                <span className="truncate font-medium">{deliveryAddress || order.delivery_address}</span>
-              </div>
-            )}
-
-            {/* Bottom: Time Info & Reset Toggle */}
-            <div className="flex items-center justify-between pt-2.5 border-t border-amber-200/70 gap-2 flex-wrap">
-              <div className="text-xs text-slate-700 font-medium flex items-center gap-2 flex-wrap">
-                <Clock size={13} className="text-orange-600 shrink-0" />
-                <span>
-                  Original: <strong className="font-mono text-slate-900 font-bold">{originalTimeFormatted || "--:--"}</strong>
-                </span>
-                <span className="text-orange-500 font-bold">→</span>
-                <span>
-                  New: <strong className="font-mono text-orange-700 font-bold">{currentTimeFormatted}</strong>
-                </span>
-                <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded">NOW</span>
-              </div>
-
-              <label
-                className={`inline-flex items-center gap-2 px-3 py-1 rounded-xl text-xs font-bold cursor-pointer transition-all border ${
-                  resetTime
-                    ? "bg-white border-orange-400 text-orange-900 shadow-2xs ring-1 ring-orange-200"
-                    : "bg-amber-100/40 border-amber-200 text-slate-500"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={resetTime}
-                  onChange={(e) => setResetTime(e.target.checked)}
-                  className="rounded text-orange-600 focus:ring-orange-500 cursor-pointer"
-                />
-                <span>Reset Time to Now</span>
-              </label>
-            </div>
-          </div>
-
-          {/* ─── ORDER ITEMS SECTION ───────────────────────────────── */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between px-0.5">
-              <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <span>Order Items</span>
-                <span className="bg-slate-200 text-slate-700 text-[10px] font-black px-2 py-0.2 rounded-full">
-                  {items.length} {items.length === 1 ? "item" : "items"}
-                </span>
-              </h3>
-              <span className="text-[11px] text-slate-400">
-                Adjust quantities or edit price per item
-              </span>
-            </div>
-
-            <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 bg-white shadow-2xs">
-              {items.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-xs space-y-1">
-                  <p className="font-semibold text-slate-600">No items in this order.</p>
-                  <p>Add products using the selector below to continue.</p>
-                </div>
-              ) : (
-                items.map((item, idx) => {
-                  const lineTotal = item.price * item.qty;
-
-                  return (
-                    <div
-                      key={idx}
-                      className="p-3 sm:p-3.5 text-xs flex items-center justify-between gap-3 hover:bg-slate-50/70 transition-colors"
-                    >
-                      {/* Item Details */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-black text-slate-900 text-sm">
-                            {item.name}
-                          </span>
-                          {item.detail && (
-                            <span className="bg-orange-50 text-orange-700 border border-orange-200 text-[11px] font-extrabold px-2 py-0.5 rounded-lg shadow-2xs">
-                              {item.detail}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Quantity Stepper & Price */}
-                      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                        {/* Stepper */}
-                        <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 overflow-hidden shadow-2xs">
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateQty(idx, -1)}
-                            className="w-7 h-7 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors flex items-center justify-center font-black text-sm cursor-pointer"
-                            title="Decrease quantity"
-                          >
-                            −
-                          </button>
-                          <span className="px-2 text-xs font-black font-mono text-slate-900 min-w-6 text-center">
-                            {item.qty}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateQty(idx, 1)}
-                            className="w-7 h-7 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors flex items-center justify-center cursor-pointer"
-                            title="Increase quantity"
-                          >
-                            <Plus size={12} />
-                          </button>
-                        </div>
-
-                        {/* Unit Price Input */}
-                        <div
-                          className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 focus-within:ring-2 focus-within:ring-orange-500/20 focus-within:border-orange-500 transition-all"
-                          title="Click to override unit price"
-                        >
-                          <span className="text-[10px] text-slate-400 font-bold mr-1">@ {currencySymbol}</span>
-                          <input
-                            type="number"
-                            min="0"
-                            value={item.price}
-                            onChange={(e) => handleUpdatePrice(idx, Number(e.target.value) || 0)}
-                            className="w-14 sm:w-16 text-xs font-mono font-bold text-slate-900 bg-transparent text-right focus:outline-none"
-                          />
-                        </div>
-
-                        {/* Line Total */}
-                        <div className="font-mono font-black text-slate-900 min-w-16 sm:min-w-20 text-right text-xs sm:text-sm">
-                          {currencySymbol}{lineTotal.toLocaleString()}
-                        </div>
-
-                        {/* Delete */}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(idx)}
-                          className="w-7 h-7 flex items-center justify-center text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                          title="Remove item"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {/* ─── ADD PRODUCT TO ORDER BOX ──────────────────────────── */}
-          <div className="border border-amber-200/90 bg-gradient-to-br from-amber-50/40 via-white to-orange-50/30 rounded-2xl p-4 space-y-3 shadow-xs">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
-                <Plus size={14} className="text-orange-600 stroke-[3]" />
-                Add Product to Order
-                <span className="text-slate-400 font-normal text-[11px] hidden sm:inline">(e.g. +1 Burger, Drink, Pizza)</span>
-              </span>
-
-              {/* Mode Toggle */}
-              <div className="flex bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-[11px] font-bold">
-                <button
-                  type="button"
-                  onClick={() => setAddMode("menu")}
-                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                    addMode === "menu"
-                      ? "bg-white text-slate-900 shadow-2xs font-extrabold"
-                      : "text-slate-500 hover:text-slate-900"
-                  }`}
-                >
-                  From Menu
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAddMode("custom")}
-                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                    addMode === "custom"
-                      ? "bg-white text-slate-900 shadow-2xs font-extrabold"
-                      : "text-slate-500 hover:text-slate-900"
-                  }`}
-                >
-                  Custom Item
-                </button>
-              </div>
-            </div>
-
-            {addMode === "menu" ? (
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                  {/* Select Product */}
-                  <select
-                    value={selectedProductId}
-                    onChange={(e) => setSelectedProductId(e.target.value)}
-                    className="flex-1 min-w-[200px] px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs cursor-pointer"
-                  >
-                    <option value="">-- Select Product from Menu --</option>
-                    {availableProducts.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} {p.category_name ? `(${p.category_name})` : ""} - {currencySymbol}{Number(p.price).toLocaleString()}
-                      </option>
-                    ))}
-                  </select>
-
-                  {/* Quantity */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-xs text-slate-500 font-bold">Qty:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      value={addQty}
-                      onChange={(e) => setAddQty(Math.max(1, Number(e.target.value) || 1))}
-                      className="w-14 px-2 py-2 text-xs font-black text-center bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs"
-                    />
-                  </div>
-
-                  {/* Add Button */}
-                  <button
-                    type="button"
-                    disabled={!selectedProductId}
-                    onClick={handleAddSelectedProduct}
-                    className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white text-xs font-black rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-sm shadow-orange-600/20 cursor-pointer active:scale-95 shrink-0"
-                  >
-                    <Plus size={14} className="stroke-[3]" />
-                    <span>Add Item</span>
-                  </button>
-                </div>
-
-                {/* Size Variations Chips if available */}
-                {currentSelectedProduct?.variations && currentSelectedProduct.variations.length > 0 && (
-                  <div className="flex items-center gap-2 flex-wrap pt-1 pl-0.5">
-                    <span className="text-[11px] font-extrabold text-slate-600 flex items-center gap-1">
-                      <Pizza size={12} className="text-orange-600" />
-                      Select Size:
-                    </span>
-                    {currentSelectedProduct.variations.map((v: any, idx: number) => {
-                      const isSelected = selectedVariation?.name === v.name;
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setSelectedVariation(v)}
-                          className={`px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1 ${
-                            isSelected
-                              ? "bg-orange-600 text-white shadow-sm shadow-orange-600/20 ring-2 ring-orange-600/30"
-                              : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300"
-                          }`}
-                        >
-                          {isSelected && <Check size={11} className="stroke-[3]" />}
-                          <span>{v.name}</span>
-                          <span className={isSelected ? "text-orange-100 font-mono" : "text-slate-400 font-mono text-[11px]"}>
-                            ({currencySymbol}{Number(v.price).toLocaleString()})
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* Custom Item Inputs */
-              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                <input
-                  type="text"
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  placeholder="Item Name (e.g. 1.5L Drink, Extra Dip)"
-                  className="flex-1 min-w-[180px] px-3 py-2 text-xs font-semibold bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  value={customPrice}
-                  onChange={(e) => setCustomPrice(e.target.value === "" ? "" : Number(e.target.value))}
-                  placeholder="Price"
-                  className="w-24 px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 font-mono font-bold text-right focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs"
-                />
-                <input
-                  type="number"
-                  min="1"
-                  value={customQty}
-                  onChange={(e) => setCustomQty(Math.max(1, Number(e.target.value) || 1))}
-                  className="w-14 px-2 py-2 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 text-center font-black focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs"
-                />
-                <button
-                  type="button"
-                  disabled={!customName.trim()}
-                  onClick={handleAddCustomItem}
-                  className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white text-xs font-black rounded-xl transition-all disabled:opacity-40 flex items-center gap-1.5 shadow-sm shadow-orange-600/20 cursor-pointer active:scale-95 shrink-0"
-                >
-                  <Plus size={14} className="stroke-[3]" />
-                  <span>Add Custom</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* ─── STATUS & REASON ROW ───────────────────────────────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <div>
-              <label className="text-[10px] font-extrabold text-slate-600 uppercase tracking-wider block mb-1">
-                Status After Recreate
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-bold bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs cursor-pointer"
-              >
-                <option value="preparing">🍳 Preparing (Send to Kitchen)</option>
-                <option value="ready">🛵 Ready (Pickup / Dispatch)</option>
-                <option value="delivered">✅ Delivered / Served</option>
-                <option value="pending">⏳ Pending Approval</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-extrabold text-slate-600 uppercase tracking-wider block mb-1">
-                Reason / Request Note
-              </label>
-              <input
-                type="text"
-                value={notesInput}
-                onChange={(e) => setNotesInput(e.target.value)}
-                placeholder="e.g. Customer called to add 1 burger"
-                className="w-full px-3 py-2 text-xs font-semibold bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* ─── MODAL FOOTER ────────────────────────────────────────── */}
-        <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/90 backdrop-blur-md flex items-center justify-between gap-3 sticky bottom-0 z-20 shrink-0">
-          <div className="flex items-center gap-3 sm:gap-4 text-xs font-medium">
             <button
               type="button"
               onClick={onClose}
               disabled={isPending}
-              className="px-4 py-2.5 border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs active:scale-95 shadow-2xs"
+              className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-all cursor-pointer"
+              title="Close window"
             >
-              Cancel
+              <X size={20} />
             </button>
+          </div>
+        </div>
 
-            <div className="text-slate-500 hidden sm:flex items-center gap-2.5">
-              <span>Subtotal: <strong className="font-mono text-slate-900 font-bold">{currencySymbol}{itemsSubtotal.toLocaleString()}</strong></span>
-              <span className="text-slate-300">•</span>
-              <div className="flex items-center gap-1.5">
-                <Bike size={13} className="text-slate-400 shrink-0" />
-                <span className="text-slate-600 font-bold">Delivery:</span>
-                <span className="text-slate-400 font-mono text-[11px]">{currencySymbol}</span>
+        {/* ─── ERROR ALERT ─────────────────────────────────────────── */}
+        {errorMsg && (
+          <div className="mx-5 mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-semibold flex items-center gap-2 shrink-0">
+            <AlertCircle size={16} className="shrink-0 text-red-600" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* ─── TWO-COLUMN WORKSPACE BODY ───────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-hidden min-h-0">
+          
+          {/* ════════════════════════════════════════════════════════════
+              LEFT COLUMN: ORDER ITEMS, CUSTOMER & SETTINGS (7 COLS)
+              ════════════════════════════════════════════════════════════ */}
+          <div className="lg:col-span-7 flex flex-col h-full overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-200">
+            
+            {/* Scrollable Items & Details Area */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+              
+              {/* Customer Strip & Time Settings */}
+              <div className="bg-gradient-to-br from-amber-50/70 via-orange-50/30 to-amber-50/50 border border-amber-200/80 rounded-2xl p-3.5 space-y-2.5 shadow-2xs">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 text-xs flex-1 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-orange-100 border border-orange-200 text-orange-700 flex items-center justify-center shrink-0">
+                      <User size={13} />
+                    </div>
+                    <div className="truncate flex items-center gap-2">
+                      <span className="font-black text-slate-900 text-sm truncate">
+                        {customerName || order.customer_name || "Guest Customer"}
+                      </span>
+                      {(customerPhone || order.customer_phone) && (
+                        <span className="text-[11px] font-mono font-bold text-slate-500 bg-white/80 border border-amber-200/60 px-1.5 py-0.5 rounded">
+                          {customerPhone || order.customer_phone}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Edit Customer Button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingCustomer(!isEditingCustomer)}
+                    className="text-[11px] font-extrabold text-orange-600 hover:text-orange-700 flex items-center gap-1 cursor-pointer bg-white/80 border border-orange-200 px-2 py-0.5 rounded-lg shadow-2xs"
+                  >
+                    <Edit2 size={11} />
+                    <span>{isEditingCustomer ? "Done" : "Edit Customer"}</span>
+                  </button>
+                </div>
+
+                {/* Delivery Address badge */}
+                {(deliveryAddress || order.delivery_address) && (
+                  <div className="flex items-center gap-1.5 text-xs text-slate-700 bg-white/90 border border-amber-200/80 rounded-xl px-2.5 py-1">
+                    <MapPin size={12} className="text-orange-600 shrink-0" />
+                    <span className="font-bold">Delivery:</span>
+                    <span className="truncate">{deliveryAddress || order.delivery_address}</span>
+                  </div>
+                )}
+
+                {/* Inline Customer Edit Form */}
+                {isEditingCustomer && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-amber-200/60">
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Customer Name"
+                      className="px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    />
+                    <input
+                      type="text"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="Phone Number"
+                      className="px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg font-mono font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    />
+                    <input
+                      type="text"
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      placeholder="Delivery Address"
+                      className="px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    />
+                  </div>
+                )}
+
+                {/* Reset Time & Status Bar */}
+                <div className="flex items-center justify-between gap-3 pt-1 border-t border-amber-200/40 text-xs flex-wrap">
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <Clock size={12} className="text-orange-600" />
+                    <span className="text-[11px]">Original: <strong>{originalTimeFormatted || "--:--"}</strong></span>
+                    <span className="text-slate-400">→</span>
+                    <span className="text-[11px]">New: <strong className="text-orange-600">{currentTimeFormatted}</strong></span>
+                    <label className="ml-1 inline-flex items-center gap-1 cursor-pointer font-bold text-slate-800 text-[11px]">
+                      <input
+                        type="checkbox"
+                        checked={resetTime}
+                        onChange={(e) => setResetTime(e.target.checked)}
+                        className="rounded text-orange-600 focus:ring-orange-500 cursor-pointer"
+                      />
+                      <span>Reset Time to Now</span>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold text-slate-500">Status:</span>
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-0.5 text-xs font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    >
+                      <option value="preparing">🍳 Preparing (Kitchen)</option>
+                      <option value="ready">🛵 Ready</option>
+                      <option value="delivered">✅ Delivered</option>
+                      <option value="pending">⏳ Pending</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Items Header */}
+              <div className="flex items-center justify-between px-0.5 pt-1">
+                <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Layers size={14} className="text-orange-600" />
+                  <span>Items in Recreated Ticket</span>
+                  <span className="bg-orange-100 text-orange-800 text-[10px] font-black px-2 py-0.5 rounded-full">
+                    {items.length} {items.length === 1 ? "Item" : "Items"}
+                  </span>
+                </h3>
+                <span className="text-[11px] text-slate-400">
+                  Override prices or quantities directly
+                </span>
+              </div>
+
+              {/* Items List */}
+              <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 bg-white shadow-2xs">
+                {items.length === 0 ? (
+                  <div className="p-10 text-center text-slate-400 text-xs space-y-2">
+                    <ChefHat size={36} className="mx-auto text-slate-300" />
+                    <p className="font-bold text-slate-700 text-sm">No items in this order ticket.</p>
+                    <p className="text-slate-400">Select any Pizza, Burger, or Deal from the right catalog.</p>
+                  </div>
+                ) : (
+                  items.map((item, idx) => {
+                    const lineTotal = item.price * item.qty;
+
+                    return (
+                      <div
+                        key={idx}
+                        className="p-3 sm:p-3.5 text-xs flex items-center justify-between gap-3 hover:bg-slate-50/70 transition-colors"
+                      >
+                        {/* Item Name & Variation Badge */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-black text-slate-900 text-sm">
+                              {item.name}
+                            </span>
+                            {item.detail && (
+                              <span className="bg-orange-50 text-orange-700 border border-orange-200 text-[11px] font-extrabold px-2 py-0.5 rounded-lg shadow-2xs flex items-center gap-1">
+                                <Pizza size={10} className="text-orange-600" />
+                                {item.detail}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Quantity Controls, Unit Price, Line Total, Trash */}
+                        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                          {/* Stepper */}
+                          <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 overflow-hidden shadow-2xs">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateQty(idx, -1)}
+                              className="w-7 h-7 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors flex items-center justify-center font-black text-sm cursor-pointer"
+                              title="Decrease quantity"
+                            >
+                              −
+                            </button>
+                            <span className="px-2 text-xs font-black font-mono text-slate-900 min-w-6 text-center">
+                              {item.qty}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateQty(idx, 1)}
+                              className="w-7 h-7 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors flex items-center justify-center cursor-pointer"
+                              title="Increase quantity"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+
+                          {/* Unit Price Override Input */}
+                          <div
+                            className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2 py-1 focus-within:ring-2 focus-within:ring-orange-500/20 focus-within:border-orange-500 transition-all"
+                            title="Edit unit price"
+                          >
+                            <span className="text-[10px] text-slate-400 font-bold mr-1">@ {currencySymbol}</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={item.price}
+                              onChange={(e) => handleUpdatePrice(idx, Number(e.target.value) || 0)}
+                              className="w-14 sm:w-16 text-xs font-mono font-bold text-slate-900 bg-transparent text-right focus:outline-none"
+                            />
+                          </div>
+
+                          {/* Line Total */}
+                          <div className="font-mono font-black text-slate-900 min-w-16 text-right text-xs sm:text-sm">
+                            {currencySymbol}{lineTotal.toLocaleString()}
+                          </div>
+
+                          {/* Remove button */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(idx)}
+                            className="w-7 h-7 flex items-center justify-center text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            title="Remove item"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Recreate Notes input */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                  Recreate Audit Note / Instruction (Optional)
+                </label>
                 <input
-                  type="number"
-                  min="0"
-                  value={deliveryFee}
-                  onChange={(e) => setDeliveryFee(Math.max(0, Number(e.target.value) || 0))}
-                  className="w-16 px-1.5 py-1 text-xs font-mono font-bold text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-right shadow-2xs"
-                  title="Edit delivery charge"
+                  type="text"
+                  value={notesInput}
+                  onChange={(e) => setNotesInput(e.target.value)}
+                  placeholder="e.g. Customer called to change 1 Large Pizza to Fajita"
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs"
                 />
+              </div>
+            </div>
+
+            {/* Left Column Sticky Bottom: Totals & Submit */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50/90 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-3 text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={isPending}
+                  className="px-3.5 py-2 border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs shadow-2xs"
+                >
+                  Cancel
+                </button>
+
+                <div className="text-slate-500 hidden sm:flex items-center gap-2">
+                  <span>Subtotal: <strong className="font-mono text-slate-900 font-bold">{currencySymbol}{itemsSubtotal.toLocaleString()}</strong></span>
+                  <span className="text-slate-300">•</span>
+                  <div className="flex items-center gap-1">
+                    <Bike size={12} className="text-slate-400" />
+                    <span className="text-slate-600 font-bold">Delivery:</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={deliveryFee}
+                      onChange={(e) => setDeliveryFee(Math.max(0, Number(e.target.value) || 0))}
+                      className="w-16 px-1.5 py-1 text-xs font-mono font-bold text-slate-900 bg-white border border-slate-300 rounded-lg text-right shadow-2xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-extrabold text-slate-400 block -mb-0.5">Grand Total</span>
+                  <span className="text-base sm:text-xl font-black font-mono text-slate-900">
+                    {currencySymbol}{grandTotal.toLocaleString()}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={isPending || items.length === 0}
+                  onClick={handleSaveRecreatedOrder}
+                  className="px-5 py-2.5 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-600 hover:from-orange-700 hover:to-amber-700 text-white text-xs sm:text-sm font-black rounded-xl transition-all shadow-md shadow-orange-600/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer active:scale-98"
+                >
+                  <RefreshCw size={14} className={isPending ? "animate-spin" : ""} />
+                  <span>{isPending ? "Recreating..." : "Save & Recreate"}</span>
+                </button>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4">
-            {/* Total Badge */}
-            <div className="text-right">
-              <span className="text-[10px] uppercase font-extrabold text-slate-400 block -mb-0.5">Grand Total</span>
-              <span className="text-base sm:text-xl font-black font-mono text-slate-900">
-                {currencySymbol}{grandTotal.toLocaleString()}
-              </span>
+
+          {/* ════════════════════════════════════════════════════════════
+              RIGHT COLUMN: INTERACTIVE PIZZA & MENU CATALOG (5 COLS)
+              ════════════════════════════════════════════════════════════ */}
+          <div className="lg:col-span-5 flex flex-col h-full bg-slate-50/70 overflow-hidden">
+            
+            {/* Catalog Top Bar: Search & Mode Toggle */}
+            <div className="p-3.5 border-b border-slate-200 bg-white space-y-2.5 shrink-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 font-black text-xs text-slate-900 uppercase tracking-wide">
+                  <Sparkles size={14} className="text-orange-600" />
+                  <span>Select Items &amp; Pizza Sizes</span>
+                </div>
+
+                {/* Mode Selector */}
+                <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[11px] font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setAddMode("menu")}
+                    className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                      addMode === "menu" ? "bg-white text-orange-600 shadow-2xs font-black" : "text-slate-600"
+                    }`}
+                  >
+                    Menu Catalog
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAddMode("custom")}
+                    className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                      addMode === "custom" ? "bg-white text-orange-600 shadow-2xs font-black" : "text-slate-600"
+                    }`}
+                  >
+                    Custom Item
+                  </button>
+                </div>
+              </div>
+
+              {addMode === "menu" && (
+                <>
+                  {/* Search input */}
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search pizza, flavor, burger, drink..."
+                      className="w-full pl-8.5 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 font-medium"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Category Pills */}
+                  {categories.length > 1 && (
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-[11px] font-bold">
+                      {categories.map((cat) => {
+                        const isSelected = selectedCategory === cat;
+                        const label = cat === "all" ? "All Products" : cat;
+                        const isPizzaCat = cat.toLowerCase().includes("pizza");
+
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`px-2.5 py-1 rounded-lg shrink-0 transition-all cursor-pointer flex items-center gap-1 ${
+                              isSelected
+                                ? "bg-orange-600 text-white font-black shadow-xs"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                            }`}
+                          >
+                            {isPizzaCat && <span>🍕</span>}
+                            <span>{label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
-            <button
-              type="button"
-              disabled={isPending || items.length === 0}
-              onClick={handleSaveRecreatedOrder}
-              className="px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-600 hover:from-orange-700 hover:to-amber-700 text-white text-xs sm:text-sm font-black rounded-xl transition-all shadow-md shadow-orange-600/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer active:scale-98"
-            >
-              <RefreshCw size={14} className={isPending ? "animate-spin" : ""} />
-              <span>{isPending ? "Recreating..." : "Save & Recreate Order"}</span>
-            </button>
+            {/* Catalog Content Area */}
+            {addMode === "custom" ? (
+              /* Custom Item Form */
+              <div className="p-4 space-y-3 flex-1 overflow-y-auto">
+                <div className="bg-white border border-amber-200 rounded-2xl p-4 space-y-3 shadow-xs">
+                  <h4 className="font-black text-xs text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                    <Plus size={14} className="text-orange-600 stroke-[3]" />
+                    <span>Add Custom / Special Item</span>
+                  </h4>
+                  <p className="text-slate-500 text-xs">
+                    Quickly add off-menu item, special sauce, or custom charges to this ticket.
+                  </p>
+
+                  <div className="space-y-2.5">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Item Title / Name *</label>
+                      <input
+                        type="text"
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        placeholder="e.g. Extra 1.5L Drink, Loaded Fries"
+                        className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Unit Price ({currencySymbol}) *</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={customPrice}
+                          onChange={(e) => setCustomPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                          placeholder="Price"
+                          className="w-full px-3 py-2 text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-1 focus:ring-orange-500 text-right"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Quantity</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={customQty}
+                          onChange={(e) => setCustomQty(Math.max(1, Number(e.target.value) || 1))}
+                          className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-center focus:outline-none focus:ring-1 focus:ring-orange-500"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={!customName.trim()}
+                      onClick={handleAddCustomItem}
+                      className="w-full py-2.5 bg-orange-600 hover:bg-orange-700 active:scale-98 text-white text-xs font-black rounded-xl transition-all shadow-md shadow-orange-600/20 disabled:opacity-40 cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Plus size={14} className="stroke-[3]" />
+                      <span>Add Custom Item</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Menu Catalog with Pizza Size Selector */
+              <div className="flex-1 flex flex-col overflow-hidden">
+                
+                {/* 1. Scrollable Product Cards / List */}
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {loadingProducts ? (
+                    <div className="p-8 text-center text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
+                      <RefreshCw size={20} className="animate-spin text-orange-600" />
+                      <span>Loading shop menu products...</span>
+                    </div>
+                  ) : filteredProducts.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-slate-400 space-y-1">
+                      <p className="font-bold text-slate-600">No products match &quot;{searchQuery}&quot;</p>
+                      <p>Switch category or try another keyword.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {filteredProducts.map((p) => {
+                        const isSelected = String(selectedProductId) === String(p.id);
+                        const hasVariations = p.variations && p.variations.length > 0;
+                        const isPizza = p.name.toLowerCase().includes("pizza") || (p.category_name && p.category_name.toLowerCase().includes("pizza"));
+
+                        return (
+                          <div
+                            key={p.id}
+                            onClick={() => handleSelectProductCard(p)}
+                            className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${
+                              isSelected
+                                ? "bg-orange-50/90 border-orange-500 shadow-md ring-2 ring-orange-500/20"
+                                : "bg-white border-slate-200 hover:border-orange-300 hover:shadow-xs"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-1.5">
+                              <div className="min-w-0 flex-1">
+                                <div className="font-black text-xs text-slate-900 leading-snug truncate">
+                                  {isPizza && <span className="mr-1">🍕</span>}
+                                  {p.name}
+                                </div>
+                                {p.category_name && (
+                                  <span className="text-[10px] font-bold text-slate-400 block truncate">
+                                    {p.category_name}
+                                  </span>
+                                )}
+                              </div>
+                              {isSelected && (
+                                <span className="w-5 h-5 rounded-full bg-orange-600 text-white flex items-center justify-center shrink-0">
+                                  <Check size={11} className="stroke-[3]" />
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                              <span className="font-mono font-black text-slate-900 text-[11px]">
+                                {hasVariations ? (
+                                  <span className="text-orange-600">From {currencySymbol}{Math.min(...p.variations!.map((v: any) => Number(v.price) || 0)).toLocaleString()}</span>
+                                ) : (
+                                  <span>{currencySymbol}{Number(p.price).toLocaleString()}</span>
+                                )}
+                              </span>
+
+                              {hasVariations && (
+                                <span className="text-[9.5px] font-extrabold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-md">
+                                  {p.variations!.length} Sizes
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. DEDICATED PIZZA SIZES & ADD BAR (STICKY BOTTOM OF RIGHT COLUMN) */}
+                {currentSelectedProduct && (
+                  <div className="p-3.5 bg-white border-t border-slate-200 shadow-lg space-y-2.5 shrink-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="truncate flex items-center gap-1.5">
+                        <span className="text-base">🍕</span>
+                        <div className="truncate">
+                          <span className="text-xs font-black text-slate-900 truncate block">
+                            {currentSelectedProduct.name}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            Select size variation &amp; quantity
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Quantity Stepper */}
+                      <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 overflow-hidden shadow-2xs shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setAddQty(Math.max(1, addQty - 1))}
+                          className="w-7 h-7 text-slate-600 hover:bg-slate-200 flex items-center justify-center font-bold text-xs"
+                        >
+                          −
+                        </button>
+                        <span className="px-2 text-xs font-black font-mono text-slate-900 min-w-6 text-center">
+                          {addQty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setAddQty(addQty + 1)}
+                          className="w-7 h-7 text-slate-600 hover:bg-slate-200 flex items-center justify-center font-bold text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* SIZES SELECTION BUTTONS / CHIPS */}
+                    {currentSelectedProduct.variations && currentSelectedProduct.variations.length > 0 ? (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
+                          Pizza / Item Size:
+                        </span>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                          {currentSelectedProduct.variations.map((v: any, vIdx: number) => {
+                            const isVarSelected = selectedVariation?.name === v.name;
+
+                            return (
+                              <button
+                                key={vIdx}
+                                type="button"
+                                onClick={() => setSelectedVariation(v)}
+                                className={`px-2.5 py-2 rounded-xl text-left transition-all cursor-pointer border flex flex-col justify-between ${
+                                  isVarSelected
+                                    ? "bg-gradient-to-r from-orange-600 to-amber-600 text-white border-orange-600 shadow-sm shadow-orange-600/30 ring-2 ring-orange-500/30"
+                                    : "bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-black truncate">{v.name}</span>
+                                  {isVarSelected && <Check size={11} className="stroke-[3]" />}
+                                </div>
+                                <span
+                                  className={`text-[10px] font-mono font-bold ${
+                                    isVarSelected ? "text-orange-100" : "text-slate-500"
+                                  }`}
+                                >
+                                  {currencySymbol}{Number(v.price).toLocaleString()}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs font-mono font-bold text-slate-700">
+                        Price: {currencySymbol}{Number(currentSelectedProduct.price).toLocaleString()}
+                      </div>
+                    )}
+
+                    {/* Big Add Button */}
+                    <button
+                      type="button"
+                      onClick={handleAddSelectedProduct}
+                      className="w-full py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-700 hover:to-teal-700 active:scale-98 text-white text-xs font-black rounded-xl transition-all shadow-md shadow-emerald-600/25 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Plus size={15} className="stroke-[3]" />
+                      <span>
+                        Add to Ticket (
+                        {currencySymbol}
+                        {(
+                          (selectedVariation ? Number(selectedVariation.price) : Number(currentSelectedProduct.price)) *
+                          addQty
+                        ).toLocaleString()}
+                        )
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
