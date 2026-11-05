@@ -694,8 +694,9 @@ export async function confirmDeliveryByRider(
   orderNumber: string,
   riderName?: string,
   deliveryNote?: string,
-  paymentMethod: "Cash" | "Card" = "Cash",
-  transactionId?: string
+  paymentMethod: "Cash" | "Card" | "Split" = "Cash",
+  transactionId?: string,
+  splitDetails?: { cashAmount: number; onlineAmount: number }
 ): Promise<{ success: boolean; order?: any; error?: string; alreadyDelivered?: boolean }> {
   try {
     const cleanNumber = orderNumber.trim();
@@ -734,16 +735,21 @@ export async function confirmDeliveryByRider(
     });
     const riderTag = riderName ? ` by ${riderName}` : "";
     const cleanTxn = transactionId?.trim() || "";
-    const payModeTag = paymentMethod === "Card"
-      ? `Payment: Card / Online${cleanTxn ? ` (TXN: ${cleanTxn})` : ""}`
-      : "Payment: Cash";
+    let payModeTag = "Payment: Cash";
+    let formattedPaymentMethod = "Cash on Delivery";
+
+    if (paymentMethod === "Split" && splitDetails) {
+      const cAmt = Number(splitDetails.cashAmount) || 0;
+      const oAmt = Number(splitDetails.onlineAmount) || 0;
+      payModeTag = `Payment: Split (Cash: Rs. ${cAmt}, Online: Rs. ${oAmt})${cleanTxn ? ` (TXN: ${cleanTxn})` : ""}`;
+      formattedPaymentMethod = `Split (Cash: Rs. ${cAmt}, Online: Rs. ${oAmt})${cleanTxn ? ` [TXN: ${cleanTxn}]` : ""}`;
+    } else if (paymentMethod === "Card") {
+      payModeTag = `Payment: Card / Online${cleanTxn ? ` (TXN: ${cleanTxn})` : ""}`;
+      formattedPaymentMethod = cleanTxn ? `Card / Online (TXN: ${cleanTxn})` : "Card / Online Transfer";
+    }
 
     const noteEntry = `[DELIVERED & CONFIRMED${riderTag} at ${nowStr} | ${payModeTag}${deliveryNote?.trim() ? ` | Note: ${deliveryNote.trim()}` : ""}]`;
     const updatedNotes = order.notes ? `${order.notes} ${noteEntry}` : noteEntry;
-
-    const formattedPaymentMethod = paymentMethod === "Card"
-      ? (cleanTxn ? `Card / Online (TXN: ${cleanTxn})` : "Card / Online Transfer")
-      : "Cash on Delivery";
 
     const updatePayload: Record<string, any> = {
       status: "delivered",

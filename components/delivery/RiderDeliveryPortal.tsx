@@ -106,7 +106,16 @@ export default function RiderDeliveryPortal({
     "";
 
   // Payment Method Selection State: "Cash" or "Card"
-  const [paymentMode, setPaymentMode] = useState<"Cash" | "Card">(initialIsCard ? "Card" : "Cash");
+  const [paymentMode, setPaymentMode] = useState<"Cash" | "Card" | "Split">(
+    initialPaymentMethod.toLowerCase().includes("split") || order?.notes?.includes("Payment: Split")
+      ? "Split"
+      : initialIsCard
+      ? "Card"
+      : "Cash"
+  );
+  const orderTotal = Number(order?.total) || 0;
+  const [splitCash, setSplitCash] = useState<number>(Math.round(orderTotal / 2));
+  const [splitOnline, setSplitOnline] = useState<number>(Math.max(0, orderTotal - Math.round(orderTotal / 2)));
   const [transactionId, setTransactionId] = useState<string>(initialTxn);
 
   // Parse delivery info from order
@@ -177,7 +186,8 @@ export default function RiderDeliveryPortal({
         riderName,
         deliveryNote,
         paymentMode,
-        paymentMode === "Card" ? transactionId : undefined
+        paymentMode === "Card" || paymentMode === "Split" ? transactionId : undefined,
+        paymentMode === "Split" ? { cashAmount: splitCash, onlineAmount: splitOnline } : undefined
       );
       if (res.success && res.order) {
         setOrder(res.order);
@@ -596,7 +606,7 @@ export default function RiderDeliveryPortal({
             </label>
 
             {/* 2 Square 5px Toggle Buttons: Cash vs Card */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px" }}>
               <button
                 type="button"
                 onClick={() => setPaymentMode("Cash")}
@@ -607,21 +617,24 @@ export default function RiderDeliveryPortal({
                   background: paymentMode === "Cash" ? "#ecfdf5" : "#ffffff",
                   color: paymentMode === "Cash" ? "#065f46" : "#475569",
                   fontWeight: 800,
-                  fontSize: "13px",
+                  fontSize: "12px",
                   display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "8px",
+                  gap: "2px",
                   cursor: "pointer",
                   transition: "all 0.15s ease",
                   boxShadow: paymentMode === "Cash" ? "0 2px 6px rgba(5, 150, 105, 0.15)" : "none",
                 }}
               >
-                <BanknoteIcon size={18} className={paymentMode === "Cash" ? "text-emerald-600" : "text-slate-400"} />
-                <span>💵 Cash</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <BanknoteIcon size={16} className={paymentMode === "Cash" ? "text-emerald-600" : "text-slate-400"} />
+                  <span>💵 Cash</span>
+                </div>
                 {paymentMode === "Cash" && (
-                  <span style={{ fontSize: "10px", background: "#059669", color: "#ffffff", padding: "1px 5px", borderRadius: "3px" }}>
-                    ✓ Selected
+                  <span style={{ fontSize: "9px", background: "#059669", color: "#ffffff", padding: "0 4px", borderRadius: "3px" }}>
+                    Selected
                   </span>
                 )}
               </button>
@@ -636,25 +649,198 @@ export default function RiderDeliveryPortal({
                   background: paymentMode === "Card" ? "#eff6ff" : "#ffffff",
                   color: paymentMode === "Card" ? "#1e40af" : "#475569",
                   fontWeight: 800,
-                  fontSize: "13px",
+                  fontSize: "12px",
                   display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "8px",
+                  gap: "2px",
                   cursor: "pointer",
                   transition: "all 0.15s ease",
                   boxShadow: paymentMode === "Card" ? "0 2px 6px rgba(37, 99, 235, 0.15)" : "none",
                 }}
               >
-                <CreditCardIcon size={18} className={paymentMode === "Card" ? "text-blue-600" : "text-slate-400"} />
-                <span>💳 Card / Online</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <CreditCardIcon size={16} className={paymentMode === "Card" ? "text-blue-600" : "text-slate-400"} />
+                  <span>💳 Online</span>
+                </div>
                 {paymentMode === "Card" && (
-                  <span style={{ fontSize: "10px", background: "#2563eb", color: "#ffffff", padding: "1px 5px", borderRadius: "3px" }}>
-                    ✓ Selected
+                  <span style={{ fontSize: "9px", background: "#2563eb", color: "#ffffff", padding: "0 4px", borderRadius: "3px" }}>
+                    Selected
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPaymentMode("Split");
+                  if (splitCash === 0 && splitOnline === 0) {
+                    const half = Math.round(orderTotal / 2);
+                    setSplitCash(half);
+                    setSplitOnline(Math.max(0, orderTotal - half));
+                  }
+                }}
+                style={{
+                  height: "46px",
+                  borderRadius: "5px",
+                  border: paymentMode === "Split" ? "2px solid #8b5cf6" : "1.5px solid #cbd5e1",
+                  background: paymentMode === "Split" ? "#f5f3ff" : "#ffffff",
+                  color: paymentMode === "Split" ? "#6d28d9" : "#475569",
+                  fontWeight: 800,
+                  fontSize: "12px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "2px",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  boxShadow: paymentMode === "Split" ? "0 2px 6px rgba(139, 92, 246, 0.15)" : "none",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ fontSize: "14px" }}>⚡</span>
+                  <span>Split Pay</span>
+                </div>
+                {paymentMode === "Split" && (
+                  <span style={{ fontSize: "9px", background: "#8b5cf6", color: "#ffffff", padding: "0 4px", borderRadius: "3px" }}>
+                    Half / Custom
                   </span>
                 )}
               </button>
             </div>
+
+            {/* Split Payment Form Builder */}
+            {paymentMode === "Split" && (
+              <div
+                style={{
+                  marginTop: "10px",
+                  background: "#faf5ff",
+                  border: "1.5px solid #d8b4fe",
+                  borderRadius: "5px",
+                  padding: "12px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 800, color: "#6b21a8", textTransform: "uppercase" }}>
+                    ⚡ Split Payment Allocation:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const half = Math.round(orderTotal / 2);
+                      setSplitCash(half);
+                      setSplitOnline(Math.max(0, orderTotal - half));
+                    }}
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: 800,
+                      background: "#8b5cf6",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "3px",
+                      padding: "2px 7px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Set 50 / 50 Split
+                  </button>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "10.5px", fontWeight: 800, color: "#065f46", marginBottom: "3px" }}>
+                      💵 Cash Amount ({currencySymbol}):
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max={orderTotal}
+                      value={splitCash}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(orderTotal, Number(e.target.value) || 0));
+                        setSplitCash(val);
+                        setSplitOnline(Math.max(0, orderTotal - val));
+                      }}
+                      style={{
+                        width: "100%",
+                        height: "36px",
+                        padding: "0 8px",
+                        borderRadius: "5px",
+                        border: "1.5px solid #86efac",
+                        fontSize: "13px",
+                        fontWeight: 800,
+                        color: "#065f46",
+                        background: "#ffffff",
+                        boxSizing: "border-box",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "10.5px", fontWeight: 800, color: "#1e40af", marginBottom: "3px" }}>
+                      💳 Online Amount ({currencySymbol}):
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max={orderTotal}
+                      value={splitOnline}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(orderTotal, Number(e.target.value) || 0));
+                        setSplitOnline(val);
+                        setSplitCash(Math.max(0, orderTotal - val));
+                      }}
+                      style={{
+                        width: "100%",
+                        height: "36px",
+                        padding: "0 8px",
+                        borderRadius: "5px",
+                        border: "1.5px solid #93c5fd",
+                        fontSize: "13px",
+                        fontWeight: 800,
+                        color: "#1e40af",
+                        background: "#ffffff",
+                        boxSizing: "border-box",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Visual Ratio Bar */}
+                <div style={{ height: "7px", width: "100%", background: "#e2e8f0", borderRadius: "3px", overflow: "hidden", display: "flex", marginBottom: "8px" }}>
+                  <div style={{ width: `${orderTotal > 0 ? (splitCash / orderTotal) * 100 : 50}%`, background: "#10b981", transition: "width 0.2s" }} />
+                  <div style={{ width: `${orderTotal > 0 ? (splitOnline / orderTotal) * 100 : 50}%`, background: "#3b82f6", transition: "width 0.2s" }} />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "10px", fontWeight: 700, color: "#64748b", marginBottom: "3px" }}>
+                    Online Transaction / Raast / Slip Ref (Optional):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Raast ref #, EasyPaisa, or Slip code"
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
+                    style={{
+                      width: "100%",
+                      height: "32px",
+                      padding: "0 8px",
+                      borderRadius: "4px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "12px",
+                      color: "#0f172a",
+                      background: "#ffffff",
+                      boxSizing: "border-box",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* If Card / Online is chosen: Transaction ID / Reference Input */}
             {paymentMode === "Card" && (
@@ -1088,10 +1274,14 @@ export default function RiderDeliveryPortal({
                 fontSize: "12px",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: transactionId && paymentMode === "Card" ? "4px" : "0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
                 <span style={{ color: "#64748b", fontWeight: 700 }}>Payment Method:</span>
-                <strong style={{ color: paymentMode === "Card" ? "#1e40af" : "#166534" }}>
-                  {paymentMode === "Card" ? "💳 Card / Online Transfer" : "💵 Cash on Delivery"}
+                <strong style={{ color: paymentMode === "Split" ? "#6d28d9" : paymentMode === "Card" ? "#1e40af" : "#166534" }}>
+                  {paymentMode === "Split"
+                    ? `⚡ Split (Cash ${currencySymbol} ${splitCash} + Online ${currencySymbol} ${splitOnline})`
+                    : paymentMode === "Card"
+                    ? "💳 Card / Online Transfer"
+                    : "💵 Cash on Delivery"}
                 </strong>
               </div>
               {paymentMode === "Card" && transactionId && (

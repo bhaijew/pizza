@@ -21,6 +21,11 @@ interface DailyClosingProps {
     date: string;
     totalOrders: number;
     totalSales: number;
+    cashSales?: number;
+    onlineSales?: number;
+    cashOrdersCount?: number;
+    onlineOrdersCount?: number;
+    splitOrdersCount?: number;
     dineInSales: number;
     takeawaySales: number;
     dineInOrdersCount: number;
@@ -43,6 +48,57 @@ interface DailyClosingProps {
   staffName?: string;
   ownerPhone?: string;
   shopId?: number | null;
+}
+
+
+function renderPaymentPill(order: any) {
+  const pm = (order.payment_method || '').toLowerCase();
+  const notes = (order.notes || '').toLowerCase();
+
+  if (pm.includes('split') || notes.includes('split')) {
+    const cashMatch = (order.notes || '').match(/cash:\s*(?:rs\.?\s*)?([0-9.]+)/i) || (order.payment_method || '').match(/cash:\s*(?:rs\.?\s*)?([0-9.]+)/i);
+    const onlineMatch = (order.notes || '').match(/online:\s*(?:rs\.?\s*)?([0-9.]+)/i) || (order.payment_method || '').match(/online:\s*(?:rs\.?\s*)?([0-9.]+)/i);
+    return (
+      <span
+        style={{ borderRadius: "5px" }}
+        className="bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold px-1.5 py-0.2"
+        title={`Split Payment: Cash Rs. ${cashMatch?.[1] || '?'} | Online Rs. ${onlineMatch?.[1] || '?'}`}
+      >
+        ⚡ SPLIT
+      </span>
+    );
+  }
+
+  if (
+    pm.includes('card') ||
+    pm.includes('online') ||
+    pm.includes('bank') ||
+    pm.includes('transfer') ||
+    pm.includes('easypaisa') ||
+    pm.includes('jazzcash') ||
+    notes.includes('payment: card') ||
+    notes.includes('payment: online') ||
+    notes.includes('paid via online') ||
+    notes.includes('paid via card')
+  ) {
+    return (
+      <span
+        style={{ borderRadius: "5px" }}
+        className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold px-1.5 py-0.2"
+      >
+        💳 ONLINE
+      </span>
+    );
+  }
+
+  return (
+    <span
+      style={{ borderRadius: "5px" }}
+      className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-1.5 py-0.2"
+    >
+      💵 CASH
+    </span>
+  );
 }
 
 export default function DailyClosingManager({
@@ -444,7 +500,7 @@ export default function DailyClosingManager({
         )}
       </div>
 
-      {/* KPI Financial Overview Cards */}
+      {/* KPI Financial Overview Cards: Gross, Cash Collected, Online, Expenses, Net Profit */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Total Sales */}
         <div
@@ -461,40 +517,44 @@ export default function DailyClosingManager({
           <span className="text-[11px] text-gray-500">{data.totalOrders} total orders</span>
         </div>
 
-        {/* Dine-In (Table QR) Sales */}
+        {/* 💵 Cash Collected */}
         <div
           style={{ borderRadius: "5px" }}
-          className="bg-white border border-blue-200 p-4 shadow-sm"
+          className="bg-emerald-50/50 border border-emerald-300 p-4 shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-blue-700 mb-1">
-              Dine-In (Table QR)
+            <p className="text-[10px] font-bold tracking-widest uppercase text-emerald-800 mb-1">
+              💵 Cash Collected
             </p>
-            <span className="text-xs">🪑</span>
+            <span className="text-xs">💵</span>
           </div>
-          <p className="text-2xl font-black text-blue-600">
+          <p className="text-2xl font-black text-emerald-700">
             {currencySymbol}
-            {data.dineInSales.toFixed(2)}
+            {(data.cashSales !== undefined ? data.cashSales : data.totalSales).toFixed(2)}
           </p>
-          <span className="text-[11px] text-blue-600/70">{data.dineInOrdersCount} table orders</span>
+          <span className="text-[11px] text-emerald-700/80">
+            {data.cashOrdersCount !== undefined ? `${data.cashOrdersCount} cash orders` : "In-store & COD cash"}
+          </span>
         </div>
 
-        {/* Takeaway Sales */}
+        {/* 💳 Online / Digital Sales */}
         <div
           style={{ borderRadius: "5px" }}
-          className="bg-white border border-purple-200 p-4 shadow-sm"
+          className="bg-blue-50/50 border border-blue-300 p-4 shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-purple-700 mb-1">
-              Takeaway / Delivery
+            <p className="text-[10px] font-bold tracking-widest uppercase text-blue-800 mb-1">
+              💳 Online / Card
             </p>
-            <span className="text-xs">🥡</span>
+            <span className="text-xs">📱</span>
           </div>
-          <p className="text-2xl font-black text-purple-600">
+          <p className="text-2xl font-black text-blue-700">
             {currencySymbol}
-            {data.takeawaySales.toFixed(2)}
+            {(data.onlineSales !== undefined ? data.onlineSales : 0).toFixed(2)}
           </p>
-          <span className="text-[11px] text-purple-600/70">{data.takeawayOrdersCount} takeaway orders</span>
+          <span className="text-[11px] text-blue-700/80">
+            {data.onlineOrdersCount !== undefined ? `${data.onlineOrdersCount} online orders` : "Digital bank / card"}
+          </span>
         </div>
 
         {/* Total Day Expenses */}
@@ -515,7 +575,7 @@ export default function DailyClosingManager({
           <span className="text-[11px] text-red-500">{data.expenses.length} expense entries</span>
         </div>
 
-        {/* Net Profit */}
+        {/* Net Profit & Till Cash */}
         <div
           style={{ borderRadius: "5px" }}
           className={`border p-4 shadow-sm ${
@@ -543,8 +603,22 @@ export default function DailyClosingManager({
             {currencySymbol}
             {Math.abs(data.netProfit).toFixed(2)}
           </p>
-          <span className="text-[11px] text-gray-500">Revenue - Expenses</span>
+          <span className="text-[11px] font-semibold text-gray-600">
+            Till Cash: {currencySymbol}{Math.max(0, (data.cashSales || data.totalSales) - data.totalExpenses).toFixed(2)}
+          </span>
         </div>
+      </div>
+
+      {/* Sub Channels Bar: Dine-in vs Takeaway */}
+      <div className="flex items-center gap-3 text-xs bg-gray-50 border border-gray-200 px-3.5 py-2" style={{ borderRadius: "5px" }}>
+        <span className="font-bold text-gray-500 uppercase text-[10px]">Channel Split:</span>
+        <span className="text-blue-800 font-bold">
+          🪑 Dine-In: {currencySymbol}{data.dineInSales.toFixed(2)} ({data.dineInOrdersCount} orders)
+        </span>
+        <span className="text-gray-300">|</span>
+        <span className="text-purple-800 font-bold">
+          🥡 Takeaway & Delivery: {currencySymbol}{data.takeawaySales.toFixed(2)} ({data.takeawayOrdersCount} orders)
+        </span>
       </div>
 
       {/* Two Column Grid: Today's Orders Breakdown & Today's Expenses Breakdown */}
@@ -597,6 +671,7 @@ export default function DailyClosingManager({
                             TAKEAWAY
                           </span>
                         )}
+                        {renderPaymentPill(order)}
                         <span className="text-[10px] text-gray-400 font-mono">
                           {new Date(order.created_at).toLocaleTimeString([], {
                             hour: "2-digit",

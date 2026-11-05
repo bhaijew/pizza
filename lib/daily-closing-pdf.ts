@@ -23,6 +23,11 @@ export interface DailyClosingReportPDFInput {
   closedBy: string;
   totalOrders: number;
   totalSales: number;
+  cashSales?: number;
+  onlineSales?: number;
+  cashOrdersCount?: number;
+  onlineOrdersCount?: number;
+  splitOrdersCount?: number;
   dineInSales: number;
   takeawaySales: number;
   dineInOrdersCount: number;
@@ -473,6 +478,38 @@ export function exportDailyClosingPDF(report: DailyClosingReportPDFInput): void 
  * 2. PRINT / FULL-SCREEN VIEW (HTML FALLBACK)
  * Opens an in-browser printable A4 view with complete modern CSS styling.
  */
+export 
+function getOrderPaymentBadge(o: any, curr: string): string {
+  const pm = (o.payment_method || '').toLowerCase();
+  const notes = (o.notes || '').toLowerCase();
+
+  if (pm.includes('split') || notes.includes('split')) {
+    const cashMatch = (o.notes || '').match(/cash:\s*(?:rs\.?\s*)?([0-9.]+)/i) || (o.payment_method || '').match(/cash:\s*(?:rs\.?\s*)?([0-9.]+)/i);
+    const onlineMatch = (o.notes || '').match(/online:\s*(?:rs\.?\s*)?([0-9.]+)/i) || (o.payment_method || '').match(/online:\s*(?:rs\.?\s*)?([0-9.]+)/i);
+    const c = cashMatch ? cashMatch[1] : '?';
+    const onl = onlineMatch ? onlineMatch[1] : '?';
+    return `<span style="display:inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9.5px; font-weight: 800; background: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe;">⚡ SPLIT (💵${c} | 💳${onl})</span>`;
+  }
+
+  if (
+    pm.includes('card') ||
+    pm.includes('online') ||
+    pm.includes('bank') ||
+    pm.includes('transfer') ||
+    pm.includes('easypaisa') ||
+    pm.includes('jazzcash') ||
+    notes.includes('payment: card') ||
+    notes.includes('payment: online') ||
+    notes.includes('paid via online') ||
+    notes.includes('paid via card')
+  ) {
+    const txn = o.transaction_id || (o.notes || '').match(/TXN:\s*([^)\]|]+)/i)?.[1]?.trim() || '';
+    return `<span style="display:inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9.5px; font-weight: 800; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">💳 ONLINE${txn ? ` (${txn})` : ''}</span>`;
+  }
+
+  return `<span style="display:inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9.5px; font-weight: 800; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;">💵 CASH</span>`;
+}
+
 export function openDailyClosingPrintView(report: DailyClosingReportPDFInput): void {
   if (typeof window === "undefined") return;
 
@@ -484,6 +521,40 @@ export function openDailyClosingPrintView(report: DailyClosingReportPDFInput): v
 
   const curr = report.currencySymbol || "Rs.";
   const shopName = report.shopName || "Pizza Store";
+
+  // Calculate or fallback cash and online sales
+  let calculatedCashSales = report.cashSales !== undefined ? report.cashSales : 0;
+  let calculatedOnlineSales = report.onlineSales !== undefined ? report.onlineSales : 0;
+  let cashOrdersCount = report.cashOrdersCount !== undefined ? report.cashOrdersCount : 0;
+  let onlineOrdersCount = report.onlineOrdersCount !== undefined ? report.onlineOrdersCount : 0;
+
+  if (report.cashSales === undefined && Array.isArray(report.orders)) {
+    calculatedCashSales = 0;
+    calculatedOnlineSales = 0;
+    cashOrdersCount = 0;
+    onlineOrdersCount = 0;
+    report.orders.filter(o => o.status !== 'cancelled').forEach(o => {
+      const tot = Number(o.total) || 0;
+      const pm = (o.payment_method || '').toLowerCase();
+      const nts = (o.notes || '').toLowerCase();
+      if (pm.includes('split') || nts.includes('split')) {
+        const cMatch = (o.notes || '').match(/cash:\s*(?:rs\.?\s*)?([0-9.]+)/i) || (o.payment_method || '').match(/cash:\s*(?:rs\.?\s*)?([0-9.]+)/i);
+        const oMatch = (o.notes || '').match(/online:\s*(?:rs\.?\s*)?([0-9.]+)/i) || (o.payment_method || '').match(/online:\s*(?:rs\.?\s*)?([0-9.]+)/i);
+        const c = cMatch ? parseFloat(cMatch[1]) : 0;
+        const onl = oMatch ? parseFloat(oMatch[1]) : Math.max(0, tot - c);
+        calculatedCashSales += c;
+        calculatedOnlineSales += onl;
+        if (c > 0) cashOrdersCount++;
+        if (onl > 0) onlineOrdersCount++;
+      } else if (pm.includes('card') || pm.includes('online') || pm.includes('bank') || pm.includes('transfer') || nts.includes('payment: card') || nts.includes('payment: online') || nts.includes('paid via online') || nts.includes('paid via card')) {
+        calculatedOnlineSales += tot;
+        onlineOrdersCount++;
+      } else {
+        calculatedCashSales += tot;
+        cashOrdersCount++;
+      }
+    });
+  }
   const formattedDate = new Date().toLocaleDateString("en-PK", {
     weekday: "long",
     year: "numeric",
@@ -507,6 +578,7 @@ export function openDailyClosingPrintView(report: DailyClosingReportPDFInput): v
               <td style="padding: 7px 9px; border-bottom: 1px solid #e2e8f0; font-size: 11px; font-weight: 600;">${typeLabel}</td>
               <td style="padding: 7px 9px; border-bottom: 1px solid #e2e8f0; font-size: 11px;">${o.customer_name || "Guest"}${o.customer_phone ? ` <span style="color:#64748b; font-size:9px;">(${o.customer_phone})</span>` : ""}</td>
               <td style="padding: 7px 9px; border-bottom: 1px solid #e2e8f0; font-size: 10px; color: #334155;">${items}</td>
+              <td style="padding: 7px 9px; border-bottom: 1px solid #e2e8f0; text-align: center;">${getOrderPaymentBadge(o, curr)}</td>
               <td style="padding: 7px 9px; border-bottom: 1px solid #e2e8f0; font-size: 10px; text-transform: uppercase; font-weight: 700; color: ${isCancelled ? "#dc2626" : "#059669"};">${o.status}</td>
               <td style="padding: 7px 9px; border-bottom: 1px solid #e2e8f0; font-weight: 800; text-align: right; font-size: 11px;">${curr} ${Number(o.total || 0).toLocaleString()}</td>
             </tr>

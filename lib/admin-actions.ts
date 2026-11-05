@@ -2681,10 +2681,52 @@ export async function getShopActiveShiftBoundary(shopId?: number | null): Promis
   };
 }
 
+
+// Helper function to extract exact cash vs online vs split payment breakdown from an order
+export function parseOrderPaymentBreakdown(o: any): { cash: number; online: number; type: 'cash' | 'online' | 'split' } {
+  const total = Number(o.total) || 0;
+  const pm = (o.payment_method || '').toLowerCase();
+  const notes = (o.notes || '').toLowerCase();
+
+  // Check split payment (e.g. Split (Cash: Rs. 500, Online: Rs. 500))
+  if (pm.includes('split') || notes.includes('split')) {
+    const cashMatch = (o.notes || '').match(/cash:\s*(?:rs\.?\s*)?([0-9.]+)/i) || (o.payment_method || '').match(/cash:\s*(?:rs\.?\s*)?([0-9.]+)/i);
+    const onlineMatch = (o.notes || '').match(/online:\s*(?:rs\.?\s*)?([0-9.]+)/i) || (o.payment_method || '').match(/online:\s*(?:rs\.?\s*)?([0-9.]+)/i);
+    const cash = cashMatch ? parseFloat(cashMatch[1]) : 0;
+    const online = onlineMatch ? parseFloat(onlineMatch[1]) : Math.max(0, total - cash);
+    return { cash, online, type: 'split' };
+  }
+
+  // Check online / card / bank / transfer / easypaisa / jazzcash
+  if (
+    pm.includes('card') ||
+    pm.includes('online') ||
+    pm.includes('bank') ||
+    pm.includes('transfer') ||
+    pm.includes('easypaisa') ||
+    pm.includes('jazzcash') ||
+    notes.includes('payment: card') ||
+    notes.includes('payment: online') ||
+    notes.includes('paid via online') ||
+    notes.includes('paid via card') ||
+    notes.includes('paid via bank')
+  ) {
+    return { cash: 0, online: total, type: 'online' };
+  }
+
+  // Default to Cash
+  return { cash: total, online: 0, type: 'cash' };
+}
+
 export async function fetchDailyClosingData(targetDate?: string, skipAutoCheck = false): Promise<{
   date: string;
   totalOrders: number;
   totalSales: number;
+  cashSales: number;
+  onlineSales: number;
+  cashOrdersCount: number;
+  onlineOrdersCount: number;
+  splitOrdersCount: number;
   dineInSales: number;
   takeawaySales: number;
   dineInOrdersCount: number;
@@ -2802,6 +2844,11 @@ export async function fetchDailyClosingData(targetDate?: string, skipAutoCheck =
   const validOrders = orders.filter((o) => o.status !== "cancelled");
 
   let totalSales = 0;
+  let cashSales = 0;
+  let onlineSales = 0;
+  let cashOrdersCount = 0;
+  let onlineOrdersCount = 0;
+  let splitOrdersCount = 0;
   let dineInSales = 0;
   let takeawaySales = 0;
   let dineInOrdersCount = 0;
@@ -2818,6 +2865,19 @@ export async function fetchDailyClosingData(targetDate?: string, skipAutoCheck =
       takeawaySales += val;
       takeawayOrdersCount++;
     }
+
+    const pay = parseOrderPaymentBreakdown(o);
+    cashSales += pay.cash;
+    onlineSales += pay.online;
+    if (pay.type === "split") {
+      splitOrdersCount++;
+      if (pay.cash > 0) cashOrdersCount++;
+      if (pay.online > 0) onlineOrdersCount++;
+    } else if (pay.type === "online") {
+      onlineOrdersCount++;
+    } else {
+      cashOrdersCount++;
+    }
   }
 
   const expenses = dayExpenses || [];
@@ -2828,6 +2888,11 @@ export async function fetchDailyClosingData(targetDate?: string, skipAutoCheck =
     date: dateStr,
     totalOrders: validOrders.length,
     totalSales: Number(totalSales.toFixed(2)),
+    cashSales: Number(cashSales.toFixed(2)),
+    onlineSales: Number(onlineSales.toFixed(2)),
+    cashOrdersCount,
+    onlineOrdersCount,
+    splitOrdersCount,
     dineInSales: Number(dineInSales.toFixed(2)),
     takeawaySales: Number(takeawaySales.toFixed(2)),
     dineInOrdersCount,
@@ -2870,11 +2935,24 @@ export async function recordDailyClosing(
     total_expenses: summary.totalExpenses,
     net_profit: summary.netProfit,
     closed_by: closedBy,
-    notes: notes || null,
+    notes: notes
+      ? `${notes} [CASH: Rs. ${summary.cashSales} | ONLINE: Rs. ${summary.onlineSales}]`
+      : `[CASH: Rs. ${summary.cashSales} | ONLINE: Rs. ${summary.onlineSales}]`,
     shop_id: activeShop.shopId || null,
   };
 
-  const { error } = await db.from("daily_closings").upsert(payload);
+  try {
+    payload.cash_sales = summary.cashSales;
+    payload.online_sales = summary.onlineSales;
+  } catch {}
+
+  let { error } = await db.from("daily_closings").upsert(payload);
+  if (error && (error.message?.includes("cash_sales") || error.message?.includes("online_sales"))) {
+    delete payload.cash_sales;
+    delete payload.online_sales;
+    const retry = await db.from("daily_closings").upsert(payload);
+    error = retry.error;
+  }
 
   if (error) return { error: error.message, success: false };
 
