@@ -128,7 +128,7 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
     if (rawProdIds.length > 0) {
       const { data: dbProducts } = await supabase
         .from("products")
-        .select("id, name, price, variations")
+        .select("id, name, price, variations, description, items_included")
         .in("id", Array.from(new Set(rawProdIds)));
 
       const prodMap = new Map<number, any>();
@@ -178,9 +178,15 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
 
         return {
           ...it,
+          id: prod ? prod.id : (it.id || (it as any).product_id),
+          product_id: prod ? prod.id : ((it as any).product_id || it.id),
           price: unitPrice,
           qty,
           quantity: qty,
+          items_included: prod
+            ? (prod.items_included || prod.description || null)
+            : ((it as any).items_included || (it as any).description || null),
+          description: prod ? (prod.description || null) : ((it as any).description || null),
         };
       });
     } else {
