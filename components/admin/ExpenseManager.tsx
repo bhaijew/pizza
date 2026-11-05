@@ -69,16 +69,21 @@ export default function ExpenseManager({
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Prevent page scroll when expense modal is open
-  useEffect(() => {
+  // Toggle Add Expense Form
+  const handleToggleAddModal = () => {
     if (showAddModal) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
+      setShowAddModal(false);
+    } else {
+      setFormError(null);
+      setFormData({
+        title: "",
+        amount: "",
+        expense_date: todayStr,
+        notes: "",
+      });
+      setShowAddModal(true);
     }
-  }, [showAddModal]);
+  };
 
   // Form state
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
@@ -377,10 +382,15 @@ export default function ExpenseManager({
             <span>🖨️</span> Print Slip
           </button>
           <button
-            onClick={handleOpenAddModal}
-            className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 flex items-center justify-center gap-1.5 transition-all rounded-xl shadow-md shadow-red-500/20 hover:shadow-lg cursor-pointer"
+            onClick={handleToggleAddModal}
+            className={
+              showAddModal
+                ? "bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs uppercase tracking-wider px-4 py-2.5 flex items-center justify-center gap-1.5 transition-all rounded-xl border border-gray-300 shadow-sm cursor-pointer"
+                : "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 flex items-center justify-center gap-1.5 transition-all rounded-xl shadow-md shadow-red-500/20 hover:shadow-lg cursor-pointer"
+            }
           >
-            <span className="text-base font-bold">＋</span> Record Expense
+            <span className="text-base font-bold">{showAddModal ? "✕" : "＋"}</span>
+            <span>{showAddModal ? "Close Form" : "Record Expense"}</span>
           </button>
         </div>
       </div>
@@ -431,6 +441,565 @@ export default function ExpenseManager({
           <span className="text-[11px] text-gray-500 font-medium">{expenses.length} total entries</span>
         </div>
       </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* Inline Add Expense Form (Embedded directly in page, NOT popup) */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {showAddModal && (
+        <div
+          id="expense-inline-form"
+          className="bg-white rounded-2xl border-2 border-emerald-500/35 shadow-md overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+        >
+          {/* Form Header (Compact) */}
+          <div
+            style={{
+              padding: "12px 20px",
+              borderBottom: "1px solid #f1f5f9",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              background: "linear-gradient(to right, #f0fdf4, #ffffff)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background: "#ecfdf5",
+                  border: "1.5px solid #a7f3d0",
+                  color: "#059669",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+                  <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+                </svg>
+              </div>
+              <div>
+                <h2
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 900,
+                    margin: 0,
+                    color: "#0f172a",
+                    letterSpacing: "-0.2px",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  Record Expense
+                </h2>
+                <p style={{ margin: "2px 0 0", fontSize: 11.5, color: "#64748b" }}>
+                  Enter restaurant outgoing, e.g. spices, fuel, or daily operational costs.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowAddModal(false)}
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 8,
+                background: "#f1f5f9",
+                border: "none",
+                color: "#64748b",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 13,
+                fontWeight: 800,
+                cursor: "pointer",
+                transition: "background 0.15s ease",
+              }}
+              className="hover:bg-slate-200"
+              title="Close Form"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Error Banner */}
+          {formError && (
+            <div
+              style={{
+                margin: "12px 20px 0",
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                color: "#991b1b",
+                fontSize: 12,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span>⚠️</span>
+              <span>{formError}</span>
+            </div>
+          )}
+
+          {/* Form Content */}
+          <form onSubmit={handleAddExpense} style={{ margin: 0 }}>
+            <div style={{ padding: "16px 20px 14px" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                  gap: 16,
+                }}
+              >
+                {/* Left Column: Description & Notes */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {/* Expense Description */}
+                  <div>
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 5,
+                        fontSize: 11.5,
+                        fontWeight: 800,
+                        color: "#0f172a",
+                        marginBottom: 4,
+                      }}
+                    >
+                      <span style={{ color: "#059669" }}>🏷️</span>
+                      <span>Expense Description / Title</span>
+                      <span style={{ color: "#dc2626" }}>*</span>
+                    </label>
+                    <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                      <span style={{ position: "absolute", left: 10, color: "#94a3b8", display: "flex", alignItems: "center" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                          <line x1="7" y1="7" x2="7.01" y2="7" />
+                        </svg>
+                      </span>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Cooking Oil, Mozzarella Cheese, Gas Cylinder..."
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        style={{
+                          width: "100%",
+                          padding: "6px 12px 6px 32px",
+                          height: 38,
+                          borderRadius: 8,
+                          border: "1.5px solid #cbd5e1",
+                          fontSize: 12.5,
+                          color: "#0f172a",
+                          outline: "none",
+                          boxSizing: "border-box",
+                          background: "#ffffff",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Notes / Vendor / Bill # */}
+                  <div>
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 5,
+                        fontSize: 11.5,
+                        fontWeight: 800,
+                        color: "#0f172a",
+                        marginBottom: 4,
+                      }}
+                    >
+                      <span style={{ color: "#059669" }}>📃</span>
+                      <span>Notes / Vendor / Bill #</span>
+                      <span style={{ color: "#94a3b8", fontWeight: 500, fontSize: 10.5 }}>(Optional)</span>
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="Supplier name, receipt number, cash via online payment details..."
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      style={{
+                        width: "100%",
+                        height: 64,
+                        minHeight: 64,
+                        maxHeight: 100,
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        border: "1.5px solid #cbd5e1",
+                        fontSize: 12,
+                        color: "#0f172a",
+                        outline: "none",
+                        resize: "vertical",
+                        boxSizing: "border-box",
+                        fontFamily: "inherit",
+                        lineHeight: 1.35,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Right Column: Amount, Date, and Expense Preview */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {/* Amount & Date Row */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 10 }}>
+                    {/* Amount */}
+                    <div>
+                      <label
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                          fontSize: 11.5,
+                          fontWeight: 800,
+                          color: "#0f172a",
+                          marginBottom: 4,
+                        }}
+                      >
+                        <span style={{ color: "#059669" }}>💸</span>
+                        <span>Amount ({currencySymbol})</span>
+                        <span style={{ color: "#dc2626" }}>*</span>
+                      </label>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          border: "1.5px solid #cbd5e1",
+                          borderRadius: 8,
+                          overflow: "hidden",
+                          background: "#ffffff",
+                          height: 38,
+                        }}
+                      >
+                        <span
+                          style={{
+                            padding: "0 10px",
+                            height: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            background: "#f1f5f9",
+                            color: "#334155",
+                            fontSize: 12,
+                            fontWeight: 800,
+                            borderRight: "1.5px solid #cbd5e1",
+                            fontFamily: "monospace",
+                          }}
+                        >
+                          {currencySymbol}
+                        </span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          required
+                          placeholder="0.00"
+                          value={formData.amount}
+                          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                          style={{
+                            flex: 1,
+                            padding: "0 10px",
+                            height: "100%",
+                            border: "none",
+                            fontSize: 13.5,
+                            fontWeight: 800,
+                            color: "#0f172a",
+                            outline: "none",
+                            fontFamily: "monospace",
+                            width: "100%",
+                          }}
+                        />
+                      </div>
+                      {/* Quick Presets */}
+                      <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
+                        <button
+                          type="button"
+                          onClick={() => handleQuickAmount(500)}
+                          style={{
+                            flex: 1,
+                            padding: "3px 0",
+                            borderRadius: 5,
+                            background: "#f1f5f9",
+                            border: "1px solid #e2e8f0",
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            color: "#475569",
+                            cursor: "pointer",
+                          }}
+                          className="hover:bg-slate-200"
+                        >
+                          +500
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleQuickAmount(1000)}
+                          style={{
+                            flex: 1,
+                            padding: "3px 0",
+                            borderRadius: 5,
+                            background: "#f1f5f9",
+                            border: "1px solid #e2e8f0",
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            color: "#475569",
+                            cursor: "pointer",
+                          }}
+                          className="hover:bg-slate-200"
+                        >
+                          +1,000
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleQuickAmount(5000)}
+                          style={{
+                            flex: 1,
+                            padding: "3px 0",
+                            borderRadius: 5,
+                            background: "#f1f5f9",
+                            border: "1px solid #e2e8f0",
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            color: "#475569",
+                            cursor: "pointer",
+                          }}
+                          className="hover:bg-slate-200"
+                        >
+                          +5,000
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Date */}
+                    <div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: 4,
+                        }}
+                      >
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 3,
+                            fontSize: 11.5,
+                            fontWeight: 800,
+                            color: "#0f172a",
+                          }}
+                        >
+                          <span style={{ color: "#059669" }}>📅</span>
+                          <span>Date</span>
+                          <span style={{ color: "#dc2626" }}>*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, expense_date: todayStr })}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 3,
+                            padding: "1px 6px",
+                            borderRadius: 8,
+                            background: "#ecfdf5",
+                            border: "1px solid #a7f3d0",
+                            color: "#059669",
+                            fontSize: 10,
+                            fontWeight: 800,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <span style={{ width: 4, height: 4, borderRadius: "50%", background: "#10b981" }} />
+                          Today
+                        </button>
+                      </div>
+                      <input
+                        type="date"
+                        required
+                        value={formData.expense_date}
+                        onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
+                        style={{
+                          width: "100%",
+                          height: 38,
+                          padding: "0 8px",
+                          borderRadius: 8,
+                          border: "1.5px solid #cbd5e1",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "#0f172a",
+                          outline: "none",
+                          boxSizing: "border-box",
+                          background: "#ffffff",
+                          fontFamily: "monospace",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Expense Preview Card */}
+                  <div
+                    style={{
+                      background: "#f0fdf4",
+                      border: "1.5px dashed #86efac",
+                      borderRadius: 10,
+                      padding: "10px 14px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 4,
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 800, color: "#166534" }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <span>Expense Preview</span>
+                      </div>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, color: "#15803d", fontFamily: "monospace" }}>
+                        {formData.expense_date || todayStr}
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 1 }}>
+                      <div style={{ minWidth: 0, flex: 1, paddingRight: 8 }}>
+                        <div style={{ fontSize: 10, color: "#475569", fontWeight: 600 }}>Description</div>
+                        <div
+                          style={{
+                            fontSize: 12.5,
+                            fontWeight: 800,
+                            color: "#0f172a",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {formData.title?.trim() || "Untitled Expense"}
+                        </div>
+
+                        <div style={{ fontSize: 10, color: "#475569", fontWeight: 600, marginTop: 4 }}>Amount</div>
+                        <div
+                          style={{
+                            fontSize: 18,
+                            fontWeight: 900,
+                            color: "#0f172a",
+                            fontFamily: "monospace",
+                            lineHeight: 1.1,
+                          }}
+                        >
+                          {currencySymbol} {Number(formData.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                      </div>
+
+                      {/* Aesthetic Receipt Slip Illustration with Checkmark */}
+                      <div style={{ flexShrink: 0 }}>
+                        <svg width="48" height="48" viewBox="0 0 68 68" fill="none">
+                          <rect x="10" y="6" width="44" height="54" rx="6" fill="#ffffff" stroke="#86efac" strokeWidth="2" />
+                          <line x1="18" y1="16" x2="38" y2="16" stroke="#86efac" strokeWidth="2.5" strokeLinecap="round" />
+                          <line x1="18" y1="24" x2="46" y2="24" stroke="#bbf7d0" strokeWidth="2" strokeLinecap="round" />
+                          <line x1="18" y1="31" x2="42" y2="31" stroke="#bbf7d0" strokeWidth="2" strokeLinecap="round" />
+                          <line x1="18" y1="38" x2="34" y2="38" stroke="#bbf7d0" strokeWidth="2" strokeLinecap="round" />
+                          <circle cx="50" cy="50" r="13" fill="#10b981" />
+                          <path d="M45 50l3.5 3.5 7.5-7.5" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Form Footer Bar */}
+            <div
+              style={{
+                padding: "10px 20px",
+                borderTop: "1px solid #f1f5f9",
+                background: "#fafbfc",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 11.5, color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <span style={{ color: "#3b82f6" }}>ℹ️</span>
+                <span>Fields with <span style={{ color: "#dc2626" }}>*</span> are required</span>
+              </span>
+
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  style={{
+                    padding: "7px 18px",
+                    borderRadius: 8,
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#334155",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                  className="hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "7px 22px",
+                    borderRadius: 8,
+                    border: "none",
+                    background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+                    color: "#ffffff",
+                    fontSize: 12.5,
+                    fontWeight: 800,
+                    cursor: isPending ? "not-allowed" : "pointer",
+                    boxShadow: "0 2px 6px rgba(5, 150, 105, 0.3)",
+                    transition: "all 0.15s ease",
+                  }}
+                  className="hover:brightness-110 active:scale-[0.98]"
+                >
+                  {isPending ? (
+                    <span>Saving...</span>
+                  ) : (
+                    <>
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      <span>Save Expense</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Search Bar */}
       <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm flex items-center justify-between gap-3">
@@ -517,591 +1086,6 @@ export default function ExpenseManager({
           </div>
         )}
       </div>
-
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* Modern Add Expense Modal (Full View Frosted-White Executive)   */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {showAddModal && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(15, 23, 42, 0.45)",
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
-            zIndex: 99999,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "10px",
-            overflow: "hidden",
-          }}
-          onClick={() => setShowAddModal(false)}
-        >
-          <div
-            style={{
-              background: "#ffffff",
-              borderRadius: 14,
-              maxWidth: 750,
-              width: "100%",
-              boxShadow: "0 20px 50px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.06)",
-              border: "1px solid #e2e8f0",
-              overflow: "hidden",
-              animation: "fadeIn 0.18s ease-out",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header (Compact) */}
-            <div
-              style={{
-                padding: "10px 18px",
-                borderBottom: "1px solid #f1f5f9",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                background: "#ffffff",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 9,
-                    background: "#ecfdf5",
-                    border: "1.5px solid #a7f3d0",
-                    color: "#059669",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
-                    <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
-                  </svg>
-                </div>
-                <div>
-                  <h2
-                    style={{
-                      fontSize: 15.5,
-                      fontWeight: 900,
-                      margin: 0,
-                      color: "#0f172a",
-                      letterSpacing: "-0.2px",
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    Record Expense
-                  </h2>
-                  <p style={{ margin: "1px 0 0", fontSize: 11, color: "#64748b" }}>
-                    Enter restaurant outgoing, e.g. spices, fuel, or daily operational costs.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowAddModal(false)}
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 7,
-                  background: "#f1f5f9",
-                  border: "none",
-                  color: "#64748b",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 13,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  transition: "background 0.15s ease",
-                }}
-                className="hover:bg-slate-200"
-                title="Close"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Error Banner */}
-            {formError && (
-              <div
-                style={{
-                  margin: "8px 18px 0",
-                  padding: "6px 10px",
-                  borderRadius: 6,
-                  background: "#fef2f2",
-                  border: "1px solid #fecaca",
-                  color: "#991b1b",
-                  fontSize: 11.5,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <span>⚠️</span>
-                <span>{formError}</span>
-              </div>
-            )}
-
-            {/* Non-Scrollable Form Content */}
-            <form onSubmit={handleAddExpense} style={{ margin: 0 }}>
-              <div style={{ padding: "12px 18px 12px" }}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1.1fr 1fr",
-                    gap: 14,
-                  }}
-                >
-                  {/* Left Column: Description & Notes */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {/* Expense Description */}
-                    <div>
-                      <label
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 5,
-                          fontSize: 11,
-                          fontWeight: 800,
-                          color: "#0f172a",
-                          marginBottom: 4,
-                        }}
-                      >
-                        <span style={{ color: "#059669" }}>🏷️</span>
-                        <span>Expense Description / Title</span>
-                        <span style={{ color: "#dc2626" }}>*</span>
-                      </label>
-                      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                        <span style={{ position: "absolute", left: 10, color: "#94a3b8", display: "flex", alignItems: "center" }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                            <line x1="7" y1="7" x2="7.01" y2="7" />
-                          </svg>
-                        </span>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. Cooking Oil, Mozzarella Cheese, Gas Cylinder..."
-                          value={formData.title}
-                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                          style={{
-                            width: "100%",
-                            padding: "6px 12px 6px 32px",
-                            height: 35,
-                            borderRadius: 7,
-                            border: "1.5px solid #cbd5e1",
-                            fontSize: 12.5,
-                            color: "#0f172a",
-                            outline: "none",
-                            boxSizing: "border-box",
-                            background: "#ffffff",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Notes / Vendor / Bill # */}
-                    <div>
-                      <label
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 5,
-                          fontSize: 11,
-                          fontWeight: 800,
-                          color: "#0f172a",
-                          marginBottom: 4,
-                        }}
-                      >
-                        <span style={{ color: "#059669" }}>📃</span>
-                        <span>Notes / Vendor / Bill #</span>
-                        <span style={{ color: "#94a3b8", fontWeight: 500, fontSize: 10.5 }}>(Optional)</span>
-                      </label>
-                      <textarea
-                        rows={2}
-                        placeholder="Supplier name, receipt number, cash via online payment details..."
-                        value={formData.notes}
-                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                        style={{
-                          width: "100%",
-                          height: 60,
-                          minHeight: 60,
-                          maxHeight: 60,
-                          padding: "6px 10px",
-                          borderRadius: 7,
-                          border: "1.5px solid #cbd5e1",
-                          fontSize: 11.5,
-                          color: "#0f172a",
-                          outline: "none",
-                          resize: "none",
-                          boxSizing: "border-box",
-                          fontFamily: "inherit",
-                          lineHeight: 1.35,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Right Column: Amount, Date, and Expense Preview */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {/* Amount & Date Row */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 10 }}>
-                      {/* Amount */}
-                      <div>
-                        <label
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4,
-                            fontSize: 11,
-                            fontWeight: 800,
-                            color: "#0f172a",
-                            marginBottom: 4,
-                          }}
-                        >
-                          <span style={{ color: "#059669" }}>💸</span>
-                          <span>Amount ({currencySymbol})</span>
-                          <span style={{ color: "#dc2626" }}>*</span>
-                        </label>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            border: "1.5px solid #cbd5e1",
-                            borderRadius: 7,
-                            overflow: "hidden",
-                            background: "#ffffff",
-                            height: 35,
-                          }}
-                        >
-                          <span
-                            style={{
-                              padding: "0 8px",
-                              height: "100%",
-                              display: "flex",
-                              alignItems: "center",
-                              background: "#f1f5f9",
-                              color: "#334155",
-                              fontSize: 11.5,
-                              fontWeight: 800,
-                              borderRight: "1.5px solid #cbd5e1",
-                              fontFamily: "monospace",
-                            }}
-                          >
-                            {currencySymbol}
-                          </span>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            required
-                            placeholder="0.00"
-                            value={formData.amount}
-                            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                            style={{
-                              flex: 1,
-                              padding: "0 8px",
-                              height: "100%",
-                              border: "none",
-                              fontSize: 13,
-                              fontWeight: 800,
-                              color: "#0f172a",
-                              outline: "none",
-                              fontFamily: "monospace",
-                              width: "100%",
-                            }}
-                          />
-                        </div>
-                        {/* Quick Presets */}
-                        <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-                          <button
-                            type="button"
-                            onClick={() => handleQuickAmount(500)}
-                            style={{
-                              flex: 1,
-                              padding: "2px 0",
-                              borderRadius: 4,
-                              background: "#f1f5f9",
-                              border: "1px solid #e2e8f0",
-                              fontSize: 10,
-                              fontWeight: 700,
-                              color: "#475569",
-                              cursor: "pointer",
-                            }}
-                            className="hover:bg-slate-200"
-                          >
-                            +500
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleQuickAmount(1000)}
-                            style={{
-                              flex: 1,
-                              padding: "2px 0",
-                              borderRadius: 4,
-                              background: "#f1f5f9",
-                              border: "1px solid #e2e8f0",
-                              fontSize: 10,
-                              fontWeight: 700,
-                              color: "#475569",
-                              cursor: "pointer",
-                            }}
-                            className="hover:bg-slate-200"
-                          >
-                            +1,000
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleQuickAmount(5000)}
-                            style={{
-                              flex: 1,
-                              padding: "2px 0",
-                              borderRadius: 4,
-                              background: "#f1f5f9",
-                              border: "1px solid #e2e8f0",
-                              fontSize: 10,
-                              fontWeight: 700,
-                              color: "#475569",
-                              cursor: "pointer",
-                            }}
-                            className="hover:bg-slate-200"
-                          >
-                            +5,000
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Date */}
-                      <div>
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginBottom: 4,
-                          }}
-                        >
-                          <label
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 3,
-                              fontSize: 11,
-                              fontWeight: 800,
-                              color: "#0f172a",
-                            }}
-                          >
-                            <span style={{ color: "#059669" }}>📅</span>
-                            <span>Date</span>
-                            <span style={{ color: "#dc2626" }}>*</span>
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => setFormData({ ...formData, expense_date: todayStr })}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 3,
-                              padding: "1px 6px",
-                              borderRadius: 8,
-                              background: "#ecfdf5",
-                              border: "1px solid #a7f3d0",
-                              color: "#059669",
-                              fontSize: 9.5,
-                              fontWeight: 800,
-                              cursor: "pointer",
-                            }}
-                          >
-                            <span style={{ width: 4, height: 4, borderRadius: "50%", background: "#10b981" }} />
-                            Today
-                          </button>
-                        </div>
-                        <input
-                          type="date"
-                          required
-                          value={formData.expense_date}
-                          onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
-                          style={{
-                            width: "100%",
-                            height: 35,
-                            padding: "0 8px",
-                            borderRadius: 7,
-                            border: "1.5px solid #cbd5e1",
-                            fontSize: 11.5,
-                            fontWeight: 700,
-                            color: "#0f172a",
-                            outline: "none",
-                            boxSizing: "border-box",
-                            background: "#ffffff",
-                            fontFamily: "monospace",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Expense Preview Card (Matching image 1) */}
-                    <div
-                      style={{
-                        background: "#f0fdf4",
-                        border: "1.5px dashed #86efac",
-                        borderRadius: 10,
-                        padding: "8px 12px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 4,
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 800, color: "#166534" }}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>
-                          <span>Expense Preview</span>
-                        </div>
-                        <span style={{ fontSize: 10.5, fontWeight: 700, color: "#15803d", fontFamily: "monospace" }}>
-                          {formData.expense_date || todayStr}
-                        </span>
-                      </div>
-
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 1 }}>
-                        <div style={{ minWidth: 0, flex: 1, paddingRight: 8 }}>
-                          <div style={{ fontSize: 9.5, color: "#475569", fontWeight: 600 }}>Description</div>
-                          <div
-                            style={{
-                              fontSize: 12,
-                              fontWeight: 800,
-                              color: "#0f172a",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              lineHeight: 1.2,
-                            }}
-                          >
-                            {formData.title?.trim() || "Untitled Expense"}
-                          </div>
-
-                          <div style={{ fontSize: 9.5, color: "#475569", fontWeight: 600, marginTop: 4 }}>Amount</div>
-                          <div
-                            style={{
-                              fontSize: 18,
-                              fontWeight: 900,
-                              color: "#0f172a",
-                              fontFamily: "monospace",
-                              lineHeight: 1.1,
-                            }}
-                          >
-                            {currencySymbol} {Number(formData.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </div>
-                        </div>
-
-                        {/* Aesthetic Receipt Slip Illustration with Checkmark */}
-                        <div style={{ flexShrink: 0 }}>
-                          <svg width="48" height="48" viewBox="0 0 68 68" fill="none">
-                            <rect x="10" y="6" width="44" height="54" rx="6" fill="#ffffff" stroke="#86efac" strokeWidth="2" />
-                            <line x1="18" y1="16" x2="38" y2="16" stroke="#86efac" strokeWidth="2.5" strokeLinecap="round" />
-                            <line x1="18" y1="24" x2="46" y2="24" stroke="#bbf7d0" strokeWidth="2" strokeLinecap="round" />
-                            <line x1="18" y1="31" x2="42" y2="31" stroke="#bbf7d0" strokeWidth="2" strokeLinecap="round" />
-                            <line x1="18" y1="38" x2="34" y2="38" stroke="#bbf7d0" strokeWidth="2" strokeLinecap="round" />
-                            <circle cx="50" cy="50" r="13" fill="#10b981" />
-                            <path d="M45 50l3.5 3.5 7.5-7.5" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fixed Footer Bar */}
-              <div
-                style={{
-                  padding: "9px 18px",
-                  borderTop: "1px solid #f1f5f9",
-                  background: "#fafbfc",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: 8,
-                }}
-              >
-                <span style={{ fontSize: 11, color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  <span style={{ color: "#3b82f6" }}>ℹ️</span>
-                  <span>Fields with <span style={{ color: "#dc2626" }}>*</span> are required</span>
-                </span>
-
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddModal(false)}
-                    style={{
-                      padding: "6px 16px",
-                      borderRadius: 7,
-                      border: "1px solid #cbd5e1",
-                      background: "#ffffff",
-                      color: "#334155",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      transition: "all 0.15s ease",
-                    }}
-                    className="hover:bg-slate-50"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={isPending}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 5,
-                      padding: "6px 18px",
-                      borderRadius: 7,
-                      border: "none",
-                      background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                      color: "#ffffff",
-                      fontSize: 12,
-                      fontWeight: 800,
-                      cursor: isPending ? "not-allowed" : "pointer",
-                      boxShadow: "0 2px 6px rgba(5, 150, 105, 0.3)",
-                      transition: "all 0.15s ease",
-                    }}
-                    className="hover:brightness-110 active:scale-[0.98]"
-                  >
-                    {isPending ? (
-                      <span>Saving...</span>
-                    ) : (
-                      <>
-                        <svg
-                          width="13"
-                          height="13"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        <span>Save Expense</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
