@@ -69,6 +69,17 @@ function renderPaymentPill(order: any) {
     );
   }
 
+  if (pm.includes('already') || notes.includes('already paid')) {
+    return (
+      <span
+        style={{ borderRadius: "5px" }}
+        className="bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200 text-[10px] font-bold px-1.5 py-0.2"
+      >
+        ✅ ALREADY PAID
+      </span>
+    );
+  }
+
   if (
     pm.includes('card') ||
     pm.includes('online') ||

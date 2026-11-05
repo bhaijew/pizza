@@ -2697,6 +2697,11 @@ function parseOrderPaymentBreakdown(o: any): { cash: number; online: number; typ
     return { cash, online, type: 'split' };
   }
 
+  // Check already paid in advance / pre-paid
+  if (pm.includes('already') || notes.includes('already paid') || pm === 'paid') {
+    return { cash: 0, online: total, type: 'online' };
+  }
+
   // Check online / card / bank / transfer / easypaisa / jazzcash
   if (
     pm.includes('card') ||

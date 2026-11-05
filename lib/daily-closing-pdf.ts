@@ -526,6 +526,10 @@ function getOrderPaymentBadge(o: any, curr: string): string {
     return `<span style="display:inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9.5px; font-weight: 800; background: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe;">⚡ SPLIT (💵${c} | 💳${onl})</span>`;
   }
 
+  if (pm.includes('already') || notes.includes('already paid')) {
+    return `<span style="display:inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9.5px; font-weight: 800; background: #fdf4ff; color: #a21caf; border: 1px solid #f0abfc;">✅ ALREADY PAID</span>`;
+  }
+
   if (
     pm.includes('card') ||
     pm.includes('online') ||
