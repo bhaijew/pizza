@@ -1591,22 +1591,31 @@ export default function OrdersLiveBoard({
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
-                            flexWrap: "wrap",
+                            flexWrap: "nowrap",
                             gap: "4px",
                             borderTop: info.deliveryAddress ? "1px dashed #e2e8f0" : "none",
                             paddingTop: info.deliveryAddress ? "4px" : "0",
                           }}
                         >
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span style={{ fontSize: "9.5px", fontWeight: 800, color: "#64748b", textTransform: "uppercase" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px", minWidth: 0, flex: 1 }}>
+                            <span style={{ fontSize: "9.5px", fontWeight: 800, color: "#64748b", textTransform: "uppercase", flexShrink: 0 }}>
                               Rider:
                             </span>
-                            <span style={{ fontSize: "11px", fontWeight: 700, color: info.riderName ? "#0f172a" : "#dc2626" }}>
+                            <span
+                              style={{
+                                fontSize: "11px",
+                                fontWeight: 700,
+                                color: info.riderName ? "#0f172a" : "#dc2626",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
                               {info.riderName ? `${info.riderName} (${info.riderPhone || "No phone"})` : "Not Assigned"}
                             </span>
                           </div>
 
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "3px", flexShrink: 0 }}>
                             {!info.riderName && nextRoundRobinRider && (
                               <button
                                 type="button"
@@ -1614,17 +1623,18 @@ export default function OrdersLiveBoard({
                                 onClick={() => handleAssignRiderSubmit(order.id, nextRoundRobinRider.name, nextRoundRobinRider.phone)}
                                 title={`Auto-assign to next rider in turn: ${nextRoundRobinRider.name} (${nextRoundRobinRider.phone})`}
                                 style={{
-                                  padding: "2px 8px",
-                                  borderRadius: "4px",
+                                  padding: "2px 7px",
+                                  borderRadius: "3px",
                                   background: "#ecfdf5",
                                   border: "1px solid #10b981",
                                   color: "#065f46",
-                                  fontSize: "10px",
+                                  fontSize: "9.5px",
                                   fontWeight: 800,
                                   cursor: "pointer",
                                   display: "inline-flex",
                                   alignItems: "center",
-                                  gap: 3,
+                                  gap: 2,
+                                  whiteSpace: "nowrap",
                                 }}
                               >
                                 <span>⚡ Assign {nextRoundRobinRider.name}</span>
@@ -1647,14 +1657,15 @@ export default function OrdersLiveBoard({
                                 }
                               }}
                               style={{
-                                padding: "2px 8px",
-                                borderRadius: "4px",
+                                padding: "2px 7px",
+                                borderRadius: "3px",
                                 background: "#ffffff",
                                 border: "1px solid #cbd5e1",
                                 color: "#0f172a",
-                                fontSize: "10px",
+                                fontSize: "9.5px",
                                 fontWeight: 700,
                                 cursor: "pointer",
+                                whiteSpace: "nowrap",
                               }}
                             >
                               {info.riderName ? "Change" : "Pick Rider"}
@@ -1669,47 +1680,51 @@ export default function OrdersLiveBoard({
                                 style={{
                                   display: "inline-flex",
                                   alignItems: "center",
-                                  gap: 3,
-                                  padding: "2px 7px",
-                                  borderRadius: "4px",
+                                  gap: 2,
+                                  padding: "2px 6px",
+                                  borderRadius: "3px",
                                   background: riderWaSentId === order.id ? "#15803d" : "#25d366",
                                   color: "#ffffff",
-                                  fontSize: "10px",
+                                  fontSize: "9.5px",
                                   fontWeight: 700,
                                   border: "none",
                                   cursor: sendingRiderWaId === order.id ? "not-allowed" : "pointer",
+                                  whiteSpace: "nowrap",
                                 }}
                               >
                                 <span>{riderWaSentId === order.id ? "Sent ✓" : "💬 WA"}</span>
                               </button>
                             )}
 
-                            {/* Direct Rider Portal Link (Admin can view map or confirm delivery if rider forgets) */}
-                            <a
-                              href={`/delivery/${encodeURIComponent(order.order_number)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="Open Rider Delivery Portal — Admin can view map or confirm delivery & cash collection directly if rider forgot"
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 3,
-                                padding: "2px 7px",
-                                borderRadius: "4px",
-                                background: "#eff6ff",
-                                border: "1px solid #93c5fd",
-                                color: "#1d4ed8",
-                                fontSize: "10px",
-                                fontWeight: 700,
-                                textDecoration: "none",
-                                cursor: "pointer",
-                                transition: "all 0.15s ease",
-                              }}
-                              className="hover:bg-blue-100 hover:border-blue-400"
-                            >
-                              <ExternalLink size={10} style={{ flexShrink: 0 }} />
-                              <span>Rider Link</span>
-                            </a>
+                            {/* Direct Rider Portal Link (Only shown when rider is assigned, perfectly fits on 1 line without wrapping) */}
+                            {info.riderName && (
+                              <a
+                                href={`/delivery/${encodeURIComponent(order.order_number)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Open Rider Delivery Portal — Admin can confirm delivery & cash collection directly if rider forgot"
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 2,
+                                  padding: "2px 6px",
+                                  borderRadius: "3px",
+                                  background: "#eff6ff",
+                                  border: "1px solid #93c5fd",
+                                  color: "#1d4ed8",
+                                  fontSize: "9.5px",
+                                  fontWeight: 700,
+                                  textDecoration: "none",
+                                  cursor: "pointer",
+                                  whiteSpace: "nowrap",
+                                  flexShrink: 0,
+                                }}
+                                className="hover:bg-blue-100 hover:border-blue-400"
+                              >
+                                <ExternalLink size={9} style={{ flexShrink: 0 }} />
+                                <span>Rider Link</span>
+                              </a>
+                            )}
                           </div>
                         </div>
 
