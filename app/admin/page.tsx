@@ -839,6 +839,32 @@ export default async function AdminDashboardPage() {
                               <span>Track</span>
                               <ArrowUpRight size={12} />
                             </Link>
+
+                            {isDelivery && (
+                              <Link
+                                href={`/delivery/${encodeURIComponent(order.order_number)}`}
+                                target="_blank"
+                                style={{
+                                  padding: "5px 10px",
+                                  borderRadius: 5,
+                                  background: "#eff6ff",
+                                  border: "1px solid #bfdbfe",
+                                  color: "#1d4ed8",
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  textDecoration: "none",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
+                                  transition: "all 0.15s ease",
+                                }}
+                                className="hover:bg-blue-100 hover:border-blue-400"
+                                title="Open Rider Delivery Portal — Admin can confirm delivery if rider forgot"
+                              >
+                                <Bike size={12} />
+                                <span>Rider Portal ↗</span>
+                              </Link>
+                            )}
                           </div>
                         </div>
                       );
@@ -979,6 +1005,32 @@ export default async function AdminDashboardPage() {
                         <span>Track</span>
                         <ArrowUpRight size={12} />
                       </Link>
+
+                      {isDelivery && (
+                        <Link
+                          href={`/delivery/${encodeURIComponent(order.order_number)}`}
+                          target="_blank"
+                          style={{
+                            padding: "5px 10px",
+                            borderRadius: 5,
+                            background: "#eff6ff",
+                            border: "1px solid #bfdbfe",
+                            color: "#1d4ed8",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            textDecoration: "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            transition: "all 0.15s ease",
+                          }}
+                          className="hover:bg-blue-100 hover:border-blue-400"
+                          title="Open Rider Delivery Portal — Admin can confirm delivery if rider forgot"
+                        >
+                          <Bike size={12} />
+                          <span>Rider Portal ↗</span>
+                        </Link>
+                      )}
                     </div>
                   </div>
                 );

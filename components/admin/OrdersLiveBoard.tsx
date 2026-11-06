@@ -1683,6 +1683,33 @@ export default function OrdersLiveBoard({
                                 <span>{riderWaSentId === order.id ? "Sent ✓" : "💬 WA"}</span>
                               </button>
                             )}
+
+                            {/* Direct Rider Portal Link (Admin can view map or confirm delivery if rider forgets) */}
+                            <a
+                              href={`/delivery/${encodeURIComponent(order.order_number)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Open Rider Delivery Portal — Admin can view map or confirm delivery & cash collection directly if rider forgot"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 3,
+                                padding: "2px 7px",
+                                borderRadius: "4px",
+                                background: "#eff6ff",
+                                border: "1px solid #93c5fd",
+                                color: "#1d4ed8",
+                                fontSize: "10px",
+                                fontWeight: 700,
+                                textDecoration: "none",
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
+                              }}
+                              className="hover:bg-blue-100 hover:border-blue-400"
+                            >
+                              <ExternalLink size={10} style={{ flexShrink: 0 }} />
+                              <span>Rider Link</span>
+                            </a>
                           </div>
                         </div>
 
