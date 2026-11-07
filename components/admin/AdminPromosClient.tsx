@@ -220,8 +220,13 @@ export default function AdminPromosClient({
         <button
           type="button"
           onClick={() => {
-            setFormError(null);
-            setShowAddModal(true);
+            if (showAddModal) {
+              setShowAddModal(false);
+              resetModalState();
+            } else {
+              setFormError(null);
+              setShowAddModal(true);
+            }
           }}
           style={{
             display: "inline-flex",
@@ -229,23 +234,666 @@ export default function AdminPromosClient({
             gap: 8,
             padding: "10px 18px",
             borderRadius: 6,
-            background: "#ea580c",
+            background: showAddModal ? "#475569" : "#ea580c",
             color: "#ffffff",
             fontSize: 13,
             fontWeight: 700,
             border: "none",
             cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(234, 88, 12, 0.25)",
+            boxShadow: showAddModal ? "0 2px 8px rgba(71, 85, 105, 0.25)" : "0 2px 8px rgba(234, 88, 12, 0.25)",
             transition: "all 0.15s ease",
           }}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          <span>Create Coupon Code</span>
+          {showAddModal ? (
+            <>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>Close Form</span>
+            </>
+          ) : (
+            <>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Create Coupon Code</span>
+            </>
+          )}
         </button>
       </div>
+
+      {/* IN-PAGE CREATE NEW COUPON FORM CARD (INLINE EMBEDDED, NOT A POPUP) */}
+      {showAddModal && (
+        <div
+          id="create-coupon-card"
+          style={{
+            background: "#ffffff",
+            borderRadius: 12,
+            border: "1.5px solid #fed7aa",
+            boxShadow: "0 6px 24px -4px rgba(234, 88, 12, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04)",
+            overflow: "hidden",
+            marginBottom: 24,
+            animation: "fadeIn 0.18s ease-out",
+          }}
+        >
+          {/* Card Header */}
+          <div
+            style={{
+              padding: "16px 22px",
+              borderBottom: "1px solid #fed7aa",
+              background: "linear-gradient(to right, #fff7ed, #ffffff)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 8,
+                  background: "#ea580c",
+                  color: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  boxShadow: "0 2px 6px rgba(234, 88, 12, 0.3)",
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                </svg>
+              </div>
+              <div>
+                <h2 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: "#0f172a", letterSpacing: "-0.2px" }}>
+                  Create New Discount Coupon
+                </h2>
+                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
+                  Configure promotional discount rules and customer checkout voucher details.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowAddModal(false);
+                resetModalState();
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "6px 12px",
+                borderRadius: 6,
+                background: "#f1f5f9",
+                border: "1px solid #cbd5e1",
+                color: "#475569",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              title="Close form"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>Close</span>
+            </button>
+          </div>
+
+          {/* Error Banner */}
+          {formError && (
+            <div
+              style={{
+                margin: "14px 22px 0",
+                padding: "10px 14px",
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                color: "#b91c1c",
+                borderRadius: 6,
+                fontSize: 12.5,
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span>⚠</span>
+              <span>{formError}</span>
+            </div>
+          )}
+
+          {/* Form Body: 2-Column Responsive Layout */}
+          <form onSubmit={handleCreateCoupon} style={{ display: "flex", flexDirection: "column" }}>
+            <input type="hidden" name="shop_id" value={shopId || ""} />
+            <input type="hidden" name="discount_type" value={discountType} />
+
+            <div
+              style={{
+                padding: "22px",
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                gap: "24px",
+              }}
+            >
+              {/* ─── LEFT COLUMN: FORM INPUTS ─── */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {/* Coupon Code Input */}
+                <div>
+                  <label style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                    <span>Coupon Code <span style={{ color: "#dc2626" }}>*</span></span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Uppercase letters & numbers</span>
+                  </label>
+                  <div style={{ position: "relative", display: "flex" }}>
+                    <input
+                      name="code"
+                      type="text"
+                      required
+                      value={modalCode}
+                      onChange={(e) => setModalCode(e.target.value.toUpperCase())}
+                      placeholder="e.g. SPECIAL50"
+                      style={{
+                        width: "100%",
+                        height: 40,
+                        paddingLeft: 12,
+                        paddingRight: 80,
+                        borderRadius: 6,
+                        border: "1.5px solid #cbd5e1",
+                        fontSize: 14,
+                        fontFamily: "monospace",
+                        fontWeight: 800,
+                        letterSpacing: "0.5px",
+                        outline: "none",
+                        color: "#0f172a",
+                        background: "#ffffff",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const randomCode = "SAVE" + Math.floor(100 + Math.random() * 900);
+                        setModalCode(randomCode);
+                      }}
+                      style={{
+                        position: "absolute",
+                        right: 5,
+                        top: 5,
+                        bottom: 5,
+                        padding: "0 10px",
+                        background: "#f1f5f9",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: 4,
+                        color: "#475569",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                      title="Generate random code"
+                    >
+                      Random
+                    </button>
+                  </div>
+                </div>
+
+                {/* Discount Calculation Method (Segmented Switch) */}
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                    Discount Calculation Method <span style={{ color: "#dc2626" }}>*</span>
+                  </label>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      background: "#f1f5f9",
+                      padding: 3,
+                      borderRadius: 6,
+                      gap: 4,
+                      border: "1px solid #e2e8f0",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setDiscountType("fixed")}
+                      style={{
+                        padding: "8px 10px",
+                        borderRadius: 4,
+                        border: "none",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                        background: discountType === "fixed" ? "#0f172a" : "transparent",
+                        color: discountType === "fixed" ? "#ffffff" : "#475569",
+                        boxShadow: discountType === "fixed" ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span>💵</span>
+                      <span>Fixed Rupee (Rs.)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDiscountType("percentage")}
+                      style={{
+                        padding: "8px 10px",
+                        borderRadius: 4,
+                        border: "none",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                        background: discountType === "percentage" ? "#0f172a" : "transparent",
+                        color: discountType === "percentage" ? "#ffffff" : "#475569",
+                        boxShadow: discountType === "percentage" ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span>％</span>
+                      <span>Percentage (%)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Discount Value & Max Cap Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: discountType === "percentage" ? "1fr 1fr" : "1fr", gap: 10 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                      {discountType === "fixed" ? "Discount Amount (Rs.)" : "Discount Percentage (%)"} <span style={{ color: "#dc2626" }}>*</span>
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: 10,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "#64748b",
+                        }}
+                      >
+                        {discountType === "fixed" ? "Rs." : "%"}
+                      </div>
+                      <input
+                        name="discount_value"
+                        type="number"
+                        step="any"
+                        required
+                        value={modalValue}
+                        onChange={(e) => setModalValue(e.target.value)}
+                        placeholder={discountType === "fixed" ? "e.g. 150" : "e.g. 20"}
+                        style={{
+                          width: "100%",
+                          height: 38,
+                          paddingLeft: 36,
+                          paddingRight: 10,
+                          borderRadius: 6,
+                          border: "1.5px solid #cbd5e1",
+                          fontSize: 13.5,
+                          fontWeight: 800,
+                          color: "#0f172a",
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {discountType === "percentage" && (
+                    <div>
+                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                        Max Cap Limit (Rs.)
+                      </label>
+                      <div style={{ position: "relative" }}>
+                        <div
+                          style={{
+                            position: "absolute",
+                            left: 10,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: "#64748b",
+                          }}
+                        >
+                          Rs.
+                        </div>
+                        <input
+                          name="max_discount_amount"
+                          type="number"
+                          value={modalMaxDiscount}
+                          onChange={(e) => setModalMaxDiscount(e.target.value)}
+                          placeholder="e.g. 400"
+                          style={{
+                            width: "100%",
+                            height: 38,
+                            paddingLeft: 36,
+                            paddingRight: 10,
+                            borderRadius: 6,
+                            border: "1.5px solid #cbd5e1",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: "#0f172a",
+                            outline: "none",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Min Order & Total Uses Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                      Min. Order Required (Rs.)
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: 10,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "#64748b",
+                        }}
+                      >
+                        Rs.
+                      </div>
+                      <input
+                        name="min_order_amount"
+                        type="number"
+                        value={modalMinOrder}
+                        onChange={(e) => setModalMinOrder(e.target.value)}
+                        placeholder="0"
+                        style={{
+                          width: "100%",
+                          height: 38,
+                          paddingLeft: 36,
+                          paddingRight: 10,
+                          borderRadius: 6,
+                          border: "1.5px solid #cbd5e1",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: "#0f172a",
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                      Total Usage Cap
+                    </label>
+                    <input
+                      name="usage_limit"
+                      type="number"
+                      defaultValue={500}
+                      placeholder="500"
+                      style={{
+                        width: "100%",
+                        height: 38,
+                        padding: "0 10px",
+                        borderRadius: 6,
+                        border: "1.5px solid #cbd5e1",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#0f172a",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Description Input */}
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+                    Customer Note / Description <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>(Optional)</span>
+                  </label>
+                  <input
+                    name="description"
+                    type="text"
+                    value={modalDesc}
+                    onChange={(e) => setModalDesc(e.target.value)}
+                    placeholder="e.g. 20% discount on entire pizza menu"
+                    style={{
+                      width: "100%",
+                      height: 38,
+                      padding: "0 12px",
+                      borderRadius: 6,
+                      border: "1.5px solid #cbd5e1",
+                      fontSize: 13,
+                      outline: "none",
+                      color: "#0f172a",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* ─── RIGHT COLUMN: LIVE VOUCHER CARD & PRESETS ─── */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>
+                    Live Customer Voucher Preview
+                  </div>
+
+                  {/* Realistic Digital Ticket Voucher Card */}
+                  <div
+                    style={{
+                      background: "#0f172a",
+                      color: "#ffffff",
+                      borderRadius: 10,
+                      padding: "16px",
+                      border: "1px solid #1e293b",
+                      boxShadow: "0 4px 14px rgba(15, 23, 42, 0.15)",
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {/* Top Bar */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                      <span style={{ fontSize: 10, fontWeight: 800, background: "#1e293b", color: "#38bdf8", padding: "2px 7px", borderRadius: 4, letterSpacing: "0.5px" }}>
+                        COUPON VOUCHER
+                      </span>
+                      <span style={{ fontSize: 10, fontWeight: 800, color: "#4ade80" }}>
+                        Active at Checkout ✓
+                      </span>
+                    </div>
+
+                    {/* Code Badge */}
+                    <div style={{ marginBottom: 10 }}>
+                      <div
+                        style={{
+                          fontFamily: "monospace",
+                          fontWeight: 900,
+                          fontSize: 18,
+                          color: "#fbbf24",
+                          letterSpacing: "1px",
+                        }}
+                      >
+                        {modalCode.trim().toUpperCase() || "YOUR_CODE"}
+                      </div>
+                      {modalDesc ? (
+                        <div style={{ fontSize: 11.5, color: "#94a3b8", marginTop: 3 }}>
+                          {modalDesc}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {/* Discount Highlight */}
+                    <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 10, color: "#94a3b8", textTransform: "uppercase", fontWeight: 700 }}>Savings</div>
+                        <div style={{ fontSize: 16, fontWeight: 900, color: "#ffffff" }}>
+                          {modalValue
+                            ? discountType === "percentage"
+                              ? `${modalValue}% OFF` + (modalMaxDiscount ? ` (Cap: Rs. ${modalMaxDiscount})` : "")
+                              : `Rs. ${modalValue} OFF`
+                            : "Discount Amount"}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: 10, color: "#94a3b8", textTransform: "uppercase", fontWeight: 700 }}>Min. Order</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#e2e8f0" }}>
+                          {Number(modalMinOrder) > 0 ? `Rs. ${modalMinOrder}` : "Rs. 0"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 1-Click Fast Presets */}
+                <div>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>
+                    Fast Fill Presets:
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                    {[
+                      { label: "10% OFF Order", code: "SAVE10", type: "percentage", val: "10", min: "500", cap: "200" },
+                      { label: "20% OFF Deal", code: "WELCOME20", type: "percentage", val: "20", min: "600", cap: "400" },
+                      { label: "Flat Rs. 100", code: "FLAT100", type: "fixed", val: "100", min: "800", cap: "" },
+                      { label: "Flat Rs. 200", code: "SUPER200", type: "fixed", val: "200", min: "1200", cap: "" },
+                    ].map((preset) => (
+                      <button
+                        key={preset.code}
+                        type="button"
+                        onClick={() => {
+                          setModalCode(preset.code);
+                          setDiscountType(preset.type as any);
+                          setModalValue(preset.val);
+                          setModalMinOrder(preset.min);
+                          setModalMaxDiscount(preset.cap);
+                        }}
+                        style={{
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          padding: "6px 10px",
+                          borderRadius: 6,
+                          background: modalCode === preset.code ? "#0f172a" : "#f8fafc",
+                          color: modalCode === preset.code ? "#ffffff" : "#334155",
+                          border: modalCode === preset.code ? "1px solid #0f172a" : "1px solid #cbd5e1",
+                          cursor: "pointer",
+                          textAlign: "center",
+                          transition: "all 0.12s ease",
+                        }}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Operational Notes */}
+                <div
+                  style={{
+                    background: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 8,
+                    padding: "10px 12px",
+                    fontSize: "11.5px",
+                    color: "#475569",
+                    lineHeight: "1.5",
+                  }}
+                >
+                  <div style={{ fontWeight: 700, color: "#0f172a", marginBottom: 2 }}>Rules:</div>
+                  • Applied immediately at online customer cart<br />
+                  • Validated against minimum subtotal requirement<br />
+                  • Can be enabled, disabled, or deleted anytime
+                </div>
+              </div>
+            </div>
+
+            {/* In-Page Card Action Footer Bar */}
+            <div
+              style={{
+                padding: "14px 22px",
+                borderTop: "1px solid #fed7aa",
+                background: "#fffaf5",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 10,
+              }}
+            >
+              <span style={{ fontSize: 11.5, color: "#64748b" }}>
+                Fields with <span style={{ color: "#dc2626" }}>*</span> are required
+              </span>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddModal(false);
+                    resetModalState();
+                  }}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: 6,
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#475569",
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "8px 20px",
+                    borderRadius: 6,
+                    border: "none",
+                    background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
+                    color: "#ffffff",
+                    fontSize: 12.5,
+                    fontWeight: 800,
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                    boxShadow: "0 2px 8px rgba(234, 88, 12, 0.3)",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {isSubmitting ? (
+                    <span>Saving...</span>
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      <span>Save &amp; Activate Coupon</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Main Full-Width Coupon List Card */}
       <div
@@ -300,6 +948,9 @@ export default function AdminPromosClient({
               onClick={() => {
                 setFormError(null);
                 setShowAddModal(true);
+                setTimeout(() => {
+                  document.getElementById("create-coupon-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 50);
               }}
               style={{
                 display: "inline-flex",
@@ -511,6 +1162,9 @@ export default function AdminPromosClient({
               onClick={() => {
                 setFormError(null);
                 setShowAddModal(true);
+                setTimeout(() => {
+                  document.getElementById("create-coupon-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 50);
               }}
               style={{
                 display: "inline-flex",
@@ -531,662 +1185,6 @@ export default function AdminPromosClient({
           </div>
         )}
       </div>
-
-      {/* CREATE NEW COUPON MODAL (FULL VIEW PROFESSIONAL 2-COLUMN POPUP) */}
-      {showAddModal && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(15, 23, 42, 0.75)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            zIndex: 99999,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "16px",
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowAddModal(false);
-              resetModalState();
-            }
-          }}
-        >
-          <div
-            style={{
-              background: "#ffffff",
-              borderRadius: 14,
-              maxWidth: 860,
-              width: "100%",
-              maxHeight: "90vh",
-              display: "flex",
-              flexDirection: "column",
-              boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.45)",
-              border: "1px solid #cbd5e1",
-              overflow: "hidden",
-              animation: "fadeIn 0.18s ease-out",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div
-              style={{
-                padding: "18px 24px",
-                borderBottom: "1px solid #e2e8f0",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                background: "#ffffff",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 8,
-                    background: "#fff7ed",
-                    border: "1px solid #fed7aa",
-                    color: "#ea580c",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
-                  </svg>
-                </div>
-                <div>
-                  <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0, color: "#0f172a", letterSpacing: "-0.2px" }}>
-                    Create Discount Coupon
-                  </h2>
-                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>
-                    Configure promotional discount voucher and customer checkout rules.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAddModal(false);
-                  resetModalState();
-                }}
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 6,
-                  background: "#f1f5f9",
-                  border: "none",
-                  color: "#64748b",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  transition: "background 0.15s ease",
-                }}
-                title="Close dialog"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-
-            {/* Error Banner */}
-            {formError && (
-              <div
-                style={{
-                  margin: "14px 24px 0",
-                  padding: "10px 14px",
-                  background: "#fef2f2",
-                  border: "1px solid #fecaca",
-                  color: "#b91c1c",
-                  borderRadius: 6,
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                <span>⚠</span>
-                <span>{formError}</span>
-              </div>
-            )}
-
-            {/* Modal Body: 2-Column Responsive Layout */}
-            <form onSubmit={handleCreateCoupon} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-              <input type="hidden" name="shop_id" value={shopId || ""} />
-              <input type="hidden" name="discount_type" value={discountType} />
-
-              <div
-                style={{
-                  padding: "20px 24px",
-                  overflowY: "auto",
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-                  gap: "24px",
-                  flex: 1,
-                }}
-              >
-                {/* ─── LEFT COLUMN: FORM INPUTS ─── */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  {/* Coupon Code Input */}
-                  <div>
-                    <label style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
-                      <span>Coupon Code <span style={{ color: "#dc2626" }}>*</span></span>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Uppercase letters & numbers</span>
-                    </label>
-                    <div style={{ position: "relative", display: "flex" }}>
-                      <input
-                        name="code"
-                        type="text"
-                        required
-                        value={modalCode}
-                        onChange={(e) => setModalCode(e.target.value.toUpperCase())}
-                        placeholder="e.g. SPECIAL50"
-                        style={{
-                          width: "100%",
-                          height: 40,
-                          paddingLeft: 12,
-                          paddingRight: 80,
-                          borderRadius: 6,
-                          border: "1.5px solid #cbd5e1",
-                          fontSize: 14,
-                          fontFamily: "monospace",
-                          fontWeight: 800,
-                          letterSpacing: "0.5px",
-                          outline: "none",
-                          color: "#0f172a",
-                          background: "#ffffff",
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const randomCode = "SAVE" + Math.floor(100 + Math.random() * 900);
-                          setModalCode(randomCode);
-                        }}
-                        style={{
-                          position: "absolute",
-                          right: 5,
-                          top: 5,
-                          bottom: 5,
-                          padding: "0 10px",
-                          background: "#f1f5f9",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: 4,
-                          color: "#475569",
-                          fontSize: 11,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                        }}
-                        title="Generate random code"
-                      >
-                        Random
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Discount Calculation Method (Segmented Switch) */}
-                  <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
-                      Discount Calculation Method <span style={{ color: "#dc2626" }}>*</span>
-                    </label>
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        background: "#f1f5f9",
-                        padding: 3,
-                        borderRadius: 6,
-                        gap: 4,
-                        border: "1px solid #e2e8f0",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setDiscountType("fixed")}
-                        style={{
-                          padding: "8px 10px",
-                          borderRadius: 4,
-                          border: "none",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 6,
-                          background: discountType === "fixed" ? "#0f172a" : "transparent",
-                          color: discountType === "fixed" ? "#ffffff" : "#475569",
-                          boxShadow: discountType === "fixed" ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        <span>💵</span>
-                        <span>Fixed Rupee (Rs.)</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setDiscountType("percentage")}
-                        style={{
-                          padding: "8px 10px",
-                          borderRadius: 4,
-                          border: "none",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 6,
-                          background: discountType === "percentage" ? "#0f172a" : "transparent",
-                          color: discountType === "percentage" ? "#ffffff" : "#475569",
-                          boxShadow: discountType === "percentage" ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        <span>％</span>
-                        <span>Percentage (%)</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Discount Value & Max Cap Grid */}
-                  <div style={{ display: "grid", gridTemplateColumns: discountType === "percentage" ? "1fr 1fr" : "1fr", gap: 10 }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
-                        {discountType === "fixed" ? "Discount Amount (Rs.)" : "Discount Percentage (%)"} <span style={{ color: "#dc2626" }}>*</span>
-                      </label>
-                      <div style={{ position: "relative" }}>
-                        <div
-                          style={{
-                            position: "absolute",
-                            left: 10,
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            fontSize: 12,
-                            fontWeight: 700,
-                            color: "#64748b",
-                          }}
-                        >
-                          {discountType === "fixed" ? "Rs." : "%"}
-                        </div>
-                        <input
-                          name="discount_value"
-                          type="number"
-                          step="any"
-                          required
-                          value={modalValue}
-                          onChange={(e) => setModalValue(e.target.value)}
-                          placeholder={discountType === "fixed" ? "e.g. 150" : "e.g. 20"}
-                          style={{
-                            width: "100%",
-                            height: 38,
-                            paddingLeft: 36,
-                            paddingRight: 10,
-                            borderRadius: 6,
-                            border: "1.5px solid #cbd5e1",
-                            fontSize: 13.5,
-                            fontWeight: 800,
-                            color: "#0f172a",
-                            outline: "none",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {discountType === "percentage" && (
-                      <div>
-                        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
-                          Max Cap Limit (Rs.)
-                        </label>
-                        <div style={{ position: "relative" }}>
-                          <div
-                            style={{
-                              position: "absolute",
-                              left: 10,
-                              top: "50%",
-                              transform: "translateY(-50%)",
-                              fontSize: 12,
-                              fontWeight: 700,
-                              color: "#64748b",
-                            }}
-                          >
-                            Rs.
-                          </div>
-                          <input
-                            name="max_discount_amount"
-                            type="number"
-                            value={modalMaxDiscount}
-                            onChange={(e) => setModalMaxDiscount(e.target.value)}
-                            placeholder="e.g. 400"
-                            style={{
-                              width: "100%",
-                              height: 38,
-                              paddingLeft: 36,
-                              paddingRight: 10,
-                              borderRadius: 6,
-                              border: "1.5px solid #cbd5e1",
-                              fontSize: 13,
-                              fontWeight: 700,
-                              color: "#0f172a",
-                              outline: "none",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Min Order & Total Uses Grid */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
-                        Min. Order Required (Rs.)
-                      </label>
-                      <div style={{ position: "relative" }}>
-                        <div
-                          style={{
-                            position: "absolute",
-                            left: 10,
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            fontSize: 12,
-                            fontWeight: 700,
-                            color: "#64748b",
-                          }}
-                        >
-                          Rs.
-                        </div>
-                        <input
-                          name="min_order_amount"
-                          type="number"
-                          value={modalMinOrder}
-                          onChange={(e) => setModalMinOrder(e.target.value)}
-                          placeholder="0"
-                          style={{
-                            width: "100%",
-                            height: 38,
-                            paddingLeft: 36,
-                            paddingRight: 10,
-                            borderRadius: 6,
-                            border: "1.5px solid #cbd5e1",
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: "#0f172a",
-                            outline: "none",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
-                        Total Usage Cap
-                      </label>
-                      <input
-                        name="usage_limit"
-                        type="number"
-                        defaultValue={500}
-                        placeholder="500"
-                        style={{
-                          width: "100%",
-                          height: 38,
-                          padding: "0 10px",
-                          borderRadius: 6,
-                          border: "1.5px solid #cbd5e1",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: "#0f172a",
-                          outline: "none",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Description Input */}
-                  <div>
-                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
-                      Customer Note / Description <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>(Optional)</span>
-                    </label>
-                    <input
-                      name="description"
-                      type="text"
-                      value={modalDesc}
-                      onChange={(e) => setModalDesc(e.target.value)}
-                      placeholder="e.g. 20% discount on entire pizza menu"
-                      style={{
-                        width: "100%",
-                        height: 38,
-                        padding: "0 12px",
-                        borderRadius: 6,
-                        border: "1.5px solid #cbd5e1",
-                        fontSize: 13,
-                        outline: "none",
-                        color: "#0f172a",
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* ─── RIGHT COLUMN: LIVE VOUCHER CARD & PRESETS ─── */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div>
-                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>
-                      Live Customer Voucher Preview
-                    </div>
-
-                    {/* Realistic Digital Ticket Voucher Card */}
-                    <div
-                      style={{
-                        background: "#0f172a",
-                        color: "#ffffff",
-                        borderRadius: 10,
-                        padding: "16px",
-                        border: "1px solid #1e293b",
-                        boxShadow: "0 4px 14px rgba(15, 23, 42, 0.15)",
-                        position: "relative",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {/* Top Bar */}
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                        <span style={{ fontSize: 10, fontWeight: 800, background: "#1e293b", color: "#38bdf8", padding: "2px 7px", borderRadius: 4, letterSpacing: "0.5px" }}>
-                          COUPON VOUCHER
-                        </span>
-                        <span style={{ fontSize: 10, fontWeight: 800, color: "#4ade80" }}>
-                          Active at Checkout ✓
-                        </span>
-                      </div>
-
-                      {/* Code Badge */}
-                      <div style={{ marginBottom: 10 }}>
-                        <div
-                          style={{
-                            fontFamily: "monospace",
-                            fontWeight: 900,
-                            fontSize: 18,
-                            color: "#fbbf24",
-                            letterSpacing: "1px",
-                          }}
-                        >
-                          {modalCode.trim().toUpperCase() || "YOUR_CODE"}
-                        </div>
-                        {modalDesc ? (
-                          <div style={{ fontSize: 11.5, color: "#94a3b8", marginTop: 3 }}>
-                            {modalDesc}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      {/* Discount Highlight */}
-                      <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div>
-                          <div style={{ fontSize: 10, color: "#94a3b8", textTransform: "uppercase", fontWeight: 700 }}>Savings</div>
-                          <div style={{ fontSize: 16, fontWeight: 900, color: "#ffffff" }}>
-                            {modalValue
-                              ? discountType === "percentage"
-                                ? `${modalValue}% OFF` + (modalMaxDiscount ? ` (Cap: Rs. ${modalMaxDiscount})` : "")
-                                : `Rs. ${modalValue} OFF`
-                              : "Discount Amount"}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: 10, color: "#94a3b8", textTransform: "uppercase", fontWeight: 700 }}>Min. Order</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: "#e2e8f0" }}>
-                            {Number(modalMinOrder) > 0 ? `Rs. ${modalMinOrder}` : "Rs. 0"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 1-Click Fast Presets */}
-                  <div>
-                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>
-                      Fast Fill Presets:
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                      {[
-                        { label: "10% OFF Order", code: "SAVE10", type: "percentage", val: "10", min: "500", cap: "200" },
-                        { label: "20% OFF Deal", code: "WELCOME20", type: "percentage", val: "20", min: "600", cap: "400" },
-                        { label: "Flat Rs. 100", code: "FLAT100", type: "fixed", val: "100", min: "800", cap: "" },
-                        { label: "Flat Rs. 200", code: "SUPER200", type: "fixed", val: "200", min: "1200", cap: "" },
-                      ].map((preset) => (
-                        <button
-                          key={preset.code}
-                          type="button"
-                          onClick={() => {
-                            setModalCode(preset.code);
-                            setDiscountType(preset.type as any);
-                            setModalValue(preset.val);
-                            setModalMinOrder(preset.min);
-                            setModalMaxDiscount(preset.cap);
-                          }}
-                          style={{
-                            fontSize: 11.5,
-                            fontWeight: 700,
-                            padding: "6px 10px",
-                            borderRadius: 6,
-                            background: modalCode === preset.code ? "#0f172a" : "#f8fafc",
-                            color: modalCode === preset.code ? "#ffffff" : "#334155",
-                            border: modalCode === preset.code ? "1px solid #0f172a" : "1px solid #cbd5e1",
-                            cursor: "pointer",
-                            textAlign: "center",
-                            transition: "all 0.12s ease",
-                          }}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Operational Notes */}
-                  <div
-                    style={{
-                      background: "#f8fafc",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: 8,
-                      padding: "10px 12px",
-                      fontSize: "11.5px",
-                      color: "#475569",
-                      lineHeight: "1.5",
-                    }}
-                  >
-                    <div style={{ fontWeight: 700, color: "#0f172a", marginBottom: 2 }}>Rules:</div>
-                    • Applied immediately at online customer cart<br />
-                    • Validated against minimum subtotal requirement<br />
-                    • Can be enabled, disabled, or deleted anytime
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Fixed Footer Bar */}
-              <div
-                style={{
-                  padding: "14px 24px",
-                  borderTop: "1px solid #e2e8f0",
-                  background: "#f8fafc",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: 10,
-                }}
-              >
-                <span style={{ fontSize: 11.5, color: "#64748b" }}>
-                  Fields with <span style={{ color: "#dc2626" }}>*</span> are required
-                </span>
-
-                <div style={{ display: "flex", gap: 10 }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddModal(false);
-                      resetModalState();
-                    }}
-                    style={{
-                      padding: "8px 16px",
-                      borderRadius: 6,
-                      border: "1px solid #cbd5e1",
-                      background: "#ffffff",
-                      color: "#475569",
-                      fontSize: 12.5,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "8px 20px",
-                      borderRadius: 6,
-                      border: "none",
-                      background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
-                      color: "#ffffff",
-                      fontSize: 12.5,
-                      fontWeight: 800,
-                      cursor: isSubmitting ? "not-allowed" : "pointer",
-                      boxShadow: "0 2px 8px rgba(234, 88, 12, 0.3)",
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    {isSubmitting ? (
-                      <span>Saving...</span>
-                    ) : (
-                      <>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        <span>Save &amp; Activate Coupon</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

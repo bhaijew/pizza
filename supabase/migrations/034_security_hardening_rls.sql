@@ -127,3 +127,4 @@ GRANT EXECUTE ON FUNCTION public.verify_branch_credentials(BIGINT, TEXT) TO anon
 
 -- 5. Reload PostgREST schema cache
 NOTIFY pgrst, 'reload schema';
+
