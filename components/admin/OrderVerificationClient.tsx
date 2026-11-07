@@ -333,7 +333,7 @@ export default function OrderVerificationClient({
           background: isDark
             ? "linear-gradient(135deg, rgba(9, 23, 42, 0.90) 0%, rgba(13, 35, 63, 0.94) 100%), url('/images/pizzger-hero-pizza.jpg') center/cover no-repeat"
             : "linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.96) 100%), url('/images/pizzger-hero-pizza.jpg') center/cover no-repeat",
-          borderRadius: "5px",
+          borderRadius: 0,
           border: isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #cbd5e1",
           padding: "16px 20px",
           marginBottom: "16px",
@@ -351,7 +351,7 @@ export default function OrderVerificationClient({
               style={{
                 width: 38,
                 height: 38,
-                borderRadius: "5px",
+                borderRadius: 0,
                 background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
                 color: "#ffffff",
                 display: "flex",
@@ -385,7 +385,7 @@ export default function OrderVerificationClient({
                     alignItems: "center",
                     gap: "5px",
                     padding: "2px 8px",
-                    borderRadius: "5px",
+                    borderRadius: 0,
                     background: isDark ? "rgba(16, 185, 129, 0.2)" : "rgba(16, 185, 129, 0.15)",
                     border: isDark ? "1px solid rgba(52, 211, 153, 0.4)" : "1px solid rgba(16, 185, 129, 0.4)",
                     color: isDark ? "#34d399" : "#059669",
@@ -426,7 +426,7 @@ export default function OrderVerificationClient({
                 alignItems: "center",
                 gap: "5px",
                 padding: "6px 12px",
-                borderRadius: "5px",
+                borderRadius: 0,
                 border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
                 background: isDark ? "rgba(255, 255, 255, 0.08)" : "#ffffff",
                 color: isDark ? "#ffffff" : "#0f172a",
@@ -461,7 +461,7 @@ export default function OrderVerificationClient({
                 alignItems: "center",
                 gap: "5px",
                 padding: "6px 12px",
-                borderRadius: "5px",
+                borderRadius: 0,
                 border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
                 background: isDark ? "rgba(255, 255, 255, 0.08)" : "#ffffff",
                 color: isDark ? "#ffffff" : "#0f172a",
@@ -485,7 +485,7 @@ export default function OrderVerificationClient({
                 alignItems: "center",
                 gap: "5px",
                 padding: "6px 14px",
-                borderRadius: "5px",
+                borderRadius: 0,
                 background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
                 border: "none",
                 color: "#ffffff",
@@ -507,7 +507,7 @@ export default function OrderVerificationClient({
             style={{
               background: isDark ? "rgba(0, 0, 0, 0.4)" : "#ffffff",
               border: isDark ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid #fde68a",
-              borderRadius: "5px",
+              borderRadius: 0,
               padding: "10px 14px",
               boxShadow: isDark ? "none" : "0 2px 6px rgba(245, 158, 11, 0.08)",
             }}
@@ -524,7 +524,7 @@ export default function OrderVerificationClient({
             style={{
               background: isDark ? "rgba(0, 0, 0, 0.4)" : "#ffffff",
               border: isDark ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid #bbf7d0",
-              borderRadius: "5px",
+              borderRadius: 0,
               padding: "10px 14px",
               boxShadow: isDark ? "none" : "0 2px 6px rgba(16, 185, 129, 0.08)",
             }}
@@ -541,7 +541,7 @@ export default function OrderVerificationClient({
             style={{
               background: isDark ? "rgba(0, 0, 0, 0.4)" : "#ffffff",
               border: isDark ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid #fecaca",
-              borderRadius: "5px",
+              borderRadius: 0,
               padding: "10px 14px",
               boxShadow: isDark ? "none" : "0 2px 6px rgba(239, 68, 68, 0.08)",
             }}
@@ -564,7 +564,7 @@ export default function OrderVerificationClient({
             onClick={() => setActiveTab("pending")}
             style={{
               padding: "7px 14px",
-              borderRadius: "5px",
+              borderRadius: 0,
               fontSize: "12px",
               fontWeight: 800,
               cursor: "pointer",
@@ -578,7 +578,7 @@ export default function OrderVerificationClient({
             }}
           >
             <span>🟡 Awaiting Verification</span>
-            <span style={{ background: "#f59e0b", color: "#ffffff", padding: "1px 6px", borderRadius: "5px", fontSize: "10.5px" }}>
+            <span style={{ background: "#f59e0b", color: "#ffffff", padding: "1px 6px", borderRadius: 0, fontSize: "10.5px" }}>
               {pendingCount}
             </span>
           </button>
@@ -588,7 +588,7 @@ export default function OrderVerificationClient({
             onClick={() => setActiveTab("verified")}
             style={{
               padding: "7px 14px",
-              borderRadius: "5px",
+              borderRadius: 0,
               fontSize: "12px",
               fontWeight: 800,
               cursor: "pointer",
@@ -602,7 +602,7 @@ export default function OrderVerificationClient({
             }}
           >
             <span>🟢 Verified &amp; Approved</span>
-            <span style={{ background: "#10b981", color: "#ffffff", padding: "1px 6px", borderRadius: "5px", fontSize: "10.5px" }}>
+            <span style={{ background: "#10b981", color: "#ffffff", padding: "1px 6px", borderRadius: 0, fontSize: "10.5px" }}>
               {verifiedCount}
             </span>
           </button>
@@ -612,7 +612,7 @@ export default function OrderVerificationClient({
             onClick={() => setActiveTab("rejected")}
             style={{
               padding: "7px 14px",
-              borderRadius: "5px",
+              borderRadius: 0,
               fontSize: "12px",
               fontWeight: 800,
               cursor: "pointer",
@@ -626,7 +626,7 @@ export default function OrderVerificationClient({
             }}
           >
             <span>🔴 Rejected</span>
-            <span style={{ background: "#ef4444", color: "#ffffff", padding: "1px 6px", borderRadius: "5px", fontSize: "10.5px" }}>
+            <span style={{ background: "#ef4444", color: "#ffffff", padding: "1px 6px", borderRadius: 0, fontSize: "10.5px" }}>
               {rejectedCount}
             </span>
           </button>
@@ -636,7 +636,7 @@ export default function OrderVerificationClient({
             onClick={() => setActiveTab("all")}
             style={{
               padding: "7px 14px",
-              borderRadius: "5px",
+              borderRadius: 0,
               fontSize: "12px",
               fontWeight: 800,
               cursor: "pointer",
@@ -664,7 +664,7 @@ export default function OrderVerificationClient({
               paddingLeft: "32px",
               paddingRight: "10px",
               fontSize: "12px",
-              borderRadius: "5px",
+              borderRadius: 0,
               border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
               background: isDark ? "rgba(15, 23, 42, 0.8)" : "#ffffff",
               color: isDark ? "#ffffff" : "#0f172a",
@@ -681,7 +681,7 @@ export default function OrderVerificationClient({
           style={{
             background: isDark ? "#0f172a" : "#ffffff",
             border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1.5px solid #e2e8f0",
-            borderRadius: "5px",
+            borderRadius: 0,
             padding: "44px 20px",
             textAlign: "center",
             boxShadow: isDark ? "0 4px 14px rgba(0,0,0,0.4)" : "0 2px 8px rgba(0,0,0,0.04)",
@@ -692,7 +692,7 @@ export default function OrderVerificationClient({
               position: "relative",
               width: "70px",
               height: "70px",
-              borderRadius: "5px",
+              borderRadius: 0,
               overflow: "hidden",
               margin: "0 auto 14px",
               border: "2px solid #fed7aa",
@@ -757,7 +757,7 @@ export default function OrderVerificationClient({
                     : isOrderCancelled
                     ? (isDark ? "1.5px solid #7f1d1d" : "1.5px solid #fecaca")
                     : (isDark ? "1.5px solid #065f46" : "1.5px solid #bbf7d0"),
-                  borderRadius: "5px",
+                  borderRadius: 0,
                   padding: "16px",
                   boxShadow: isUnverified
                     ? "0 4px 14px rgba(245, 158, 11, 0.16)"
@@ -782,7 +782,7 @@ export default function OrderVerificationClient({
                             fontSize: "10px",
                             fontWeight: 800,
                             padding: "2px 6px",
-                            borderRadius: "5px",
+                            borderRadius: 0,
                             background: isDelivery ? (isDark ? "rgba(37, 99, 235, 0.2)" : "#eff6ff") : isDineIn ? (isDark ? "rgba(168, 85, 247, 0.2)" : "#fdf4ff") : (isDark ? "rgba(234, 179, 8, 0.2)" : "#fefce8"),
                             color: isDelivery ? (isDark ? "#93c5fd" : "#1d4ed8") : isDineIn ? (isDark ? "#f0abfc" : "#86198f") : (isDark ? "#fde047" : "#854d0e"),
                             border: `1px solid ${isDelivery ? (isDark ? "rgba(59, 130, 246, 0.4)" : "#bfdbfe") : isDineIn ? (isDark ? "rgba(168, 85, 247, 0.4)" : "#f5d0fe") : (isDark ? "rgba(234, 179, 8, 0.4)" : "#fde047")}`,
@@ -802,15 +802,15 @@ export default function OrderVerificationClient({
 
                     <div>
                       {isUnverified ? (
-                        <span style={{ fontSize: "11px", fontWeight: 800, color: isDark ? "#fbbf24" : "#b45309", background: isDark ? "rgba(245, 158, 11, 0.2)" : "#fef3c7", padding: "3px 8px", borderRadius: "5px", border: isDark ? "1px solid rgba(245, 158, 11, 0.4)" : "1px solid #fde68a" }}>
+                        <span style={{ fontSize: "11px", fontWeight: 800, color: isDark ? "#fbbf24" : "#b45309", background: isDark ? "rgba(245, 158, 11, 0.2)" : "#fef3c7", padding: "3px 8px", borderRadius: 0, border: isDark ? "1px solid rgba(245, 158, 11, 0.4)" : "1px solid #fde68a" }}>
                           ⚠️ Awaiting Verify
                         </span>
                       ) : isOrderCancelled ? (
-                        <span style={{ fontSize: "11px", fontWeight: 800, color: isDark ? "#fca5a5" : "#991b1b", background: isDark ? "rgba(239, 68, 68, 0.2)" : "#fee2e2", padding: "3px 8px", borderRadius: "5px", border: isDark ? "1px solid rgba(239, 68, 68, 0.4)" : "1px solid #fecaca" }}>
+                        <span style={{ fontSize: "11px", fontWeight: 800, color: isDark ? "#fca5a5" : "#991b1b", background: isDark ? "rgba(239, 68, 68, 0.2)" : "#fee2e2", padding: "3px 8px", borderRadius: 0, border: isDark ? "1px solid rgba(239, 68, 68, 0.4)" : "1px solid #fecaca" }}>
                           ❌ Rejected
                         </span>
                       ) : (
-                        <span style={{ fontSize: "11px", fontWeight: 800, color: isDark ? "#86efac" : "#166534", background: isDark ? "rgba(16, 185, 129, 0.2)" : "#dcfce7", padding: "3px 8px", borderRadius: "5px", border: isDark ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid #bbf7d0" }}>
+                        <span style={{ fontSize: "11px", fontWeight: 800, color: isDark ? "#86efac" : "#166534", background: isDark ? "rgba(16, 185, 129, 0.2)" : "#dcfce7", padding: "3px 8px", borderRadius: 0, border: isDark ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid #bbf7d0" }}>
                           ✓ Live Order
                         </span>
                       )}
@@ -822,7 +822,7 @@ export default function OrderVerificationClient({
                     style={{
                       background: isDark ? "rgba(255, 255, 255, 0.04)" : "#f8fafc",
                       border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #e2e8f0",
-                      borderRadius: "5px",
+                      borderRadius: 0,
                       padding: "10px 12px",
                       marginBottom: "12px",
                     }}
@@ -855,7 +855,7 @@ export default function OrderVerificationClient({
                               justifyContent: "center",
                               gap: "4px",
                               padding: "6px 8px",
-                              borderRadius: "5px",
+                              borderRadius: 0,
                               background: isDark ? "rgba(255, 255, 255, 0.08)" : "#ffffff",
                               border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
                               color: isDark ? "#ffffff" : "#0f172a",
@@ -879,7 +879,7 @@ export default function OrderVerificationClient({
                               justifyContent: "center",
                               gap: "4px",
                               padding: "6px 8px",
-                              borderRadius: "5px",
+                              borderRadius: 0,
                               background: isDark ? "rgba(16, 185, 129, 0.2)" : "#ecfdf5",
                               border: isDark ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid #a7f3d0",
                               color: isDark ? "#34d399" : "#065f46",
@@ -901,7 +901,7 @@ export default function OrderVerificationClient({
                           rel="noopener noreferrer"
                           style={{
                             padding: "6px 8px",
-                            borderRadius: "5px",
+                            borderRadius: 0,
                             background: isDark ? "rgba(37, 99, 235, 0.2)" : "#eff6ff",
                             border: isDark ? "1px solid rgba(59, 130, 246, 0.4)" : "1px solid #bfdbfe",
                             color: isDark ? "#93c5fd" : "#1d4ed8",
@@ -930,7 +930,7 @@ export default function OrderVerificationClient({
                             </strong>
                             <span>{item.name || item.product?.name || "Item"}</span>
                             {item.selected_variation && (
-                              <span style={{ marginLeft: 4, fontSize: 10, background: isDark ? "rgba(239, 68, 68, 0.25)" : "#fee2e2", color: isDark ? "#fca5a5" : "#dc2626", padding: "1px 5px", borderRadius: "5px", fontWeight: 700 }}>
+                              <span style={{ marginLeft: 4, fontSize: 10, background: isDark ? "rgba(239, 68, 68, 0.25)" : "#fee2e2", color: isDark ? "#fca5a5" : "#dc2626", padding: "1px 5px", borderRadius: 0, fontWeight: 700 }}>
                                 {item.selected_variation.name}
                               </span>
                             )}
@@ -955,7 +955,7 @@ export default function OrderVerificationClient({
                           alignItems: "center",
                           background: isDark ? "rgba(16, 185, 129, 0.15)" : "#f0fdf4",
                           border: isDark ? "1px dashed rgba(52, 211, 153, 0.4)" : "1px dashed #86efac",
-                          borderRadius: "5px",
+                          borderRadius: 0,
                           padding: "4px 8px",
                           marginTop: "8px",
                           marginBottom: "4px",
@@ -976,7 +976,7 @@ export default function OrderVerificationClient({
                             style={{
                               background: isDark ? "rgba(16, 185, 129, 0.3)" : "#dcfce7",
                               padding: "1px 6px",
-                              borderRadius: "5px",
+                              borderRadius: 0,
                               letterSpacing: "0.5px",
                               fontSize: "10.5px",
                             }}
@@ -1004,7 +1004,7 @@ export default function OrderVerificationClient({
                   {isUnverified ? (
                     <div>
                       {rejectingOrderId === order.id ? (
-                        <div style={{ background: isDark ? "rgba(239, 68, 68, 0.15)" : "#fef2f2", border: isDark ? "1px solid rgba(239, 68, 68, 0.4)" : "1px solid #fecaca", borderRadius: "5px", padding: "10px" }}>
+                        <div style={{ background: isDark ? "rgba(239, 68, 68, 0.15)" : "#fef2f2", border: isDark ? "1px solid rgba(239, 68, 68, 0.4)" : "1px solid #fecaca", borderRadius: 0, padding: "10px" }}>
                           <span style={{ fontSize: "11px", fontWeight: 800, color: isDark ? "#fca5a5" : "#991b1b", display: "block", marginBottom: "4px" }}>
                             Reason for Rejecting / Cancelling:
                           </span>
@@ -1018,7 +1018,7 @@ export default function OrderVerificationClient({
                               height: "32px",
                               fontSize: "12px",
                               padding: "0 8px",
-                              borderRadius: "5px",
+                              borderRadius: 0,
                               border: isDark ? "1px solid rgba(255, 255, 255, 0.2)" : "1px solid #cbd5e1",
                               background: isDark ? "#1e293b" : "#ffffff",
                               color: isDark ? "#ffffff" : "#0f172a",
@@ -1036,7 +1036,7 @@ export default function OrderVerificationClient({
                               style={{
                                 flex: 1,
                                 height: "30px",
-                                borderRadius: "5px",
+                                borderRadius: 0,
                                 background: isDark ? "rgba(255, 255, 255, 0.08)" : "#ffffff",
                                 border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
                                 color: isDark ? "#ffffff" : "#0f172a",
@@ -1054,7 +1054,7 @@ export default function OrderVerificationClient({
                               style={{
                                 flex: 1,
                                 height: "30px",
-                                borderRadius: "5px",
+                                borderRadius: 0,
                                 background: "#dc2626",
                                 color: "#ffffff",
                                 border: "none",
@@ -1078,7 +1078,7 @@ export default function OrderVerificationClient({
                               style={{
                                 flex: 2,
                                 height: "40px",
-                                borderRadius: "5px",
+                                borderRadius: 0,
                                 background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                                 color: "#ffffff",
                                 border: "none",
@@ -1109,7 +1109,7 @@ export default function OrderVerificationClient({
                               style={{
                                 flex: 1,
                                 height: "40px",
-                                borderRadius: "5px",
+                                borderRadius: 0,
                                 background: isDark ? "rgba(37, 99, 235, 0.2)" : "#eff6ff",
                                 color: isDark ? "#93c5fd" : "#1d4ed8",
                                 border: isDark ? "1.5px solid rgba(59, 130, 246, 0.4)" : "1.5px solid #bfdbfe",
@@ -1138,7 +1138,7 @@ export default function OrderVerificationClient({
                             style={{
                               width: "100%",
                               height: "30px",
-                              borderRadius: "5px",
+                              borderRadius: 0,
                               background: isDark ? "rgba(239, 68, 68, 0.15)" : "#fef2f2",
                               color: isDark ? "#fca5a5" : "#dc2626",
                               border: isDark ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid #fecaca",
@@ -1153,11 +1153,11 @@ export default function OrderVerificationClient({
                       )}
                     </div>
                   ) : isOrderCancelled ? (
-                    <div style={{ textAlign: "center", padding: "8px", background: isDark ? "rgba(239, 68, 68, 0.15)" : "#fef2f2", borderRadius: "5px", fontSize: "11.5px", color: isDark ? "#fca5a5" : "#991b1b", fontWeight: 700, border: isDark ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid #fecaca" }}>
+                    <div style={{ textAlign: "center", padding: "8px", background: isDark ? "rgba(239, 68, 68, 0.15)" : "#fef2f2", borderRadius: 0, fontSize: "11.5px", color: isDark ? "#fca5a5" : "#991b1b", fontWeight: 700, border: isDark ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid #fecaca" }}>
                       Rejected &amp; Cancelled by Admin
                     </div>
                   ) : (
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#f0fdf4", borderRadius: "5px", border: isDark ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid #bbf7d0" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#f0fdf4", borderRadius: 0, border: isDark ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid #bbf7d0" }}>
                       <span style={{ fontSize: "11.5px", color: isDark ? "#86efac" : "#166534", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
                         <Check size={13} />
                         <span>Active on Live Orders Board</span>
@@ -1170,7 +1170,7 @@ export default function OrderVerificationClient({
                           border: isDark ? "1px solid rgba(255, 255, 255, 0.2)" : "1px solid #cbd5e1",
                           color: isDark ? "#ffffff" : "#0f172a",
                           padding: "4px 8px",
-                          borderRadius: "5px",
+                          borderRadius: 0,
                           fontSize: "11px",
                           fontWeight: 700,
                           cursor: "pointer",
