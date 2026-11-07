@@ -205,20 +205,67 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
     const finalTotal = verifiedTotal;
 
     // -------------------------------------------------------------
-    // CONCURRENCY-SAFE ORDER NUMBERING: Atomic Sequence with Retry Loop
-    // Prevents duplicate key collisions (23505) under rush-hour surges
+    // CONCURRENCY-SAFE ORDER NUMBERING: Shop-Isolated Prefix with Date & Atomic Sequence
+    // Generates format: ORD-{shopCode}{ddMM}-{seq} (e.g. ORD-pm0711-0001, ORD-demo0711-0001)
+    // Guarantees zero cross-shop collisions across web menu, POS & FloDesktop
     // -------------------------------------------------------------
-    async function getNextOrderNumber(shopId: number | null): Promise<{ seq: number; num: string }> {
+    async function getNextOrderNumber(shopId: number | null): Promise<{ seq: number; num: string; prefix: string }> {
+      let shopCode = "main";
+      if (shopId) {
+        try {
+          const { data: s } = await supabase.from("shops").select("slug, name").eq("id", shopId).maybeSingle();
+          if (s?.slug) {
+            const clean = s.slug.toLowerCase().trim();
+            if (clean === "pizza-mafia" || clean === "pizza_mafia" || clean === "pizzamafia") {
+              shopCode = "pm";
+            } else if (clean === "demo") {
+              shopCode = "demo";
+            } else {
+              const parts = clean.split(/[-_]/).filter(Boolean);
+              shopCode = parts.length > 1 ? parts.map((p: string) => p[0]).join("") : clean.slice(0, 4);
+            }
+          } else if (shopId === 7) {
+            shopCode = "pm";
+          } else if (shopId === 8) {
+            shopCode = "demo";
+          } else {
+            shopCode = `s${shopId}`;
+          }
+        } catch {
+          shopCode = shopId === 7 ? "pm" : shopId === 8 ? "demo" : `s${shopId}`;
+        }
+      }
+
+      // Date formatted as ddMM (e.g. 0711 for 07 Nov) in Asia/Karachi timezone
+      const now = new Date();
+      let dateCode = "0711";
+      try {
+        const formatter = new Intl.DateTimeFormat("en-PK", {
+          timeZone: "Asia/Karachi",
+          day: "2-digit",
+          month: "2-digit",
+        });
+        const parts = formatter.formatToParts(now);
+        const day = parts.find((p) => p.type === "day")?.value || String(now.getDate()).padStart(2, "0");
+        const month = parts.find((p) => p.type === "month")?.value || String(now.getMonth() + 1).padStart(2, "0");
+        dateCode = `${day}${month}`;
+      } catch {
+        const day = String(now.getDate()).padStart(2, "0");
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        dateCode = `${day}${month}`;
+      }
+
+      const prefix = `ORD-${shopCode}${dateCode}-`;
+
       let query = supabase
         .from("orders")
         .select("order_number, id")
+        .like("order_number", `${prefix}%`)
         .order("id", { ascending: false })
         .limit(1);
 
       if (shopId) {
         query = query.eq("shop_id", shopId);
-      } else {
-        query = query.is("shop_id", null);
       }
 
       let seq = 1;
@@ -229,16 +276,14 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
           const match = lastNum.match(/(\d+)$/);
           if (match) {
             seq = parseInt(match[1], 10) + 1;
-          } else {
-            seq = (Number(latestRows[0].id) || 0) + 1;
           }
         }
       } catch {
         seq = 1;
       }
-      const seqStr = String(seq).padStart(3, "0");
-      const num = shopId ? `ORD-${shopId}-${seqStr}` : `ORD-${seqStr}`;
-      return { seq, num };
+      const seqStr = String(seq).padStart(4, "0");
+      const num = `${prefix}${seqStr}`;
+      return { seq, num, prefix };
     }
 
     let { seq: nextSeq, num: orderNumber } = await getNextOrderNumber(targetShopId);
@@ -318,9 +363,7 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
         const refreshed = await getNextOrderNumber(targetShopId);
         if (refreshed.num === orderPayload.order_number) {
           const jitterSeq = refreshed.seq + attempt;
-          orderPayload.order_number = targetShopId
-            ? `ORD-${targetShopId}-${String(jitterSeq).padStart(3, "0")}`
-            : `ORD-${String(jitterSeq).padStart(3, "0")}`;
+          orderPayload.order_number = `${refreshed.prefix}${String(jitterSeq).padStart(4, "0")}`;
         } else {
           orderPayload.order_number = refreshed.num;
         }

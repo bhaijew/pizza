@@ -338,8 +338,12 @@ function POSContent() {
 
     try {
       const nextSeq = orders.length + 1;
-      const orderSeqStr = String(nextSeq).padStart(3, "0");
-      const seqOrderNum = `ORD-${activeShop.id ? activeShop.id + "-" : ""}${orderSeqStr}`;
+      const orderSeqStr = String(nextSeq).padStart(4, "0");
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, "0");
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const shopCode = activeShop.slug === "pizza-mafia" || activeShop.id === 7 ? "pm" : "demo";
+      const seqOrderNum = `ORD-${shopCode}${dd}${mm}-${orderSeqStr}`;
       const sampleCustomerNames = ["Hamza Tariq", "Zahid Qureshi", "Ayesha Malik", "Usman Khan", "Bilal Sheikh"];
       const randomName = sampleCustomerNames[Math.floor(Math.random() * sampleCustomerNames.length)];
       const sampleItems = [
