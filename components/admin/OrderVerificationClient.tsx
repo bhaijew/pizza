@@ -27,6 +27,8 @@ import {
   AlertTriangle,
   Flame,
   Check,
+  Sun,
+  Moon,
 } from "lucide-react";
 import ThermalDualPrintModal from "@/components/admin/ThermalDualPrintModal";
 
@@ -59,6 +61,24 @@ export default function OrderVerificationClient({
   const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
+  const [isDark, setIsDark] = useState(true);
+
+  // Load saved theme preference
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("pizza_admin_verify_theme") || localStorage.getItem("pizza_admin_sidebar_theme");
+      if (saved === "light") setIsDark(false);
+      else if (saved === "dark") setIsDark(true);
+    } catch {}
+  }, []);
+
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    try {
+      localStorage.setItem("pizza_admin_verify_theme", next ? "dark" : "light");
+    } catch {}
+  };
 
   // Determine if order belongs in online verification flow
   const isVerifyTarget = (o: any) => {
@@ -306,102 +326,132 @@ export default function OrderVerificationClient({
 
   return (
     <div style={{ maxWidth: "1280px", margin: "0 auto", paddingBottom: "60px", fontFamily: "var(--font-poppins, system-ui, sans-serif)" }}>
-      {/* ─── PAGE HEADER ─── */}
+      {/* ─── 1. EXECUTIVE COMMAND BAR WITH BACKGROUND PHOTO & THEME SUPPORT ─── */}
       <div
         style={{
-          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-          color: "#ffffff",
+          position: "relative",
+          background: isDark
+            ? "linear-gradient(135deg, rgba(9, 23, 42, 0.90) 0%, rgba(13, 35, 63, 0.94) 100%), url('/images/pizzger-hero-pizza.jpg') center/cover no-repeat"
+            : "linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.96) 100%), url('/images/pizzger-hero-pizza.jpg') center/cover no-repeat",
           borderRadius: "5px",
-          border: "1px solid #334155",
-          padding: "20px",
+          border: isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #cbd5e1",
+          padding: "16px 20px",
           marginBottom: "16px",
-          boxShadow: "0 4px 14px rgba(15, 23, 42, 0.2)",
+          boxShadow: isDark
+            ? "0 10px 30px -8px rgba(9, 23, 42, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08)"
+            : "0 6px 20px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04)",
+          backdropFilter: "blur(8px)",
+          color: isDark ? "#ffffff" : "#0f172a",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", minWidth: 0, flex: 1 }}>
-            {/* Visual Verification Terminal Hero Badge */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "14px" }}>
+          {/* Left: Glowing Executive Badge & Title */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0, flex: 1 }}>
             <div
               style={{
-                position: "relative",
-                width: "68px",
-                height: "68px",
-                borderRadius: "12px",
-                overflow: "hidden",
-                border: "2px solid rgba(245, 158, 11, 0.6)",
-                boxShadow: "0 4px 18px rgba(245, 158, 11, 0.25)",
+                width: 38,
+                height: 38,
+                borderRadius: "5px",
+                background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                color: "#ffffff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 4px 14px rgba(234, 88, 12, 0.45)",
                 flexShrink: 0,
-                background: "#1e293b",
               }}
             >
-              <img
-                src="/images/pizzger-hero-pizza.jpg"
-                alt="Order Verification"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  right: 0,
-                  background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-                  color: "#0f172a",
-                  borderRadius: "5px 0 0 0",
-                  padding: "3px 5px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                title="Verified Terminal"
-              >
-                <ShieldCheck size={12} strokeWidth={3} />
-              </div>
+              <ShieldCheck size={20} strokeWidth={2.4} />
             </div>
 
             <div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(245, 158, 11, 0.18)", border: "1px solid rgba(245, 158, 11, 0.35)", padding: "3px 8px", borderRadius: "4px", marginBottom: "6px" }}>
-                <ShieldCheck size={14} className="text-amber-400" />
-                <span style={{ fontSize: "11px", fontWeight: 800, color: "#fbbf24", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  Order Verification Terminal
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "15px",
+                    fontWeight: 900,
+                    color: isDark ? "#ffffff" : "#0f172a",
+                    letterSpacing: "0.02em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Online Menu Orders Verification
+                </h2>
+
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "2px 8px",
+                    borderRadius: "5px",
+                    background: isDark ? "rgba(16, 185, 129, 0.2)" : "rgba(16, 185, 129, 0.15)",
+                    border: isDark ? "1px solid rgba(52, 211, 153, 0.4)" : "1px solid rgba(16, 185, 129, 0.4)",
+                    color: isDark ? "#34d399" : "#059669",
+                    fontSize: "10px",
+                    fontWeight: 800,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: "#10b981",
+                      boxShadow: "0 0 6px #10b981",
+                    }}
+                    className="admin-pulse-green"
+                  />
+                  <span>Auto-Live (2.5s)</span>
                 </span>
               </div>
-              <h1 style={{ margin: "2px 0 6px", fontSize: "22px", fontWeight: 900, letterSpacing: "-0.5px" }}>
-                Online Menu Orders Verification
-              </h1>
-              <p style={{ margin: 0, fontSize: "12.5px", color: "#94a3b8", maxWidth: "680px" }}>
-                Review customer details, address, and items before releasing orders into the Live Kitchen &amp; POS Board. Prevents fake / prank orders and eliminates wasted cooking and thermal paper.
+
+              <p style={{ margin: "2px 0 0", fontSize: "11.5px", color: isDark ? "#94a3b8" : "#64748b" }}>
+                Review customer details, address, and items before releasing orders into the Live Kitchen &amp; POS Board.
               </p>
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
-            <div
+          {/* Right: Executive Controls Bar (Theme Toggle, Refresh, Live Board) */}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+            {/* White & Dark Theme Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                background: "rgba(16, 185, 129, 0.15)",
-                border: "1px solid rgba(16, 185, 129, 0.35)",
-                padding: "6px 10px",
+                gap: "5px",
+                padding: "6px 12px",
                 borderRadius: "5px",
+                border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
+                background: isDark ? "rgba(255, 255, 255, 0.08)" : "#ffffff",
+                color: isDark ? "#ffffff" : "#0f172a",
+                fontSize: "11.5px",
+                fontWeight: 800,
+                cursor: "pointer",
+                backdropFilter: "blur(4px)",
+                transition: "all 0.15s ease",
               }}
-              title="Orders auto-update every 2.5 seconds without needing browser refresh"
+              title={isDark ? "Switch to White / Light Mode" : "Switch to Dark Executive Mode"}
             >
-              <span
-                style={{
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  background: "#10b981",
-                  boxShadow: "0 0 8px #10b981",
-                  display: "inline-block",
-                }}
-              />
-              <span style={{ fontSize: "11px", fontWeight: 800, color: "#34d399", letterSpacing: "0.3px" }}>
-                Auto-Live (2.5s)
-              </span>
-            </div>
+              {isDark ? (
+                <>
+                  <Sun size={13} className="text-amber-400" />
+                  <span>Light Mode</span>
+                </>
+              ) : (
+                <>
+                  <Moon size={13} className="text-slate-700" />
+                  <span>Dark Mode</span>
+                </>
+              )}
+            </button>
 
+            {/* Refresh Button */}
             <button
               type="button"
               onClick={() => fetchLiveOrders(false)}
@@ -409,36 +459,41 @@ export default function OrderVerificationClient({
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                background: "rgba(255, 255, 255, 0.1)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-                color: "#ffffff",
-                fontSize: "12px",
-                fontWeight: 700,
-                padding: "7px 12px",
+                gap: "5px",
+                padding: "6px 12px",
                 borderRadius: "5px",
+                border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
+                background: isDark ? "rgba(255, 255, 255, 0.08)" : "#ffffff",
+                color: isDark ? "#ffffff" : "#0f172a",
+                fontSize: "11.5px",
+                fontWeight: 800,
                 cursor: isRefreshing ? "wait" : "pointer",
+                backdropFilter: "blur(4px)",
+                transition: "all 0.15s ease",
               }}
               title="Force check for new orders now"
             >
-              <RefreshCw size={13} className={isRefreshing ? "animate-spin text-amber-400" : ""} />
-              <span>{isRefreshing ? "Checking..." : "Refresh"}</span>
+              <RefreshCw size={12} className={isRefreshing ? "animate-spin text-amber-400" : ""} />
+              <span>{isRefreshing ? "Syncing..." : "Refresh"}</span>
             </button>
 
+            {/* Link to Live Orders Board */}
             <a
               href="/admin/orders"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                background: "rgba(255, 255, 255, 0.1)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-                color: "#ffffff",
-                fontSize: "12px",
-                fontWeight: 800,
-                padding: "7px 14px",
+                gap: "5px",
+                padding: "6px 14px",
                 borderRadius: "5px",
+                background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                border: "none",
+                color: "#ffffff",
+                fontSize: "11.5px",
+                fontWeight: 800,
                 textDecoration: "none",
+                boxShadow: "0 2px 8px rgba(234, 88, 12, 0.35)",
+                transition: "all 0.15s ease",
               }}
             >
               <span>Live Orders Board →</span>
@@ -447,31 +502,61 @@ export default function OrderVerificationClient({
         </div>
 
         {/* Real-time Statistics Strip */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginTop: "16px" }}>
-          <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "5px", padding: "10px 14px" }}>
-            <span style={{ fontSize: "11px", color: "#fbbf24", fontWeight: 800, textTransform: "uppercase" }}>Awaiting Verification</span>
-            <div style={{ fontSize: "24px", fontWeight: 900, color: "#ffffff", marginTop: "2px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginTop: "14px" }}>
+          <div
+            style={{
+              background: isDark ? "rgba(0, 0, 0, 0.4)" : "#ffffff",
+              border: isDark ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid #fde68a",
+              borderRadius: "5px",
+              padding: "10px 14px",
+              boxShadow: isDark ? "none" : "0 2px 6px rgba(245, 158, 11, 0.08)",
+            }}
+          >
+            <span style={{ fontSize: "10.5px", color: isDark ? "#fbbf24" : "#b45309", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.03em" }}>
+              Awaiting Verification
+            </span>
+            <div style={{ fontSize: "24px", fontWeight: 900, color: isDark ? "#ffffff" : "#0f172a", marginTop: "2px" }}>
               {pendingCount}
             </div>
           </div>
 
-          <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "5px", padding: "10px 14px" }}>
-            <span style={{ fontSize: "11px", color: "#34d399", fontWeight: 800, textTransform: "uppercase" }}>Approved & Sent to Live</span>
-            <div style={{ fontSize: "24px", fontWeight: 900, color: "#ffffff", marginTop: "2px" }}>
+          <div
+            style={{
+              background: isDark ? "rgba(0, 0, 0, 0.4)" : "#ffffff",
+              border: isDark ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid #bbf7d0",
+              borderRadius: "5px",
+              padding: "10px 14px",
+              boxShadow: isDark ? "none" : "0 2px 6px rgba(16, 185, 129, 0.08)",
+            }}
+          >
+            <span style={{ fontSize: "10.5px", color: isDark ? "#34d399" : "#15803d", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.03em" }}>
+              Approved &amp; Sent to Live
+            </span>
+            <div style={{ fontSize: "24px", fontWeight: 900, color: isDark ? "#ffffff" : "#0f172a", marginTop: "2px" }}>
               {verifiedCount}
             </div>
           </div>
 
-          <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "5px", padding: "10px 14px" }}>
-            <span style={{ fontSize: "11px", color: "#f87171", fontWeight: 800, textTransform: "uppercase" }}>Rejected / Prank Orders</span>
-            <div style={{ fontSize: "24px", fontWeight: 900, color: "#ffffff", marginTop: "2px" }}>
+          <div
+            style={{
+              background: isDark ? "rgba(0, 0, 0, 0.4)" : "#ffffff",
+              border: isDark ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid #fecaca",
+              borderRadius: "5px",
+              padding: "10px 14px",
+              boxShadow: isDark ? "none" : "0 2px 6px rgba(239, 68, 68, 0.08)",
+            }}
+          >
+            <span style={{ fontSize: "10.5px", color: isDark ? "#f87171" : "#dc2626", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.03em" }}>
+              Rejected / Prank Orders
+            </span>
+            <div style={{ fontSize: "24px", fontWeight: 900, color: isDark ? "#ffffff" : "#0f172a", marginTop: "2px" }}>
               {rejectedCount}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ─── FILTER TABS & SEARCH BAR ─── */}
+      {/* ─── 2. FILTER TABS & SEARCH BAR (5PX RADIUS + THEME SUPPORT) ─── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "16px" }}>
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
           <button
@@ -480,19 +565,20 @@ export default function OrderVerificationClient({
             style={{
               padding: "7px 14px",
               borderRadius: "5px",
-              fontSize: "12.5px",
+              fontSize: "12px",
               fontWeight: 800,
               cursor: "pointer",
-              border: activeTab === "pending" ? "1.5px solid #f59e0b" : "1px solid #cbd5e1",
-              background: activeTab === "pending" ? "#fffbeb" : "#ffffff",
-              color: activeTab === "pending" ? "#b45309" : "#475569",
+              border: activeTab === "pending" ? "1.5px solid #f59e0b" : isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #cbd5e1",
+              background: activeTab === "pending" ? (isDark ? "rgba(245, 158, 11, 0.2)" : "#fffbeb") : isDark ? "rgba(255, 255, 255, 0.05)" : "#ffffff",
+              color: activeTab === "pending" ? (isDark ? "#fbbf24" : "#b45309") : isDark ? "#94a3b8" : "#475569",
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
+              transition: "all 0.15s ease",
             }}
           >
             <span>🟡 Awaiting Verification</span>
-            <span style={{ background: "#f59e0b", color: "#ffffff", padding: "1px 6px", borderRadius: "10px", fontSize: "11px" }}>
+            <span style={{ background: "#f59e0b", color: "#ffffff", padding: "1px 6px", borderRadius: "5px", fontSize: "10.5px" }}>
               {pendingCount}
             </span>
           </button>
@@ -503,19 +589,20 @@ export default function OrderVerificationClient({
             style={{
               padding: "7px 14px",
               borderRadius: "5px",
-              fontSize: "12.5px",
+              fontSize: "12px",
               fontWeight: 800,
               cursor: "pointer",
-              border: activeTab === "verified" ? "1.5px solid #10b981" : "1px solid #cbd5e1",
-              background: activeTab === "verified" ? "#ecfdf5" : "#ffffff",
-              color: activeTab === "verified" ? "#065f46" : "#475569",
+              border: activeTab === "verified" ? "1.5px solid #10b981" : isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #cbd5e1",
+              background: activeTab === "verified" ? (isDark ? "rgba(16, 185, 129, 0.2)" : "#ecfdf5") : isDark ? "rgba(255, 255, 255, 0.05)" : "#ffffff",
+              color: activeTab === "verified" ? (isDark ? "#34d399" : "#065f46") : isDark ? "#94a3b8" : "#475569",
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
+              transition: "all 0.15s ease",
             }}
           >
-            <span>🟢 Verified & Approved</span>
-            <span style={{ background: "#10b981", color: "#ffffff", padding: "1px 6px", borderRadius: "10px", fontSize: "11px" }}>
+            <span>🟢 Verified &amp; Approved</span>
+            <span style={{ background: "#10b981", color: "#ffffff", padding: "1px 6px", borderRadius: "5px", fontSize: "10.5px" }}>
               {verifiedCount}
             </span>
           </button>
@@ -526,19 +613,20 @@ export default function OrderVerificationClient({
             style={{
               padding: "7px 14px",
               borderRadius: "5px",
-              fontSize: "12.5px",
+              fontSize: "12px",
               fontWeight: 800,
               cursor: "pointer",
-              border: activeTab === "rejected" ? "1.5px solid #ef4444" : "1px solid #cbd5e1",
-              background: activeTab === "rejected" ? "#fef2f2" : "#ffffff",
-              color: activeTab === "rejected" ? "#991b1b" : "#475569",
+              border: activeTab === "rejected" ? "1.5px solid #ef4444" : isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #cbd5e1",
+              background: activeTab === "rejected" ? (isDark ? "rgba(239, 68, 68, 0.2)" : "#fef2f2") : isDark ? "rgba(255, 255, 255, 0.05)" : "#ffffff",
+              color: activeTab === "rejected" ? (isDark ? "#f87171" : "#991b1b") : isDark ? "#94a3b8" : "#475569",
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
+              transition: "all 0.15s ease",
             }}
           >
             <span>🔴 Rejected</span>
-            <span style={{ background: "#ef4444", color: "#ffffff", padding: "1px 6px", borderRadius: "10px", fontSize: "11px" }}>
+            <span style={{ background: "#ef4444", color: "#ffffff", padding: "1px 6px", borderRadius: "5px", fontSize: "10.5px" }}>
               {rejectedCount}
             </span>
           </button>
@@ -549,12 +637,13 @@ export default function OrderVerificationClient({
             style={{
               padding: "7px 14px",
               borderRadius: "5px",
-              fontSize: "12.5px",
+              fontSize: "12px",
               fontWeight: 800,
               cursor: "pointer",
-              border: activeTab === "all" ? "1.5px solid #0f172a" : "1px solid #cbd5e1",
-              background: activeTab === "all" ? "#0f172a" : "#ffffff",
-              color: activeTab === "all" ? "#ffffff" : "#475569",
+              border: activeTab === "all" ? (isDark ? "1.5px solid #f97316" : "1.5px solid #0f172a") : isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #cbd5e1",
+              background: activeTab === "all" ? (isDark ? "#f97316" : "#0f172a") : isDark ? "rgba(255, 255, 255, 0.05)" : "#ffffff",
+              color: activeTab === "all" ? "#ffffff" : isDark ? "#94a3b8" : "#475569",
+              transition: "all 0.15s ease",
             }}
           >
             All Menu Orders ({orders.length})
@@ -563,7 +652,7 @@ export default function OrderVerificationClient({
 
         {/* Search Input */}
         <div style={{ position: "relative", minWidth: "240px" }}>
-          <Search size={14} style={{ position: "absolute", left: "10px", top: "10px", color: "#94a3b8" }} />
+          <Search size={14} style={{ position: "absolute", left: "10px", top: "11px", color: isDark ? "#64748b" : "#94a3b8" }} />
           <input
             type="text"
             placeholder="Search order #, customer, phone..."
@@ -576,8 +665,9 @@ export default function OrderVerificationClient({
               paddingRight: "10px",
               fontSize: "12px",
               borderRadius: "5px",
-              border: "1px solid #cbd5e1",
-              background: "#ffffff",
+              border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
+              background: isDark ? "rgba(15, 23, 42, 0.8)" : "#ffffff",
+              color: isDark ? "#ffffff" : "#0f172a",
               outline: "none",
               boxSizing: "border-box",
             }}
@@ -585,16 +675,16 @@ export default function OrderVerificationClient({
         </div>
       </div>
 
-      {/* ─── ORDERS CARDS GRID ─── */}
+      {/* ─── 3. ORDERS CARDS GRID (5PX RADIUS & THEME AWARE) ─── */}
       {filteredOrders.length === 0 ? (
         <div
           style={{
-            background: "#ffffff",
-            border: "1.5px solid #e2e8f0",
-            borderRadius: "8px",
+            background: isDark ? "#0f172a" : "#ffffff",
+            border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1.5px solid #e2e8f0",
+            borderRadius: "5px",
             padding: "44px 20px",
             textAlign: "center",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+            boxShadow: isDark ? "0 4px 14px rgba(0,0,0,0.4)" : "0 2px 8px rgba(0,0,0,0.04)",
           }}
         >
           <div
@@ -602,12 +692,12 @@ export default function OrderVerificationClient({
               position: "relative",
               width: "70px",
               height: "70px",
-              borderRadius: "50%",
+              borderRadius: "5px",
               overflow: "hidden",
               margin: "0 auto 14px",
               border: "2px solid #fed7aa",
               boxShadow: "0 4px 12px rgba(234, 88, 12, 0.15)",
-              background: "#fff7ed",
+              background: isDark ? "#1e293b" : "#fff7ed",
             }}
           >
             <img
@@ -616,10 +706,10 @@ export default function OrderVerificationClient({
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           </div>
-          <h3 style={{ margin: "0 0 6px", fontSize: "16px", fontWeight: 800, color: "#0f172a" }}>
+          <h3 style={{ margin: "0 0 6px", fontSize: "16px", fontWeight: 800, color: isDark ? "#ffffff" : "#0f172a" }}>
             No Orders in this View
           </h3>
-          <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>
+          <p style={{ margin: 0, fontSize: "13px", color: isDark ? "#94a3b8" : "#64748b" }}>
             {activeTab === "pending"
               ? "All online menu orders have been verified! New incoming orders will appear here in real-time."
               : "No orders found matching the selected filter."}
@@ -661,15 +751,19 @@ export default function OrderVerificationClient({
               <div
                 key={order.id}
                 style={{
-                  background: "#ffffff",
+                  background: isDark ? "#0f172a" : "#ffffff",
                   border: isUnverified
                     ? "2px solid #f59e0b"
                     : isOrderCancelled
-                    ? "1.5px solid #fecaca"
-                    : "1.5px solid #bbf7d0",
+                    ? (isDark ? "1.5px solid #7f1d1d" : "1.5px solid #fecaca")
+                    : (isDark ? "1.5px solid #065f46" : "1.5px solid #bbf7d0"),
                   borderRadius: "5px",
                   padding: "16px",
-                  boxShadow: isUnverified ? "0 4px 12px rgba(245, 158, 11, 0.12)" : "0 2px 6px rgba(0,0,0,0.03)",
+                  boxShadow: isUnverified
+                    ? "0 4px 14px rgba(245, 158, 11, 0.16)"
+                    : isDark
+                    ? "0 4px 12px rgba(0, 0, 0, 0.3)"
+                    : "0 2px 6px rgba(0,0,0,0.03)",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
@@ -680,7 +774,7 @@ export default function OrderVerificationClient({
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "16px", fontWeight: 900, fontFamily: "monospace", color: "#0f172a" }}>
+                        <span style={{ fontSize: "16px", fontWeight: 900, fontFamily: "monospace", color: isDark ? "#f8fafc" : "#0f172a" }}>
                           #{order.order_number}
                         </span>
                         <span
@@ -688,10 +782,10 @@ export default function OrderVerificationClient({
                             fontSize: "10px",
                             fontWeight: 800,
                             padding: "2px 6px",
-                            borderRadius: "3px",
-                            background: isDelivery ? "#eff6ff" : isDineIn ? "#fdf4ff" : "#fefce8",
-                            color: isDelivery ? "#1d4ed8" : isDineIn ? "#86198f" : "#854d0e",
-                            border: `1px solid ${isDelivery ? "#bfdbfe" : isDineIn ? "#f5d0fe" : "#fde047"}`,
+                            borderRadius: "5px",
+                            background: isDelivery ? (isDark ? "rgba(37, 99, 235, 0.2)" : "#eff6ff") : isDineIn ? (isDark ? "rgba(168, 85, 247, 0.2)" : "#fdf4ff") : (isDark ? "rgba(234, 179, 8, 0.2)" : "#fefce8"),
+                            color: isDelivery ? (isDark ? "#93c5fd" : "#1d4ed8") : isDineIn ? (isDark ? "#f0abfc" : "#86198f") : (isDark ? "#fde047" : "#854d0e"),
+                            border: `1px solid ${isDelivery ? (isDark ? "rgba(59, 130, 246, 0.4)" : "#bfdbfe") : isDineIn ? (isDark ? "rgba(168, 85, 247, 0.4)" : "#f5d0fe") : (isDark ? "rgba(234, 179, 8, 0.4)" : "#fde047")}`,
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "3px",
@@ -701,22 +795,22 @@ export default function OrderVerificationClient({
                           <span>{isDelivery ? "Delivery" : isDineIn ? `Table #${order.table_number || "QR"}` : `Takeaway #${order.token_number || "Token"}`}</span>
                         </span>
                       </div>
-                      <span style={{ fontSize: "11px", color: "#64748b", marginTop: "2px", display: "block" }}>
+                      <span style={{ fontSize: "11px", color: isDark ? "#94a3b8" : "#64748b", marginTop: "2px", display: "block" }}>
                         {new Date(order.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} • Online Menu Order
                       </span>
                     </div>
 
                     <div>
                       {isUnverified ? (
-                        <span style={{ fontSize: "11px", fontWeight: 800, color: "#b45309", background: "#fef3c7", padding: "3px 8px", borderRadius: "4px", border: "1px solid #fde68a" }}>
+                        <span style={{ fontSize: "11px", fontWeight: 800, color: isDark ? "#fbbf24" : "#b45309", background: isDark ? "rgba(245, 158, 11, 0.2)" : "#fef3c7", padding: "3px 8px", borderRadius: "5px", border: isDark ? "1px solid rgba(245, 158, 11, 0.4)" : "1px solid #fde68a" }}>
                           ⚠️ Awaiting Verify
                         </span>
                       ) : isOrderCancelled ? (
-                        <span style={{ fontSize: "11px", fontWeight: 800, color: "#991b1b", background: "#fee2e2", padding: "3px 8px", borderRadius: "4px", border: "1px solid #fecaca" }}>
+                        <span style={{ fontSize: "11px", fontWeight: 800, color: isDark ? "#fca5a5" : "#991b1b", background: isDark ? "rgba(239, 68, 68, 0.2)" : "#fee2e2", padding: "3px 8px", borderRadius: "5px", border: isDark ? "1px solid rgba(239, 68, 68, 0.4)" : "1px solid #fecaca" }}>
                           ❌ Rejected
                         </span>
                       ) : (
-                        <span style={{ fontSize: "11px", fontWeight: 800, color: "#166534", background: "#dcfce7", padding: "3px 8px", borderRadius: "4px", border: "1px solid #bbf7d0" }}>
+                        <span style={{ fontSize: "11px", fontWeight: 800, color: isDark ? "#86efac" : "#166534", background: isDark ? "rgba(16, 185, 129, 0.2)" : "#dcfce7", padding: "3px 8px", borderRadius: "5px", border: isDark ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid #bbf7d0" }}>
                           ✓ Live Order
                         </span>
                       )}
@@ -726,24 +820,24 @@ export default function OrderVerificationClient({
                   {/* Customer Information Box */}
                   <div
                     style={{
-                      background: "#f8fafc",
-                      border: "1px solid #e2e8f0",
+                      background: isDark ? "rgba(255, 255, 255, 0.04)" : "#f8fafc",
+                      border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #e2e8f0",
                       borderRadius: "5px",
                       padding: "10px 12px",
                       marginBottom: "12px",
                     }}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                      <strong style={{ fontSize: "13.5px", color: "#0f172a" }}>
+                      <strong style={{ fontSize: "13.5px", color: isDark ? "#f8fafc" : "#0f172a" }}>
                         {order.customer_name || "Valued Customer"}
                       </strong>
-                      <span style={{ fontSize: "12px", fontFamily: "monospace", fontWeight: 700, color: "#0284c7" }}>
+                      <span style={{ fontSize: "12px", fontFamily: "monospace", fontWeight: 700, color: isDark ? "#38bdf8" : "#0284c7" }}>
                         {order.customer_phone || "No phone"}
                       </span>
                     </div>
 
                     {order.delivery_address && (
-                      <p style={{ margin: "4px 0 8px", fontSize: "12px", color: "#475569", lineHeight: 1.35 }}>
+                      <p style={{ margin: "4px 0 8px", fontSize: "12px", color: isDark ? "#cbd5e1" : "#475569", lineHeight: 1.35 }}>
                         📍 {order.delivery_address}
                       </p>
                     )}
@@ -761,16 +855,16 @@ export default function OrderVerificationClient({
                               justifyContent: "center",
                               gap: "4px",
                               padding: "6px 8px",
-                              borderRadius: "4px",
-                              background: "#ffffff",
-                              border: "1px solid #cbd5e1",
-                              color: "#0f172a",
+                              borderRadius: "5px",
+                              background: isDark ? "rgba(255, 255, 255, 0.08)" : "#ffffff",
+                              border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
+                              color: isDark ? "#ffffff" : "#0f172a",
                               fontSize: "11.5px",
                               fontWeight: 700,
                               textDecoration: "none",
                             }}
                           >
-                            <Phone size={13} className="text-blue-600" />
+                            <Phone size={13} className="text-blue-500" />
                             <span>Call</span>
                           </a>
 
@@ -785,16 +879,16 @@ export default function OrderVerificationClient({
                               justifyContent: "center",
                               gap: "4px",
                               padding: "6px 8px",
-                              borderRadius: "4px",
-                              background: "#ecfdf5",
-                              border: "1px solid #a7f3d0",
-                              color: "#065f46",
+                              borderRadius: "5px",
+                              background: isDark ? "rgba(16, 185, 129, 0.2)" : "#ecfdf5",
+                              border: isDark ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid #a7f3d0",
+                              color: isDark ? "#34d399" : "#065f46",
                               fontSize: "11.5px",
                               fontWeight: 700,
                               textDecoration: "none",
                             }}
                           >
-                            <MessageSquare size={13} className="text-emerald-600" />
+                            <MessageSquare size={13} className="text-emerald-500" />
                             <span>Verify WA</span>
                           </a>
                         </>
@@ -807,10 +901,10 @@ export default function OrderVerificationClient({
                           rel="noopener noreferrer"
                           style={{
                             padding: "6px 8px",
-                            borderRadius: "4px",
-                            background: "#eff6ff",
-                            border: "1px solid #bfdbfe",
-                            color: "#1d4ed8",
+                            borderRadius: "5px",
+                            background: isDark ? "rgba(37, 99, 235, 0.2)" : "#eff6ff",
+                            border: isDark ? "1px solid rgba(59, 130, 246, 0.4)" : "1px solid #bfdbfe",
+                            color: isDark ? "#93c5fd" : "#1d4ed8",
                             fontSize: "11.5px",
                             fontWeight: 700,
                             textDecoration: "none",
@@ -826,27 +920,27 @@ export default function OrderVerificationClient({
                   </div>
 
                   {/* Food Items in Package */}
-                  <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "8px", marginBottom: "12px" }}>
+                  <div style={{ borderTop: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #f1f5f9", paddingTop: "8px", marginBottom: "12px" }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                       {items.map((item: any, idx: number) => (
-                        <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#334155" }}>
+                        <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: isDark ? "#e2e8f0" : "#334155" }}>
                           <div>
-                            <strong style={{ color: "#dc2626", marginRight: "6px" }}>
+                            <strong style={{ color: "#ef4444", marginRight: "6px" }}>
                               {item.quantity || item.qty || 1}x
                             </strong>
                             <span>{item.name || item.product?.name || "Item"}</span>
                             {item.selected_variation && (
-                              <span style={{ marginLeft: 4, fontSize: 10, background: "#fee2e2", color: "#dc2626", padding: "1px 5px", borderRadius: "3px", fontWeight: 700 }}>
+                              <span style={{ marginLeft: 4, fontSize: 10, background: isDark ? "rgba(239, 68, 68, 0.25)" : "#fee2e2", color: isDark ? "#fca5a5" : "#dc2626", padding: "1px 5px", borderRadius: "5px", fontWeight: 700 }}>
                                 {item.selected_variation.name}
                               </span>
                             )}
                             {item.selected_toppings && item.selected_toppings.length > 0 && (
-                              <div style={{ fontSize: 10, color: "#64748b", marginLeft: 16 }}>
+                              <div style={{ fontSize: 10, color: isDark ? "#94a3b8" : "#64748b", marginLeft: 16 }}>
                                 + {item.selected_toppings.map((t: any) => t.name).join(", ")}
                               </div>
                             )}
                           </div>
-                          <span style={{ color: "#64748b", fontWeight: 600 }}>
+                          <span style={{ color: isDark ? "#94a3b8" : "#64748b", fontWeight: 600 }}>
                             {currencySymbol}{((item.price || item.product?.price || 0) * (item.quantity || item.qty || 1)).toFixed(2)}
                           </span>
                         </div>
@@ -859,9 +953,9 @@ export default function OrderVerificationClient({
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
-                          background: "#f0fdf4",
-                          border: "1px dashed #86efac",
-                          borderRadius: "4px",
+                          background: isDark ? "rgba(16, 185, 129, 0.15)" : "#f0fdf4",
+                          border: isDark ? "1px dashed rgba(52, 211, 153, 0.4)" : "1px dashed #86efac",
+                          borderRadius: "5px",
                           padding: "4px 8px",
                           marginTop: "8px",
                           marginBottom: "4px",
@@ -870,7 +964,7 @@ export default function OrderVerificationClient({
                         <span
                           style={{
                             fontSize: "11px",
-                            color: "#166534",
+                            color: isDark ? "#86efac" : "#166534",
                             fontWeight: 700,
                             display: "inline-flex",
                             alignItems: "center",
@@ -880,9 +974,9 @@ export default function OrderVerificationClient({
                           <span>🎟️ Coupon:</span>
                           <strong
                             style={{
-                              background: "#dcfce7",
+                              background: isDark ? "rgba(16, 185, 129, 0.3)" : "#dcfce7",
                               padding: "1px 6px",
-                              borderRadius: "3px",
+                              borderRadius: "5px",
                               letterSpacing: "0.5px",
                               fontSize: "10.5px",
                             }}
@@ -890,28 +984,28 @@ export default function OrderVerificationClient({
                             {promoCode || "DISCOUNT"}
                           </strong>
                         </span>
-                        <span style={{ fontSize: "12px", fontWeight: 800, color: "#15803d" }}>
+                        <span style={{ fontSize: "12px", fontWeight: 800, color: isDark ? "#34d399" : "#15803d" }}>
                           -{currencySymbol} {discountVal.toFixed(2)}
                         </span>
                       </div>
                     )}
 
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px", paddingTop: "6px", borderTop: "1px dashed #cbd5e1" }}>
-                      <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 700 }}>Total Order Value:</span>
-                      <strong style={{ fontSize: "16px", color: "#0f172a", fontWeight: 900 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px", paddingTop: "6px", borderTop: isDark ? "1px dashed rgba(255, 255, 255, 0.1)" : "1px dashed #cbd5e1" }}>
+                      <span style={{ fontSize: "12px", color: isDark ? "#94a3b8" : "#64748b", fontWeight: 700 }}>Total Order Value:</span>
+                      <strong style={{ fontSize: "16px", color: isDark ? "#ffffff" : "#0f172a", fontWeight: 900 }}>
                         {currencySymbol} {effectiveTotal.toFixed(2)}
                       </strong>
                     </div>
                   </div>
                 </div>
 
-                {/* Bottom Action Buttons */}
+                {/* Bottom Action Buttons (Strictly 5px radius) */}
                 <div>
                   {isUnverified ? (
                     <div>
                       {rejectingOrderId === order.id ? (
-                        <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "5px", padding: "10px" }}>
-                          <span style={{ fontSize: "11px", fontWeight: 800, color: "#991b1b", display: "block", marginBottom: "4px" }}>
+                        <div style={{ background: isDark ? "rgba(239, 68, 68, 0.15)" : "#fef2f2", border: isDark ? "1px solid rgba(239, 68, 68, 0.4)" : "1px solid #fecaca", borderRadius: "5px", padding: "10px" }}>
+                          <span style={{ fontSize: "11px", fontWeight: 800, color: isDark ? "#fca5a5" : "#991b1b", display: "block", marginBottom: "4px" }}>
                             Reason for Rejecting / Cancelling:
                           </span>
                           <input
@@ -924,8 +1018,10 @@ export default function OrderVerificationClient({
                               height: "32px",
                               fontSize: "12px",
                               padding: "0 8px",
-                              borderRadius: "4px",
-                              border: "1px solid #cbd5e1",
+                              borderRadius: "5px",
+                              border: isDark ? "1px solid rgba(255, 255, 255, 0.2)" : "1px solid #cbd5e1",
+                              background: isDark ? "#1e293b" : "#ffffff",
+                              color: isDark ? "#ffffff" : "#0f172a",
                               marginBottom: "6px",
                               boxSizing: "border-box",
                             }}
@@ -940,9 +1036,10 @@ export default function OrderVerificationClient({
                               style={{
                                 flex: 1,
                                 height: "30px",
-                                borderRadius: "4px",
-                                background: "#ffffff",
-                                border: "1px solid #cbd5e1",
+                                borderRadius: "5px",
+                                background: isDark ? "rgba(255, 255, 255, 0.08)" : "#ffffff",
+                                border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
+                                color: isDark ? "#ffffff" : "#0f172a",
                                 fontSize: "11.5px",
                                 fontWeight: 700,
                                 cursor: "pointer",
@@ -957,7 +1054,7 @@ export default function OrderVerificationClient({
                               style={{
                                 flex: 1,
                                 height: "30px",
-                                borderRadius: "4px",
+                                borderRadius: "5px",
                                 background: "#dc2626",
                                 color: "#ffffff",
                                 border: "none",
@@ -980,12 +1077,12 @@ export default function OrderVerificationClient({
                               onClick={() => handleVerify(order, true)}
                               style={{
                                 flex: 2,
-                                height: "42px",
+                                height: "40px",
                                 borderRadius: "5px",
                                 background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                                 color: "#ffffff",
                                 border: "none",
-                                fontSize: "13px",
+                                fontSize: "12.5px",
                                 fontWeight: 900,
                                 cursor: "pointer",
                                 display: "inline-flex",
@@ -997,11 +1094,11 @@ export default function OrderVerificationClient({
                               className="hover:brightness-110 active:scale-[0.99] transition-all"
                             >
                               {isPending && processingId === order.id ? (
-                                <RefreshCw size={15} className="animate-spin" />
+                                <RefreshCw size={14} className="animate-spin" />
                               ) : (
-                                <CheckCircle2 size={16} />
+                                <CheckCircle2 size={15} />
                               )}
-                              <span>Verify & Send to Kitchen</span>
+                              <span>Verify &amp; Send to Kitchen</span>
                             </button>
 
                             {/* Verify & Print Thermal Receipt */}
@@ -1011,12 +1108,12 @@ export default function OrderVerificationClient({
                               onClick={() => handleVerifyAndPrint(order)}
                               style={{
                                 flex: 1,
-                                height: "42px",
+                                height: "40px",
                                 borderRadius: "5px",
-                                background: "#eff6ff",
-                                color: "#1d4ed8",
-                                border: "1.5px solid #bfdbfe",
-                                fontSize: "12px",
+                                background: isDark ? "rgba(37, 99, 235, 0.2)" : "#eff6ff",
+                                color: isDark ? "#93c5fd" : "#1d4ed8",
+                                border: isDark ? "1.5px solid rgba(59, 130, 246, 0.4)" : "1.5px solid #bfdbfe",
+                                fontSize: "11.5px",
                                 fontWeight: 800,
                                 cursor: "pointer",
                                 display: "inline-flex",
@@ -1026,8 +1123,8 @@ export default function OrderVerificationClient({
                               }}
                               title="Verify order and immediately open Thermal Receipt & KOT print dialog"
                             >
-                              <Printer size={15} />
-                              <span>Verify & Print</span>
+                              <Printer size={14} />
+                              <span>Verify &amp; Print</span>
                             </button>
                           </div>
 
@@ -1040,12 +1137,12 @@ export default function OrderVerificationClient({
                             }}
                             style={{
                               width: "100%",
-                              height: "32px",
-                              borderRadius: "4px",
-                              background: "#fef2f2",
-                              color: "#dc2626",
-                              border: "1px solid #fecaca",
-                              fontSize: "11.5px",
+                              height: "30px",
+                              borderRadius: "5px",
+                              background: isDark ? "rgba(239, 68, 68, 0.15)" : "#fef2f2",
+                              color: isDark ? "#fca5a5" : "#dc2626",
+                              border: isDark ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid #fecaca",
+                              fontSize: "11px",
                               fontWeight: 700,
                               cursor: "pointer",
                             }}
@@ -1056,24 +1153,24 @@ export default function OrderVerificationClient({
                       )}
                     </div>
                   ) : isOrderCancelled ? (
-                    <div style={{ textAlign: "center", padding: "8px", background: "#fef2f2", borderRadius: "4px", fontSize: "11.5px", color: "#991b1b", fontWeight: 700 }}>
-                      Rejected & Cancelled by Admin
+                    <div style={{ textAlign: "center", padding: "8px", background: isDark ? "rgba(239, 68, 68, 0.15)" : "#fef2f2", borderRadius: "5px", fontSize: "11.5px", color: isDark ? "#fca5a5" : "#991b1b", fontWeight: 700, border: isDark ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid #fecaca" }}>
+                      Rejected &amp; Cancelled by Admin
                     </div>
                   ) : (
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "#f0fdf4", borderRadius: "4px", border: "1px solid #bbf7d0" }}>
-                      <span style={{ fontSize: "12px", color: "#166534", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                        <Check size={14} />
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#f0fdf4", borderRadius: "5px", border: isDark ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid #bbf7d0" }}>
+                      <span style={{ fontSize: "11.5px", color: isDark ? "#86efac" : "#166534", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        <Check size={13} />
                         <span>Active on Live Orders Board</span>
                       </span>
                       <button
                         type="button"
                         onClick={() => setPrintingOrder(order)}
                         style={{
-                          background: "#ffffff",
-                          border: "1px solid #cbd5e1",
-                          color: "#0f172a",
+                          background: isDark ? "rgba(255, 255, 255, 0.1)" : "#ffffff",
+                          border: isDark ? "1px solid rgba(255, 255, 255, 0.2)" : "1px solid #cbd5e1",
+                          color: isDark ? "#ffffff" : "#0f172a",
                           padding: "4px 8px",
-                          borderRadius: "4px",
+                          borderRadius: "5px",
                           fontSize: "11px",
                           fontWeight: 700,
                           cursor: "pointer",
