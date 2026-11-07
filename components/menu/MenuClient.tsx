@@ -328,7 +328,6 @@ function MenuInner({
         shopName={settings.shop_name}
         verifiedTable={currentVerifiedTable}
         logoUrl={settings.logo_url}
-        phone={settings.owner_phone}
       />
 
       <main id="main-content" style={{ minHeight: "80vh" }}>

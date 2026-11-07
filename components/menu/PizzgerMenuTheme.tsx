@@ -18,7 +18,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import DailyDealsSpotlight from "./DailyDealsSpotlight";
-import MenuHeader from "./MenuHeader";
 
 // ─── Native Crisp SVG Icons (Zero missing module errors) ───────────
 function PizzaSliceLogo({ size = 36 }: { size?: number }) {
@@ -219,14 +218,196 @@ export default function PizzgerMenuTheme({
         </div>
       )}
 
-      {/* ─── 1. HEAT BOX / CHEEZIOUS DUAL-TAPE STREETWEAR HEADER ─── */}
-      <MenuHeader
-        onCartOpen={onOpenCart}
-        shopName={shopName}
-        verifiedTable={verifiedTable}
-        logoUrl={settings.logo_url}
-        phone={settings.owner_phone}
-      />
+      {/* ─── 1. SINGLE-LINE HEADER (Strictly 1 Line, No Double Bar) ─── */}
+      <header
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 40,
+          background: "#ffffff",
+          borderBottom: "1px solid #f1f5f9",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.02)",
+          height: 68,
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "0 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          {/* Left: Brand Identity in a single horizontal cluster */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {settings.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt={shopName}
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: "10px",
+                  objectFit: "cover",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                }}
+              />
+            ) : (
+              <PizzaSliceLogo size={38} />
+            )}
+
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span
+                  style={{
+                    fontSize: "20px",
+                    fontWeight: 900,
+                    letterSpacing: "-0.03em",
+                    color: "#0f172a",
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {shopName}
+                </span>
+                {verifiedTable && (
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: 800,
+                      background: "#ecfdf5",
+                      color: "#059669",
+                      padding: "2px 6px",
+                      borderRadius: "6px",
+                      border: "1px solid #a7f3d0",
+                    }}
+                  >
+                    Table {verifiedTable}
+                  </span>
+                )}
+              </div>
+              <span
+                style={{
+                  fontSize: "10.5px",
+                  fontWeight: 700,
+                  color: "#64748b",
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  lineHeight: 1,
+                  marginTop: "2px",
+                }}
+              >
+                Fresh &bull; Hot &bull; Always
+              </span>
+            </div>
+          </div>
+
+          {/* Right: Search, Live Cart Badge & Drawer in single line */}
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            {/* Search Trigger */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen(!searchOpen)}
+              aria-label="Search Menu"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                background: searchOpen ? "#f1f5f9" : "transparent",
+                border: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#1e293b",
+                cursor: "pointer",
+                transition: "background 0.2s",
+              }}
+              className="hover:bg-slate-100"
+            >
+              {searchOpen ? <X size={20} /> : <Search size={21} />}
+            </button>
+
+            {/* Cart with Red Circular Badge */}
+            <button
+              type="button"
+              onClick={onOpenCart}
+              aria-label="Open Cart"
+              style={{
+                position: "relative",
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                background: "transparent",
+                border: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#1e293b",
+                cursor: "pointer",
+                transition: "background 0.2s",
+              }}
+              className="hover:bg-slate-100"
+            >
+              <CartTrolleyIcon size={22} />
+              {totalItems > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 2,
+                    right: 0,
+                    background: "#ef4444",
+                    color: "#ffffff",
+                    borderRadius: "9999px",
+                    minWidth: "18px",
+                    height: "18px",
+                    fontSize: "10.5px",
+                    fontWeight: 900,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 4px",
+                    border: "2px solid #ffffff",
+                    boxShadow: "0 2px 6px rgba(239, 68, 68, 0.4)",
+                  }}
+                >
+                  {totalItems}
+                </span>
+              )}
+            </button>
+
+            {/* Hamburger Menu Drawer Trigger */}
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Menu Options"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                background: "transparent",
+                border: "none",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "5px",
+                color: "#1e293b",
+                cursor: "pointer",
+                transition: "background 0.2s",
+              }}
+              className="hover:bg-slate-100"
+            >
+              <span style={{ width: "20px", height: "2.2px", background: "#1e293b", borderRadius: "2px" }} />
+              <span style={{ width: "20px", height: "2.2px", background: "#1e293b", borderRadius: "2px" }} />
+              <span style={{ width: "20px", height: "2.2px", background: "#1e293b", borderRadius: "2px" }} />
+            </button>
+          </div>
+        </div>
+      </header>
 
       {/* ─── SEARCH BAR SLIDE-DOWN ─── */}
       {searchOpen && (
