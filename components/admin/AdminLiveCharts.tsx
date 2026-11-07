@@ -433,7 +433,7 @@ export default function AdminLiveCharts({
       <div
         style={{
           background: "linear-gradient(135deg, #09172a 0%, #0d233f 100%)",
-          borderRadius: 16,
+          borderRadius: 5,
           padding: "16px 22px",
           color: "#ffffff",
           display: "flex",
@@ -450,7 +450,7 @@ export default function AdminLiveCharts({
             style={{
               width: 38,
               height: 38,
-              borderRadius: 10,
+              borderRadius: 5,
               background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
               color: "#ffffff",
               display: "flex",
@@ -482,7 +482,7 @@ export default function AdminLiveCharts({
                   alignItems: "center",
                   gap: 5,
                   padding: "2px 8px",
-                  borderRadius: 20,
+                  borderRadius: 5,
                   background: livePulse ? "rgba(220, 38, 38, 0.25)" : "rgba(16, 185, 129, 0.2)",
                   border: livePulse ? "1px solid rgba(248, 113, 113, 0.5)" : "1px solid rgba(52, 211, 153, 0.4)",
                   color: livePulse ? "#fca5a5" : "#34d399",
@@ -524,7 +524,7 @@ export default function AdminLiveCharts({
             title="Set chart to start fresh from Today (hides earlier test orders) or restore all shop history"
             style={{
               padding: "6px 12px",
-              borderRadius: 9,
+              borderRadius: 5,
               border: "1px solid rgba(255, 255, 255, 0.15)",
               background:
                 activeSinceIso && getPakistaniDateKey(activeSinceIso) === todayDateKey
@@ -556,7 +556,7 @@ export default function AdminLiveCharts({
               display: "inline-flex",
               background: "rgba(11, 23, 42, 0.8)",
               padding: 3,
-              borderRadius: 9,
+              borderRadius: 5,
               border: "1px solid rgba(255, 255, 255, 0.12)",
             }}
           >
@@ -576,7 +576,7 @@ export default function AdminLiveCharts({
                   onClick={() => setRange(tab.id)}
                   style={{
                     padding: "6px 13px",
-                    borderRadius: 7,
+                    borderRadius: 5,
                     border: "none",
                     background: active
                       ? "linear-gradient(135deg, #f97316 0%, #ea580c 100%)"
@@ -604,7 +604,7 @@ export default function AdminLiveCharts({
           style={{
             background: "#edfcf2",
             border: "1.5px solid #b7ebd0",
-            borderRadius: 14,
+            borderRadius: 5,
             padding: "16px 18px",
             display: "flex",
             alignItems: "center",
@@ -617,7 +617,7 @@ export default function AdminLiveCharts({
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 10,
+                borderRadius: 5,
                 background: "#d1fae5",
                 color: "#059669",
                 display: "flex",
@@ -637,7 +637,7 @@ export default function AdminLiveCharts({
               </div>
             </div>
           </div>
-          <span style={{ fontSize: 11.5, fontWeight: 800, color: "#059669", background: "rgba(16, 185, 129, 0.15)", padding: "2px 8px", borderRadius: 12 }}>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: "#059669", background: "rgba(16, 185, 129, 0.15)", padding: "2px 8px", borderRadius: 5 }}>
             ↑ 12%
           </span>
         </div>
@@ -647,7 +647,7 @@ export default function AdminLiveCharts({
           style={{
             background: "#eff6ff",
             border: "1.5px solid #bfdbfe",
-            borderRadius: 14,
+            borderRadius: 5,
             padding: "16px 18px",
             display: "flex",
             alignItems: "center",
@@ -660,7 +660,7 @@ export default function AdminLiveCharts({
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 10,
+                borderRadius: 5,
                 background: "#dbeafe",
                 color: "#2563eb",
                 display: "flex",
@@ -680,7 +680,7 @@ export default function AdminLiveCharts({
               </div>
             </div>
           </div>
-          <span style={{ fontSize: 11.5, fontWeight: 800, color: "#2563eb", background: "rgba(37, 99, 235, 0.12)", padding: "2px 8px", borderRadius: 12 }}>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: "#2563eb", background: "rgba(37, 99, 235, 0.12)", padding: "2px 8px", borderRadius: 5 }}>
             ↑ 8%
           </span>
         </div>
@@ -690,7 +690,7 @@ export default function AdminLiveCharts({
           style={{
             background: "#fff7ed",
             border: "1.5px solid #fed7aa",
-            borderRadius: 14,
+            borderRadius: 5,
             padding: "16px 18px",
             display: "flex",
             alignItems: "center",
@@ -703,7 +703,7 @@ export default function AdminLiveCharts({
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 10,
+                borderRadius: 5,
                 background: "#ffedd5",
                 color: "#ea580c",
                 display: "flex",
@@ -723,7 +723,7 @@ export default function AdminLiveCharts({
               </div>
             </div>
           </div>
-          <span style={{ fontSize: 11.5, fontWeight: 800, color: "#ea580c", background: "rgba(234, 88, 12, 0.12)", padding: "2px 8px", borderRadius: 12 }}>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: "#ea580c", background: "rgba(234, 88, 12, 0.12)", padding: "2px 8px", borderRadius: 5 }}>
             ↑ 5%
           </span>
         </div>
@@ -733,7 +733,7 @@ export default function AdminLiveCharts({
           style={{
             background: "#faf5ff",
             border: "1.5px solid #e9d5ff",
-            borderRadius: 14,
+            borderRadius: 5,
             padding: "16px 18px",
             display: "flex",
             alignItems: "center",
@@ -746,7 +746,7 @@ export default function AdminLiveCharts({
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 10,
+                borderRadius: 5,
                 background: "#ede9fe",
                 color: "#7c3aed",
                 display: "flex",
@@ -768,7 +768,7 @@ export default function AdminLiveCharts({
               </div>
             </div>
           </div>
-          <span style={{ fontSize: 11.5, fontWeight: 800, color: "#7c3aed", background: "rgba(124, 58, 237, 0.12)", padding: "2px 8px", borderRadius: 12 }}>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: "#7c3aed", background: "rgba(124, 58, 237, 0.12)", padding: "2px 8px", borderRadius: 5 }}>
             ↑ 15%
           </span>
         </div>
@@ -781,7 +781,7 @@ export default function AdminLiveCharts({
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: 16,
+            borderRadius: 5,
             overflow: "hidden",
             boxShadow: "0 4px 20px -2px rgba(15, 23, 42, 0.05)",
             display: "flex",
@@ -807,7 +807,7 @@ export default function AdminLiveCharts({
                 style={{
                   width: 34,
                   height: 34,
-                  borderRadius: 9,
+                  borderRadius: 5,
                   background: "#fff7ed",
                   color: "#ea580c",
                   display: "flex",
@@ -837,7 +837,7 @@ export default function AdminLiveCharts({
                   fontSize: 11,
                   fontWeight: 800,
                   padding: "5px 12px",
-                  borderRadius: 7,
+                  borderRadius: 5,
                   border: "none",
                   cursor: "pointer",
                 }}
@@ -850,7 +850,7 @@ export default function AdminLiveCharts({
                   display: "inline-flex",
                   background: "#f1f5f9",
                   padding: 2,
-                  borderRadius: 7,
+                  borderRadius: 5,
                   border: "1px solid #e2e8f0",
                 }}
               >
@@ -985,7 +985,7 @@ export default function AdminLiveCharts({
                           width: "100%",
                           maxWidth: 24,
                           height: `${barPx}px`,
-                          borderRadius: "6px 6px 0 0",
+                          borderRadius: "5px 5px 0 0",
                           background:
                             val === 0
                               ? "#f1f5f9"
@@ -1068,7 +1068,7 @@ export default function AdminLiveCharts({
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: 16,
+            borderRadius: 5,
             overflow: "hidden",
             boxShadow: "0 4px 20px -2px rgba(15, 23, 42, 0.05)",
             display: "flex",
@@ -1094,7 +1094,7 @@ export default function AdminLiveCharts({
                 style={{
                   width: 34,
                   height: 34,
-                  borderRadius: 9,
+                  borderRadius: 5,
                   background: "#ecfdf5",
                   border: "1px solid #a7f3d0",
                   color: "#059669",
@@ -1124,7 +1124,7 @@ export default function AdminLiveCharts({
                   fontSize: 11,
                   fontWeight: 800,
                   padding: "5px 12px",
-                  borderRadius: 7,
+                  borderRadius: 5,
                   border: "none",
                   cursor: "pointer",
                 }}
@@ -1137,7 +1137,7 @@ export default function AdminLiveCharts({
                   display: "inline-flex",
                   background: "#f1f5f9",
                   padding: 2,
-                  borderRadius: 7,
+                  borderRadius: 5,
                   border: "1px solid #e2e8f0",
                 }}
               >
@@ -1364,7 +1364,7 @@ export default function AdminLiveCharts({
                             width: "100%",
                             maxWidth: 32,
                             height: `${barPx}px`,
-                            borderRadius: "6px 6px 0 0",
+                            borderRadius: "5px 5px 0 0",
                             background: "linear-gradient(180deg, #10b981 0%, #059669 100%)",
                             boxShadow: p.revenue > 0 ? "0 4px 12px rgba(16, 185, 129, 0.3)" : "none",
                             transition: "height 0.3s ease",
@@ -1429,7 +1429,7 @@ export default function AdminLiveCharts({
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: 16,
+            borderRadius: 5,
             overflow: "hidden",
             boxShadow: "0 4px 20px -2px rgba(15, 23, 42, 0.05)",
             display: "flex",
@@ -1453,7 +1453,7 @@ export default function AdminLiveCharts({
                   style={{
                     width: 34,
                     height: 34,
-                    borderRadius: 9,
+                    borderRadius: 5,
                     background: "#fdf2f8",
                     border: "1px solid #fbcfe8",
                     color: "#db2777",
@@ -1482,7 +1482,7 @@ export default function AdminLiveCharts({
                   fontSize: 11,
                   fontWeight: 800,
                   padding: "5px 14px",
-                  borderRadius: 7,
+                  borderRadius: 5,
                   border: "none",
                   cursor: "pointer",
                 }}
@@ -1500,7 +1500,7 @@ export default function AdminLiveCharts({
                     color: "#64748b",
                     fontSize: 13,
                     border: "1.5px dashed #e2e8f0",
-                    borderRadius: 12,
+                    borderRadius: 5,
                   }}
                 >
                   No item sales recorded in this period yet.
@@ -1535,7 +1535,7 @@ export default function AdminLiveCharts({
                           style={{
                             width: 36,
                             height: 36,
-                            borderRadius: 9,
+                            borderRadius: 5,
                             background: c.bg,
                             display: "flex",
                             alignItems: "center",
@@ -1566,7 +1566,7 @@ export default function AdminLiveCharts({
                             style={{
                               width: "100%",
                               height: 6,
-                              borderRadius: 4,
+                              borderRadius: 5,
                               background: "#f1f5f9",
                               overflow: "hidden",
                             }}
@@ -1575,7 +1575,7 @@ export default function AdminLiveCharts({
                               style={{
                                 width: `${widthPct}%`,
                                 height: "100%",
-                                borderRadius: 4,
+                                borderRadius: 5,
                                 background: c.bar,
                                 transition: "width 0.4s ease",
                               }}
@@ -1596,7 +1596,7 @@ export default function AdminLiveCharts({
                               background: "#ecfdf5",
                               border: "1px solid #a7f3d0",
                               padding: "2px 6px",
-                              borderRadius: 6,
+                              borderRadius: 5,
                             }}
                           >
                             ↑ 1{idx + 2}%
@@ -1616,7 +1616,7 @@ export default function AdminLiveCharts({
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: 16,
+            borderRadius: 5,
             overflow: "hidden",
             boxShadow: "0 4px 20px -2px rgba(15, 23, 42, 0.05)",
             display: "flex",
@@ -1641,7 +1641,7 @@ export default function AdminLiveCharts({
                   style={{
                     width: 34,
                     height: 34,
-                    borderRadius: 9,
+                    borderRadius: 5,
                     background: "#eff6ff",
                     border: "1px solid #bfdbfe",
                     color: "#2563eb",
@@ -1674,7 +1674,7 @@ export default function AdminLiveCharts({
                 style={{
                   height: 8,
                   width: "100%",
-                  borderRadius: 10,
+                  borderRadius: 5,
                   background: "linear-gradient(90deg, #7c3aed 0%, #ec4899 50%, #38bdf8 100%)",
                   marginBottom: 16,
                 }}
@@ -1697,7 +1697,7 @@ export default function AdminLiveCharts({
                       style={{
                         background: "#ffffff",
                         border: "1px solid #e2e8f0",
-                        borderRadius: 12,
+                        borderRadius: 5,
                         padding: "12px 16px",
                         display: "flex",
                         alignItems: "center",
@@ -1712,7 +1712,7 @@ export default function AdminLiveCharts({
                           style={{
                             width: 38,
                             height: 38,
-                            borderRadius: 9,
+                            borderRadius: 5,
                             background: iconBgs[i % iconBgs.length],
                             color: iconColors[i % iconColors.length],
                             display: "flex",
