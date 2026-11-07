@@ -994,6 +994,35 @@ export default function AdminShell({
               </span>
             </div>
 
+            {/* Live Customer Menu Quick Link */}
+            <Link
+              href={customerMenuUrl}
+              target="_blank"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "5px 12px",
+                borderRadius: 0,
+                background: "linear-gradient(135deg, #ff6b00 0%, #ea580c 100%)",
+                color: "#ffffff",
+                fontSize: "12px",
+                fontWeight: 800,
+                textDecoration: "none",
+                boxShadow: "0 2px 8px rgba(234, 88, 12, 0.35)",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+                letterSpacing: "0.02em",
+                transition: "all 0.15s ease",
+              }}
+              className="hover:brightness-110 active:scale-95"
+              title="Open Live Customer Ordering Menu in new tab"
+            >
+              <Store size={13} />
+              <span>Customer Menu</span>
+              <ExternalLink size={11} style={{ opacity: 0.85 }} />
+            </Link>
+
             {/* ─── ROLE SELECTOR (Admin only) & ACTIVE PROFILE BADGE ─── */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
               {/* Quick Role Switcher for Admin preview (Hidden for Staff/Cashier) */}

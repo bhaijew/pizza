@@ -183,10 +183,24 @@ export default function AdminLiveCharts({
   const filteredOrders = useMemo(() => {
     const now = Date.now();
     if (range === "today") {
-      if (todayOrders.length > 0) return todayOrders;
-      return activationFilteredOrders.filter(
-        (o) => getPakistaniDateKey(o.created_at) === todayDateKey
-      );
+      const todayKeys = new Set<number>();
+      const combinedToday: Order[] = [];
+
+      activationFilteredOrders.forEach((o) => {
+        if (getPakistaniDateKey(o.created_at) === todayDateKey) {
+          todayKeys.add(Number(o.id));
+          combinedToday.push(o);
+        }
+      });
+
+      todayOrders.forEach((o) => {
+        if (!todayKeys.has(Number(o.id))) {
+          todayKeys.add(Number(o.id));
+          combinedToday.push(o);
+        }
+      });
+
+      return combinedToday;
     }
     if (range === "7d") {
       const cutoff = now - 7 * 24 * 60 * 60 * 1000;
@@ -264,6 +278,80 @@ export default function AdminLiveCharts({
 
     return { list, peakSlot, maxVal };
   }, [validOrders, rushMetric]);
+
+  // ─── 1.5 REAL COMPARISON WITH PREVIOUS PERIOD (100% Calculated Metrics) ───
+  const previousPeriodOrders = useMemo(() => {
+    const now = Date.now();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    let startMs = 0;
+    let endMs = 0;
+
+    if (range === "today") {
+      // Previous 24-48 hours (yesterday's shift comparison)
+      endMs = now - oneDayMs;
+      startMs = endMs - oneDayMs;
+    } else if (range === "7d") {
+      // Prior 7 days: days -14 to -7
+      endMs = now - 7 * oneDayMs;
+      startMs = endMs - 7 * oneDayMs;
+    } else if (range === "30d") {
+      // Prior 30 days: days -60 to -30
+      endMs = now - 30 * oneDayMs;
+      startMs = endMs - 30 * oneDayMs;
+    } else {
+      // All-time: compare with earlier half of lifetime orders
+      if (orders.length > 2) {
+        const sorted = [...orders].sort(
+          (a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+        );
+        const mid = Math.floor(sorted.length / 2);
+        return sorted.slice(0, mid).filter((o) => o.status !== "cancelled");
+      }
+      return [];
+    }
+
+    return orders
+      .filter((o) => o.status !== "cancelled")
+      .filter((o) => {
+        const ts = new Date(o.created_at || 0).getTime();
+        return ts >= startMs && ts < endMs;
+      });
+  }, [orders, range]);
+
+  const prevSummary = useMemo(() => {
+    const totalRev = previousPeriodOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+    const count = previousPeriodOrders.length;
+    const aov = count > 0 ? Math.round(totalRev / count) : 0;
+    return { totalRev, count, aov };
+  }, [previousPeriodOrders]);
+
+  // Compute 100% REAL dynamic percentage changes
+  const kpiGrowth = useMemo(() => {
+    const calcGrowth = (curr: number, prev: number) => {
+      if (prev <= 0) {
+        if (curr > 0) return { label: "↑ +100%", isPositive: true, isZero: false };
+        return { label: "— 0%", isPositive: true, isZero: true };
+      }
+      const diff = Math.round(((curr - prev) / prev) * 100);
+      if (diff > 0) return { label: `↑ +${diff}%`, isPositive: true, isZero: false };
+      if (diff < 0) return { label: `↓ ${diff}%`, isPositive: false, isZero: false };
+      return { label: "— 0%", isPositive: true, isZero: true };
+    };
+
+    const sales = calcGrowth(summary.totalRev, prevSummary.totalRev);
+    const ordersGrowth = calcGrowth(summary.count, prevSummary.count);
+    const aov = calcGrowth(summary.aov, prevSummary.aov);
+
+    // Peak rush hour intensity (exact volume share during the highest kitchen hour)
+    const peakOrders = rushHourSlots.peakSlot.orders;
+    const peakPct = summary.count > 0 ? Math.round((peakOrders / summary.count) * 100) : 0;
+    const rush =
+      peakPct > 0
+        ? { label: `↑ ${peakPct}% rush`, isPositive: true, isZero: false }
+        : { label: "— 0%", isPositive: true, isZero: true };
+
+    return { sales, orders: ordersGrowth, aov, rush };
+  }, [summary, prevSummary, rushHourSlots.peakSlot.orders]);
 
   // ─── 2. SELLING & REVENUE TREND CHART (Only Active Days on SoleWhat) ────────
   const dailySalesTrend = useMemo(() => {
@@ -644,10 +732,13 @@ export default function AdminLiveCharts({
         </div>
       </div>
 
-      {/* ─── 2. TOP 4 FLOATING KPI METRIC CARDS (Exact Mockup Match) ─── */}
+      {/* ─── 2. TOP 4 FLOATING KPI METRIC CARDS (100% Real Live Metrics) ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         {/* Card 1: TOTAL SALES (Green) */}
         <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setRushMetric("revenue")}
           style={{
             background: "#edfcf2",
             border: "1.5px solid #b7ebd0",
@@ -657,7 +748,11 @@ export default function AdminLiveCharts({
             alignItems: "center",
             justifyContent: "space-between",
             boxShadow: "0 2px 8px rgba(16, 185, 129, 0.06)",
+            cursor: "pointer",
+            transition: "all 0.15s ease",
           }}
+          className="hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
+          title="Click to view sales revenue trends"
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div
@@ -684,13 +779,31 @@ export default function AdminLiveCharts({
               </div>
             </div>
           </div>
-          <span style={{ fontSize: 11.5, fontWeight: 800, color: "#059669", background: "rgba(16, 185, 129, 0.15)", padding: "2px 8px", borderRadius: 0 }}>
-            ↑ 12%
+          <span
+            style={{
+              fontSize: 11.5,
+              fontWeight: 800,
+              color: kpiGrowth.sales.isPositive ? "#059669" : kpiGrowth.sales.isZero ? "#64748b" : "#dc2626",
+              background: kpiGrowth.sales.isPositive
+                ? "rgba(16, 185, 129, 0.15)"
+                : kpiGrowth.sales.isZero
+                ? "rgba(100, 116, 139, 0.12)"
+                : "rgba(239, 68, 68, 0.15)",
+              padding: "2px 8px",
+              borderRadius: 0,
+              whiteSpace: "nowrap",
+            }}
+            title={`Real period delta compared to previous ${range === "today" ? "shift" : range === "7d" ? "7 days" : range === "30d" ? "30 days" : "period"}`}
+          >
+            {kpiGrowth.sales.label}
           </span>
         </div>
 
         {/* Card 2: TOTAL UNIQUE CUSTOMERS (Blue) */}
         <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setRushMetric("orders")}
           style={{
             background: "#eff6ff",
             border: "1.5px solid #bfdbfe",
@@ -700,7 +813,11 @@ export default function AdminLiveCharts({
             alignItems: "center",
             justifyContent: "space-between",
             boxShadow: "0 2px 8px rgba(37, 99, 235, 0.06)",
+            cursor: "pointer",
+            transition: "all 0.15s ease",
           }}
+          className="hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
+          title="Click to view total order volumes"
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div
@@ -727,13 +844,31 @@ export default function AdminLiveCharts({
               </div>
             </div>
           </div>
-          <span style={{ fontSize: 11.5, fontWeight: 800, color: "#2563eb", background: "rgba(37, 99, 235, 0.12)", padding: "2px 8px", borderRadius: 0 }}>
-            ↑ 8%
+          <span
+            style={{
+              fontSize: 11.5,
+              fontWeight: 800,
+              color: kpiGrowth.orders.isPositive ? "#2563eb" : kpiGrowth.orders.isZero ? "#64748b" : "#dc2626",
+              background: kpiGrowth.orders.isPositive
+                ? "rgba(37, 99, 235, 0.12)"
+                : kpiGrowth.orders.isZero
+                ? "rgba(100, 116, 139, 0.12)"
+                : "rgba(239, 68, 68, 0.15)",
+              padding: "2px 8px",
+              borderRadius: 0,
+              whiteSpace: "nowrap",
+            }}
+            title={`Real period delta compared to previous ${range === "today" ? "shift" : range === "7d" ? "7 days" : range === "30d" ? "30 days" : "period"}`}
+          >
+            {kpiGrowth.orders.label}
           </span>
         </div>
 
         {/* Card 3: AVERAGE ORDER VALUE (Orange) */}
         <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setSalesChartStyle((s) => (s === "bars" ? "area" : "bars"))}
           style={{
             background: "#fff7ed",
             border: "1.5px solid #fed7aa",
@@ -743,7 +878,11 @@ export default function AdminLiveCharts({
             alignItems: "center",
             justifyContent: "space-between",
             boxShadow: "0 2px 8px rgba(234, 88, 12, 0.06)",
+            cursor: "pointer",
+            transition: "all 0.15s ease",
           }}
+          className="hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
+          title="Click to toggle chart visual style"
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div
@@ -770,13 +909,31 @@ export default function AdminLiveCharts({
               </div>
             </div>
           </div>
-          <span style={{ fontSize: 11.5, fontWeight: 800, color: "#ea580c", background: "rgba(234, 88, 12, 0.12)", padding: "2px 8px", borderRadius: 0 }}>
-            ↑ 5%
+          <span
+            style={{
+              fontSize: 11.5,
+              fontWeight: 800,
+              color: kpiGrowth.aov.isPositive ? "#ea580c" : kpiGrowth.aov.isZero ? "#64748b" : "#dc2626",
+              background: kpiGrowth.aov.isPositive
+                ? "rgba(234, 88, 12, 0.12)"
+                : kpiGrowth.aov.isZero
+                ? "rgba(100, 116, 139, 0.12)"
+                : "rgba(239, 68, 68, 0.15)",
+              padding: "2px 8px",
+              borderRadius: 0,
+              whiteSpace: "nowrap",
+            }}
+            title={`Real period delta compared to previous ${range === "today" ? "shift" : range === "7d" ? "7 days" : range === "30d" ? "30 days" : "period"}`}
+          >
+            {kpiGrowth.aov.label}
           </span>
         </div>
 
         {/* Card 4: PEAK RUSH / TRANSACTIONS (Purple) */}
         <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setRushMetric("orders")}
           style={{
             background: "#faf5ff",
             border: "1.5px solid #e9d5ff",
@@ -786,7 +943,11 @@ export default function AdminLiveCharts({
             alignItems: "center",
             justifyContent: "space-between",
             boxShadow: "0 2px 8px rgba(124, 58, 237, 0.06)",
+            cursor: "pointer",
+            transition: "all 0.15s ease",
           }}
+          className="hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
+          title="Click to focus rush hour distribution"
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div
@@ -815,8 +976,21 @@ export default function AdminLiveCharts({
               </div>
             </div>
           </div>
-          <span style={{ fontSize: 11.5, fontWeight: 800, color: "#7c3aed", background: "rgba(124, 58, 237, 0.12)", padding: "2px 8px", borderRadius: 0 }}>
-            ↑ 15%
+          <span
+            style={{
+              fontSize: 11.5,
+              fontWeight: 800,
+              color: kpiGrowth.rush.isPositive ? "#7c3aed" : "#64748b",
+              background: kpiGrowth.rush.isPositive
+                ? "rgba(124, 58, 237, 0.12)"
+                : "rgba(100, 116, 139, 0.12)",
+              padding: "2px 8px",
+              borderRadius: 0,
+              whiteSpace: "nowrap",
+            }}
+            title="Exact share of total orders concentrated during this peak hour"
+          >
+            {kpiGrowth.rush.label}
           </span>
         </div>
       </div>
