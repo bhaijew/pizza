@@ -636,9 +636,21 @@ export default function OrderVerificationClient({
             const isDineIn = order.order_type === "dine_in" || order.table_number || order.notes?.includes("[DINE-IN:");
             const isTakeaway = order.order_type === "takeaway" || order.token_number || order.notes?.includes("[TAKEAWAY:");
 
+            const discountVal = Number((order as any).discount_amount || 0);
+            const promoCode = (order as any).promo_code;
+            const itemsSum = Array.isArray(order.items)
+              ? order.items.reduce((s: number, it: any) => s + (Number(it.price || 0) * Number(it.qty || it.quantity || 1)), 0)
+              : 0;
+            const feeVal = Number(order.delivery_fee || 0);
+            const rawUndiscounted = itemsSum > 0 ? (itemsSum + feeVal) : 0;
+            const isTotalUndiscounted = discountVal > 0 && Math.abs(Number(order.total) - rawUndiscounted) < 1;
+            const effectiveTotal = isTotalUndiscounted
+              ? Math.max(0, Number(order.total) - discountVal)
+              : Number(order.total);
+
             const customerPhoneClean = (order.customer_phone || "").replace(/\D/g, "");
             const waVerificationMsg = encodeURIComponent(
-              `Salam ${order.customer_name || "Customer"}! This is ${shopName}. We received your online order #${order.order_number} (${currencySymbol} ${Number(order.total).toFixed(2)}). Please confirm if you are available to receive it so our kitchen can prepare it now.`
+              `Salam ${order.customer_name || "Customer"}! This is ${shopName}. We received your online order #${order.order_number} (${currencySymbol} ${effectiveTotal.toFixed(2)}). Please confirm if you are available to receive it so our kitchen can prepare it now.`
             );
             const customerWaUrl = `https://wa.me/${customerPhoneClean}?text=${waVerificationMsg}`;
             const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -841,10 +853,53 @@ export default function OrderVerificationClient({
                       ))}
                     </div>
 
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px", paddingTop: "8px", borderTop: "1px dashed #cbd5e1" }}>
+                    {discountVal > 0 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          background: "#f0fdf4",
+                          border: "1px dashed #86efac",
+                          borderRadius: "4px",
+                          padding: "4px 8px",
+                          marginTop: "8px",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            color: "#166534",
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          <span>🎟️ Coupon:</span>
+                          <strong
+                            style={{
+                              background: "#dcfce7",
+                              padding: "1px 6px",
+                              borderRadius: "3px",
+                              letterSpacing: "0.5px",
+                              fontSize: "10.5px",
+                            }}
+                          >
+                            {promoCode || "DISCOUNT"}
+                          </strong>
+                        </span>
+                        <span style={{ fontSize: "12px", fontWeight: 800, color: "#15803d" }}>
+                          -{currencySymbol} {discountVal.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px", paddingTop: "6px", borderTop: "1px dashed #cbd5e1" }}>
                       <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 700 }}>Total Order Value:</span>
                       <strong style={{ fontSize: "16px", color: "#0f172a", fontWeight: 900 }}>
-                        {currencySymbol} {Number(order.total).toFixed(2)}
+                        {currencySymbol} {effectiveTotal.toFixed(2)}
                       </strong>
                     </div>
                   </div>

@@ -2053,19 +2053,79 @@ export default function OrdersLiveBoard({
                     );
                   })()}
 
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    <span style={{ fontSize: "11.5px", color: "#64748b", fontWeight: 600 }}>Total Amount</span>
-                    <span style={{ fontSize: "16px", fontWeight: 800, color: "#0f172a" }}>
-                      {currencySymbol}{Number(order.total).toFixed(2)}
-                    </span>
-                  </div>
+                  {(() => {
+                    const discountVal = Number((order as any).discount_amount || 0);
+                    const promoCode = (order as any).promo_code;
+                    const itemsSum = Array.isArray(order.items)
+                      ? order.items.reduce((s: number, it: any) => s + (Number(it.price || 0) * Number(it.qty || it.quantity || 1)), 0)
+                      : 0;
+                    const feeVal = Number(order.delivery_fee || 0);
+                    const rawUndiscounted = itemsSum > 0 ? (itemsSum + feeVal) : 0;
+                    const isTotalUndiscounted = discountVal > 0 && Math.abs(Number(order.total) - rawUndiscounted) < 1;
+                    const displayTotal = isTotalUndiscounted
+                      ? Math.max(0, Number(order.total) - discountVal)
+                      : Number(order.total);
+
+                    return (
+                      <>
+                        {discountVal > 0 && (
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              background: "#f0fdf4",
+                              border: "1px dashed #86efac",
+                              borderRadius: "5px",
+                              padding: "4px 8px",
+                              marginBottom: "6px",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: "11px",
+                                color: "#166534",
+                                fontWeight: 700,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <span>🎟️ Coupon:</span>
+                              <strong
+                                style={{
+                                  background: "#dcfce7",
+                                  padding: "1px 6px",
+                                  borderRadius: "3px",
+                                  letterSpacing: "0.5px",
+                                  fontSize: "10.5px",
+                                }}
+                              >
+                                {promoCode || "DISCOUNT"}
+                              </strong>
+                            </span>
+                            <span style={{ fontSize: "12px", fontWeight: 800, color: "#15803d" }}>
+                              -{currencySymbol}{discountVal.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: "6px",
+                          }}
+                        >
+                          <span style={{ fontSize: "11.5px", color: "#64748b", fontWeight: 600 }}>Total Amount</span>
+                          <span style={{ fontSize: "16px", fontWeight: 800, color: "#0f172a" }}>
+                            {currencySymbol}{displayTotal.toFixed(2)}
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
 
                   {/* Action Buttons: 2-Row Modern Grid Layout */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
@@ -2246,43 +2306,15 @@ export default function OrdersLiveBoard({
                       )}
                     </div>
 
-                    {/* ROW 2: Utility Toolbelt (Edit Info, Cancel, Delete) */}
+                    {/* ROW 2: Utility Toolbelt (Cancel, Delete) */}
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(65px, 1fr))",
+                        gridTemplateColumns: "1fr 1fr",
                         gap: "5px",
                         width: "100%",
                       }}
                     >
-                      {/* Quick Edit Customer / Address Button */}
-                      <button
-                        type="button"
-                        onClick={() => setEditingCustomerOrder(order)}
-                        style={{
-                          height: "28px",
-                          borderRadius: "5px",
-                          background: "#f8fafc",
-                          color: "#334155",
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          border: "1px solid #cbd5e1",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "4px",
-                          whiteSpace: "nowrap",
-                          padding: "0 4px",
-                          transition: "all 0.15s ease",
-                        }}
-                        className="hover:bg-slate-100 hover:border-slate-300"
-                        title="Edit Customer Name, Phone Number, or Delivery Address"
-                      >
-                        <Edit2 size={11} style={{ flexShrink: 0 }} />
-                        <span>Edit Info</span>
-                      </button>
-
                       {/* Cancel Order Button */}
                       {order.status !== "cancelled" && order.status !== "delivered" && (
                         canCancelOrders ? (

@@ -201,8 +201,8 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
     const discountAmount = Number(input.discount_amount || 0);
     const verifiedTotal = Math.max(0, Number((verifiedSubtotal + deliveryFee - discountAmount).toFixed(2)));
 
-    // If client total was manipulated, override with verified total
-    const finalTotal = Math.abs(Number(input.total) - verifiedTotal) > 1 ? verifiedTotal : Number(input.total.toFixed(2));
+    // Server-enforced total: Always strictly apply verified items + delivery fee - validated discount
+    const finalTotal = verifiedTotal;
 
     // -------------------------------------------------------------
     // CONCURRENCY-SAFE ORDER NUMBERING: Atomic Sequence with Retry Loop
@@ -259,6 +259,10 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       enrichedNotes = `[TAKEAWAY: Token ${tokenNumber}] ${enrichedNotes}`.trim();
     } else if (input.order_type === "delivery") {
       enrichedNotes = `[DELIVERY: Address: ${input.delivery_address?.trim()} | Phone: ${input.customer_phone?.trim()} | Fee: ${deliveryFee}] ${enrichedNotes}`.trim();
+    }
+
+    if (discountAmount > 0) {
+      enrichedNotes = `[COUPON: ${input.promo_code || "PROMO"} (-Rs. ${discountAmount})] ${enrichedNotes}`.trim();
     }
 
     const orderPayload: Record<string, any> = {
