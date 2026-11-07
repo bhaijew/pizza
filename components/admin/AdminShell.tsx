@@ -123,43 +123,31 @@ const NAV_GROUPS: NavGroup[] = [
       {
         label: "Live Orders",
         href: "/admin/orders",
-        badge: "LIVE",
-        badgeColor: "#ef4444",
         icon: ShoppingBag,
       },
       {
         label: "Verify Orders",
         href: "/admin/verify",
-        badge: "NEW",
-        badgeColor: "#f59e0b",
         icon: ShieldCheck,
       },
       {
         label: "Kitchen Display (KDS)",
         href: "/admin/kitchen",
-        badge: "KDS",
-        badgeColor: "#f97316",
         icon: ChefHat,
       },
       {
         label: "Sole-What",
         href: "/admin/sole-what",
-        badge: "WA BOT",
-        badgeColor: "#10b981",
         icon: SoleWhatNavIcon,
       },
       {
         label: "Delivery Riders",
         href: "/admin/riders",
-        badge: "RIDERS",
-        badgeColor: "#059669",
         icon: Bike,
       },
       {
         label: "Customer Info",
         href: "/admin/customers",
-        badge: "CRM",
-        badgeColor: "#ea580c",
         icon: Users,
       },
     ],
@@ -180,8 +168,6 @@ const NAV_GROUPS: NavGroup[] = [
       {
         label: "Special Deals",
         href: "/admin/deals",
-        badge: "DEALS",
-        badgeColor: "#ea580c",
         icon: Sparkles,
       },
       {
@@ -192,15 +178,11 @@ const NAV_GROUPS: NavGroup[] = [
       {
         label: "Discount Coupons",
         href: "/admin/promos",
-        badge: "COUPONS",
-        badgeColor: "#10b981",
         icon: TicketPercent,
       },
       {
         label: "Store Logo",
         href: "/admin/menu-layout",
-        badge: "LOGO",
-        badgeColor: "#ec4899",
         icon: LayoutIcon,
       },
     ],
@@ -216,8 +198,6 @@ const NAV_GROUPS: NavGroup[] = [
       {
         label: "Order Lookup",
         href: "/admin/order-lookup",
-        badge: "ORD-",
-        badgeColor: "#0284c7",
         icon: Search,
       },
       {
@@ -233,15 +213,11 @@ const NAV_GROUPS: NavGroup[] = [
       {
         label: "Recipe & Inventory",
         href: "/admin/inventory",
-        badge: "BOM",
-        badgeColor: "#8b5cf6",
         icon: Boxes,
       },
       {
         label: "Staff & Sub-Admins",
         href: "/admin/staff",
-        badge: "ROLES",
-        badgeColor: "#3b82f6",
         icon: Users,
       },
       {

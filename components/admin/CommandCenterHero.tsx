@@ -47,6 +47,15 @@ export default function CommandCenterHero({
   })();
 
   const [activeSlide, setActiveSlide] = useState(0);
+  const [telemetryIndex, setTelemetryIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const TELEMETRY_PHRASES = [
+    "Real-time kitchen order sequencing, WhatsApp dispatch automation & daily shift telemetry.",
+    "Cloud POS sync active • 0 ms latency real-time WebSocket connection to kitchen stations.",
+    "Automated 5-Star WhatsApp customer review prompts & Google reputation guard online.",
+    "Live fleet tracking, instant thermal receipt dispatch & biometric staff verification ready.",
+  ];
 
   // Auto-scroll images every 4.5 seconds
   useEffect(() => {
@@ -56,6 +65,18 @@ export default function CommandCenterHero({
     }, 4500);
     return () => clearInterval(timer);
   }, [images.length]);
+
+  // Dynamic telemetry text rotation every 4.5 seconds
+  useEffect(() => {
+    const textTimer = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setTelemetryIndex((prev) => (prev + 1) % TELEMETRY_PHRASES.length);
+        setIsTransitioning(false);
+      }, 300);
+    }, 4500);
+    return () => clearInterval(textTimer);
+  }, [TELEMETRY_PHRASES.length]);
 
   return (
     <div
@@ -262,6 +283,14 @@ export default function CommandCenterHero({
           from { width: 0%; }
           to { width: 100%; }
         }
+        @keyframes heroTextShimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes heroCursorBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
       `}} />
 
       {/* Text & Title Content */}
@@ -273,7 +302,7 @@ export default function CommandCenterHero({
             alignItems: "center",
             gap: 8,
             padding: "4px 12px",
-            borderRadius: 20,
+            borderRadius: 5,
             background: "rgba(16, 185, 129, 0.16)",
             border: "1px solid rgba(16, 185, 129, 0.4)",
             marginBottom: 12,
@@ -308,29 +337,59 @@ export default function CommandCenterHero({
           style={{
             fontSize: 28,
             fontWeight: 900,
-            color: "#ffffff",
             letterSpacing: "-0.02em",
             margin: "0 0 8px",
             lineHeight: 1.2,
             textShadow: "0 2px 10px rgba(0,0,0,0.5)",
           }}
         >
-          <span className="bg-gradient-to-r from-white via-slate-100 to-amber-200 bg-clip-text text-transparent">
+          <span
+            style={{
+              background: "linear-gradient(90deg, #ffffff 0%, #fed7aa 25%, #f97316 50%, #fed7aa 75%, #ffffff 100%)",
+              backgroundSize: "200% auto",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              animation: "heroTextShimmer 5s linear infinite",
+              display: "inline-block",
+            }}
+          >
             {shopName}
           </span>{" "}
-          Command Center
+          <span style={{ color: "#ffffff" }}>Command Center</span>
         </h1>
-        <p
+        <div
           style={{
-            margin: 0,
-            fontSize: 14,
-            color: "#e2e8f0",
-            lineHeight: 1.5,
-            textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+            minHeight: 44,
+            display: "flex",
+            alignItems: "center",
           }}
         >
-          Real-time kitchen order sequencing, WhatsApp dispatch automation &amp; daily shift telemetry.
-        </p>
+          <p
+            style={{
+              margin: 0,
+              fontSize: 14,
+              color: "#e2e8f0",
+              lineHeight: 1.5,
+              textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+              opacity: isTransitioning ? 0 : 1,
+              transform: isTransitioning ? "translateY(3px)" : "translateY(0)",
+              transition: "opacity 0.25s ease, transform 0.25s ease",
+            }}
+          >
+            {TELEMETRY_PHRASES[telemetryIndex]}
+            <span
+              style={{
+                display: "inline-block",
+                marginLeft: 6,
+                width: 6,
+                height: 14,
+                backgroundColor: "#10b981",
+                verticalAlign: "middle",
+                animation: "heroCursorBlink 1s infinite",
+              }}
+            />
+          </p>
+        </div>
       </div>
 
       {/* Quick Executive Shortcuts */}
@@ -350,7 +409,7 @@ export default function CommandCenterHero({
             alignItems: "center",
             gap: 8,
             padding: "11px 18px",
-            borderRadius: 10,
+            borderRadius: 5,
             background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
             color: "#ffffff",
             fontWeight: 800,
@@ -370,7 +429,7 @@ export default function CommandCenterHero({
                 background: "#ffffff",
                 color: "#ea580c",
                 padding: "1px 8px",
-                borderRadius: 12,
+                borderRadius: 4,
                 fontSize: 11,
                 fontWeight: 900,
                 boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
@@ -388,7 +447,7 @@ export default function CommandCenterHero({
             alignItems: "center",
             gap: 8,
             padding: "11px 18px",
-            borderRadius: 10,
+            borderRadius: 5,
             background: "rgba(15, 23, 42, 0.65)",
             color: "#ffffff",
             fontWeight: 700,
@@ -412,7 +471,7 @@ export default function CommandCenterHero({
             alignItems: "center",
             gap: 8,
             padding: "11px 16px",
-            borderRadius: 10,
+            borderRadius: 5,
             background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
             color: "#ffffff",
             fontWeight: 800,
@@ -432,7 +491,7 @@ export default function CommandCenterHero({
               background: "#ffffff",
               color: "#059669",
               padding: "1px 6px",
-              borderRadius: 10,
+              borderRadius: 4,
               fontSize: 10,
               fontWeight: 900,
             }}
@@ -449,7 +508,7 @@ export default function CommandCenterHero({
             alignItems: "center",
             gap: 8,
             padding: "11px 16px",
-            borderRadius: 10,
+            borderRadius: 5,
             background: "rgba(16, 185, 129, 0.16)",
             color: "#34d399",
             fontWeight: 700,
@@ -474,7 +533,7 @@ export default function CommandCenterHero({
             alignItems: "center",
             gap: 6,
             padding: "11px 16px",
-            borderRadius: 10,
+            borderRadius: 5,
             background: "rgba(15, 23, 42, 0.55)",
             color: "#e2e8f0",
             fontWeight: 600,
