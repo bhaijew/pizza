@@ -887,30 +887,33 @@ export default function AdminShell({
           className="admin-desktop-header md:flex"
         >
           {/* Breadcrumb & Section Name */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "nowrap", overflow: "hidden", minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "nowrap", overflow: "hidden", minWidth: 0 }}>
             <span
               style={{
-                fontSize: "12.5px",
+                fontSize: "12px",
                 color: isLight ? "#64748b" : "#94a3b8",
-                fontWeight: 500,
+                fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
                 gap: "5px",
                 whiteSpace: "nowrap",
                 flexShrink: 0,
+                letterSpacing: "0.03em",
+                textTransform: "uppercase",
               }}
             >
               <Store size={13} />
               Admin Portal
             </span>
-            <ChevronRight size={13} style={{ color: isLight ? "#cbd5e1" : "#475569", flexShrink: 0 }} />
+            <span style={{ color: isLight ? "#cbd5e1" : "#475569", flexShrink: 0, fontSize: "12px" }}>/</span>
             <span
               style={{
-                fontSize: "13.5px",
+                fontSize: "13px",
                 fontWeight: 800,
                 color: isLight ? "#0f172a" : "#ffffff",
                 whiteSpace: "nowrap",
                 flexShrink: 0,
+                letterSpacing: "0.01em",
               }}
             >
               {currentPageTitle}
@@ -921,49 +924,26 @@ export default function AdminShell({
                 style={{
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: isLight ? "#1d4ed8" : "#93c5fd",
-                  background: isLight ? "#eff6ff" : "rgba(59, 130, 246, 0.15)",
-                  border: isLight ? "1px solid #bfdbfe" : "1px solid rgba(59, 130, 246, 0.35)",
-                  borderRadius: "6px",
-                  padding: "2px 7px",
-                  marginLeft: "6px",
+                  color: isLight ? "#334155" : "#cbd5e1",
+                  background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.05)",
+                  border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: 0,
+                  padding: "2px 8px",
+                  marginLeft: "4px",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "4px",
+                  gap: "5px",
                   whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  maxWidth: "160px",
                   flexShrink: 0,
+                  letterSpacing: "0.02em",
                 }}
               >
-                <Store size={11} />
+                <Store size={11} className="text-slate-500" />
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {shopName}
                 </span>
               </span>
             )}
-
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 800,
-                color: theme.badgeText,
-                background: theme.badgeBg,
-                border: `1px solid ${theme.badgeBorder}`,
-                borderRadius: "6px",
-                padding: "2px 8px",
-                marginLeft: "6px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-              }}
-            >
-              <span>{theme.accentEmoji}</span>
-              <span>{theme.name}</span>
-            </span>
           </div>
 
           {/* Quick Actions & Status Tools */}
@@ -982,193 +962,107 @@ export default function AdminShell({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "7px",
-                padding: "5px 12px",
-                borderRadius: "5px",
-                background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.06)",
-                border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
+                padding: "5px 10px",
+                borderRadius: 0,
+                background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.04)",
+                border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
                 color: isLight ? "#0f172a" : "#ffffff",
-                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
                 flexShrink: 0,
                 whiteSpace: "nowrap",
               }}
-              title="Live Pakistan Standard Time (PKT / UTC+5, Asia/Karachi)"
+              title="Live Pakistan Standard Time (PKT / UTC+5)"
             >
               <div
                 style={{
-                  width: "7px",
-                  height: "7px",
+                  width: "6px",
+                  height: "6px",
                   borderRadius: "50%",
                   background: "#10b981",
-                  boxShadow: "0 0 8px #10b981",
+                  boxShadow: "0 0 6px #10b981",
                   flexShrink: 0,
                 }}
               />
-              <Clock size={13} className="text-emerald-500" style={{ flexShrink: 0 }} />
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", whiteSpace: "nowrap" }}>
-                <span style={{ fontFamily: "monospace", fontSize: "12px", fontWeight: 800, letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
-                  {pakistanTime || "Loading..."}
-                </span>
-                <span
-                  style={{
-                    fontSize: "9px",
-                    fontWeight: 800,
-                    background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
-                    color: "#ffffff",
-                    padding: "2px 5px",
-                    borderRadius: "4px",
-                    letterSpacing: "0.05em",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  PKT
-                </span>
-              </div>
+              <Clock size={12} className="text-emerald-500" style={{ flexShrink: 0 }} />
+              <span style={{ fontFamily: "monospace", fontSize: "12px", fontWeight: 700, letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
+                {pakistanTime || "Loading..."}
+              </span>
+              <span
+                style={{
+                  fontSize: "9px",
+                  fontWeight: 800,
+                  background: isLight ? "#0f172a" : "#334155",
+                  color: "#ffffff",
+                  padding: "1px 5px",
+                  borderRadius: 0,
+                  letterSpacing: "0.05em",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                PKT
+              </span>
             </div>
 
-            {/* Quick Kitchen Display button */}
-            <Link
-              href={kdsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "5px 11px",
-                borderRadius: "5px",
-                background: isLight ? "#fff7ed" : "rgba(249, 115, 22, 0.15)",
-                border: isLight ? "1px solid #fed7aa" : "1px solid rgba(249, 115, 22, 0.3)",
-                fontSize: "11.5px",
-                fontWeight: 700,
-                color: isLight ? "#c2410c" : "#fdba74",
-                textDecoration: "none",
-                transition: "all 0.15s ease",
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-              }}
-              className="hover:scale-105"
-              title="Open Live Kitchen Display Screen (KDS) in New Tab"
-            >
-              <ChefHat size={13} style={{ flexShrink: 0 }} />
-              <span>Kitchen KDS</span>
-              <ExternalLink size={10} style={{ opacity: 0.7 }} />
-            </Link>
-
-            {/* Preview Live Menu button */}
-            <Link
-              href={customerMenuUrl}
-              target="_blank"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "5px 12px",
-                borderRadius: "5px",
-                background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
-                color: "#ffffff",
-                fontSize: "11.5px",
-                fontWeight: 700,
-                textDecoration: "none",
-                boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
-                transition: "transform 0.15s ease",
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-              }}
-              className="hover:scale-105"
-            >
-              <Store size={13} style={{ flexShrink: 0 }} />
-              <span>Customer Menu</span>
-              <ExternalLink size={11} style={{ flexShrink: 0 }} />
-            </Link>
-
-            {/* How to Use / System Operations Guide Button */}
-            <button
-              type="button"
-              onClick={() => setGuideOpen(true)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "5px 12px",
-                borderRadius: "6px",
-                background: isLight ? "#f1f5f9" : "#1e293b",
-                color: isLight ? "#0f172a" : "#f1f5f9",
-                border: isLight ? "1px solid #cbd5e1" : "1px solid #334155",
-                fontSize: "11.5px",
-                fontWeight: 600,
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-              }}
-              className="hover:border-slate-400"
-              title="Open Complete Restaurant Operations & System Manual"
-            >
-              <BookOpenIcon size={13} className="shrink-0" />
-              <span>User Manual</span>
-            </button>
-
             {/* ─── ROLE SELECTOR (Admin only) & ACTIVE PROFILE BADGE ─── */}
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
               {/* Quick Role Switcher for Admin preview (Hidden for Staff/Cashier) */}
               {isAdmin && (
                 <div
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.08)",
+                    background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.06)",
                     padding: "2px",
-                    borderRadius: "5px",
-                    border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: 0,
+                    border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
                     flexShrink: 0,
                   }}
-                  title="Switch between Shop Master Admin and Staff / Sub-Admin view"
+                  title="Switch between Shop Master Admin and Staff view"
                 >
                   <button
                     type="button"
                     disabled={roleSwitching}
                     onClick={() => handleRoleSwitch("admin")}
                     style={{
-                      padding: "3px 8px",
-                      borderRadius: "5px",
+                      padding: "4px 10px",
+                      borderRadius: 0,
                       fontSize: "11px",
-                      fontWeight: 800,
+                      fontWeight: 700,
                       cursor: "pointer",
                       border: "none",
-                      background: isAdmin ? "linear-gradient(135deg, #f59e0b, #d97706)" : "transparent",
-                      color: isAdmin ? "#ffffff" : isLight ? "#64748b" : "#94a3b8",
+                      background: isAdmin ? (isLight ? "#0f172a" : "#f8fafc") : "transparent",
+                      color: isAdmin ? (isLight ? "#ffffff" : "#0f172a") : (isLight ? "#64748b" : "#94a3b8"),
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "3px",
-                      boxShadow: isAdmin ? "0 1px 4px rgba(245, 158, 11, 0.3)" : "none",
+                      gap: "4px",
                       whiteSpace: "nowrap",
+                      transition: "all 0.15s ease",
                     }}
-                    title="👑 Master Admin mode (Full access, Order cancel allowed)"
+                    title="Master Admin mode (Full access, Order cancel allowed)"
                   >
-                    <span>👑 Admin</span>
+                    <span>Admin</span>
                   </button>
                   <button
                     type="button"
                     disabled={roleSwitching}
                     onClick={() => handleRoleSwitch("staff")}
                     style={{
-                      padding: "3px 8px",
-                      borderRadius: "5px",
+                      padding: "4px 10px",
+                      borderRadius: 0,
                       fontSize: "11px",
-                      fontWeight: 800,
+                      fontWeight: 700,
                       cursor: "pointer",
                       border: "none",
-                      background: !isAdmin ? "linear-gradient(135deg, #10b981, #059669)" : "transparent",
-                      color: !isAdmin ? "#ffffff" : isLight ? "#64748b" : "#94a3b8",
+                      background: !isAdmin ? (isLight ? "#0f172a" : "#f8fafc") : "transparent",
+                      color: !isAdmin ? (isLight ? "#ffffff" : "#0f172a") : (isLight ? "#64748b" : "#94a3b8"),
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "3px",
-                      boxShadow: !isAdmin ? "0 1px 4px rgba(16, 185, 129, 0.3)" : "none",
+                      gap: "4px",
                       whiteSpace: "nowrap",
+                      transition: "all 0.15s ease",
                     }}
-                    title="👤 Staff / Sub-Admin mode (Order cancellation restricted)"
+                    title="Staff mode (Order cancellation restricted)"
                   >
-                    <span>👤 Staff</span>
+                    <span>Staff</span>
                   </button>
                 </div>
               )}
@@ -1178,47 +1072,40 @@ export default function AdminShell({
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "7px",
-                  padding: "4px 10px 4px 4px",
-                  borderRadius: "5px",
-                  background: isAdmin
-                    ? isLight ? "#fffbeb" : "rgba(245, 158, 11, 0.12)"
-                    : isLight ? "#ecfdf5" : "rgba(16, 185, 129, 0.12)",
-                  border: isAdmin
-                    ? isLight ? "1px solid #fde68a" : "1px solid rgba(245, 158, 11, 0.35)"
-                    : isLight ? "1px solid #a7f3d0" : "1px solid rgba(16, 185, 129, 0.35)",
+                  gap: "8px",
+                  padding: "4px 10px",
+                  borderRadius: 0,
+                  background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.04)",
+                  border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
                   flexShrink: 0,
                   whiteSpace: "nowrap",
                 }}
               >
                 <div
                   style={{
-                    width: "26px",
-                    height: "26px",
-                    borderRadius: "5px",
-                    background: isAdmin
-                      ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-                      : "linear-gradient(135deg, #10b981 0%, #047857 100%)",
+                    width: "22px",
+                    height: "22px",
+                    borderRadius: 0,
+                    background: isAdmin ? "#0f172a" : "#059669",
                     color: "#ffffff",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: isAdmin
-                      ? "0 2px 6px rgba(245, 158, 11, 0.4)"
-                      : "0 2px 6px rgba(16, 185, 129, 0.4)",
-                    fontSize: "12px",
+                    fontSize: "11px",
+                    fontWeight: 800,
                     flexShrink: 0,
                   }}
                 >
-                  {isAdmin ? "👑" : "👤"}
+                  <ShieldCheck size={13} />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.15", whiteSpace: "nowrap" }}>
+                <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.2", whiteSpace: "nowrap" }}>
                   <span
                     style={{
-                      fontSize: "10.5px",
+                      fontSize: "11px",
                       fontWeight: 800,
-                      color: isAdmin ? (isLight ? "#92400e" : "#fef08a") : (isLight ? "#065f46" : "#6ee7b7"),
-                      letterSpacing: "0.02em",
+                      color: isLight ? "#0f172a" : "#ffffff",
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -1226,9 +1113,9 @@ export default function AdminShell({
                   </span>
                   <span
                     style={{
-                      fontSize: "9px",
-                      fontWeight: 700,
-                      color: isAdmin ? (isLight ? "#b45309" : "#fde047") : (isLight ? "#047857" : "#a7f3d0"),
+                      fontSize: "9.5px",
+                      fontWeight: 600,
+                      color: isAdmin ? "#059669" : "#64748b",
                       display: "flex",
                       alignItems: "center",
                       gap: "3px",
