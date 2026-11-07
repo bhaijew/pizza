@@ -1876,6 +1876,123 @@ export async function deleteOrder(
   return { error: null };
 }
 
+/**
+ * Update payment method (Cash vs Card/Online) and payment status for an existing order.
+ * Allows switching payment mode live (e.g., customer ordered Cash for Dine-In/Takeaway, but paid via Online/Card).
+ * Immediately synchronizes database columns and updates notes so Daily Closing accurately accounts for Cash vs Online sales.
+ */
+export async function updateOrderPaymentMethod(params: {
+  orderId: number;
+  paymentMethod: "cash" | "online" | "card" | string;
+  paymentStatus?: "paid" | "unpaid";
+  transactionId?: string;
+}): Promise<{
+  success: boolean;
+  error?: string | null;
+  order?: any;
+}> {
+  await requireAdmin();
+  if (!isServiceRoleConfigured()) {
+    return { success: false, error: SERVICE_ROLE_ERROR };
+  }
+
+  const db = createAdminClient();
+  const activeShop = await getActiveShopContext();
+
+  const { data: currentOrder, error: fetchErr } = await db
+    .from("orders")
+    .select("id, notes, payment_method, payment_status, shop_id, order_type, total")
+    .eq("id", params.orderId)
+    .maybeSingle();
+
+  if (fetchErr || !currentOrder) {
+    return { success: false, error: fetchErr?.message || "Order not found." };
+  }
+
+  if (activeShop.shopId && currentOrder.shop_id && Number(currentOrder.shop_id) !== Number(activeShop.shopId)) {
+    return { success: false, error: "Unauthorized: this order belongs to another branch." };
+  }
+
+  const methodLower = (params.paymentMethod || "").toLowerCase().trim();
+  const isOnline =
+    methodLower.includes("online") ||
+    methodLower.includes("card") ||
+    methodLower.includes("bank") ||
+    methodLower.includes("transfer") ||
+    methodLower.includes("easypaisa") ||
+    methodLower.includes("jazzcash");
+
+  const cleanTxn = params.transactionId?.trim();
+  const formattedMethod = isOnline
+    ? (cleanTxn ? `Card / Online (TXN: ${cleanTxn})` : "Card / Online")
+    : (currentOrder.order_type === "delivery" ? "Cash on Delivery" : "Cash");
+
+  const effectiveStatus = params.paymentStatus || (isOnline ? "paid" : (currentOrder.payment_status || "paid"));
+
+  // Build audit trail in notes
+  const nowIso = new Date().toISOString();
+  const nowStr = new Date().toLocaleTimeString("en-US", {
+    timeZone: "Asia/Karachi",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+  const staff = activeShop.staffName || "Admin";
+
+  let existingNotes = currentOrder.notes || "";
+  // Remove any previous payment mode switch tags to keep notes clean
+  existingNotes = existingNotes.replace(/\[PAYMENT_SWITCH:[^\]]*\]/gi, "").trim();
+  // Also if notes had an old Payment: Cash or Payment: Card, update it
+  if (existingNotes.includes("Payment: Cash") || existingNotes.includes("Payment: Card")) {
+    existingNotes = existingNotes.replace(/Payment:\s*(?:Cash|Card\s*\/?\s*Online)/gi, `Payment: ${isOnline ? "Card / Online" : "Cash"}`);
+  }
+
+  const switchTag = `[PAYMENT_SWITCH: ${isOnline ? "Online / Card" : "Cash"}${cleanTxn ? ` (TXN: ${cleanTxn})` : ""} by ${staff} at ${nowStr}]`;
+  const updatedNotes = existingNotes ? `${existingNotes} ${switchTag}`.trim() : switchTag;
+
+  const updatePayload: Record<string, any> = {
+    payment_method: formattedMethod,
+    payment_status: effectiveStatus,
+    notes: updatedNotes,
+    updated_at: nowIso,
+  };
+
+  if (cleanTxn !== undefined) {
+    updatePayload.transaction_id = cleanTxn || null;
+  }
+
+  let { data: updatedOrder, error: updateErr } = await db
+    .from("orders")
+    .update(updatePayload)
+    .eq("id", params.orderId)
+    .select()
+    .single();
+
+  if (updateErr && cleanTxn && updateErr.message?.includes("transaction_id")) {
+    delete updatePayload.transaction_id;
+    const retry = await db
+      .from("orders")
+      .update(updatePayload)
+      .eq("id", params.orderId)
+      .select()
+      .single();
+    updateErr = retry.error;
+    updatedOrder = retry.data;
+  }
+
+  if (updateErr) {
+    return { success: false, error: updateErr.message };
+  }
+
+  dbCache.invalidateTag("orders");
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/closing");
+  revalidatePath("/admin/kitchen");
+  revalidatePath("/admin");
+
+  return { success: true, order: updatedOrder };
+}
+
 export async function assignOrderRider(
   id: number,
   riderName: string,

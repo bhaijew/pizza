@@ -8,6 +8,7 @@ import {
   assignOrderRider,
   triggerRiderWhatsAppAlert,
   deleteOrder,
+  updateOrderPaymentMethod,
   type ShopMenuProduct,
 } from "@/lib/admin-actions";
 import { createClient } from "@/utils/supabase/client";
@@ -514,6 +515,101 @@ export default function OrdersLiveBoard({
       const res = await deleteOrder(orderId);
       if (res?.error) {
         alert(res.error);
+        window.location.reload();
+      }
+    });
+  };
+
+  const handleSwitchPaymentMethod = (order: Order, targetMethod: "cash" | "online") => {
+    const methodStr = (order.payment_method || "").toLowerCase();
+    const notesStr = order.notes || "";
+    const isCurrentOnline =
+      methodStr.includes("card") ||
+      methodStr.includes("online") ||
+      methodStr.includes("bank") ||
+      methodStr.includes("transfer") ||
+      methodStr.includes("easypaisa") ||
+      methodStr.includes("jazzcash") ||
+      notesStr.includes("Payment: Card") ||
+      notesStr.includes("Payment: Online");
+
+    const isTargetOnline = targetMethod === "online";
+    if (isCurrentOnline === isTargetOnline) return;
+
+    const formattedMethod = isTargetOnline
+      ? (order.transaction_id ? `Card / Online (TXN: ${order.transaction_id})` : "Card / Online")
+      : (order.order_type === "delivery" ? "Cash on Delivery" : "Cash");
+
+    // Optimistically update orders in UI immediately
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === order.id
+          ? {
+              ...o,
+              payment_method: formattedMethod,
+              payment_status: isTargetOnline ? "paid" : o.payment_status || "paid",
+            }
+          : o
+      )
+    );
+
+    startTransition(async () => {
+      const res = await updateOrderPaymentMethod({
+        orderId: order.id,
+        paymentMethod: targetMethod,
+        paymentStatus: isTargetOnline ? "paid" : (order.payment_status === "unpaid" ? "unpaid" : "paid"),
+        transactionId: order.transaction_id || undefined,
+      });
+
+      if (!res.success) {
+        alert(res.error || "Failed to update payment method.");
+        window.location.reload();
+      }
+    });
+  };
+
+  const handleTogglePaymentStatus = (order: Order) => {
+    const nextStatus = order.payment_status === "paid" ? "unpaid" : "paid";
+    setOrders((prev) =>
+      prev.map((o) => (o.id === order.id ? { ...o, payment_status: nextStatus } : o))
+    );
+
+    startTransition(async () => {
+      const isOnline = (order.payment_method || "").toLowerCase().includes("online") || (order.payment_method || "").toLowerCase().includes("card");
+      const res = await updateOrderPaymentMethod({
+        orderId: order.id,
+        paymentMethod: isOnline ? "online" : "cash",
+        paymentStatus: nextStatus as any,
+        transactionId: order.transaction_id || undefined,
+      });
+
+      if (!res.success) {
+        alert(res.error || "Failed to update payment status.");
+        window.location.reload();
+      }
+    });
+  };
+
+  const handleEditTransactionId = (order: Order) => {
+    const currentTxn = order.transaction_id || "";
+    const promptVal = window.prompt("Enter Transaction ID / Ref # (e.g. JazzCash / EasyPaisa / Bank Slip):", currentTxn);
+    if (promptVal === null) return;
+    const cleanTxn = promptVal.trim();
+    const isOnline = (order.payment_method || "").toLowerCase().includes("online") || (order.payment_method || "").toLowerCase().includes("card");
+
+    setOrders((prev) =>
+      prev.map((o) => (o.id === order.id ? { ...o, transaction_id: cleanTxn } : o))
+    );
+
+    startTransition(async () => {
+      const res = await updateOrderPaymentMethod({
+        orderId: order.id,
+        paymentMethod: isOnline ? "online" : "cash",
+        transactionId: cleanTxn,
+      });
+
+      if (!res.success) {
+        alert(res.error || "Failed to update transaction reference.");
         window.location.reload();
       }
     });
@@ -1992,23 +2088,25 @@ export default function OrdersLiveBoard({
 
                 {/* Bottom Total & Status Progress Buttons */}
                 <div>
-                  {/* Payment Mode & Transaction ID badge (Cash vs Card + Ref #) */}
+                  {/* Interactive Payment Switcher: 1-Click Cash vs Online + Status */}
                   {(() => {
-                    const method = order.payment_method || "";
-                    const notes = order.notes || "";
+                    const method = (order.payment_method || "").toLowerCase();
+                    const notes = (order.notes || "").toLowerCase();
                     const isCard =
-                      method.toLowerCase().includes("card") ||
-                      method.toLowerCase().includes("online") ||
-                      notes.includes("Payment: Card");
-                    const isCash =
-                      method.toLowerCase().includes("cash") ||
-                      notes.includes("Payment: Cash");
+                      method.includes("card") ||
+                      method.includes("online") ||
+                      method.includes("bank") ||
+                      method.includes("transfer") ||
+                      method.includes("easypaisa") ||
+                      method.includes("jazzcash") ||
+                      notes.includes("payment: card") ||
+                      notes.includes("payment: online");
+                    const isCash = !isCard;
+                    const isPaid = order.payment_status === "paid" || order.status === "delivered";
                     const txn =
                       order.transaction_id ||
-                      notes.match(/TXN:\s*([^)\],|]+)/i)?.[1]?.trim() ||
-                      method.match(/TXN:\s*([^)\],|]+)/i)?.[1]?.trim();
-
-                    if (!isCard && !isCash && !txn && order.status !== "delivered") return null;
+                      order.notes?.match(/TXN:\s*([^)\],|]+)/i)?.[1]?.trim() ||
+                      order.payment_method?.match(/TXN:\s*([^)\],|]+)/i)?.[1]?.trim();
 
                     return (
                       <div
@@ -2016,39 +2114,135 @@ export default function OrdersLiveBoard({
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          padding: "3px 7px",
-                          borderRadius: "4px",
+                          padding: "3px 6px",
+                          borderRadius: "5px",
                           fontSize: "10px",
-                          fontWeight: 700,
                           background: isCard ? "#eff6ff" : "#f0fdf4",
                           border: `1px solid ${isCard ? "#bfdbfe" : "#bbf7d0"}`,
-                          color: isCard ? "#1d4ed8" : "#15803d",
                           marginBottom: "6px",
+                          gap: "4px",
                         }}
                       >
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                          {isCard ? "💳 Card / Online" : "💵 Cash on Delivery"}
-                        </span>
-                        {txn ? (
-                          <span
+                        {/* 1-Click Payment Switcher Segmented Toggle */}
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "2px",
+                            background: "#ffffff",
+                            padding: "2px",
+                            borderRadius: "4px",
+                            border: "1px solid rgba(0,0,0,0.08)",
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleSwitchPaymentMethod(order, "cash")}
+                            title={isCash ? "Currently paid in Cash" : "Click to switch to Cash"}
                             style={{
-                              fontFamily: "monospace",
-                              fontSize: "9.5px",
-                              background: "#ffffff",
-                              padding: "1px 5px",
+                              padding: "2px 6px",
+                              fontSize: "10px",
+                              fontWeight: isCash ? 800 : 600,
                               borderRadius: "3px",
-                              border: "1px solid rgba(0,0,0,0.12)",
-                              color: "#0f172a",
+                              border: "none",
+                              cursor: isCash ? "default" : "pointer",
+                              background: isCash ? "#16a34a" : "transparent",
+                              color: isCash ? "#ffffff" : "#64748b",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px",
+                              transition: "all 0.15s ease",
                             }}
-                            title={`Transaction Reference: ${txn}`}
                           >
-                            Ref: {txn}
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: "9px", opacity: 0.9, fontWeight: 800 }}>
-                            {order.payment_status === "paid" || order.status === "delivered" ? "PAID ✓" : "DUE"}
-                          </span>
-                        )}
+                            <span>💵 Cash</span>
+                            {isCash && <span style={{ fontSize: "9px" }}>✓</span>}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSwitchPaymentMethod(order, "online")}
+                            title={isCard ? "Currently paid Online" : "Customer paid Online? Click to switch to Online / Card"}
+                            style={{
+                              padding: "2px 6px",
+                              fontSize: "10px",
+                              fontWeight: isCard ? 800 : 600,
+                              borderRadius: "3px",
+                              border: "none",
+                              cursor: isCard ? "default" : "pointer",
+                              background: isCard ? "#2563eb" : "transparent",
+                              color: isCard ? "#ffffff" : "#64748b",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            <span>💳 Online</span>
+                            {isCard && <span style={{ fontSize: "9px" }}>✓</span>}
+                          </button>
+                        </div>
+
+                        {/* Transaction ID & Paid / Due Status Indicator */}
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          {txn ? (
+                            <button
+                              type="button"
+                              onClick={() => handleEditTransactionId(order)}
+                              title={`Reference: ${txn} (Click to edit)`}
+                              style={{
+                                fontFamily: "monospace",
+                                fontSize: "9px",
+                                fontWeight: 700,
+                                background: "#ffffff",
+                                padding: "1px 5px",
+                                borderRadius: "3px",
+                                border: "1px solid rgba(0,0,0,0.15)",
+                                color: "#0f172a",
+                                cursor: "pointer",
+                              }}
+                            >
+                              Ref: {txn} ✏️
+                            </button>
+                          ) : isCard ? (
+                            <button
+                              type="button"
+                              onClick={() => handleEditTransactionId(order)}
+                              title="Add Online Payment Transaction / Reference ID"
+                              style={{
+                                fontSize: "9px",
+                                fontWeight: 700,
+                                background: "#ffffff",
+                                padding: "1px 4px",
+                                borderRadius: "3px",
+                                border: "1px dashed #93c5fd",
+                                color: "#2563eb",
+                                cursor: "pointer",
+                              }}
+                            >
+                              + Ref
+                            </button>
+                          ) : null}
+
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePaymentStatus(order)}
+                            title="Click to toggle Paid / Due status"
+                            style={{
+                              fontSize: "9px",
+                              fontWeight: 800,
+                              padding: "2px 5px",
+                              borderRadius: "3px",
+                              border: "none",
+                              cursor: "pointer",
+                              background: isPaid ? "#dcfce7" : "#fef3c7",
+                              color: isPaid ? "#15803d" : "#b45309",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "2px",
+                            }}
+                          >
+                            <span>{isPaid ? "PAID ✓" : "DUE"}</span>
+                          </button>
+                        </div>
                       </div>
                     );
                   })()}
