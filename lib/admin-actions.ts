@@ -1913,6 +1913,23 @@ export async function updateOrderPaymentMethod(params: {
     return { success: false, error: "Unauthorized: this order belongs to another branch." };
   }
 
+  // STRICT RBAC: Only Shop Admin can change order payment method!
+  if (activeShop.role !== "admin") {
+    return {
+      success: false,
+      error: "Permission Denied: Only Shop Admin can change payment method.",
+    };
+  }
+
+  // Only Dine-In and Takeaway orders can be switched, NOT delivery!
+  const isDelivery = currentOrder.order_type === "delivery" || currentOrder.notes?.includes("[DELIVERY:");
+  if (isDelivery) {
+    return {
+      success: false,
+      error: "Payment method cannot be switched for delivery orders (Only Dine-In & Takeaway allowed).",
+    };
+  }
+
   const methodLower = (params.paymentMethod || "").toLowerCase().trim();
   const isOnline =
     methodLower.includes("online") ||

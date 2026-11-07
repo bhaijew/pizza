@@ -521,6 +521,17 @@ export default function OrdersLiveBoard({
   };
 
   const handleSwitchPaymentMethod = (order: Order, targetMethod: "cash" | "online") => {
+    if (!canCancelOrders) {
+      alert("Permission Denied: Only Shop Admin can change order payment method.");
+      return;
+    }
+
+    const serviceInfo = getOrderServiceInfo(order);
+    if (serviceInfo.type === "delivery") {
+      alert("Payment method cannot be switched for delivery orders (Only Dine-In & Takeaway allowed).");
+      return;
+    }
+
     const methodStr = (order.payment_method || "").toLowerCase();
     const notesStr = order.notes || "";
     const isCurrentOnline =
@@ -538,7 +549,7 @@ export default function OrdersLiveBoard({
 
     const formattedMethod = isTargetOnline
       ? (order.transaction_id ? `Card / Online (TXN: ${order.transaction_id})` : "Card / Online")
-      : (order.order_type === "delivery" ? "Cash on Delivery" : "Cash");
+      : "Cash";
 
     // Optimistically update orders in UI immediately
     setOrders((prev) =>
@@ -569,6 +580,11 @@ export default function OrdersLiveBoard({
   };
 
   const handleTogglePaymentStatus = (order: Order) => {
+    if (!canCancelOrders) {
+      alert("Permission Denied: Only Shop Admin can change payment status.");
+      return;
+    }
+
     const nextStatus = order.payment_status === "paid" ? "unpaid" : "paid";
     setOrders((prev) =>
       prev.map((o) => (o.id === order.id ? { ...o, payment_status: nextStatus } : o))
@@ -591,6 +607,11 @@ export default function OrdersLiveBoard({
   };
 
   const handleEditTransactionId = (order: Order) => {
+    if (!canCancelOrders) {
+      alert("Permission Denied: Only Shop Admin can edit transaction reference.");
+      return;
+    }
+
     const currentTxn = order.transaction_id || "";
     const promptVal = window.prompt("Enter Transaction ID / Ref # (e.g. JazzCash / EasyPaisa / Bank Slip):", currentTxn);
     if (promptVal === null) return;
@@ -2088,7 +2109,7 @@ export default function OrdersLiveBoard({
 
                 {/* Bottom Total & Status Progress Buttons */}
                 <div>
-                  {/* Interactive Payment Switcher: 1-Click Cash vs Online + Status */}
+                  {/* Payment Mode & Status badge */}
                   {(() => {
                     const method = (order.payment_method || "").toLowerCase();
                     const notes = (order.notes || "").toLowerCase();
@@ -2108,6 +2129,55 @@ export default function OrdersLiveBoard({
                       order.notes?.match(/TXN:\s*([^)\],|]+)/i)?.[1]?.trim() ||
                       order.payment_method?.match(/TXN:\s*([^)\],|]+)/i)?.[1]?.trim();
 
+                    const serviceInfo = getOrderServiceInfo(order);
+                    const isDelivery = serviceInfo.type === "delivery";
+
+                    // For Delivery: Standard fixed badge (no switcher, rider handles delivery cash)
+                    if (isDelivery) {
+                      return (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "3px 7px",
+                            borderRadius: "4px",
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            background: isCard ? "#eff6ff" : "#f0fdf4",
+                            border: `1px solid ${isCard ? "#bfdbfe" : "#bbf7d0"}`,
+                            color: isCard ? "#1d4ed8" : "#15803d",
+                            marginBottom: "6px",
+                          }}
+                        >
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            {isCard ? "💳 Card / Online" : "🛵 Cash on Delivery"}
+                          </span>
+                          {txn ? (
+                            <span
+                              style={{
+                                fontFamily: "monospace",
+                                fontSize: "9.5px",
+                                background: "#ffffff",
+                                padding: "1px 5px",
+                                borderRadius: "3px",
+                                border: "1px solid rgba(0,0,0,0.12)",
+                                color: "#0f172a",
+                              }}
+                              title={`Transaction Reference: ${txn}`}
+                            >
+                              Ref: {txn}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: "9px", opacity: 0.9, fontWeight: 800 }}>
+                              {isPaid ? "PAID ✓" : "DUE"}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    // For Dine-In and Takeaway: Only Admin can toggle Cash vs Online
                     return (
                       <div
                         style={{
@@ -2123,71 +2193,86 @@ export default function OrdersLiveBoard({
                           gap: "4px",
                         }}
                       >
-                        {/* 1-Click Payment Switcher Segmented Toggle */}
-                        <div
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "2px",
-                            background: "#ffffff",
-                            padding: "2px",
-                            borderRadius: "4px",
-                            border: "1px solid rgba(0,0,0,0.08)",
-                          }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => handleSwitchPaymentMethod(order, "cash")}
-                            title={isCash ? "Currently paid in Cash" : "Click to switch to Cash"}
+                        {/* If Admin: 1-Click Segmented Toggle between Cash & Online */}
+                        {canCancelOrders ? (
+                          <div
                             style={{
-                              padding: "2px 6px",
-                              fontSize: "10px",
-                              fontWeight: isCash ? 800 : 600,
-                              borderRadius: "3px",
-                              border: "none",
-                              cursor: isCash ? "default" : "pointer",
-                              background: isCash ? "#16a34a" : "transparent",
-                              color: isCash ? "#ffffff" : "#64748b",
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: "3px",
-                              transition: "all 0.15s ease",
+                              gap: "2px",
+                              background: "#ffffff",
+                              padding: "2px",
+                              borderRadius: "4px",
+                              border: "1px solid rgba(0,0,0,0.08)",
                             }}
                           >
-                            <span>💵 Cash</span>
-                            {isCash && <span style={{ fontSize: "9px" }}>✓</span>}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleSwitchPaymentMethod(order, "online")}
-                            title={isCard ? "Currently paid Online" : "Customer paid Online? Click to switch to Online / Card"}
+                            <button
+                              type="button"
+                              onClick={() => handleSwitchPaymentMethod(order, "cash")}
+                              title={isCash ? "Currently Cash" : "Click to switch to Cash (Admin only)"}
+                              style={{
+                                padding: "2px 6px",
+                                fontSize: "10px",
+                                fontWeight: isCash ? 800 : 600,
+                                borderRadius: "3px",
+                                border: "none",
+                                cursor: isCash ? "default" : "pointer",
+                                background: isCash ? "#16a34a" : "transparent",
+                                color: isCash ? "#ffffff" : "#64748b",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              <span>💵 Cash</span>
+                              {isCash && <span style={{ fontSize: "9px" }}>✓</span>}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSwitchPaymentMethod(order, "online")}
+                              title={isCard ? "Currently Online" : "Customer paid Online? Click to switch to Online (Admin only)"}
+                              style={{
+                                padding: "2px 6px",
+                                fontSize: "10px",
+                                fontWeight: isCard ? 800 : 600,
+                                borderRadius: "3px",
+                                border: "none",
+                                cursor: isCard ? "default" : "pointer",
+                                background: isCard ? "#2563eb" : "transparent",
+                                color: isCard ? "#ffffff" : "#64748b",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              <span>💳 Online</span>
+                              {isCard && <span style={{ fontSize: "9px" }}>✓</span>}
+                            </button>
+                          </div>
+                        ) : (
+                          /* Non-admin read-only display */
+                          <span
                             style={{
-                              padding: "2px 6px",
-                              fontSize: "10px",
-                              fontWeight: isCard ? 800 : 600,
-                              borderRadius: "3px",
-                              border: "none",
-                              cursor: isCard ? "default" : "pointer",
-                              background: isCard ? "#2563eb" : "transparent",
-                              color: isCard ? "#ffffff" : "#64748b",
+                              fontWeight: 700,
+                              color: isCard ? "#1d4ed8" : "#15803d",
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: "3px",
-                              transition: "all 0.15s ease",
+                              gap: "4px",
                             }}
                           >
-                            <span>💳 Online</span>
-                            {isCard && <span style={{ fontSize: "9px" }}>✓</span>}
-                          </button>
-                        </div>
+                            {isCard ? "💳 Card / Online" : "💵 Cash"}
+                          </span>
+                        )}
 
                         {/* Transaction ID & Paid / Due Status Indicator */}
                         <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
                           {txn ? (
                             <button
                               type="button"
-                              onClick={() => handleEditTransactionId(order)}
-                              title={`Reference: ${txn} (Click to edit)`}
+                              onClick={() => canCancelOrders && handleEditTransactionId(order)}
+                              title={canCancelOrders ? `Reference: ${txn} (Click to edit)` : `Reference: ${txn}`}
                               style={{
                                 fontFamily: "monospace",
                                 fontSize: "9px",
@@ -2197,12 +2282,12 @@ export default function OrdersLiveBoard({
                                 borderRadius: "3px",
                                 border: "1px solid rgba(0,0,0,0.15)",
                                 color: "#0f172a",
-                                cursor: "pointer",
+                                cursor: canCancelOrders ? "pointer" : "default",
                               }}
                             >
-                              Ref: {txn} ✏️
+                              Ref: {txn} {canCancelOrders ? "✏️" : ""}
                             </button>
-                          ) : isCard ? (
+                          ) : isCard && canCancelOrders ? (
                             <button
                               type="button"
                               onClick={() => handleEditTransactionId(order)}
@@ -2224,15 +2309,15 @@ export default function OrdersLiveBoard({
 
                           <button
                             type="button"
-                            onClick={() => handleTogglePaymentStatus(order)}
-                            title="Click to toggle Paid / Due status"
+                            onClick={() => canCancelOrders && handleTogglePaymentStatus(order)}
+                            title={canCancelOrders ? "Click to toggle Paid / Due status" : (isPaid ? "Paid" : "Due")}
                             style={{
                               fontSize: "9px",
                               fontWeight: 800,
                               padding: "2px 5px",
                               borderRadius: "3px",
                               border: "none",
-                              cursor: "pointer",
+                              cursor: canCancelOrders ? "pointer" : "default",
                               background: isPaid ? "#dcfce7" : "#fef3c7",
                               color: isPaid ? "#15803d" : "#b45309",
                               display: "inline-flex",
