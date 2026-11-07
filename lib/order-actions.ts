@@ -255,7 +255,8 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
         dateCode = `${day}${month}`;
       }
 
-      const prefix = `ORD-${shopCode}${dateCode}-`;
+      // Prefix includes -W for Web / Online Menu orders so offline POS counter orders (-0001) never collide
+      const prefix = `ORD-${shopCode}${dateCode}-W`;
 
       let query = supabase
         .from("orders")
