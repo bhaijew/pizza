@@ -318,20 +318,60 @@ export default function OrderVerificationClient({
           boxShadow: "0 4px 14px rgba(15, 23, 42, 0.2)",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
-          <div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(245, 158, 11, 0.18)", border: "1px solid rgba(245, 158, 11, 0.35)", padding: "3px 8px", borderRadius: "4px", marginBottom: "6px" }}>
-              <ShieldCheck size={14} className="text-amber-400" />
-              <span style={{ fontSize: "11px", fontWeight: 800, color: "#fbbf24", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Order Verification Terminal
-              </span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", minWidth: 0, flex: 1 }}>
+            {/* Visual Verification Terminal Hero Badge */}
+            <div
+              style={{
+                position: "relative",
+                width: "68px",
+                height: "68px",
+                borderRadius: "12px",
+                overflow: "hidden",
+                border: "2px solid rgba(245, 158, 11, 0.6)",
+                boxShadow: "0 4px 18px rgba(245, 158, 11, 0.25)",
+                flexShrink: 0,
+                background: "#1e293b",
+              }}
+            >
+              <img
+                src="/images/pizzger-hero-pizza.jpg"
+                alt="Order Verification"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  right: 0,
+                  background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                  color: "#0f172a",
+                  borderRadius: "5px 0 0 0",
+                  padding: "3px 5px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                title="Verified Terminal"
+              >
+                <ShieldCheck size={12} strokeWidth={3} />
+              </div>
             </div>
-            <h1 style={{ margin: "2px 0 6px", fontSize: "22px", fontWeight: 900, letterSpacing: "-0.5px" }}>
-              Online Menu Orders Verification
-            </h1>
-            <p style={{ margin: 0, fontSize: "12.5px", color: "#94a3b8", maxWidth: "680px" }}>
-              Review customer details, address, and items before releasing orders into the Live Kitchen & POS Board. Prevents fake / prank orders and eliminates wasted cooking and thermal paper.
-            </p>
+
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(245, 158, 11, 0.18)", border: "1px solid rgba(245, 158, 11, 0.35)", padding: "3px 8px", borderRadius: "4px", marginBottom: "6px" }}>
+                <ShieldCheck size={14} className="text-amber-400" />
+                <span style={{ fontSize: "11px", fontWeight: 800, color: "#fbbf24", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Order Verification Terminal
+                </span>
+              </div>
+              <h1 style={{ margin: "2px 0 6px", fontSize: "22px", fontWeight: 900, letterSpacing: "-0.5px" }}>
+                Online Menu Orders Verification
+              </h1>
+              <p style={{ margin: 0, fontSize: "12.5px", color: "#94a3b8", maxWidth: "680px" }}>
+                Review customer details, address, and items before releasing orders into the Live Kitchen &amp; POS Board. Prevents fake / prank orders and eliminates wasted cooking and thermal paper.
+              </p>
+            </div>
           </div>
 
           <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
@@ -551,14 +591,30 @@ export default function OrderVerificationClient({
           style={{
             background: "#ffffff",
             border: "1.5px solid #e2e8f0",
-            borderRadius: "5px",
-            padding: "48px 20px",
+            borderRadius: "8px",
+            padding: "44px 20px",
             textAlign: "center",
             boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
           }}
         >
-          <div style={{ width: "48px", height: "48px", borderRadius: "5px", background: "#f1f5f9", color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
-            <CheckCircle2 size={24} />
+          <div
+            style={{
+              position: "relative",
+              width: "70px",
+              height: "70px",
+              borderRadius: "50%",
+              overflow: "hidden",
+              margin: "0 auto 14px",
+              border: "2px solid #fed7aa",
+              boxShadow: "0 4px 12px rgba(234, 88, 12, 0.15)",
+              background: "#fff7ed",
+            }}
+          >
+            <img
+              src="/images/pizzger-hero-pizza.jpg"
+              alt="Verification Queue Clean"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
           </div>
           <h3 style={{ margin: "0 0 6px", fontSize: "16px", fontWeight: 800, color: "#0f172a" }}>
             No Orders in this View

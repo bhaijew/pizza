@@ -1428,7 +1428,11 @@ export default function OrdersLiveBoard({
                         gap: "4px",
                       }}
                     >
-                      <div style={{ fontWeight: 700, color: "#1e293b", display: "flex", alignItems: "center", gap: "5px" }}>
+                      <div
+                        onClick={() => setEditingCustomerOrder(order)}
+                        title="Click to edit customer details"
+                        style={{ fontWeight: 700, color: "#1e293b", display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}
+                      >
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#64748b", flexShrink: 0 }}>
                           <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
                           <circle cx="12" cy="7" r="4"></circle>
@@ -1437,7 +1441,11 @@ export default function OrdersLiveBoard({
                       </div>
                       {order.customer_phone && (
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <div style={{ color: "#64748b", fontSize: "10.5px", display: "flex", alignItems: "center", gap: "4px", fontFamily: "monospace", fontWeight: 600 }}>
+                          <div
+                            onClick={() => setEditingCustomerOrder(order)}
+                            title="Click to edit customer details"
+                            style={{ color: "#64748b", fontSize: "10.5px", display: "flex", alignItems: "center", gap: "4px", fontFamily: "monospace", fontWeight: 600, cursor: "pointer" }}
+                          >
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#94a3b8", flexShrink: 0 }}>
                               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                             </svg>
@@ -1475,53 +1483,7 @@ export default function OrdersLiveBoard({
                               </a>
                             );
                           })()}
-                          <button
-                            type="button"
-                            onClick={() => setEditingCustomerOrder(order)}
-                            title="Edit customer name, phone number, or delivery address"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "3px",
-                              padding: "1px 6px",
-                              borderRadius: "4px",
-                              background: "#f1f5f9",
-                              border: "1px solid #cbd5e1",
-                              color: "#334155",
-                              fontSize: "9.5px",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                            }}
-                            className="hover:bg-slate-200 transition-colors"
-                          >
-                            <Edit2 size={9} />
-                            <span>Edit</span>
-                          </button>
                         </div>
-                      )}
-                      {!order.customer_phone && (
-                        <button
-                          type="button"
-                          onClick={() => setEditingCustomerOrder(order)}
-                          title="Add customer name, phone number, or delivery address"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "3px",
-                            padding: "1px 6px",
-                            borderRadius: "4px",
-                            background: "#f1f5f9",
-                            border: "1px solid #cbd5e1",
-                            color: "#334155",
-                            fontSize: "9.5px",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                          }}
-                          className="hover:bg-slate-200 transition-colors"
-                        >
-                          <Edit2 size={9} />
-                          <span>+ Add Info</span>
-                        </button>
                       )}
                     </div>
                   )}
@@ -1546,7 +1508,11 @@ export default function OrdersLiveBoard({
                       >
                         {info.deliveryAddress && (
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "4px", minWidth: 0 }}>
+                            <div
+                              onClick={() => setEditingCustomerOrder(order)}
+                              title="Click to edit delivery address"
+                              style={{ display: "flex", alignItems: "center", gap: "4px", minWidth: 0, cursor: "pointer" }}
+                            >
                               <span style={{ fontSize: "9px", fontWeight: 800, color: "#065f46", background: "#d1fae5", border: "1px solid #a7f3d0", padding: "1px 5px", borderRadius: "3px", textTransform: "uppercase", flexShrink: 0 }}>
                                 📍 Delivery
                               </span>
@@ -1554,35 +1520,13 @@ export default function OrdersLiveBoard({
                                 {info.deliveryAddress}
                               </span>
                             </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
-                              {info.deliveryFee !== null && (
+                            {info.deliveryFee !== null && (
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
                                 <span style={{ fontSize: "10px", color: "#047857", fontWeight: 700, background: "#ecfdf5", padding: "1px 5px", borderRadius: "3px" }}>
                                   Fee: {currencySymbol}{info.deliveryFee}
                                 </span>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => setEditingCustomerOrder(order)}
-                                title="Edit delivery address or phone"
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "2px",
-                                  padding: "1px 5px",
-                                  borderRadius: "3px",
-                                  background: "#e2e8f0",
-                                  border: "none",
-                                  color: "#334155",
-                                  fontSize: "9px",
-                                  fontWeight: 700,
-                                  cursor: "pointer",
-                                }}
-                                className="hover:bg-slate-300 transition-colors"
-                              >
-                                <Edit2 size={8} />
-                                <span>Edit</span>
-                              </button>
-                            </div>
+                              </div>
+                            )}
                           </div>
                         )}
 
