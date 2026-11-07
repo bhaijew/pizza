@@ -22,10 +22,12 @@ import {
 
 interface AdminLoginClientProps {
   setupName?: string;
+  boundShop?: { id: number; name: string; slug: string } | null;
 }
 
 export default function AdminLoginClient({
   setupName = "SoleWhat POS & Cloud Operations",
+  boundShop = null,
 }: AdminLoginClientProps) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -305,16 +307,25 @@ export default function AdminLoginClient({
                   <SoleWhatLogo size={64} variant="badge" showGlow={true} />
                 </div>
 
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 mb-2">
-                  <span>{rawName}</span>
-                </div>
+                {boundShop ? (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-orange-100 text-orange-800 border border-orange-300 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-orange-600 animate-pulse" />
+                    <span>{boundShop.name} Branch Portal</span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 mb-2">
+                    <span>{rawName}</span>
+                  </div>
+                )}
 
                 <h2 className="text-2xl font-black tracking-tight text-slate-900 m-0">
-                  Store Manager
+                  {boundShop ? `${boundShop.name} Manager` : "Store Manager"}
                 </h2>
                 
                 <p className="mt-1.5 text-xs sm:text-sm text-slate-500 max-w-xs mx-auto">
-                  Enter your admin password or staff access key to sign in
+                  {boundShop
+                    ? `Enter the admin password or staff access key for ${boundShop.name}`
+                    : "Enter your admin password or staff access key to sign in"}
                 </p>
               </div>
 
@@ -341,6 +352,12 @@ export default function AdminLoginClient({
                   THE LOGIN FORM (FIELDS KEPT UNCHANGED FOR COMPATIBILITY)
                   ───────────────────────────────────────────────────────── */}
               <form action={formAction} className="space-y-4">
+                {boundShop && (
+                  <>
+                    <input type="hidden" name="shop_id" value={boundShop.id} />
+                    <input type="hidden" name="shop_slug" value={boundShop.slug} />
+                  </>
+                )}
                 
                 {/* Password Field */}
                 <div>

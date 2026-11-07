@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/middleware";
-import { ADMIN_COOKIE, verifySessionToken } from "@/lib/admin-auth";
+import { ADMIN_COOKIE, verifyAdminSession } from "@/lib/admin-auth";
 import { SUPER_ADMIN_COOKIE, verifySuperAdminSessionToken } from "@/lib/super-admin-auth";
 
 /**
@@ -14,6 +14,27 @@ export async function proxy(request: NextRequest) {
 
   // Refresh Supabase session cookies
   const supabaseResponse = createClient(request);
+
+  // Extract shop slug from subdomain (if applicable)
+  const rawHost = (
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    ""
+  ).toLowerCase();
+  const host = rawHost.split(":")[0]; // strip port
+
+  let subdomain: string | null = null;
+  if (host.endsWith(".solewhat.store")) {
+    const part = host.replace(".solewhat.store", "").trim();
+    if (part && part !== "www") {
+      subdomain = part;
+    }
+  } else if (host.endsWith(".localhost")) {
+    const part = host.replace(".localhost", "").trim();
+    if (part && part !== "www") {
+      subdomain = part;
+    }
+  }
 
   // 1. Guard Super Admin routes (not login)
   if (pathname.startsWith("/super-admin") && !pathname.startsWith("/super-admin/login")) {
@@ -30,9 +51,23 @@ export async function proxy(request: NextRequest) {
   // 2. Guard Store Manager Admin routes (not login)
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
     const token = request.cookies.get(ADMIN_COOKIE)?.value;
-    const valid = token ? await verifySessionToken(token) : false;
+    const session = token ? await verifyAdminSession(token) : null;
 
-    if (!valid) {
+    if (!session) {
+      const loginUrl = new URL("/admin/login", request.url);
+      loginUrl.searchParams.set("from", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Tenant Boundary Guard: If visiting a specific shop subdomain (e.g. demo.solewhat.store/admin),
+    // ensure session belongs to this shop (or is Master Admin).
+    // An admin of "pizza-mafia" cannot access "demo.solewhat.store/admin".
+    if (
+      subdomain &&
+      !session.isMaster &&
+      session.shopSlug &&
+      session.shopSlug.toLowerCase() !== subdomain.toLowerCase()
+    ) {
       const loginUrl = new URL("/admin/login", request.url);
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
@@ -81,30 +116,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // 4. Wildcard Subdomain Routing
-  // Extracts shop slug from subdomains like:
-  // - pizza-mafia.solewhat.store -> rewrites internally to /pizza-mafia
-  // - pizza-mafia.localhost:3000 -> rewrites internally to /pizza-mafia
-  const rawHost = (
-    request.headers.get("x-forwarded-host") ||
-    request.headers.get("host") ||
-    ""
-  ).toLowerCase();
-  const host = rawHost.split(":")[0]; // strip port
-
-  let subdomain: string | null = null;
-
-  if (host.endsWith(".solewhat.store")) {
-    const part = host.replace(".solewhat.store", "").trim();
-    if (part && part !== "www") {
-      subdomain = part;
-    }
-  } else if (host.endsWith(".localhost")) {
-    const part = host.replace(".localhost", "").trim();
-    if (part && part !== "www") {
-      subdomain = part;
-    }
-  }
-
+  // (Uses subdomain resolved at the start of proxy)
   if (subdomain) {
     const isSystemReserved =
       pathname.startsWith("/api") ||

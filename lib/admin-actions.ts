@@ -220,6 +220,7 @@ export async function adminLogin(
 ): Promise<{ error: string | null }> {
   const password = (formData.get("password") as string)?.trim();
   const shopIdRaw = (formData.get("shop_id") as string)?.trim();
+  const shopSlugRaw = (formData.get("shop_slug") as string)?.trim();
   const adminPassword = process.env.ADMIN_PASSWORD ?? "changeme";
 
   if (!password) {
@@ -227,40 +228,117 @@ export async function adminLogin(
   }
 
   const db = isServiceRoleConfigured() ? createAdminClient() : null;
+
+  // Resolve subdomain from request headers as secondary ground truth
+  let hostSubdomain = "";
+  try {
+    const hdrs = await headers();
+    const host = (hdrs.get("x-forwarded-host") || hdrs.get("host") || "")
+      .toLowerCase()
+      .split(":")[0];
+    if (host.endsWith(".solewhat.store")) {
+      const part = host.replace(".solewhat.store", "").trim();
+      if (part && part !== "www") hostSubdomain = part;
+    } else if (host.endsWith(".localhost")) {
+      const part = host.replace(".localhost", "").trim();
+      if (part && part !== "www") hostSubdomain = part;
+    }
+  } catch {
+    // ignore
+  }
+
+  // Resolve if a specific shop is bound to this login request
+  let boundShop: { id: number; name: string; slug: string; status: string; password?: string; pos_pin?: string } | null = null;
+  if (db) {
+    if (shopIdRaw && shopIdRaw !== "master" && !isNaN(parseInt(shopIdRaw, 10))) {
+      const { data } = await db
+        .from("shops")
+        .select("id, name, slug, status, password, pos_pin")
+        .eq("id", parseInt(shopIdRaw, 10))
+        .maybeSingle();
+      if (data) boundShop = data;
+    } else if (shopSlugRaw && shopSlugRaw !== "master") {
+      const { data } = await db
+        .from("shops")
+        .select("id, name, slug, status, password, pos_pin")
+        .eq("slug", shopSlugRaw.toLowerCase().trim())
+        .maybeSingle();
+      if (data) boundShop = data;
+    } else if (hostSubdomain) {
+      const { data } = await db
+        .from("shops")
+        .select("id, name, slug, status, password, pos_pin")
+        .eq("slug", hostSubdomain)
+        .maybeSingle();
+      if (data) boundShop = data;
+    }
+  }
+
   let isAuthorized = false;
   let matchedShopData: { id: number; name: string; slug: string } | null = null;
-
   let userRole: "admin" | "sub_admin" | "staff" = "admin";
   let staffName = "Shop Admin";
   let staffId: string | null = null;
 
-  // Case 1: Specific shop branch was selected on login screen
-  if (shopIdRaw && shopIdRaw !== "master" && db) {
-    const shopIdNum = parseInt(shopIdRaw, 10);
-    const { data: matchedShop } = await db
-      .from("shops")
-      .select("id, name, slug, status, password")
-      .eq("id", shopIdNum)
-      .maybeSingle();
+  // ─────────────────────────────────────────────────────────────
+  // CASE A: DEDICATED STORE/BRANCH PORTAL LOGIN (e.g. Demo or Pizza Mafia)
+  // STRICT TENANT ISOLATION:
+  // ONLY accept credentials belonging to THIS specific shop!
+  // Password from any other branch is REJECTED immediately!
+  // ─────────────────────────────────────────────────────────────
+  if (boundShop) {
+    if (boundShop.status === "suspended") {
+      return {
+        error: `Access Suspended: Shop "${boundShop.name}" has been suspended by the Super Admin. Please contact platform support.`,
+      };
+    }
 
-    if (matchedShop) {
-      if (matchedShop.status === "suspended") {
-        return {
-          error: `Access Suspended: Shop "${matchedShop.name}" has been suspended by the Super Admin. Please contact platform support.`,
-        };
-      }
-      // Authorized if password matches this shop's password OR platform master password
-      if (matchedShop.password === password || password === adminPassword) {
+    // 1. Password matches this bound shop (password or pos_pin)
+    if (
+      (boundShop.password && password === boundShop.password) ||
+      (boundShop.pos_pin && password === boundShop.pos_pin)
+    ) {
+      isAuthorized = true;
+      userRole = "admin";
+      staffName = `${boundShop.name} Admin`;
+      matchedShopData = { id: boundShop.id, name: boundShop.name, slug: boundShop.slug };
+    }
+    // 2. Platform master admin password (authorized to manage any branch)
+    else if (password === adminPassword) {
+      isAuthorized = true;
+      userRole = "admin";
+      staffName = `Master Admin (${boundShop.name})`;
+      matchedShopData = { id: boundShop.id, name: boundShop.name, slug: boundShop.slug };
+    }
+    // 3. Staff PIN belonging to THIS specific shop
+    else if (db) {
+      const { data: staffMembers } = await db
+        .from("pos_staff")
+        .select("id, name, role, pin, is_active, shop_id")
+        .eq("shop_id", boundShop.id)
+        .eq("pin", password)
+        .eq("is_active", true);
+
+      if (staffMembers && staffMembers.length > 0) {
+        const matchedStaff = staffMembers[0];
         isAuthorized = true;
-        userRole = "admin";
-        staffName = `${matchedShop.name} Admin`;
-        matchedShopData = { id: matchedShop.id, name: matchedShop.name, slug: matchedShop.slug };
+        userRole = matchedStaff.role === "admin" ? "admin" : matchedStaff.role === "sub_admin" ? "sub_admin" : "staff";
+        staffName = matchedStaff.name;
+        staffId = matchedStaff.id;
+        matchedShopData = { id: boundShop.id, name: boundShop.name, slug: boundShop.slug };
       }
-    } else {
-      return { error: "Selected branch was not found." };
+    }
+
+    // STRICT REJECTION: Do NOT fall through to search other shops!
+    if (!isAuthorized) {
+      return {
+        error: `Incorrect password for ${boundShop.name}. This login portal is dedicated to ${boundShop.name} and only accepts credentials for this branch.`,
+      };
     }
   } else {
-    // Case 2: No specific shop selected or "master" chosen
+    // ─────────────────────────────────────────────────────────────
+    // CASE B: UNBOUND GENERIC CENTRAL PORTAL LOGIN
+    // ─────────────────────────────────────────────────────────────
     if (password === adminPassword) {
       isAuthorized = true;
       userRole = "admin";
@@ -270,8 +348,8 @@ export async function adminLogin(
       // Check if password matches a registered shop
       const { data: matchedShops } = await db
         .from("shops")
-        .select("id, name, slug, status, password")
-        .eq("password", password);
+        .select("id, name, slug, status, password, pos_pin")
+        .or(`password.eq.${password},pos_pin.eq.${password}`);
 
       if (matchedShops && matchedShops.length === 1) {
         const matchedShop = matchedShops[0];
@@ -286,37 +364,32 @@ export async function adminLogin(
         matchedShopData = { id: matchedShop.id, name: matchedShop.name, slug: matchedShop.slug };
       } else if (matchedShops && matchedShops.length > 1) {
         return {
-          error: "Multiple branches share this password. Please select your specific branch from the dropdown above.",
+          error: "Multiple branches share this password. Please access your dedicated branch URL directly.",
         };
       }
     }
-  }
 
-  // Case 3: Check if entered password matches a staff / sub-admin PIN
-  if (!isAuthorized && db) {
-    let staffQuery = db
-      .from("pos_staff")
-      .select("id, name, role, pin, is_active, shop_id, shops:shops(id, name, slug)")
-      .eq("pin", password)
-      .eq("is_active", true);
+    // Check staff PINs across shops for unbound login
+    if (!isAuthorized && db) {
+      const { data: staffMembers } = await db
+        .from("pos_staff")
+        .select("id, name, role, pin, is_active, shop_id, shops:shops(id, name, slug)")
+        .eq("pin", password)
+        .eq("is_active", true);
 
-    if (shopIdRaw && shopIdRaw !== "master") {
-      staffQuery = staffQuery.eq("shop_id", parseInt(shopIdRaw, 10));
-    }
-
-    const { data: staffMembers } = await staffQuery;
-    if (staffMembers && staffMembers.length > 0) {
-      const matchedStaff = staffMembers[0];
-      isAuthorized = true;
-      userRole = matchedStaff.role === "admin" ? "admin" : matchedStaff.role === "sub_admin" ? "sub_admin" : "staff";
-      staffName = matchedStaff.name;
-      staffId = matchedStaff.id;
-      if (matchedStaff.shop_id) {
-        matchedShopData = {
-          id: matchedStaff.shop_id,
-          name: (matchedStaff.shops as any)?.name || "Branch Store",
-          slug: (matchedStaff.shops as any)?.slug || null,
-        };
+      if (staffMembers && staffMembers.length === 1) {
+        const matchedStaff = staffMembers[0];
+        isAuthorized = true;
+        userRole = matchedStaff.role === "admin" ? "admin" : matchedStaff.role === "sub_admin" ? "sub_admin" : "staff";
+        staffName = matchedStaff.name;
+        staffId = matchedStaff.id;
+        if (matchedStaff.shop_id) {
+          matchedShopData = {
+            id: matchedStaff.shop_id,
+            name: (matchedStaff.shops as any)?.name || "Branch Store",
+            slug: (matchedStaff.shops as any)?.slug || null,
+          };
+        }
       }
     }
   }
