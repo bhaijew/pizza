@@ -1271,6 +1271,11 @@ export async function updateSettings(
 
     if (shopError) return { error: shopError.message, success: false };
 
+    // Also mirror google_review_url to master shop_settings so it is always synchronized
+    if (google_review_url) {
+      await db.from("shop_settings").update({ google_review_url }).eq("id", "main");
+    }
+
     // Update session cookie for brand display
     const cookieStore = await cookies();
     cookieStore.set(ADMIN_SHOP_NAME_COOKIE, shop_name, {

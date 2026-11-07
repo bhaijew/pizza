@@ -292,6 +292,7 @@ export async function submitOrderReview({
 export async function dispatchReviewPromptAlert(orderNumber: string): Promise<{
   success: boolean;
   error?: string;
+  reviewUrl?: string;
 }> {
   try {
     const cleanNumber = orderNumber.trim();
@@ -317,7 +318,7 @@ export async function dispatchReviewPromptAlert(orderNumber: string): Promise<{
       shopId: order.shop_id,
     });
 
-    return { success: res.success, error: res.error };
+    return { success: res.success, error: res.error, reviewUrl: res.reviewUrl };
   } catch (err: any) {
     return { success: false, error: err?.message || "Failed to dispatch review prompt." };
   }

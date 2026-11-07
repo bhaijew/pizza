@@ -69,6 +69,7 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
   shopName: string;
   currencySymbol: string;
   shopSlug: string | null;
+  googleReviewUrl?: string | null;
 }> {
   const cacheKey = `wa_creds:${shopId ?? "main"}`;
 
@@ -82,6 +83,7 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
       let shopName = "Pizza Shop";
       let currencySymbol = "Rs.";
       let shopSlug: string | null = null;
+      let googleReviewUrl: string | null = null;
 
       if (isServiceRoleConfigured()) {
         try {
@@ -91,7 +93,7 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
             // Query branch shop credentials STRICTLY for this specific shop
             const { data: shop } = await db
               .from("shops")
-              .select("name, currency_symbol, whatsapp_session_id, whatsapp_api_key, slug")
+              .select("name, currency_symbol, whatsapp_session_id, whatsapp_api_key, slug, google_review_url")
               .eq("id", shopId)
               .maybeSingle();
 
@@ -99,6 +101,9 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
               if (shop.name) shopName = shop.name;
               if (shop.currency_symbol) currencySymbol = shop.currency_symbol;
               if (shop.slug) shopSlug = shop.slug;
+              if (shop.google_review_url?.trim()) {
+                googleReviewUrl = shop.google_review_url.trim();
+              }
               // Only use if this specific shop configured it
               if (shop.whatsapp_session_id?.trim()) {
                 sessionId = shop.whatsapp_session_id.trim();
@@ -107,21 +112,30 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
                 apiKey = shop.whatsapp_api_key.trim();
               }
             }
-          } else {
-            // Query master/single shop settings ONLY
+          }
+
+          // If still no googleReviewUrl or no shopId, check master shop_settings
+          if (!googleReviewUrl || !shopId) {
             const { data: settings } = await db
               .from("shop_settings")
-              .select("shop_name, currency_symbol, whatsapp_session_id, whatsapp_api_key")
+              .select("shop_name, currency_symbol, whatsapp_session_id, whatsapp_api_key, google_review_url")
               .eq("id", "main")
               .maybeSingle();
 
             if (settings) {
-              if (settings.shop_name) shopName = settings.shop_name;
-              if (settings.currency_symbol) currencySymbol = settings.currency_symbol;
-              if (settings.whatsapp_session_id?.trim()) {
+              if (!shopName || shopName === "Pizza Shop") {
+                if (settings.shop_name) shopName = settings.shop_name;
+              }
+              if (!currencySymbol || currencySymbol === "Rs.") {
+                if (settings.currency_symbol) currencySymbol = settings.currency_symbol;
+              }
+              if (!googleReviewUrl && settings.google_review_url?.trim()) {
+                googleReviewUrl = settings.google_review_url.trim();
+              }
+              if (!sessionId && settings.whatsapp_session_id?.trim()) {
                 sessionId = settings.whatsapp_session_id.trim();
               }
-              if (settings.whatsapp_api_key?.trim()) {
+              if ((!apiKey || apiKey === defaultApiKey) && settings.whatsapp_api_key?.trim()) {
                 apiKey = settings.whatsapp_api_key.trim();
               }
             }
@@ -136,7 +150,7 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
         apiKey = defaultApiKey;
       }
 
-      return { sessionId, apiKey, shopName, currencySymbol, shopSlug };
+      return { sessionId, apiKey, shopName, currencySymbol, shopSlug, googleReviewUrl };
     },
     { ttlSeconds: 300, tags: ["settings", "shops"] }
   );
@@ -477,7 +491,8 @@ export interface SendWhatsAppReviewPromptInput {
 }
 
 /**
- * Dispatch automated post-delivery review prompt invitation to customer
+ * Dispatch automated post-delivery review prompt invitation to customer.
+ * Directly sends the exact Google Review link that the user pasted in Admin Settings!
  */
 export async function sendWhatsAppReviewPrompt({
   customerPhone,
@@ -490,17 +505,70 @@ export async function sendWhatsAppReviewPrompt({
   error?: string;
   reviewUrl?: string;
 }> {
-  const appBaseUrl = getAppBaseUrl();
-  const reviewUrl = `${appBaseUrl}/review/${encodeURIComponent(orderNumber)}`;
-  const creds = await getShopWhatsAppCredentials(shopId);
-  const shopName = creds.shopName || "Pizza Store";
+  let targetReviewUrl = "";
+  let shopName = "Pizza Store";
 
+  // 1. Direct realtime DB lookup to bypass any cache lag when settings are changed
+  if (isServiceRoleConfigured()) {
+    try {
+      const db = createAdminClient();
+
+      if (shopId) {
+        const { data: shop } = await db
+          .from("shops")
+          .select("name, google_review_url")
+          .eq("id", shopId)
+          .maybeSingle();
+
+        if (shop) {
+          if (shop.name) shopName = shop.name;
+          if (shop.google_review_url?.trim()) {
+            targetReviewUrl = shop.google_review_url.trim();
+          }
+        }
+      }
+
+      // If branch has no URL, check master settings
+      if (!targetReviewUrl) {
+        const { data: settings } = await db
+          .from("shop_settings")
+          .select("shop_name, google_review_url")
+          .eq("id", "main")
+          .maybeSingle();
+
+        if (settings) {
+          if (!shopName || shopName === "Pizza Store") {
+            shopName = settings.shop_name || "Pizza Store";
+          }
+          if (settings.google_review_url?.trim()) {
+            targetReviewUrl = settings.google_review_url.trim();
+          }
+        }
+      }
+    } catch (dbErr) {
+      console.warn("[sendWhatsAppReviewPrompt] DB lookup warning:", dbErr);
+    }
+  }
+
+  // 2. If no direct Google Review URL was configured by the admin, fallback to the site review page
+  if (!targetReviewUrl) {
+    const creds = await getShopWhatsAppCredentials(shopId);
+    if (creds.googleReviewUrl?.trim()) {
+      targetReviewUrl = creds.googleReviewUrl.trim();
+    } else {
+      const appBaseUrl = getAppBaseUrl();
+      targetReviewUrl = `${appBaseUrl}/review/${encodeURIComponent(orderNumber)}`;
+    }
+    if (creds.shopName) shopName = creds.shopName;
+  }
+
+  // 3. Craft personalized WhatsApp message with the exact review link
   const message = `Salam ${customerName || "Valued Customer"}! 🍕
 We hope you enjoyed your order #${orderNumber} from ${shopName}!
 
 🌟 How was your food and experience today?
-Please tap below to leave your quick 1-tap rating:
-${reviewUrl}
+Please tap below to leave your quick 5-star review:
+${targetReviewUrl}
 
 Your feedback directly helps us serve you better. Thank you!`;
 
@@ -515,7 +583,7 @@ Your feedback directly helps us serve you better. Thank you!`;
 
   return {
     ...res,
-    reviewUrl,
+    reviewUrl: targetReviewUrl,
   };
 }
 

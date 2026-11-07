@@ -2445,7 +2445,7 @@ export default function OrdersLiveBoard({
                                   const { dispatchReviewPromptAlert } = await import("@/lib/review-actions");
                                   const res = await dispatchReviewPromptAlert(order.order_number);
                                   if (res.success) {
-                                    alert(`⭐ WhatsApp 5-Star Review Prompt sent to ${order.customer_phone}!`);
+                                    alert(`⭐ WhatsApp 5-Star Review Prompt sent to ${order.customer_phone}!\n\nReview Link:\n${res.reviewUrl || "Google Review Link"}`);
                                   } else {
                                     alert(res.error || "Could not send WhatsApp alert.");
                                   }
