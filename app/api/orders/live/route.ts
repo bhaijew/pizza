@@ -1,17 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
 import { getShopActiveShiftBoundary } from "@/lib/admin-actions";
+import { ADMIN_COOKIE, verifySessionToken } from "@/lib/admin-auth";
+import { SUPER_ADMIN_COOKIE, verifySuperAdminSessionToken } from "@/lib/super-admin-auth";
 import type { Order } from "@/types/menu";
 
 export const dynamic = "force-dynamic";
 
+async function isAuthorizedLiveCaller(request: NextRequest): Promise<boolean> {
+  // 1. Check Store Admin or Super Admin session cookies
+  const adminCookie = request.cookies.get(ADMIN_COOKIE)?.value;
+  if (adminCookie && (await verifySessionToken(adminCookie))) return true;
+
+  const superCookie = request.cookies.get(SUPER_ADMIN_COOKIE)?.value;
+  if (superCookie && (await verifySuperAdminSessionToken(superCookie))) return true;
+
+  // 2. Check API Key in headers (for terminal / external integrations)
+  const rawAuth =
+    request.headers.get("x-api-key") ||
+    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+
+  if (rawAuth) {
+    const adminPwd = process.env.ADMIN_PASSWORD;
+    const superPwd = process.env.SUPER_ADMIN_PASSWORD;
+    const posKey = process.env.INTERNAL_POS_API_KEY;
+
+    if (
+      (adminPwd && rawAuth === adminPwd) ||
+      (superPwd && rawAuth === superPwd) ||
+      (posKey && rawAuth === posKey)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /**
  * GET /api/orders/live
- * Fast, unblocked real-time order polling endpoint.
+ * Fast, authenticated real-time order polling endpoint.
  * Runs with service_role to guarantee zero RLS drops and instant updates for Admin & KDS.
  * Excludes orders from previous shifts that were already closed in the daily register.
  */
 export async function GET(request: NextRequest) {
+  // ─── Security Check: Enforce Admin / Staff Authentication ─────────
+  if (!(await isAuthorizedLiveCaller(request))) {
+    return NextResponse.json(
+      { orders: [], error: "Unauthorized: Active Admin session or API key required." },
+      { status: 401 }
+    );
+  }
+
   if (!isServiceRoleConfigured()) {
     return NextResponse.json({ orders: [], error: "Service role key missing" }, { status: 500 });
   }

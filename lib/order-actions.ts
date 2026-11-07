@@ -16,6 +16,7 @@ import { sendWhatsAppOrderAlert, sendWhatsAppReviewPrompt } from "@/lib/whatsapp
 import { processLoyaltyPoints } from "@/lib/promo-actions";
 import { syncCustomerFromOrder } from "@/lib/customer-actions";
 import { dbCache } from "@/lib/db-cache";
+import { ADMIN_COOKIE, verifySessionToken } from "@/lib/admin-auth";
 
 export interface CreateOrderItem {
   id: string | number;
@@ -650,6 +651,32 @@ export async function getTrackableOrder(orderNumber: string): Promise<{
       return { success: false, error: `Order "${cleanNumber}" was not found. Please check the order reference.` };
     }
 
+    // ─── Security Hardening: Mask Sensitive Customer PII for Public Tracking ───
+    try {
+      const cookieStore = await cookies();
+      const adminToken = cookieStore.get(ADMIN_COOKIE)?.value;
+      const isAdmin = adminToken ? await verifySessionToken(adminToken) : false;
+
+      if (!isAdmin && data) {
+        // Mask customer phone number (e.g. 0300 •••• 567)
+        if (data.customer_phone && typeof data.customer_phone === "string") {
+          const clean = data.customer_phone.trim();
+          if (clean.length >= 7) {
+            data.customer_phone = `${clean.slice(0, 4)} •••• ${clean.slice(-3)}`;
+          }
+        }
+        // Redact internal administrative tags or sensitive transaction IDs from notes
+        if (data.notes && typeof data.notes === "string") {
+          data.notes = data.notes
+            .replace(/\[INTERNAL:[^\]]*\]/gi, "")
+            .replace(/TXN:\s*[^)\],|]+/gi, "TXN: ••••")
+            .trim();
+        }
+      }
+    } catch {
+      // non-blocking fallback
+    }
+
     return { success: true, order: data };
   } catch (err: any) {
     return { success: false, error: err?.message || "Failed to track order." };
@@ -731,6 +758,24 @@ export async function confirmDeliveryByRider(
 
     if (order.status === "delivered") {
       return { success: true, order, alreadyDelivered: true };
+    }
+
+    if (order.status === "cancelled") {
+      return { success: false, error: "Cannot confirm a cancelled order." };
+    }
+
+    // ─── Security Check: Enforce Authorized Confirmation ─────────────
+    const cookieStore = await cookies();
+    const adminToken = cookieStore.get(ADMIN_COOKIE)?.value;
+    const isAdmin = adminToken ? await verifySessionToken(adminToken) : false;
+
+    // If order has an assigned rider and caller is not an admin, verify rider identity
+    if (!isAdmin && order.delivery_rider_name) {
+      const normalizedInput = (riderName || "").trim().toLowerCase();
+      const expectedRider = order.delivery_rider_name.trim().toLowerCase();
+      if (normalizedInput && !expectedRider.includes(normalizedInput) && !normalizedInput.includes(expectedRider)) {
+        return { success: false, error: "Unauthorized: Only the assigned delivery rider or branch admin can confirm delivery." };
+      }
     }
 
     const nowStr = new Date().toLocaleTimeString("en-US", {
