@@ -429,39 +429,77 @@ export default function AdminLiveCharts({
 
   return (
     <section className="mb-8" style={{ fontFamily: "var(--font-poppins), system-ui, -apple-system, sans-serif" }}>
-      {/* ─── 1. TOP EXECUTIVE DARK COMMAND BAR ─── */}
+      {/* ─── 1. TOP EXECUTIVE ORANGE ACCENTED COMMAND BAR (Exact Mockup Match) ─── */}
       <div
         style={{
-          background: "linear-gradient(135deg, #09172a 0%, #0d233f 100%)",
+          position: "relative",
+          background: "#ffffff",
           borderRadius: 0,
-          padding: "16px 22px",
-          color: "#ffffff",
+          border: "2px solid #ea580c",
+          padding: "14px 20px",
+          color: "#0f172a",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           flexWrap: "wrap",
           gap: 14,
           marginBottom: 16,
-          boxShadow: "0 10px 30px -8px rgba(9, 23, 42, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08)",
+          boxShadow: "0 6px 20px rgba(234, 88, 12, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04)",
+          overflow: "hidden",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {/* Subtle orange left glow */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            bottom: 0,
+            width: 140,
+            pointerEvents: "none",
+            background: "linear-gradient(90deg, rgba(249, 115, 22, 0.12) 0%, transparent 100%)",
+          }}
+        />
+
+        {/* Right Corner Diagonal Orange Stripes */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: 50,
+            pointerEvents: "none",
+            background: "repeating-linear-gradient(45deg, #ea580c 0, #ea580c 9px, transparent 9px, transparent 18px)",
+            opacity: 0.95,
+          }}
+        />
+
+        {/* Left: Icon + Title + Status */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, position: "relative", zIndex: 2 }}>
+          {/* Pizza Icon Badge */}
           <div
             style={{
-              width: 38,
-              height: 38,
+              width: 44,
+              height: 44,
               borderRadius: 0,
-              background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+              background: "linear-gradient(135deg, #ff7828 0%, #ea580c 100%)",
               color: "#ffffff",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(234, 88, 12, 0.4)",
+              boxShadow: "0 4px 14px rgba(234, 88, 12, 0.35)",
               flexShrink: 0,
             }}
           >
-            <TrendingUp size={20} />
+            <Pizza size={24} strokeWidth={2.3} />
           </div>
+
+          {/* Thin vertical separator */}
+          <div style={{ width: 1.5, height: 36, background: "#e2e8f0", flexShrink: 0 }} />
+
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <h2
@@ -469,7 +507,7 @@ export default function AdminLiveCharts({
                   margin: 0,
                   fontSize: 15,
                   fontWeight: 900,
-                  color: "#ffffff",
+                  color: "#0f172a",
                   letterSpacing: "0.02em",
                   textTransform: "uppercase",
                 }}
@@ -481,12 +519,12 @@ export default function AdminLiveCharts({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 5,
-                  padding: "2px 8px",
+                  padding: "2px 9px",
                   borderRadius: 0,
-                  background: livePulse ? "rgba(220, 38, 38, 0.25)" : "rgba(16, 185, 129, 0.2)",
-                  border: livePulse ? "1px solid rgba(248, 113, 113, 0.5)" : "1px solid rgba(52, 211, 153, 0.4)",
-                  color: livePulse ? "#fca5a5" : "#34d399",
-                  fontSize: 10,
+                  background: livePulse ? "rgba(220, 38, 38, 0.12)" : "#f0fdf4",
+                  border: livePulse ? "1.5px solid #fca5a5" : "1.5px solid #86efac",
+                  color: livePulse ? "#dc2626" : "#16a34a",
+                  fontSize: 10.5,
                   fontWeight: 800,
                   letterSpacing: "0.04em",
                   textTransform: "uppercase",
@@ -497,22 +535,25 @@ export default function AdminLiveCharts({
                     width: 6,
                     height: 6,
                     borderRadius: "50%",
-                    background: livePulse ? "#ef4444" : "#10b981",
-                    boxShadow: livePulse ? "0 0 6px #ef4444" : "0 0 6px #10b981",
+                    background: livePulse ? "#ef4444" : "#16a34a",
+                    boxShadow: livePulse ? "0 0 6px #ef4444" : "0 0 6px #16a34a",
                   }}
                   className="admin-pulse-green"
                 />
                 {livePulse ? "New Order Synced" : "Live Dashboard"}
               </span>
             </div>
-            <p style={{ margin: "2px 0 0", fontSize: 11.5, color: "#94a3b8" }}>
+            <p style={{ margin: "2px 0 0", fontSize: 11.5, color: "#64748b", fontWeight: 500 }}>
               Track performance, analyze trends and make data-driven decisions.
             </p>
           </div>
         </div>
 
-        {/* Period Filter Buttons + Site Active Date Control */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        {/* Center vertical separator for desktop */}
+        <div style={{ width: 1.5, height: 36, background: "#e2e8f0", flexShrink: 0 }} className="hidden xl:block" />
+
+        {/* Right: Period Filter Buttons + Site Active Date Control */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", position: "relative", zIndex: 2, marginRight: 28 }}>
           <button
             type="button"
             disabled={savingStartDate}
@@ -523,21 +564,22 @@ export default function AdminLiveCharts({
             }
             title="Set chart to start fresh from Today (hides earlier test orders) or restore all shop history"
             style={{
-              padding: "6px 12px",
+              padding: "7px 14px",
               borderRadius: 0,
-              border: "1px solid rgba(255, 255, 255, 0.15)",
+              border: "1.5px solid #cbd5e1",
               background:
                 activeSinceIso && getPakistaniDateKey(activeSinceIso) === todayDateKey
-                  ? "rgba(5, 150, 105, 0.6)"
-                  : "rgba(255, 255, 255, 0.08)",
-              color: "#ffffff",
-              fontSize: 11,
-              fontWeight: 800,
+                  ? "rgba(234, 88, 12, 0.12)"
+                  : "#ffffff",
+              color: "#0f172a",
+              fontSize: 12,
+              fontWeight: 700,
               cursor: savingStartDate ? "wait" : "pointer",
               display: "inline-flex",
               alignItems: "center",
-              gap: 5,
-              backdropFilter: "blur(4px)",
+              gap: 6,
+              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+              transition: "all 0.15s ease",
             }}
           >
             <span>📅</span>
@@ -550,14 +592,13 @@ export default function AdminLiveCharts({
             </span>
           </button>
 
-          {/* Time range pills */}
+          {/* Time range pills matching mockup */}
           <div
             style={{
               display: "inline-flex",
-              background: "rgba(11, 23, 42, 0.8)",
-              padding: 3,
-              borderRadius: 0,
-              border: "1px solid rgba(255, 255, 255, 0.12)",
+              alignItems: "center",
+              gap: 6,
+              flexWrap: "wrap",
             }}
           >
             {(
@@ -575,21 +616,27 @@ export default function AdminLiveCharts({
                   type="button"
                   onClick={() => setRange(tab.id)}
                   style={{
-                    padding: "6px 13px",
+                    padding: active ? "7px 16px" : "7px 14px",
                     borderRadius: 0,
                     border: "none",
                     background: active
-                      ? "linear-gradient(135deg, #f97316 0%, #ea580c 100%)"
-                      : "transparent",
-                    color: active ? "#ffffff" : "#cbd5e1",
-                    fontSize: 11.5,
-                    fontWeight: 800,
+                      ? "linear-gradient(135deg, #ff6b00 0%, #ea580c 100%)"
+                      : "#0f172a",
+                    color: "#ffffff",
+                    fontSize: 12,
+                    fontWeight: active ? 800 : 700,
                     cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
                     transition: "all 0.15s ease",
-                    boxShadow: active ? "0 2px 8px rgba(234, 88, 12, 0.4)" : "none",
+                    boxShadow: active
+                      ? "0 4px 14px rgba(234, 88, 12, 0.45)"
+                      : "0 1px 3px rgba(0, 0, 0, 0.15)",
                   }}
                 >
-                  {tab.label}
+                  {active && <span>📅</span>}
+                  <span>{tab.label}</span>
                 </button>
               );
             })}

@@ -870,9 +870,10 @@ export default function AdminShell({
           style={{
             height: "54px",
             minHeight: "54px",
-            background: isLight ? "rgba(255, 255, 255, 0.92)" : "rgba(14, 21, 38, 0.88)",
+            background: isLight ? "rgba(255, 255, 255, 0.94)" : "rgba(14, 21, 38, 0.92)",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
+            borderTop: "3px solid #ea580c",
             borderBottom: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.08)",
             display: "none",
             alignItems: "center",
@@ -881,7 +882,7 @@ export default function AdminShell({
             position: "sticky",
             top: 0,
             zIndex: 30,
-            boxShadow: isLight ? "0 1px 3px rgba(0, 0, 0, 0.03)" : "0 4px 16px rgba(0, 0, 0, 0.25)",
+            boxShadow: isLight ? "0 2px 10px rgba(234, 88, 12, 0.08), 0 1px 3px rgba(0, 0, 0, 0.03)" : "0 4px 16px rgba(0, 0, 0, 0.25)",
             transition: "all 0.2s ease",
           }}
           className="admin-desktop-header md:flex"
@@ -895,14 +896,29 @@ export default function AdminShell({
                 fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
-                gap: "5px",
+                gap: "6px",
                 whiteSpace: "nowrap",
                 flexShrink: 0,
                 letterSpacing: "0.03em",
                 textTransform: "uppercase",
               }}
             >
-              <Store size={13} />
+              <div
+                style={{
+                  width: "22px",
+                  height: "22px",
+                  borderRadius: 0,
+                  background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                  color: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  boxShadow: "0 2px 6px rgba(234, 88, 12, 0.35)",
+                }}
+              >
+                <Store size={12} />
+              </div>
               Admin Portal
             </span>
             <span style={{ color: isLight ? "#cbd5e1" : "#475569", flexShrink: 0, fontSize: "12px" }}>/</span>
@@ -923,10 +939,10 @@ export default function AdminShell({
               <span
                 style={{
                   fontSize: "11px",
-                  fontWeight: 700,
-                  color: isLight ? "#334155" : "#cbd5e1",
-                  background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.05)",
-                  border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.12)",
+                  fontWeight: 800,
+                  color: isLight ? "#c2410c" : "#fdba74",
+                  background: isLight ? "#fff7ed" : "rgba(249, 115, 22, 0.12)",
+                  border: isLight ? "1px solid #fed7aa" : "1px solid rgba(249, 115, 22, 0.35)",
                   borderRadius: 0,
                   padding: "2px 8px",
                   marginLeft: "4px",
@@ -938,7 +954,7 @@ export default function AdminShell({
                   letterSpacing: "0.02em",
                 }}
               >
-                <Store size={11} className="text-slate-500" />
+                <Store size={11} className="text-orange-500" />
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {shopName}
                 </span>
@@ -1029,12 +1045,13 @@ export default function AdminShell({
                       fontWeight: 700,
                       cursor: "pointer",
                       border: "none",
-                      background: isAdmin ? (isLight ? "#0f172a" : "#f8fafc") : "transparent",
-                      color: isAdmin ? (isLight ? "#ffffff" : "#0f172a") : (isLight ? "#64748b" : "#94a3b8"),
+                      background: isAdmin ? "linear-gradient(135deg, #f97316 0%, #ea580c 100%)" : "transparent",
+                      color: isAdmin ? "#ffffff" : isLight ? "#64748b" : "#94a3b8",
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "4px",
                       whiteSpace: "nowrap",
+                      boxShadow: isAdmin ? "0 2px 8px rgba(234, 88, 12, 0.35)" : "none",
                       transition: "all 0.15s ease",
                     }}
                     title="Master Admin mode (Full access, Order cancel allowed)"
@@ -1052,12 +1069,13 @@ export default function AdminShell({
                       fontWeight: 700,
                       cursor: "pointer",
                       border: "none",
-                      background: !isAdmin ? (isLight ? "#0f172a" : "#f8fafc") : "transparent",
-                      color: !isAdmin ? (isLight ? "#ffffff" : "#0f172a") : (isLight ? "#64748b" : "#94a3b8"),
+                      background: !isAdmin ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "transparent",
+                      color: !isAdmin ? "#ffffff" : isLight ? "#64748b" : "#94a3b8",
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "4px",
                       whiteSpace: "nowrap",
+                      boxShadow: !isAdmin ? "0 2px 8px rgba(16, 185, 129, 0.3)" : "none",
                       transition: "all 0.15s ease",
                     }}
                     title="Staff mode (Order cancellation restricted)"
@@ -1077,6 +1095,7 @@ export default function AdminShell({
                   borderRadius: 0,
                   background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.04)",
                   border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
+                  borderLeft: "3px solid #ea580c",
                   flexShrink: 0,
                   whiteSpace: "nowrap",
                 }}
@@ -1086,7 +1105,7 @@ export default function AdminShell({
                     width: "22px",
                     height: "22px",
                     borderRadius: 0,
-                    background: isAdmin ? "#0f172a" : "#059669",
+                    background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
                     color: "#ffffff",
                     display: "flex",
                     alignItems: "center",
@@ -1094,6 +1113,7 @@ export default function AdminShell({
                     fontSize: "11px",
                     fontWeight: 800,
                     flexShrink: 0,
+                    boxShadow: "0 2px 6px rgba(234, 88, 12, 0.35)",
                   }}
                 >
                   <ShieldCheck size={13} />
@@ -1115,7 +1135,7 @@ export default function AdminShell({
                     style={{
                       fontSize: "9.5px",
                       fontWeight: 600,
-                      color: isAdmin ? "#059669" : "#64748b",
+                      color: isAdmin ? "#ea580c" : "#64748b",
                       display: "flex",
                       alignItems: "center",
                       gap: "3px",
