@@ -393,33 +393,21 @@ export default function CommandCenterHero({
       </div>
 
       {/* Quick Executive Shortcuts */}
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          flexWrap: "wrap",
-          position: "relative",
-          zIndex: 2,
-        }}
-      >
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-2.5 relative z-10 w-full">
+        {/* 1. Live Order Board (Full width on mobile, auto on desktop) */}
         <Link
           href="/admin/orders"
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "11px 18px",
             borderRadius: 5,
             background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
             color: "#ffffff",
             fontWeight: 800,
-            fontSize: 13,
             textDecoration: "none",
             boxShadow: "0 6px 18px -2px rgba(234, 88, 12, 0.45)",
             border: "none",
             transition: "all 0.2s ease",
           }}
-          className="hover:scale-105 active:scale-95"
+          className="col-span-2 sm:col-auto inline-flex items-center justify-center sm:justify-start gap-2 py-2.5 px-3.5 sm:px-4 text-xs sm:text-[13px] hover:scale-102 active:scale-98 shadow-sm"
         >
           <ShoppingBag size={16} />
           <span>Live Order Board</span>
@@ -440,114 +428,99 @@ export default function CommandCenterHero({
           )}
         </Link>
 
+        {/* 2. Kitchen KDS */}
         <Link
           href="/admin/kitchen"
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "11px 18px",
             borderRadius: 5,
             background: "rgba(15, 23, 42, 0.65)",
             color: "#ffffff",
             fontWeight: 700,
-            fontSize: 13,
             textDecoration: "none",
             border: "1px solid rgba(255, 255, 255, 0.22)",
             backdropFilter: "blur(10px)",
             transition: "all 0.2s ease",
             boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
           }}
-          className="hover:bg-slate-900/80 hover:scale-105 active:scale-95"
+          className="col-span-1 inline-flex items-center justify-center sm:justify-start gap-2 py-2.5 px-3 text-xs sm:text-[13px] hover:bg-slate-900/80 hover:scale-102 active:scale-98"
         >
-          <ChefHat size={16} className="text-orange-400" />
-          <span>Kitchen KDS</span>
+          <ChefHat size={16} className="text-orange-400 shrink-0" />
+          <span className="truncate">Kitchen KDS</span>
         </Link>
 
+        {/* 3. Sole-What WA Bot */}
         <Link
           href="/admin/sole-what"
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "11px 16px",
             borderRadius: 5,
             background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
             color: "#ffffff",
             fontWeight: 800,
-            fontSize: 13,
             textDecoration: "none",
             boxShadow: "0 6px 18px -2px rgba(16, 185, 129, 0.4)",
             border: "none",
             transition: "all 0.2s ease",
           }}
-          className="hover:scale-105 active:scale-95"
+          className="col-span-1 inline-flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 py-2.5 px-3 text-xs sm:text-[13px] hover:scale-102 active:scale-98"
           title="Sole-What WhatsApp Gateway Hub"
         >
-          <MessageSquare size={16} />
-          <span>Sole-What WA</span>
+          <MessageSquare size={16} className="shrink-0" />
+          <span className="truncate">Sole-What</span>
           <span
             style={{
               background: "#ffffff",
               color: "#059669",
-              padding: "1px 6px",
-              borderRadius: 4,
-              fontSize: 10,
+              padding: "1px 5px",
+              borderRadius: 3,
+              fontSize: 9.5,
               fontWeight: 900,
             }}
+            className="shrink-0"
           >
             BOT
           </span>
         </Link>
 
+        {/* 4. Open POS */}
         <Link
           href={posUrl}
           target="_blank"
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "11px 16px",
             borderRadius: 5,
             background: "rgba(16, 185, 129, 0.16)",
             color: "#34d399",
             fontWeight: 700,
-            fontSize: 13,
             textDecoration: "none",
             border: "1px solid rgba(16, 185, 129, 0.45)",
             backdropFilter: "blur(10px)",
             transition: "all 0.2s ease",
             boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
           }}
-          className="hover:bg-emerald-500/25 hover:scale-105 active:scale-95"
+          className="col-span-1 inline-flex items-center justify-center sm:justify-start gap-2 py-2.5 px-3 text-xs sm:text-[13px] hover:bg-emerald-500/25 hover:scale-102 active:scale-98"
           title="Open Cashier POS Terminal"
         >
-          <Download size={15} />
-          <span>Open POS</span>
+          <Download size={15} className="shrink-0" />
+          <span className="truncate">Open POS</span>
         </Link>
 
+        {/* 5. Add Pizza */}
         <Link
           href="/admin/products?action=new"
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "11px 16px",
             borderRadius: 5,
             background: "rgba(15, 23, 42, 0.55)",
             color: "#e2e8f0",
             fontWeight: 600,
-            fontSize: 13,
             textDecoration: "none",
             border: "1px solid rgba(255, 255, 255, 0.18)",
             backdropFilter: "blur(10px)",
             transition: "all 0.2s ease",
             boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
           }}
-          className="hover:bg-slate-900/80 hover:scale-105 active:scale-95"
+          className="col-span-1 inline-flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 py-2.5 px-3 text-xs sm:text-[13px] hover:bg-slate-900/80 hover:scale-102 active:scale-98"
         >
-          <Plus size={15} />
-          <span>Add Pizza</span>
+          <Plus size={15} className="shrink-0" />
+          <span className="truncate">Add Pizza</span>
         </Link>
       </div>
     </div>

@@ -223,8 +223,8 @@ export default async function AdminDashboardPage() {
         }
       />
 
-      {/* ─── Metric KPI Cards Grid (5px Square UI) ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-7 sm:mb-9">
+      {/* ─── Metric KPI Cards Grid (2 cols on mobile, 4 cols on desktop) ─── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6 sm:mb-9">
         {/* KPI 1: Active Orders */}
         <Link
           href="/admin/orders"
@@ -235,75 +235,55 @@ export default async function AdminDashboardPage() {
               : "#ffffff",
             border: pendingOrders > 0 ? "1.5px solid #fdba74" : "1px solid #e8edf2",
             borderRadius: 5,
-            padding: "24px 22px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
             boxShadow: pendingOrders > 0
               ? "0 12px 28px -6px rgba(234, 88, 12, 0.2), 0 0 1px 1px rgba(234, 88, 12, 0.15)"
               : "0 10px 28px -6px rgba(15, 23, 42, 0.05), 0 0 1px 1px rgba(0, 0, 0, 0.03)",
             transition: "all 0.22s ease",
           }}
-          className="admin-card-hover group hover:-translate-y-1"
+          className="admin-card-hover group hover:-translate-y-1 p-3 sm:p-5 lg:p-6 flex flex-col justify-between"
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span
+              className="text-[10px] sm:text-xs md:text-[13px] font-extrabold uppercase tracking-wider"
               style={{
-                fontSize: 13,
-                fontWeight: 800,
                 color: pendingOrders > 0 ? "#c2410c" : "#64748b",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
               }}
             >
               Active Orders
             </span>
             <div
+              className="w-8 h-8 sm:w-11 sm:h-11 rounded flex items-center justify-center shrink-0 group-hover:scale-108 transition-transform"
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 5,
                 background: pendingOrders > 0 ? "linear-gradient(135deg, #ea580c 0%, #dc2626 100%)" : "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
                 color: pendingOrders > 0 ? "#ffffff" : "#ea580c",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
                 boxShadow: pendingOrders > 0 ? "0 6px 14px rgba(234, 88, 12, 0.35)" : "none",
               }}
-              className="group-hover:scale-108 transition-transform"
             >
-              <Flame size={22} className={pendingOrders > 0 ? "animate-pulse" : ""} />
+              <Flame className={`w-4 h-4 sm:w-5 sm:h-5 ${pendingOrders > 0 ? "animate-pulse" : ""}`} />
             </div>
           </div>
-          <div style={{ margin: "16px 0 10px" }}>
-            <div style={{ fontSize: 38, fontWeight: 900, color: pendingOrders > 0 ? "#c2410c" : "#0f172a", lineHeight: 1.1 }}>
+          <div style={{ margin: "10px 0 6px" }}>
+            <div
+              className="text-2xl sm:text-4xl font-black leading-tight"
+              style={{ color: pendingOrders > 0 ? "#c2410c" : "#0f172a" }}
+            >
               {pendingOrders}
             </div>
             <p
+              className="text-[11px] sm:text-xs md:text-sm font-semibold truncate mt-0.5"
               style={{
-                margin: "4px 0 0",
-                fontSize: 14,
                 color: pendingOrders > 0 ? "#ea580c" : "#64748b",
-                fontWeight: 600,
-                lineHeight: 1.4,
               }}
             >
-              {pendingOrders > 0 ? "Needs kitchen preparation" : "All orders caught up"}
+              {pendingOrders > 0 ? "Needs kitchen prep" : "All orders caught up"}
             </p>
           </div>
           <div
-            style={{
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#ea580c",
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              marginTop: 6,
-            }}
+            className="text-[11px] sm:text-xs md:text-sm font-bold flex items-center gap-1 mt-1 sm:mt-2"
+            style={{ color: "#ea580c" }}
           >
-            <span>Open live order board</span>
-            <ArrowUpRight size={16} />
+            <span className="truncate">Open live board</span>
+            <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
           </div>
         </Link>
 
@@ -315,68 +295,46 @@ export default async function AdminDashboardPage() {
             background: "#ffffff",
             border: "1px solid #e8edf2",
             borderRadius: 5,
-            padding: "24px 22px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
             boxShadow: "0 10px 28px -6px rgba(15, 23, 42, 0.05), 0 0 1px 1px rgba(0, 0, 0, 0.03)",
             transition: "all 0.22s ease",
           }}
-          className="admin-card-hover group hover:-translate-y-1"
+          className="admin-card-hover group hover:-translate-y-1 p-3 sm:p-5 lg:p-6 flex flex-col justify-between"
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span
-              style={{
-                fontSize: 13,
-                fontWeight: 800,
-                color: "#64748b",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
+              className="text-[10px] sm:text-xs md:text-[13px] font-extrabold uppercase tracking-wider"
+              style={{ color: "#64748b" }}
             >
               Menu Products
             </span>
             <div
+              className="w-8 h-8 sm:w-11 sm:h-11 rounded flex items-center justify-center shrink-0 group-hover:scale-108 transition-transform"
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 5,
                 background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
                 color: "#dc2626",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
               }}
-              className="group-hover:scale-108 transition-transform"
             >
-              <Pizza size={22} />
+              <Pizza className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div style={{ margin: "16px 0 10px" }}>
-            <div style={{ fontSize: 38, fontWeight: 900, color: "#0f172a", lineHeight: 1.1 }}>
+          <div style={{ margin: "10px 0 6px" }}>
+            <div className="text-2xl sm:text-4xl font-black text-slate-900 leading-tight">
               {productCount}
             </div>
-            <p style={{ margin: "4px 0 0", fontSize: 14, color: "#64748b", fontWeight: 500, lineHeight: 1.4 }}>
-              Across {categoryCount} food categories
+            <p className="text-[11px] sm:text-xs md:text-sm text-slate-500 font-medium truncate mt-0.5">
+              Across {categoryCount} categories
             </p>
           </div>
           <div
-            style={{
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#dc2626",
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              marginTop: 6,
-            }}
+            className="text-[11px] sm:text-xs md:text-sm font-bold flex items-center gap-1 mt-1 sm:mt-2"
+            style={{ color: "#dc2626" }}
           >
-            <span>Manage food items</span>
-            <ArrowUpRight size={16} />
+            <span className="truncate">Manage food items</span>
+            <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
           </div>
         </Link>
 
-        {/* KPI 3: Today's Daily Orders (Auto-updates daily) */}
+        {/* KPI 3: Today's Daily Orders */}
         <Link
           href="/admin/orders"
           style={{
@@ -384,78 +342,45 @@ export default async function AdminDashboardPage() {
             background: "#ffffff",
             border: "1px solid #e8edf2",
             borderRadius: 5,
-            padding: "24px 22px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
             boxShadow: "0 10px 28px -6px rgba(15, 23, 42, 0.05), 0 0 1px 1px rgba(0, 0, 0, 0.03)",
             transition: "all 0.22s ease",
           }}
-          className="admin-card-hover group hover:-translate-y-1"
+          className="admin-card-hover group hover:-translate-y-1 p-3 sm:p-5 lg:p-6 flex flex-col justify-between"
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span
-              style={{
-                fontSize: 13,
-                fontWeight: 800,
-                color: "#2563eb",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
+              className="text-[10px] sm:text-xs md:text-[13px] font-extrabold uppercase tracking-wider"
+              style={{ color: "#2563eb" }}
             >
-              Today&apos;s Daily Orders
+              Today&apos;s Orders
             </span>
             <div
+              className="w-8 h-8 sm:w-11 sm:h-11 rounded flex items-center justify-center shrink-0 group-hover:scale-108 transition-transform"
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 5,
                 background: "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)",
                 color: "#2563eb",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
               }}
-              className="group-hover:scale-108 transition-transform"
             >
-              <ShoppingBag size={22} />
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div style={{ margin: "16px 0 10px" }}>
-            <div style={{ fontSize: 38, fontWeight: 900, color: "#0f172a", lineHeight: 1.1 }}>
+          <div style={{ margin: "10px 0 6px" }}>
+            <div className="text-2xl sm:text-4xl font-black text-slate-900 leading-tight">
               {todayOrders.length}
             </div>
-            <p
-              style={{
-                margin: "4px 0 0",
-                fontSize: 13,
-                color: "#64748b",
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                lineHeight: 1.4,
-              }}
-            >
-              <TrendingUp size={15} className="text-emerald-500" />
-              <span>
-                {currencySymbol} {todayNetSales.toLocaleString()} sales &bull; {businessDate}
+            <p className="text-[11px] sm:text-xs md:text-sm text-slate-500 font-semibold truncate flex items-center gap-1 mt-0.5">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <span className="truncate">
+                {currencySymbol} {todayNetSales.toLocaleString()}
               </span>
             </p>
           </div>
           <div
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: "#2563eb",
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              marginTop: 6,
-            }}
+            className="text-[11px] sm:text-xs md:text-sm font-bold flex items-center gap-1 mt-1 sm:mt-2"
+            style={{ color: "#2563eb" }}
           >
-            <span>Live daily shift queue</span>
-            <ArrowUpRight size={15} />
+            <span className="truncate">Live shift queue</span>
+            <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
           </div>
         </Link>
 
@@ -467,64 +392,42 @@ export default async function AdminDashboardPage() {
             background: "#ffffff",
             border: "1px solid #e8edf2",
             borderRadius: 5,
-            padding: "24px 22px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
             boxShadow: "0 10px 28px -6px rgba(15, 23, 42, 0.05), 0 0 1px 1px rgba(0, 0, 0, 0.03)",
             transition: "all 0.22s ease",
           }}
-          className="admin-card-hover group hover:-translate-y-1"
+          className="admin-card-hover group hover:-translate-y-1 p-3 sm:p-5 lg:p-6 flex flex-col justify-between"
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span
-              style={{
-                fontSize: 13,
-                fontWeight: 800,
-                color: "#64748b",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
+              className="text-[10px] sm:text-xs md:text-[13px] font-extrabold uppercase tracking-wider"
+              style={{ color: "#64748b" }}
             >
               Promos &amp; Loyalty
             </span>
             <div
+              className="w-8 h-8 sm:w-11 sm:h-11 rounded flex items-center justify-center shrink-0 group-hover:scale-108 transition-transform"
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 5,
                 background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
                 color: "#059669",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
               }}
-              className="group-hover:scale-108 transition-transform"
             >
-              <Sparkles size={22} />
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div style={{ margin: "16px 0 10px" }}>
-            <div style={{ fontSize: 24, fontWeight: 900, color: "#059669", lineHeight: 1.2 }}>
+          <div style={{ margin: "10px 0 6px" }}>
+            <div className="text-base sm:text-2xl font-black text-emerald-600 leading-tight truncate">
               VIP Cash Engine
             </div>
-            <p style={{ margin: "4px 0 0", fontSize: 14, color: "#64748b", fontWeight: 500, lineHeight: 1.4 }}>
-              1 pt per Rs. 50 (2% Cashback)
+            <p className="text-[11px] sm:text-xs md:text-sm text-slate-500 font-medium truncate mt-0.5">
+              1 pt per Rs. 50 (2%)
             </p>
           </div>
           <div
-            style={{
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#059669",
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              marginTop: 6,
-            }}
+            className="text-[11px] sm:text-xs md:text-sm font-bold flex items-center gap-1 mt-1 sm:mt-2"
+            style={{ color: "#059669" }}
           >
-            <span>Manage coupons &amp; points</span>
-            <ArrowUpRight size={16} />
+            <span className="truncate">Manage coupons</span>
+            <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
           </div>
         </Link>
       </div>
@@ -725,71 +628,84 @@ export default async function AdminDashboardPage() {
                         <div
                           key={order.id}
                           style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            padding: "13px 16px",
                             background: "#f8fafc",
                             border: "1px solid #edf2f7",
                             borderLeft: `4px solid ${isDelivery ? "#3b82f6" : isDineIn ? "#f97316" : "#eab308"}`,
                             borderRadius: 5,
-                            gap: 12,
                             transition: "all 0.18s ease",
                           }}
-                          className="hover:bg-slate-100/90 hover:shadow-xs"
+                          className="hover:bg-slate-100/90 hover:shadow-xs p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3"
                         >
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-                              <span
-                                style={{
-                                  fontFamily: "monospace",
-                                  fontWeight: 800,
-                                  fontSize: 13,
-                                  color: "#0f172a",
-                                  background: "#ffffff",
-                                  padding: "2px 7px",
-                                  borderRadius: 5,
-                                  border: "1px solid #e2e8f0",
-                                }}
-                              >
-                                #{order.order_number}
-                              </span>
-                              <span
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 800,
-                                  padding: "2px 8px",
-                                  borderRadius: 5,
-                                  background: isDelivery ? "#eff6ff" : isDineIn ? "#fff7ed" : "#fefce8",
-                                  color: isDelivery ? "#1d4ed8" : isDineIn ? "#c2410c" : "#a16207",
-                                  border: `1px solid ${
-                                    isDelivery ? "#bfdbfe" : isDineIn ? "#fed7aa" : "#fef08a"
-                                  }`,
-                                  textTransform: "uppercase",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 4,
-                                }}
-                              >
-                                {isDineIn ? (
-                                  <UtensilsCrossed size={12} />
-                                ) : isDelivery ? (
-                                  <Bike size={12} />
-                                ) : (
-                                  <ShoppingBag size={12} />
-                                )}
-                                <span>
-                                  {isDineIn
-                                    ? `Table ${order.table_number || "—"}`
-                                    : isDelivery
-                                    ? "Delivery"
-                                    : "Takeaway"}
+                          {/* Left / Top Info: Order Number, Tag, and (Mobile Status Badge) */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between sm:justify-start gap-2 mb-1.5 flex-wrap">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span
+                                  style={{
+                                    fontFamily: "monospace",
+                                    fontWeight: 800,
+                                    fontSize: 12.5,
+                                    color: "#0f172a",
+                                    background: "#ffffff",
+                                    padding: "2px 7px",
+                                    borderRadius: 4,
+                                    border: "1px solid #e2e8f0",
+                                  }}
+                                >
+                                  #{order.order_number}
                                 </span>
+                                <span
+                                  style={{
+                                    fontSize: 10.5,
+                                    fontWeight: 800,
+                                    padding: "2px 7px",
+                                    borderRadius: 4,
+                                    background: isDelivery ? "#eff6ff" : isDineIn ? "#fff7ed" : "#fefce8",
+                                    color: isDelivery ? "#1d4ed8" : isDineIn ? "#c2410c" : "#a16207",
+                                    border: `1px solid ${
+                                      isDelivery ? "#bfdbfe" : isDineIn ? "#fed7aa" : "#fef08a"
+                                    }`,
+                                    textTransform: "uppercase",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 3.5,
+                                  }}
+                                >
+                                  {isDineIn ? (
+                                    <UtensilsCrossed size={11} />
+                                  ) : isDelivery ? (
+                                    <Bike size={11} />
+                                  ) : (
+                                    <ShoppingBag size={11} />
+                                  )}
+                                  <span>
+                                    {isDineIn
+                                      ? `Table ${order.table_number || "—"}`
+                                      : isDelivery
+                                      ? "Delivery"
+                                      : "Takeaway"}
+                                  </span>
+                                </span>
+                              </div>
+
+                              {/* Mobile Status Badge on top-right */}
+                              <span
+                                className="inline-flex sm:hidden items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold border shrink-0"
+                                style={{
+                                  background: s.bg,
+                                  color: s.text,
+                                  borderColor: s.border,
+                                }}
+                              >
+                                <span style={{ width: 5.5, height: 5.5, borderRadius: "50%", background: s.dot }} />
+                                <span>{s.label}</span>
                               </span>
                             </div>
 
-                            <div style={{ fontSize: 13, color: "#64748b", display: "flex", alignItems: "center", gap: 8 }}>
-                              <span className="font-medium text-slate-700">{order.customer_name || "Guest"}</span>
+                            <div style={{ fontSize: 13, color: "#64748b", display: "flex", alignItems: "center", gap: 7 }}>
+                              <span className="font-semibold text-slate-800 truncate max-w-[140px] sm:max-w-[200px]">
+                                {order.customer_name || "Guest"}
+                              </span>
                               <span>&bull;</span>
                               <span style={{ fontWeight: 800, color: "#0f172a" }}>
                                 {currencySymbol} {Number(order.total).toFixed(2)}
@@ -797,19 +713,15 @@ export default async function AdminDashboardPage() {
                             </div>
                           </div>
 
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                          {/* Right / Bottom Action Controls */}
+                          <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0 pt-1.5 sm:pt-0 border-t border-slate-200/50 sm:border-t-0">
+                            {/* Desktop Status Badge */}
                             <span
+                              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-bold border"
                               style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 5,
-                                padding: "5px 10px",
-                                borderRadius: 5,
-                                fontSize: 11,
-                                fontWeight: 700,
                                 background: s.bg,
                                 color: s.text,
-                                border: `1px solid ${s.border}`,
+                                borderColor: s.border,
                               }}
                             >
                               <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
@@ -820,8 +732,8 @@ export default async function AdminDashboardPage() {
                               href={`/track/${order.order_number}`}
                               target="_blank"
                               style={{
-                                padding: "5px 10px",
-                                borderRadius: 5,
+                                padding: "5px 11px",
+                                borderRadius: 4,
                                 background: "#ffffff",
                                 border: "1px solid #cbd5e1",
                                 color: "#334155",
@@ -830,10 +742,10 @@ export default async function AdminDashboardPage() {
                                 textDecoration: "none",
                                 display: "inline-flex",
                                 alignItems: "center",
-                                gap: 3,
+                                gap: 3.5,
                                 transition: "all 0.15s ease",
                               }}
-                              className="hover:border-slate-400 hover:bg-slate-50"
+                              className="hover:border-slate-400 hover:bg-slate-50 shadow-2xs"
                               title="Track Order Live Status"
                             >
                               <span>Track</span>
@@ -845,8 +757,8 @@ export default async function AdminDashboardPage() {
                                 href={`/delivery/${encodeURIComponent(order.order_number)}`}
                                 target="_blank"
                                 style={{
-                                  padding: "5px 10px",
-                                  borderRadius: 5,
+                                  padding: "5px 11px",
+                                  borderRadius: 4,
                                   background: "#eff6ff",
                                   border: "1px solid #bfdbfe",
                                   color: "#1d4ed8",
@@ -858,7 +770,7 @@ export default async function AdminDashboardPage() {
                                   gap: 4,
                                   transition: "all 0.15s ease",
                                 }}
-                                className="hover:bg-blue-100 hover:border-blue-400"
+                                className="hover:bg-blue-100 hover:border-blue-400 shadow-2xs"
                                 title="Open Rider Delivery Portal — Admin can confirm delivery if rider forgot"
                               >
                                 <Bike size={12} />
@@ -891,71 +803,84 @@ export default async function AdminDashboardPage() {
                   <div
                     key={order.id}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "13px 16px",
                       background: "#f8fafc",
                       border: "1px solid #edf2f7",
                       borderLeft: `4px solid ${isDelivery ? "#3b82f6" : isDineIn ? "#f97316" : "#eab308"}`,
                       borderRadius: 5,
-                      gap: 12,
                       transition: "all 0.18s ease",
                     }}
-                    className="hover:bg-slate-100/90 hover:shadow-xs"
+                    className="hover:bg-slate-100/90 hover:shadow-xs p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3"
                   >
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-                        <span
-                          style={{
-                            fontFamily: "monospace",
-                            fontWeight: 800,
-                            fontSize: 13,
-                            color: "#0f172a",
-                            background: "#ffffff",
-                            padding: "2px 7px",
-                            borderRadius: 5,
-                            border: "1px solid #e2e8f0",
-                          }}
-                        >
-                          #{order.order_number}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 800,
-                            padding: "2px 8px",
-                            borderRadius: 5,
-                            background: isDelivery ? "#eff6ff" : isDineIn ? "#fff7ed" : "#fefce8",
-                            color: isDelivery ? "#1d4ed8" : isDineIn ? "#c2410c" : "#a16207",
-                            border: `1px solid ${
-                              isDelivery ? "#bfdbfe" : isDineIn ? "#fed7aa" : "#fef08a"
-                            }`,
-                            textTransform: "uppercase",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          {isDineIn ? (
-                            <UtensilsCrossed size={12} />
-                          ) : isDelivery ? (
-                            <Bike size={12} />
-                          ) : (
-                            <ShoppingBag size={12} />
-                          )}
-                          <span>
-                            {isDineIn
-                              ? `Table ${order.table_number || "—"}`
-                              : isDelivery
-                              ? "Delivery"
-                              : "Takeaway"}
+                    {/* Left / Top Info: Order Number, Tag, and (Mobile Status Badge) */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between sm:justify-start gap-2 mb-1.5 flex-wrap">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span
+                            style={{
+                              fontFamily: "monospace",
+                              fontWeight: 800,
+                              fontSize: 12.5,
+                              color: "#0f172a",
+                              background: "#ffffff",
+                              padding: "2px 7px",
+                              borderRadius: 4,
+                              border: "1px solid #e2e8f0",
+                            }}
+                          >
+                            #{order.order_number}
                           </span>
+                          <span
+                            style={{
+                              fontSize: 10.5,
+                              fontWeight: 800,
+                              padding: "2px 7px",
+                              borderRadius: 4,
+                              background: isDelivery ? "#eff6ff" : isDineIn ? "#fff7ed" : "#fefce8",
+                              color: isDelivery ? "#1d4ed8" : isDineIn ? "#c2410c" : "#a16207",
+                              border: `1px solid ${
+                                isDelivery ? "#bfdbfe" : isDineIn ? "#fed7aa" : "#fef08a"
+                              }`,
+                              textTransform: "uppercase",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 3.5,
+                            }}
+                          >
+                            {isDineIn ? (
+                              <UtensilsCrossed size={11} />
+                            ) : isDelivery ? (
+                              <Bike size={11} />
+                            ) : (
+                              <ShoppingBag size={11} />
+                            )}
+                            <span>
+                              {isDineIn
+                                ? `Table ${order.table_number || "—"}`
+                                : isDelivery
+                                ? "Delivery"
+                                : "Takeaway"}
+                            </span>
+                          </span>
+                        </div>
+
+                        {/* Mobile Status Badge on top-right */}
+                        <span
+                          className="inline-flex sm:hidden items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold border shrink-0"
+                          style={{
+                            background: s.bg,
+                            color: s.text,
+                            borderColor: s.border,
+                          }}
+                        >
+                          <span style={{ width: 5.5, height: 5.5, borderRadius: "50%", background: s.dot }} />
+                          <span>{s.label}</span>
                         </span>
                       </div>
 
-                      <div style={{ fontSize: 13, color: "#64748b", display: "flex", alignItems: "center", gap: 8 }}>
-                        <span className="font-medium text-slate-700">{order.customer_name || "Guest"}</span>
+                      <div style={{ fontSize: 13, color: "#64748b", display: "flex", alignItems: "center", gap: 7 }}>
+                        <span className="font-semibold text-slate-800 truncate max-w-[140px] sm:max-w-[200px]">
+                          {order.customer_name || "Guest"}
+                        </span>
                         <span>•</span>
                         <span style={{ fontWeight: 800, color: "#0f172a" }}>
                           {currencySymbol} {Number(order.total).toFixed(2)}
@@ -963,19 +888,15 @@ export default async function AdminDashboardPage() {
                       </div>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    {/* Right / Bottom Action Controls */}
+                    <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0 pt-1.5 sm:pt-0 border-t border-slate-200/50 sm:border-t-0">
+                      {/* Desktop Status Badge */}
                       <span
+                        className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-bold border"
                         style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 5,
-                          padding: "5px 10px",
-                          borderRadius: 5,
-                          fontSize: 11,
-                          fontWeight: 700,
                           background: s.bg,
                           color: s.text,
-                          border: `1px solid ${s.border}`,
+                          borderColor: s.border,
                         }}
                       >
                         <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot }} />
@@ -986,8 +907,8 @@ export default async function AdminDashboardPage() {
                         href={`/track/${order.order_number}`}
                         target="_blank"
                         style={{
-                          padding: "5px 10px",
-                          borderRadius: 5,
+                          padding: "5px 11px",
+                          borderRadius: 4,
                           background: "#ffffff",
                           border: "1px solid #cbd5e1",
                           color: "#334155",
@@ -996,10 +917,10 @@ export default async function AdminDashboardPage() {
                           textDecoration: "none",
                           display: "inline-flex",
                           alignItems: "center",
-                          gap: 3,
+                          gap: 3.5,
                           transition: "all 0.15s ease",
                         }}
-                        className="hover:border-slate-400 hover:bg-slate-50"
+                        className="hover:border-slate-400 hover:bg-slate-50 shadow-2xs"
                         title="Track Order Live Status"
                       >
                         <span>Track</span>
@@ -1011,8 +932,8 @@ export default async function AdminDashboardPage() {
                           href={`/delivery/${encodeURIComponent(order.order_number)}`}
                           target="_blank"
                           style={{
-                            padding: "5px 10px",
-                            borderRadius: 5,
+                            padding: "5px 11px",
+                            borderRadius: 4,
                             background: "#eff6ff",
                             border: "1px solid #bfdbfe",
                             color: "#1d4ed8",
@@ -1024,7 +945,7 @@ export default async function AdminDashboardPage() {
                             gap: 4,
                             transition: "all 0.15s ease",
                           }}
-                          className="hover:bg-blue-100 hover:border-blue-400"
+                          className="hover:bg-blue-100 hover:border-blue-400 shadow-2xs"
                           title="Open Rider Delivery Portal — Admin can confirm delivery if rider forgot"
                         >
                           <Bike size={12} />

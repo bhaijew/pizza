@@ -137,16 +137,7 @@ export default function ProductManager({
   return (
     <div>
       {/* ─── ACTION BAR ────────────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "16px",
-          flexWrap: "wrap",
-          marginBottom: "20px",
-        }}
-      >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div>
           <h2 style={{ fontSize: "16px", fontWeight: 700, margin: "0 0 4px", color: "#0f172a" }}>
             Product Catalog ({filteredProducts.length} of {products.length})
@@ -158,106 +149,59 @@ export default function ProductManager({
 
         <Link
           href="/admin/products/new"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "9px 16px",
-            borderRadius: "6px",
-            background: "linear-gradient(135deg, #ef4444 0%, #ea580c 100%)",
-            color: "#ffffff",
-            fontWeight: 700,
-            fontSize: "13px",
-            textDecoration: "none",
-            boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
-            transition: "transform 0.15s ease",
-          }}
-          className="hover:scale-105"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-md font-bold text-xs sm:text-[13px] text-white bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 shadow-md shadow-orange-500/20 active:scale-98 transition-all"
         >
-          <Plus size={16} />
+          <Plus size={16} strokeWidth={2.5} />
           <span>Add New Product</span>
         </Link>
       </div>
 
       {/* ─── SEARCH & FILTER CONTROLS ──────────────────────── */}
       <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          flexWrap: "wrap",
-          alignItems: "center",
-          marginBottom: "20px",
-          background: "#ffffff",
-          padding: "12px 16px",
-          borderRadius: "5px",
-          border: "1px solid #e2e8f0",
-        }}
+        className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 mb-5 bg-white p-3 sm:p-3.5 rounded-md border border-slate-200 shadow-2xs"
       >
         {/* Search Input */}
-        <div style={{ flex: "1 1 240px", position: "relative" }}>
+        <div className="flex-1 relative">
           <input
             type="text"
             placeholder="Search products by name or ingredients..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "9px 14px 9px 34px",
-              borderRadius: "5px",
-              border: "1px solid #cbd5e1",
-              background: "#ffffff",
-              color: "#0f172a",
-              fontSize: "13px",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
+            className="w-full py-2 pl-9 pr-3 text-xs sm:text-[13px] rounded-md border border-slate-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none text-slate-900 bg-white"
           />
           <Search
             size={15}
-            style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#64748b" }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
           />
         </div>
 
-        {/* Category Filter */}
-        <select
-          value={selectedCategoryFilter}
-          onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-          style={{
-            padding: "9px 12px",
-            borderRadius: "6px",
-            border: "1px solid #cbd5e1",
-            background: "#ffffff",
-            color: "#0f172a",
-            fontSize: "13px",
-            outline: "none",
-          }}
-        >
-          <option value="all">All Categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={String(c.id)}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        {/* 2 Filter Dropdowns: side-by-side on mobile, auto on desktop */}
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
+          {/* Category Filter */}
+          <select
+            value={selectedCategoryFilter}
+            onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+            className="py-2 px-2.5 text-xs sm:text-[13px] rounded-md border border-slate-300 text-slate-800 bg-white outline-none w-full sm:w-auto"
+          >
+            <option value="all">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={String(c.id)}>
+                {c.name}
+              </option>
+            ))}
+          </select>
 
-        {/* Availability Filter */}
-        <select
-          value={availabilityFilter}
-          onChange={(e) => setAvailabilityFilter(e.target.value)}
-          style={{
-            padding: "9px 12px",
-            borderRadius: "6px",
-            border: "1px solid #cbd5e1",
-            background: "#ffffff",
-            color: "#0f172a",
-            fontSize: "13px",
-            outline: "none",
-          }}
-        >
-          <option value="all">All Stock Status</option>
-          <option value="available">In Stock Only</option>
-          <option value="soldout">Out of Stock Only</option>
-        </select>
+          {/* Availability Filter */}
+          <select
+            value={availabilityFilter}
+            onChange={(e) => setAvailabilityFilter(e.target.value)}
+            className="py-2 px-2.5 text-xs sm:text-[13px] rounded-md border border-slate-300 text-slate-800 bg-white outline-none w-full sm:w-auto"
+          >
+            <option value="all">All Stock Status</option>
+            <option value="in_stock">In Stock</option>
+            <option value="out_of_stock">Out of Stock</option>
+          </select>
+        </div>
       </div>
 
       {/* ─── PRODUCT LIST ──────────────────────────────────── */}

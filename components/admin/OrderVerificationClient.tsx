@@ -326,21 +326,18 @@ export default function OrderVerificationClient({
 
   return (
     <div style={{ maxWidth: "1280px", margin: "0 auto", paddingBottom: "60px", fontFamily: "var(--font-poppins, system-ui, sans-serif)" }}>
-      {/* ─── 1. EXECUTIVE COMMAND BAR WITH BACKGROUND PHOTO & THEME SUPPORT ─── */}
+      {/* ─── 1. EXECUTIVE COMMAND BAR WITH CLEAN CARDS (No messy image background) ─── */}
       <div
         style={{
           position: "relative",
-          background: isDark
-            ? "linear-gradient(135deg, rgba(9, 23, 42, 0.90) 0%, rgba(13, 35, 63, 0.94) 100%), url('/images/pizzger-hero-pizza.jpg') center/cover no-repeat"
-            : "linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.96) 100%), url('/images/pizzger-hero-pizza.jpg') center/cover no-repeat",
-          borderRadius: 0,
-          border: isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #cbd5e1",
-          padding: "16px 20px",
+          background: isDark ? "#0f172a" : "#ffffff",
+          borderRadius: 6,
+          border: isDark ? "1px solid #1e293b" : "1px solid #e2e8f0",
+          padding: "16px",
           marginBottom: "16px",
           boxShadow: isDark
-            ? "0 10px 30px -8px rgba(9, 23, 42, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08)"
-            : "0 6px 20px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04)",
-          backdropFilter: "blur(8px)",
+            ? "0 4px 16px rgba(0, 0, 0, 0.25)"
+            : "0 2px 8px rgba(0, 0, 0, 0.04)",
           color: isDark ? "#ffffff" : "#0f172a",
         }}
       >
@@ -351,7 +348,7 @@ export default function OrderVerificationClient({
               style={{
                 width: 38,
                 height: 38,
-                borderRadius: 0,
+                borderRadius: 5,
                 background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
                 color: "#ffffff",
                 display: "flex",
@@ -385,7 +382,7 @@ export default function OrderVerificationClient({
                     alignItems: "center",
                     gap: "5px",
                     padding: "2px 8px",
-                    borderRadius: 0,
+                    borderRadius: 4,
                     background: isDark ? "rgba(16, 185, 129, 0.2)" : "rgba(16, 185, 129, 0.15)",
                     border: isDark ? "1px solid rgba(52, 211, 153, 0.4)" : "1px solid rgba(16, 185, 129, 0.4)",
                     color: isDark ? "#34d399" : "#059669",
@@ -426,7 +423,7 @@ export default function OrderVerificationClient({
                 alignItems: "center",
                 gap: "5px",
                 padding: "6px 12px",
-                borderRadius: 0,
+                borderRadius: 5,
                 border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
                 background: isDark ? "rgba(255, 255, 255, 0.08)" : "#ffffff",
                 color: isDark ? "#ffffff" : "#0f172a",
@@ -461,7 +458,7 @@ export default function OrderVerificationClient({
                 alignItems: "center",
                 gap: "5px",
                 padding: "6px 12px",
-                borderRadius: 0,
+                borderRadius: 5,
                 border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
                 background: isDark ? "rgba(255, 255, 255, 0.08)" : "#ffffff",
                 color: isDark ? "#ffffff" : "#0f172a",
@@ -485,7 +482,7 @@ export default function OrderVerificationClient({
                 alignItems: "center",
                 gap: "5px",
                 padding: "6px 14px",
-                borderRadius: 0,
+                borderRadius: 5,
                 background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
                 border: "none",
                 color: "#ffffff",
@@ -501,84 +498,79 @@ export default function OrderVerificationClient({
           </div>
         </div>
 
-        {/* Real-time Statistics Strip */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginTop: "14px" }}>
+        {/* Real-time Statistics Strip (Clean 3-col grid on all screens) */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-3.5">
           <div
             style={{
-              background: isDark ? "rgba(0, 0, 0, 0.4)" : "#ffffff",
+              background: isDark ? "#1e293b" : "#f8fafc",
               border: isDark ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid #fde68a",
-              borderRadius: 0,
-              padding: "10px 14px",
-              boxShadow: isDark ? "none" : "0 2px 6px rgba(245, 158, 11, 0.08)",
+              borderRadius: 5,
+              padding: "10px 12px",
+              boxShadow: isDark ? "none" : "0 1px 3px rgba(0,0,0,0.04)",
             }}
           >
-            <span style={{ fontSize: "10.5px", color: isDark ? "#fbbf24" : "#b45309", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.03em" }}>
-              Awaiting Verification
+            <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wide truncate block" style={{ color: isDark ? "#fbbf24" : "#b45309" }}>
+              Awaiting
             </span>
-            <div style={{ fontSize: "24px", fontWeight: 900, color: isDark ? "#ffffff" : "#0f172a", marginTop: "2px" }}>
+            <div className="text-xl sm:text-2xl font-black mt-1" style={{ color: isDark ? "#ffffff" : "#0f172a" }}>
               {pendingCount}
             </div>
           </div>
 
           <div
             style={{
-              background: isDark ? "rgba(0, 0, 0, 0.4)" : "#ffffff",
+              background: isDark ? "#1e293b" : "#f8fafc",
               border: isDark ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid #bbf7d0",
-              borderRadius: 0,
-              padding: "10px 14px",
-              boxShadow: isDark ? "none" : "0 2px 6px rgba(16, 185, 129, 0.08)",
+              borderRadius: 5,
+              padding: "10px 12px",
+              boxShadow: isDark ? "none" : "0 1px 3px rgba(0,0,0,0.04)",
             }}
           >
-            <span style={{ fontSize: "10.5px", color: isDark ? "#34d399" : "#15803d", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.03em" }}>
-              Approved &amp; Sent to Live
+            <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wide truncate block" style={{ color: isDark ? "#34d399" : "#15803d" }}>
+              Approved
             </span>
-            <div style={{ fontSize: "24px", fontWeight: 900, color: isDark ? "#ffffff" : "#0f172a", marginTop: "2px" }}>
+            <div className="text-xl sm:text-2xl font-black mt-1" style={{ color: isDark ? "#ffffff" : "#0f172a" }}>
               {verifiedCount}
             </div>
           </div>
 
           <div
             style={{
-              background: isDark ? "rgba(0, 0, 0, 0.4)" : "#ffffff",
+              background: isDark ? "#1e293b" : "#f8fafc",
               border: isDark ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid #fecaca",
-              borderRadius: 0,
-              padding: "10px 14px",
-              boxShadow: isDark ? "none" : "0 2px 6px rgba(239, 68, 68, 0.08)",
+              borderRadius: 5,
+              padding: "10px 12px",
+              boxShadow: isDark ? "none" : "0 1px 3px rgba(0,0,0,0.04)",
             }}
           >
-            <span style={{ fontSize: "10.5px", color: isDark ? "#f87171" : "#dc2626", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.03em" }}>
-              Rejected / Prank Orders
+            <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wide truncate block" style={{ color: isDark ? "#f87171" : "#dc2626" }}>
+              Rejected
             </span>
-            <div style={{ fontSize: "24px", fontWeight: 900, color: isDark ? "#ffffff" : "#0f172a", marginTop: "2px" }}>
+            <div className="text-xl sm:text-2xl font-black mt-1" style={{ color: isDark ? "#ffffff" : "#0f172a" }}>
               {rejectedCount}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ─── 2. FILTER TABS & SEARCH BAR (5PX RADIUS + THEME SUPPORT) ─── */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "16px" }}>
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+      {/* ─── 2. FILTER TABS & SEARCH BAR (Swipeable on mobile, wrapping on desktop) ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 mb-4">
+        <div
+          className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-nowrap sm:flex-wrap w-full sm:w-auto"
+          style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
+        >
           <button
             type="button"
             onClick={() => setActiveTab("pending")}
             style={{
-              padding: "7px 14px",
-              borderRadius: 0,
-              fontSize: "12px",
-              fontWeight: 800,
-              cursor: "pointer",
               border: activeTab === "pending" ? "1.5px solid #f59e0b" : isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #cbd5e1",
               background: activeTab === "pending" ? (isDark ? "rgba(245, 158, 11, 0.2)" : "#fffbeb") : isDark ? "rgba(255, 255, 255, 0.05)" : "#ffffff",
               color: activeTab === "pending" ? (isDark ? "#fbbf24" : "#b45309") : isDark ? "#94a3b8" : "#475569",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              transition: "all 0.15s ease",
             }}
+            className="shrink-0 rounded-md py-1.5 px-3 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-all shadow-2xs"
           >
-            <span>🟡 Awaiting Verification</span>
-            <span style={{ background: "#f59e0b", color: "#ffffff", padding: "1px 6px", borderRadius: 0, fontSize: "10.5px" }}>
+            <span>🟡 Awaiting</span>
+            <span style={{ background: "#f59e0b", color: "#ffffff", padding: "1px 6px", borderRadius: 3, fontSize: "10.5px" }}>
               {pendingCount}
             </span>
           </button>
@@ -587,22 +579,14 @@ export default function OrderVerificationClient({
             type="button"
             onClick={() => setActiveTab("verified")}
             style={{
-              padding: "7px 14px",
-              borderRadius: 0,
-              fontSize: "12px",
-              fontWeight: 800,
-              cursor: "pointer",
               border: activeTab === "verified" ? "1.5px solid #10b981" : isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #cbd5e1",
               background: activeTab === "verified" ? (isDark ? "rgba(16, 185, 129, 0.2)" : "#ecfdf5") : isDark ? "rgba(255, 255, 255, 0.05)" : "#ffffff",
               color: activeTab === "verified" ? (isDark ? "#34d399" : "#065f46") : isDark ? "#94a3b8" : "#475569",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              transition: "all 0.15s ease",
             }}
+            className="shrink-0 rounded-md py-1.5 px-3 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-all shadow-2xs"
           >
-            <span>🟢 Verified &amp; Approved</span>
-            <span style={{ background: "#10b981", color: "#ffffff", padding: "1px 6px", borderRadius: 0, fontSize: "10.5px" }}>
+            <span>🟢 Approved</span>
+            <span style={{ background: "#10b981", color: "#ffffff", padding: "1px 6px", borderRadius: 3, fontSize: "10.5px" }}>
               {verifiedCount}
             </span>
           </button>
@@ -611,22 +595,14 @@ export default function OrderVerificationClient({
             type="button"
             onClick={() => setActiveTab("rejected")}
             style={{
-              padding: "7px 14px",
-              borderRadius: 0,
-              fontSize: "12px",
-              fontWeight: 800,
-              cursor: "pointer",
               border: activeTab === "rejected" ? "1.5px solid #ef4444" : isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #cbd5e1",
               background: activeTab === "rejected" ? (isDark ? "rgba(239, 68, 68, 0.2)" : "#fef2f2") : isDark ? "rgba(255, 255, 255, 0.05)" : "#ffffff",
               color: activeTab === "rejected" ? (isDark ? "#f87171" : "#991b1b") : isDark ? "#94a3b8" : "#475569",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              transition: "all 0.15s ease",
             }}
+            className="shrink-0 rounded-md py-1.5 px-3 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-all shadow-2xs"
           >
             <span>🔴 Rejected</span>
-            <span style={{ background: "#ef4444", color: "#ffffff", padding: "1px 6px", borderRadius: 0, fontSize: "10.5px" }}>
+            <span style={{ background: "#ef4444", color: "#ffffff", padding: "1px 6px", borderRadius: 3, fontSize: "10.5px" }}>
               {rejectedCount}
             </span>
           </button>
@@ -635,24 +611,19 @@ export default function OrderVerificationClient({
             type="button"
             onClick={() => setActiveTab("all")}
             style={{
-              padding: "7px 14px",
-              borderRadius: 0,
-              fontSize: "12px",
-              fontWeight: 800,
-              cursor: "pointer",
               border: activeTab === "all" ? (isDark ? "1.5px solid #f97316" : "1.5px solid #0f172a") : isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #cbd5e1",
               background: activeTab === "all" ? (isDark ? "#f97316" : "#0f172a") : isDark ? "rgba(255, 255, 255, 0.05)" : "#ffffff",
               color: activeTab === "all" ? "#ffffff" : isDark ? "#94a3b8" : "#475569",
-              transition: "all 0.15s ease",
             }}
+            className="shrink-0 rounded-md py-1.5 px-3 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-all shadow-2xs"
           >
-            All Menu Orders ({orders.length})
+            All Orders ({orders.length})
           </button>
         </div>
 
         {/* Search Input */}
-        <div style={{ position: "relative", minWidth: "240px" }}>
-          <Search size={14} style={{ position: "absolute", left: "10px", top: "11px", color: isDark ? "#64748b" : "#94a3b8" }} />
+        <div className="relative w-full sm:w-72 shrink-0">
+          <Search size={14} style={{ position: "absolute", left: "11px", top: "50%", transform: "translateY(-50%)", color: isDark ? "#64748b" : "#94a3b8" }} />
           <input
             type="text"
             placeholder="Search order #, customer, phone..."
@@ -660,14 +631,12 @@ export default function OrderVerificationClient({
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               width: "100%",
-              height: "36px",
-              paddingLeft: "32px",
-              paddingRight: "10px",
-              fontSize: "12px",
-              borderRadius: 0,
-              border: isDark ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #cbd5e1",
-              background: isDark ? "rgba(15, 23, 42, 0.8)" : "#ffffff",
+              padding: "8px 12px 8px 32px",
+              borderRadius: 5,
+              border: isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #cbd5e1",
+              background: isDark ? "#0f172a" : "#ffffff",
               color: isDark ? "#ffffff" : "#0f172a",
+              fontSize: "12px",
               outline: "none",
               boxSizing: "border-box",
             }}

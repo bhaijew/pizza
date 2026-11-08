@@ -150,6 +150,11 @@ const NAV_GROUPS: NavGroup[] = [
         href: "/admin/customers",
         icon: Users,
       },
+      {
+        label: "WA Marketing",
+        href: "/admin/marketing",
+        icon: MessageSquare,
+      },
     ],
   },
   {
@@ -1099,7 +1104,9 @@ export default function AdminShell({
                   padding: "4px 10px",
                   borderRadius: 0,
                   background: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.04)",
-                  border: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
+                  borderTop: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRight: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
+                  borderBottom: isLight ? "1px solid #e2e8f0" : "1px solid rgba(255, 255, 255, 0.1)",
                   borderLeft: "3px solid #ea580c",
                   flexShrink: 0,
                   whiteSpace: "nowrap",
@@ -1204,72 +1211,6 @@ export default function AdminShell({
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            {/* Live Pakistan Standard Time (PKT) for Mobile */}
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "4px 8px",
-                borderRadius: "5px",
-                background: isLight ? "#f1f5f9" : "rgba(255, 255, 255, 0.08)",
-                border: isLight ? "1px solid #cbd5e1" : "1px solid rgba(255, 255, 255, 0.14)",
-                color: isLight ? "#0f172a" : "#ffffff",
-              }}
-              title="Current Pakistan Standard Time (PKT)"
-            >
-              <div
-                style={{
-                  width: "5px",
-                  height: "5px",
-                  borderRadius: "50%",
-                  background: "#10b981",
-                  boxShadow: "0 0 6px #10b981",
-                  flexShrink: 0,
-                }}
-              />
-              <Clock size={11} className="text-emerald-500" />
-              <span style={{ fontFamily: "monospace", fontSize: "11px", fontWeight: 800 }}>
-                {pakistanTime ? pakistanTime.replace(/:\d\d\s/, " ") : "--:--"}
-              </span>
-              <span
-                style={{
-                  fontSize: "8px",
-                  fontWeight: 900,
-                  background: "#059669",
-                  color: "#ffffff",
-                  padding: "1px 4px",
-                  borderRadius: "3px",
-                  letterSpacing: "0.03em",
-                }}
-              >
-                PKT
-              </span>
-            </div>
-
-            {/* Mobile How to Use Button */}
-            <button
-              type="button"
-              onClick={() => setGuideOpen(true)}
-              style={{
-                background: isLight ? "#f1f5f9" : "#1e293b",
-                border: isLight ? "1px solid #cbd5e1" : "1px solid #334155",
-                color: isLight ? "#0f172a" : "#f1f5f9",
-                padding: "6px 10px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                fontSize: "11px",
-                fontWeight: 600,
-              }}
-              title="Open System User Manual"
-            >
-              <BookOpenIcon size={12} />
-              <span>Manual</span>
-            </button>
-
             {/* Mobile Slider / Menu Open Button */}
             <button
               type="button"

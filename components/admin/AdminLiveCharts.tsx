@@ -550,9 +550,10 @@ export default function AdminLiveCharts({
           }}
         />
 
-        {/* Right Corner Diagonal Orange Stripes */}
+        {/* Right Corner Diagonal Orange Stripes (Hidden on mobile) */}
         <div
           aria-hidden="true"
+          className="hidden sm:block"
           style={{
             position: "absolute",
             top: 0,
@@ -641,7 +642,7 @@ export default function AdminLiveCharts({
         <div style={{ width: 1.5, height: 36, background: "#e2e8f0", flexShrink: 0 }} className="hidden xl:block" />
 
         {/* Right: Period Filter Buttons + Site Active Date Control */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", position: "relative", zIndex: 2, marginRight: 28 }}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 relative z-10 w-full lg:w-auto sm:mr-7">
           <button
             type="button"
             disabled={savingStartDate}
@@ -665,6 +666,7 @@ export default function AdminLiveCharts({
               cursor: savingStartDate ? "wait" : "pointer",
               display: "inline-flex",
               alignItems: "center",
+              justifyContent: "center",
               gap: 6,
               boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
               transition: "all 0.15s ease",
@@ -681,14 +683,7 @@ export default function AdminLiveCharts({
           </button>
 
           {/* Time range pills matching mockup */}
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              flexWrap: "wrap",
-            }}
-          >
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 w-full sm:w-auto">
             {(
               [
                 { id: "today", label: "Today's Shift" },
@@ -1113,55 +1108,62 @@ export default function AdminLiveCharts({
 
           {/* Chart Body with Horizontal Gridlines */}
           <div style={{ padding: "18px 20px 14px" }}>
-            <div style={{ position: "relative", height: 210, paddingTop: 24 }}>
-              {/* Background Gridlines & Y-Axis Scale */}
-              {[
-                { step: 1, label: "6k" },
-                { step: 0.75, label: "4k" },
-                { step: 0.5, label: "2k" },
-                { step: 0.25, label: "1k" },
-                { step: 0, label: "0" },
-              ].map(({ step, label }) => (
-                <div
-                  key={step}
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    bottom: `${26 + step * 155}px`,
-                    borderTop: step === 0 ? "1px solid #cbd5e1" : "1px dashed #f1f5f9",
-                    pointerEvents: "none",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <span
-                    style={{
-                      position: "absolute",
-                      left: -5,
-                      top: -8,
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: "#94a3b8",
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    {label}
-                  </span>
-                </div>
-              ))}
+            <div style={{ position: "relative", height: 220, paddingTop: 20 }}>
+              {/* Dynamic Background Gridlines & Y-Axis Scale */}
+              {(() => {
+                const rushMaxVal = Math.max(1, rushHourSlots.maxVal);
+                return [1, 0.75, 0.5, 0.25, 0].map((step) => {
+                  const v = Math.round(rushMaxVal * step);
+                  const label =
+                    rushMetric === "revenue"
+                      ? v >= 1000
+                        ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k`
+                        : `${v}`
+                      : `${v}`;
+                  return (
+                    <div
+                      key={step}
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        bottom: `${26 + step * 125}px`,
+                        borderTop: step === 0 ? "1px solid #cbd5e1" : "1px dashed #f1f5f9",
+                        pointerEvents: "none",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span
+                        style={{
+                          position: "absolute",
+                          left: -5,
+                          top: -8,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: "#94a3b8",
+                          fontFamily: "monospace",
+                        }}
+                      >
+                        {label}
+                      </span>
+                    </div>
+                  );
+                });
+              })()}
 
               {/* Bars Container */}
               <div
                 style={{
                   position: "relative",
                   zIndex: 2,
-                  height: 181,
+                  height: 200,
                   display: "flex",
                   alignItems: "flex-end",
                   gap: 6,
                   overflowX: "auto",
                   paddingLeft: 22,
+                  paddingTop: 24,
                 }}
               >
                 {rushHourSlots.list.map((slot) => {
@@ -1170,7 +1172,7 @@ export default function AdminLiveCharts({
                   const isHigh = slot.orders >= 2 && !isPeak;
                   const maxVal = Math.max(1, rushHourSlots.maxVal);
                   const barHeightPct = Math.min(100, Math.round((val / maxVal) * 100));
-                  const barPx = Math.max(val > 0 ? 8 : 4, Math.round((barHeightPct / 100) * 145));
+                  const barPx = Math.max(val > 0 ? 8 : 4, Math.round((barHeightPct / 100) * 120));
 
                   return (
                     <div
@@ -1400,43 +1402,44 @@ export default function AdminLiveCharts({
 
           {/* Chart Body */}
           <div style={{ padding: "18px 20px 14px" }}>
-            <div style={{ position: "relative", height: 210, paddingTop: 24 }}>
-              {/* Background Gridlines & Y-Axis */}
-              {[
-                { step: 1, label: "6k" },
-                { step: 0.75, label: "4k" },
-                { step: 0.5, label: "2k" },
-                { step: 0.25, label: "1k" },
-                { step: 0, label: "0" },
-              ].map(({ step, label }) => (
-                <div
-                  key={step}
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    bottom: `${26 + step * 155}px`,
-                    borderTop: step === 0 ? "1px solid #cbd5e1" : "1px dashed #f1f5f9",
-                    pointerEvents: "none",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <span
-                    style={{
-                      position: "absolute",
-                      left: -5,
-                      top: -8,
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: "#94a3b8",
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    {label}
-                  </span>
-                </div>
-              ))}
+            <div style={{ position: "relative", height: 220, paddingTop: 20 }}>
+              {/* Dynamic Background Gridlines & Y-Axis */}
+              {(() => {
+                const trendMaxRev = Math.max(1, dailySalesTrend.maxRevenue);
+                return [1, 0.75, 0.5, 0.25, 0].map((step) => {
+                  const v = Math.round(trendMaxRev * step);
+                  const label = v >= 1000 ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k` : `${v}`;
+                  return (
+                    <div
+                      key={step}
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        bottom: `${26 + step * 125}px`,
+                        borderTop: step === 0 ? "1px solid #cbd5e1" : "1px dashed #f1f5f9",
+                        pointerEvents: "none",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span
+                        style={{
+                          position: "absolute",
+                          left: -5,
+                          top: -8,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: "#94a3b8",
+                          fontFamily: "monospace",
+                        }}
+                      >
+                        {label}
+                      </span>
+                    </div>
+                  );
+                });
+              })()}
 
               {/* Chart Content */}
               {salesChartStyle === "area" ? (
@@ -1444,7 +1447,7 @@ export default function AdminLiveCharts({
                   style={{
                     position: "relative",
                     zIndex: 2,
-                    height: 181,
+                    height: 200,
                     display: "flex",
                     alignItems: "flex-end",
                     paddingLeft: 22,
@@ -1455,9 +1458,9 @@ export default function AdminLiveCharts({
                       position: "absolute",
                       left: 22,
                       right: 0,
-                      top: 0,
+                      bottom: 26,
                       width: "calc(100% - 22px)",
-                      height: 155,
+                      height: 125,
                       overflow: "visible",
                     }}
                     preserveAspectRatio="none"
@@ -1527,10 +1530,10 @@ export default function AdminLiveCharts({
                         style={{
                           fontSize: 10,
                           fontWeight: 700,
-                          color: (p.dateKey === todayDateKey) ? "#059669" : "#475569",
+                          color: p.dateKey === todayDateKey ? "#059669" : "#475569",
                         }}
                       >
-                        {(p.dateKey === todayDateKey) ? "Today" : p.shortLabel}
+                        {p.dateKey === todayDateKey ? "Today" : p.shortLabel}
                       </span>
                     ))}
                   </div>
@@ -1541,18 +1544,19 @@ export default function AdminLiveCharts({
                   style={{
                     position: "relative",
                     zIndex: 2,
-                    height: 181,
+                    height: 200,
                     display: "flex",
                     alignItems: "flex-end",
                     gap: 12,
                     overflowX: "auto",
                     paddingLeft: 22,
+                    paddingTop: 24,
                   }}
                 >
                   {dailySalesTrend.points.map((p) => {
                     const maxRev = Math.max(1, dailySalesTrend.maxRevenue);
                     const barHeightPct = Math.min(100, Math.round((p.revenue / maxRev) * 100));
-                    const barPx = Math.max(p.revenue > 0 ? 10 : 4, Math.round((barHeightPct / 100) * 145));
+                    const barPx = Math.max(p.revenue > 0 ? 10 : 4, Math.round((barHeightPct / 100) * 120));
 
                     return (
                       <div

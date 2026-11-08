@@ -1145,32 +1145,21 @@ export default function OrdersLiveBoard({
 
       {/* ─── STATUS FILTER TABS ──────────────────────────────── */}
       <div
+        className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2.5 mb-5 border-b border-slate-200 flex-nowrap sm:flex-wrap"
         style={{
-          display: "flex",
-          gap: "8px",
-          flexWrap: "wrap",
-          marginBottom: "20px",
-          borderBottom: "1px solid #e2e8f0",
-          paddingBottom: "12px",
+          scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch",
         }}
       >
         {/* Active tab */}
         <button
           onClick={() => setActiveTab("active")}
           style={{
-            padding: "7px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-            cursor: "pointer",
             border: activeTab === "active" ? "1px solid #fed7aa" : "1px solid #e2e8f0",
             background: activeTab === "active" ? "#fff7ed" : "#ffffff",
             color: activeTab === "active" ? "#ea580c" : "#64748b",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            transition: "all 0.15s ease",
           }}
+          className="shrink-0 inline-flex items-center gap-1.5 py-1.5 px-3 sm:py-2 sm:px-3.5 rounded-md text-xs sm:text-[13px] font-bold cursor-pointer transition-all shadow-2xs"
         >
           <Flame size={14} className={activeTab === "active" ? "text-orange-500" : ""} />
           <span>Active ({activeCount})</span>
@@ -1180,19 +1169,11 @@ export default function OrdersLiveBoard({
         <button
           onClick={() => setActiveTab("today")}
           style={{
-            padding: "7px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-            cursor: "pointer",
             border: activeTab === "today" || (activeTab as string) === "all" ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
             background: activeTab === "today" || (activeTab as string) === "all" ? "#f0fdf4" : "#ffffff",
             color: activeTab === "today" || (activeTab as string) === "all" ? "#16a34a" : "#64748b",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            transition: "all 0.15s ease",
           }}
+          className="shrink-0 inline-flex items-center gap-1.5 py-1.5 px-3 sm:py-2 sm:px-3.5 rounded-md text-xs sm:text-[13px] font-bold cursor-pointer transition-all shadow-2xs"
         >
           <Clock size={14} className={activeTab === "today" || (activeTab as string) === "all" ? "text-emerald-500" : ""} />
           <span>Today ({tabCounts.today})</span>
@@ -1202,19 +1183,11 @@ export default function OrdersLiveBoard({
         <button
           onClick={() => setActiveTab("delivery")}
           style={{
-            padding: "7px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-            cursor: "pointer",
             border: activeTab === "delivery" ? "1px solid #a7f3d0" : "1px solid #e2e8f0",
             background: activeTab === "delivery" ? "#ecfdf5" : "#ffffff",
             color: activeTab === "delivery" ? "#065f46" : "#64748b",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            transition: "all 0.15s ease",
           }}
+          className="shrink-0 inline-flex items-center gap-1.5 py-1.5 px-3 sm:py-2 sm:px-3.5 rounded-md text-xs sm:text-[13px] font-bold cursor-pointer transition-all shadow-2xs"
         >
           <Bike size={14} />
           <span>Delivery ({tabCounts.delivery})</span>
@@ -1223,19 +1196,11 @@ export default function OrdersLiveBoard({
         <button
           onClick={() => setActiveTab("tables")}
           style={{
-            padding: "7px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-            cursor: "pointer",
             border: activeTab === "tables" ? "1px solid #fde68a" : "1px solid #e2e8f0",
             background: activeTab === "tables" ? "#fef3c7" : "#ffffff",
             color: activeTab === "tables" ? "#92400e" : "#64748b",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            transition: "all 0.15s ease",
           }}
+          className="shrink-0 inline-flex items-center gap-1.5 py-1.5 px-3 sm:py-2 sm:px-3.5 rounded-md text-xs sm:text-[13px] font-bold cursor-pointer transition-all shadow-2xs"
         >
           <UtensilsCrossed size={14} />
           <span>Tables ({tabCounts.dineIn})</span>
@@ -1244,19 +1209,11 @@ export default function OrdersLiveBoard({
         <button
           onClick={() => setActiveTab("tokens")}
           style={{
-            padding: "7px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-            cursor: "pointer",
             border: activeTab === "tokens" ? "1px solid #fed7aa" : "1px solid #e2e8f0",
             background: activeTab === "tokens" ? "#fff7ed" : "#ffffff",
             color: activeTab === "tokens" ? "#c2410c" : "#64748b",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            transition: "all 0.15s ease",
           }}
+          className="shrink-0 inline-flex items-center gap-1.5 py-1.5 px-3 sm:py-2 sm:px-3.5 rounded-md text-xs sm:text-[13px] font-bold cursor-pointer transition-all shadow-2xs"
         >
           <Key size={14} />
           <span>Tokens ({tabCounts.takeaway})</span>
@@ -1265,19 +1222,11 @@ export default function OrdersLiveBoard({
         <button
           onClick={() => setActiveTab("pending")}
           style={{
-            padding: "7px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-            cursor: "pointer",
             border: activeTab === "pending" ? "1px solid #fef08a" : "1px solid #e2e8f0",
             background: activeTab === "pending" ? "#fefce8" : "#ffffff",
             color: activeTab === "pending" ? "#ca8a04" : "#64748b",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            transition: "all 0.15s ease",
           }}
+          className="shrink-0 inline-flex items-center gap-1.5 py-1.5 px-3 sm:py-2 sm:px-3.5 rounded-md text-xs sm:text-[13px] font-bold cursor-pointer transition-all shadow-2xs"
         >
           <Clock size={13} />
           <span>Pending ({tabCounts.pending})</span>
@@ -1286,19 +1235,11 @@ export default function OrdersLiveBoard({
         <button
           onClick={() => setActiveTab("preparing")}
           style={{
-            padding: "7px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-            cursor: "pointer",
             border: activeTab === "preparing" ? "1px solid #fed7aa" : "1px solid #e2e8f0",
             background: activeTab === "preparing" ? "#fff7ed" : "#ffffff",
             color: activeTab === "preparing" ? "#ea580c" : "#64748b",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            transition: "all 0.15s ease",
           }}
+          className="shrink-0 inline-flex items-center gap-1.5 py-1.5 px-3 sm:py-2 sm:px-3.5 rounded-md text-xs sm:text-[13px] font-bold cursor-pointer transition-all shadow-2xs"
         >
           <Flame size={13} />
           <span>In Kitchen ({tabCounts.preparing})</span>
@@ -1307,19 +1248,11 @@ export default function OrdersLiveBoard({
         <button
           onClick={() => setActiveTab("ready")}
           style={{
-            padding: "7px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-            cursor: "pointer",
             border: activeTab === "ready" ? "1px solid #e9d5ff" : "1px solid #e2e8f0",
             background: activeTab === "ready" ? "#faf5ff" : "#ffffff",
             color: activeTab === "ready" ? "#9333ea" : "#64748b",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            transition: "all 0.15s ease",
           }}
+          className="shrink-0 inline-flex items-center gap-1.5 py-1.5 px-3 sm:py-2 sm:px-3.5 rounded-md text-xs sm:text-[13px] font-bold cursor-pointer transition-all shadow-2xs"
         >
           <CheckCircle2 size={13} />
           <span>Ready ({tabCounts.ready})</span>
@@ -1328,19 +1261,11 @@ export default function OrdersLiveBoard({
         <button
           onClick={() => setActiveTab("delivered")}
           style={{
-            padding: "7px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 700,
-            cursor: "pointer",
             border: activeTab === "delivered" ? "1px solid #bbf7d0" : "1px solid #e2e8f0",
             background: activeTab === "delivered" ? "#f0fdf4" : "#ffffff",
             color: activeTab === "delivered" ? "#16a34a" : "#64748b",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            transition: "all 0.15s ease",
           }}
+          className="shrink-0 inline-flex items-center gap-1.5 py-1.5 px-3 sm:py-2 sm:px-3.5 rounded-md text-xs sm:text-[13px] font-bold cursor-pointer transition-all shadow-2xs"
         >
           <CheckCircle2 size={13} />
           <span>Delivered ({tabCounts.delivered})</span>
