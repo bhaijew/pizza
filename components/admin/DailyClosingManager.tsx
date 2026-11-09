@@ -15,6 +15,7 @@ import {
   sendDailyClosingWhatsAppAction,
 } from "@/lib/admin-actions";
 import { exportDailyClosingPDF, openDailyClosingPrintView } from "@/lib/daily-closing-pdf";
+import { createClient } from "@/utils/supabase/client";
 
 interface DailyClosingProps {
   initialData: {
@@ -129,6 +130,44 @@ export default function DailyClosingManager({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Real-time sync when closing or orders/expenses are updated from mobile app or another tab
+  useEffect(() => {
+    let active = true;
+    const refreshLive = async () => {
+      try {
+        const result = await fetchDailyClosingData(selectedDate);
+        if (active) setData(result);
+      } catch {}
+    };
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`closing_live_sync_${shopId || "main"}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "daily_closings" },
+        () => refreshLive()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        () => refreshLive()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "expenses" },
+        () => refreshLive()
+      )
+      .subscribe();
+
+    const interval = setInterval(refreshLive, 6000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [selectedDate, shopId]);
 
   // Dynamic Closed By initialization based on logged-in role & name
   const detectedClosedBy =

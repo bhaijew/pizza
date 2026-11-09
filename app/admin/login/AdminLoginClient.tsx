@@ -433,6 +433,14 @@ export default function AdminLoginClient({
                 </p>
 
                 <Link
+                  href="/download-app"
+                  className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all flex items-center justify-center gap-2 no-underline mt-1"
+                >
+                  <span>📱</span>
+                  <span>Download Android Admin App (APK)</span>
+                </Link>
+
+                <Link
                   href="/"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-red-600 transition-colors mt-1"
                 >

@@ -155,6 +155,13 @@ const NAV_GROUPS: NavGroup[] = [
         href: "/admin/marketing",
         icon: MessageSquare,
       },
+      {
+        label: "Download App (APK)",
+        href: "/admin/download-app",
+        badge: "NEW",
+        badgeColor: "#10b981",
+        icon: Download,
+      },
     ],
   },
   {
