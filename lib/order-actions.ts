@@ -17,6 +17,7 @@ import { processLoyaltyPoints } from "@/lib/promo-actions";
 import { syncCustomerFromOrder } from "@/lib/customer-actions";
 import { dbCache } from "@/lib/db-cache";
 import { ADMIN_COOKIE, verifySessionToken } from "@/lib/admin-auth";
+import { getCurrentBusinessDate } from "@/lib/business-hours";
 
 export interface CreateOrderItem {
   id: string | number;
@@ -236,20 +237,25 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
         }
       }
 
-      // Date formatted as ddMM (e.g. 0711 for 07 Nov) in Asia/Karachi timezone
-      const now = new Date();
+      // Business shift date formatted as ddMM (e.g. 0911 for 09 Nov) in PKT
+      // Uses getCurrentBusinessDate() so orders placed after midnight (e.g. 12:30 AM / 01:30 AM)
+      // belong to the SAME shift day and the sequence continues seamlessly without resetting!
       let dateCode = "0711";
       try {
-        const formatter = new Intl.DateTimeFormat("en-PK", {
-          timeZone: "Asia/Karachi",
-          day: "2-digit",
-          month: "2-digit",
-        });
-        const parts = formatter.formatToParts(now);
-        const day = parts.find((p) => p.type === "day")?.value || String(now.getDate()).padStart(2, "0");
-        const month = parts.find((p) => p.type === "month")?.value || String(now.getMonth() + 1).padStart(2, "0");
-        dateCode = `${day}${month}`;
+        const businessDateStr = getCurrentBusinessDate(); // returns YYYY-MM-DD
+        const parts = businessDateStr.split("-");
+        if (parts.length === 3) {
+          const day = parts[2];
+          const month = parts[1];
+          dateCode = `${day}${month}`;
+        } else {
+          const now = new Date();
+          const day = String(now.getDate()).padStart(2, "0");
+          const month = String(now.getMonth() + 1).padStart(2, "0");
+          dateCode = `${day}${month}`;
+        }
       } catch {
+        const now = new Date();
         const day = String(now.getDate()).padStart(2, "0");
         const month = String(now.getMonth() + 1).padStart(2, "0");
         dateCode = `${day}${month}`;
