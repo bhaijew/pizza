@@ -154,8 +154,8 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
             typeof rawVar === "string"
               ? rawVar
               : rawVar && typeof rawVar === "object"
-              ? rawVar.name || ""
-              : ""
+                ? rawVar.name || ""
+                : ""
           ).toLowerCase().trim();
 
           if (varName && Array.isArray(prod.variations)) {
@@ -500,8 +500,8 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
                 typeof rawVar === "string"
                   ? rawVar
                   : rawVar && typeof rawVar === "object"
-                  ? rawVar.name || ""
-                  : ""
+                    ? rawVar.name || ""
+                    : ""
               ).toLowerCase().trim();
 
               let matched = variationName

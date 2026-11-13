@@ -17,8 +17,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-const APK_DIRECT_URL =
-  "https://uadrrjrlhfttithjmdye.supabase.co/storage/v1/object/public/releases/Sole-What-Admin-v1.0.9.apk?download=Sole-What-Admin-v1.0.9.apk";
+const APK_DIRECT_URL = "/pizza-admin.apk";
 const APP_VERSION = "1.0.9";
 const BUILD_NUM = "10";
 const APK_SIZE = "36.2 MB";
@@ -36,7 +35,7 @@ export default function DownloadAppClient() {
     if (typeof window !== "undefined") {
       const origin = window.location.origin;
       setPageUrl(`${origin}/download-app`);
-      setApkFullUrl(APK_DIRECT_URL);
+      setApkFullUrl(APK_DIRECT_URL.startsWith("http") ? APK_DIRECT_URL : `${origin}${APK_DIRECT_URL}`);
       try {
         const saved = localStorage.getItem(THEME_STORAGE_KEY);
         if (saved === "dark") setIsDark(true);
