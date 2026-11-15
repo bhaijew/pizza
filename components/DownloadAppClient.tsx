@@ -18,8 +18,8 @@ import {
 } from "lucide-react";
 
 const APK_DIRECT_URL = "https://github.com/bhaijew/appsolewhat/releases/latest/download/app-release.apk";
-const APP_VERSION = "1.0.18";
-const BUILD_NUM = "19";
+const APP_VERSION = "1.0.19";
+const BUILD_NUM = "20";
 const APK_SIZE = "55.8 MB";
 const RELEASE_DATE = "Nov 15, 2026";
 const THEME_STORAGE_KEY = "pizza_admin_download_theme";
