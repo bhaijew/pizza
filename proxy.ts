@@ -66,7 +66,8 @@ export async function proxy(request: NextRequest) {
       subdomain &&
       !session.isMaster &&
       session.shopSlug &&
-      session.shopSlug.toLowerCase() !== subdomain.toLowerCase()
+      session.shopSlug.toLowerCase() !== subdomain.toLowerCase() &&
+      session.shopSlug.toLowerCase().replace(/[-_]/g, "") !== subdomain.toLowerCase().replace(/[-_]/g, "")
     ) {
       const loginUrl = new URL("/admin/login", request.url);
       loginUrl.searchParams.set("from", pathname);

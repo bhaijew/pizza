@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import AdminShell from "@/components/admin/AdminShell";
 import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/admin";
-import { ADMIN_SHOP_COOKIE } from "@/lib/admin-auth";
+import { ADMIN_COOKIE, ADMIN_SHOP_COOKIE, verifyAdminSession } from "@/lib/admin-auth";
 import { adminLogout, getActiveShopContext } from "@/lib/admin-actions";
 import { ShieldAlert, Store } from "@/components/admin/AdminIcons";
 import { dbCache } from "@/lib/db-cache";
@@ -23,13 +23,43 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const shopIdStr = cookieStore.get(ADMIN_SHOP_COOKIE)?.value;
+  const token = cookieStore.get(ADMIN_COOKIE)?.value;
+  const verifiedSession = token ? await verifyAdminSession(token) : null;
 
-  let shopName = "Store Admin";
+  // If user is not authenticated, render login page directly without AdminShell
+  if (!verifiedSession) {
+    return <>{children}</>;
+  }
+
+  // Tenant Boundary Guard: If visiting a specific shop subdomain, check if session matches
+  const hdrs = await headers();
+  const host = (hdrs.get("x-forwarded-host") || hdrs.get("host") || "").toLowerCase().split(":")[0];
+  let currentSub = "";
+  if (host.endsWith(".solewhat.store")) {
+    const part = host.replace(".solewhat.store", "").trim();
+    if (part && part !== "www") currentSub = part;
+  } else if (host.endsWith(".localhost")) {
+    const part = host.replace(".localhost", "").trim();
+    if (part && part !== "www") currentSub = part;
+  }
+
+  if (
+    currentSub &&
+    !verifiedSession.isMaster &&
+    verifiedSession.shopSlug &&
+    verifiedSession.shopSlug.toLowerCase() !== currentSub.toLowerCase() &&
+    verifiedSession.shopSlug.toLowerCase().replace(/[-_]/g, "") !== currentSub.toLowerCase().replace(/[-_]/g, "")
+  ) {
+    return <>{children}</>;
+  }
+
+  const shopIdStr = cookieStore.get(ADMIN_SHOP_COOKIE)?.value;
+  const shopIdNum = verifiedSession.shopId ?? (shopIdStr ? parseInt(shopIdStr, 10) : null);
+
+  let shopName = verifiedSession.shopName || "Store Admin";
   let shopStatus: "active" | "suspended" | "master" = "master";
   let ownerName = "";
-  let shopSlug: string | undefined = undefined;
-  const shopIdNum = shopIdStr ? parseInt(shopIdStr, 10) : null;
+  let shopSlug: string | undefined = verifiedSession.shopSlug || undefined;
 
   if (shopIdStr && isServiceRoleConfigured()) {
     try {
