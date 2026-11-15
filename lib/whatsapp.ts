@@ -76,7 +76,7 @@ export async function getShopWhatsAppCredentials(shopId?: number | null): Promis
   return dbCache.wrap(
     cacheKey,
     async () => {
-      const defaultApiKey = process.env.DEFAULT_WHATSAPP_API_KEY || "wag_8iBNQyfmDmSpZEvF0SsL7rtM2UzNzJ8M";
+      const defaultApiKey = process.env.DEFAULT_WHATSAPP_API_KEY || "wag_Yooc9iqdcQggxvfdO3OyvurvcKRbCE9d";
 
       let sessionId: string | null = null;
       let apiKey = defaultApiKey;
