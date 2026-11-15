@@ -1,7 +1,7 @@
 /**
  * Multi-Tenant WhatsApp Gateway Service
  * Connects with Railway WhatsApp Gateway:
- * POST https://solewhat-production-33f6.up.railway.app/api/messages/{sessionId}/send
+ * POST https://wa.solewhat.store/api/messages/{sessionId}/send
  *
  * Each shop/branch can configure its own unique `whatsapp_session_id` and optional `whatsapp_api_key`.
  */
@@ -202,9 +202,9 @@ export async function sendWhatsAppOrderAlert({
 
     const rawGatewayUrl = (process.env.WHATSAPP_GATEWAY_URL || "").trim();
     const gatewayBaseUrl = (
-      rawGatewayUrl && !rawGatewayUrl.includes("solewhat-production.up.railway.app")
+      rawGatewayUrl && !rawGatewayUrl.includes("solewhat-production.up.railway.app") && !rawGatewayUrl.includes("railway.app")
         ? rawGatewayUrl
-        : "https://solewhat-production-33f6.up.railway.app"
+        : "https://wa.solewhat.store"
     ).replace(/\/+$/, "");
     const endpoint = `${gatewayBaseUrl}/api/messages/${targetSessionId}/send`;
 

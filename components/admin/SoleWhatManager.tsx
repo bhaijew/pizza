@@ -53,9 +53,9 @@ export default function SoleWhatManager({
       : defaultMasterKey
   );
   const normalizedGatewayUrl = (
-    initialStatus.gatewayUrl && !initialStatus.gatewayUrl.includes("solewhat-production.up.railway.app")
+    initialStatus.gatewayUrl && !initialStatus.gatewayUrl.includes("solewhat-production.up.railway.app") && !initialStatus.gatewayUrl.includes("railway.app")
       ? initialStatus.gatewayUrl
-      : "https://solewhat-production-33f6.up.railway.app"
+      : "https://wa.solewhat.store"
   );
   const [gatewayUrl, setGatewayUrl] = useState(normalizedGatewayUrl);
 
@@ -229,7 +229,7 @@ server.listen(CONFIG.port, () => {
 
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
             <a
-              href="https://solewhat-production-33f6.up.railway.app/dashboard"
+              href="https://wa.solewhat.store/dashboard"
               target="_blank"
               rel="noreferrer"
               style={{
@@ -512,7 +512,7 @@ server.listen(CONFIG.port, () => {
                 }}
               />
               <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px" }}>
-                Active Railway Gateway: <code style={{ color: "#059669", fontWeight: 700 }}>{gatewayUrl}</code>
+                Active AI Gateway: <code style={{ color: "#059669", fontWeight: 700 }}>{gatewayUrl}</code>
               </div>
             </div>
 

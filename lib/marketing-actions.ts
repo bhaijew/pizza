@@ -130,9 +130,9 @@ export async function sendMarketingWhatsAppMessage(
 
     const rawGatewayUrl = (process.env.WHATSAPP_GATEWAY_URL || "").trim();
     const gatewayBaseUrl = (
-      rawGatewayUrl && !rawGatewayUrl.includes("solewhat-production.up.railway.app")
+      rawGatewayUrl && !rawGatewayUrl.includes("solewhat-production.up.railway.app") && !rawGatewayUrl.includes("railway.app")
         ? rawGatewayUrl
-        : "https://solewhat-production-33f6.up.railway.app"
+        : "https://wa.solewhat.store"
     ).replace(/\/+$/, "");
 
     const endpoint = `${gatewayBaseUrl}/api/messages/${credentials.sessionId}/send`;
