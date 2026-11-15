@@ -215,10 +215,15 @@ export async function sendWhatsAppOrderAlert({
     const appBaseUrl = getAppBaseUrl();
     const trackingSection = `\n📍 Live Status Tracker:\n${appBaseUrl}/track/${orderId}\n`;
 
+    const reviewLink = config.googleReviewUrl?.trim() || "https://reviewthis.biz/pizzamafia";
+    const reviewSection = reviewLink
+      ? `\n⭐ Please leave us a review on Google:\n${reviewLink}\n`
+      : "";
+
     const defaultMessage = `Salam ${customerName || "Valued Customer"}! 🎉
 Your order #${orderId} has been confirmed.
 Total: ${formattedTotal}
-${trackingSection}
+${trackingSection}${reviewSection}
 Thank you for shopping with ${resolvedShopName}! We will update you with delivery details soon.`;
 
     const textToSend = customMessage || defaultMessage;
@@ -556,8 +561,7 @@ export async function sendWhatsAppReviewPrompt({
     if (creds.googleReviewUrl?.trim()) {
       targetReviewUrl = creds.googleReviewUrl.trim();
     } else {
-      const appBaseUrl = getAppBaseUrl();
-      targetReviewUrl = `${appBaseUrl}/review/${encodeURIComponent(orderNumber)}`;
+      targetReviewUrl = "https://reviewthis.biz/pizzamafia";
     }
     if (creds.shopName) shopName = creds.shopName;
   }

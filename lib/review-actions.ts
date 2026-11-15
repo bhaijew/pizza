@@ -80,9 +80,7 @@ export async function getReviewOrderDetails(orderNumber: string): Promise<{
 
     // Fallback google review URL if shop hasn't set one yet
     if (!googleReviewUrl) {
-      googleReviewUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        `${shopName} Pakistan`
-      )}`;
+      googleReviewUrl = "https://reviewthis.biz/pizzamafia";
     }
 
     // Parse items
@@ -203,9 +201,7 @@ export async function submitOrderReview({
     }
 
     if (!googleReviewUrl) {
-      googleReviewUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        `${shopName} Pakistan`
-      )}`;
+      googleReviewUrl = "https://reviewthis.biz/pizzamafia";
     }
 
     const isNegative = numRating <= 3;
