@@ -17,11 +17,11 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-const APK_DIRECT_URL = "/pizza-admin.apk";
-const APP_VERSION = "1.0.9";
-const BUILD_NUM = "10";
-const APK_SIZE = "36.2 MB";
-const RELEASE_DATE = "Nov 09, 2026";
+const APK_DIRECT_URL = "https://github.com/bhaijew/appsolewhat/releases/latest/download/app-release.apk";
+const APP_VERSION = "1.0.18";
+const BUILD_NUM = "19";
+const APK_SIZE = "55.8 MB";
+const RELEASE_DATE = "Nov 15, 2026";
 const THEME_STORAGE_KEY = "pizza_admin_download_theme";
 
 export default function DownloadAppClient() {
@@ -213,7 +213,7 @@ export default function DownloadAppClient() {
               <div className="space-y-2.5 pt-1">
                 <a
                   href={APK_DIRECT_URL}
-                  download="Sole-What-Admin-v1.0.9.apk"
+                  download={`SoleWhat-Admin-v${APP_VERSION}.apk`}
                   onClick={handleTriggerDownload}
                   style={{ borderRadius: "5px" }}
                   className="w-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold text-sm px-5 py-3 transition-colors flex items-center justify-center gap-2 no-underline cursor-pointer"
@@ -377,7 +377,7 @@ export default function DownloadAppClient() {
               </span>
               <a
                 href={APK_DIRECT_URL}
-                download="Sole-What-Admin-v1.0.9.apk"
+                download={`SoleWhat-Admin-v${APP_VERSION}.apk`}
                 className="font-semibold text-red-600 hover:underline flex items-center gap-1"
               >
                 <Smartphone size={12} />
