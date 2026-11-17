@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { Order } from "@/types/menu";
 
 interface AnalyticsDashboardProps {
@@ -9,7 +10,7 @@ interface AnalyticsDashboardProps {
   shopName?: string;
 }
 
-type DateRange = "7d" | "30d" | "all" | "today";
+type DateRange = "today" | "7d" | "15d" | "30d" | "all";
 
 export default function AnalyticsDashboard({
   orders = [],
@@ -28,7 +29,7 @@ export default function AnalyticsDashboard({
       return orders.filter((o) => o.created_at?.slice(0, 10) === todayStr);
     }
 
-    const days = dateRange === "7d" ? 7 : 30;
+    const days = dateRange === "7d" ? 7 : dateRange === "15d" ? 15 : 30;
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
     return orders.filter((o) => new Date(o.created_at) >= cutoff);
   }, [orders, dateRange]);
@@ -224,7 +225,7 @@ export default function AnalyticsDashboard({
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           {/* Date Range Selector */}
           <div style={{ display: "flex", background: "#f1f5f9", padding: 3, borderRadius: 6, border: "1px solid #e2e8f0" }}>
-            {(["today", "7d", "30d", "all"] as DateRange[]).map((r) => (
+            {(["today", "7d", "15d", "30d", "all"] as DateRange[]).map((r) => (
               <button
                 key={r}
                 type="button"
@@ -241,10 +242,40 @@ export default function AnalyticsDashboard({
                   boxShadow: dateRange === r ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
                 }}
               >
-                {r === "today" ? "Today" : r === "7d" ? "Last 7 Days" : r === "30d" ? "Last 30 Days" : "All Time"}
+                {r === "today"
+                  ? "Today"
+                  : r === "7d"
+                  ? "Last 7 Days"
+                  : r === "15d"
+                  ? "Last 15 Days"
+                  : r === "30d"
+                  ? "Last 30 Days"
+                  : "All Time"}
               </button>
             ))}
           </div>
+
+          {/* Quick link to Dedicated 15/30 Days Report */}
+          <Link
+            href="/admin/sales-report"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 12px",
+              background: "#eff6ff",
+              border: "1px solid #bfdbfe",
+              borderRadius: 6,
+              color: "#1d4ed8",
+              fontSize: 12,
+              fontWeight: 800,
+              textDecoration: "none",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+            }}
+          >
+            <span>📊</span>
+            <span>15 &amp; 30 Days Audit Page</span>
+          </Link>
 
           {/* Export CSV Button */}
           <button

@@ -40,6 +40,7 @@ import {
   Search,
   Download,
   Bike,
+  TrendingUp,
 } from "lucide-react";
 import NavigationProgressBar from "@/components/admin/NavigationProgressBar";
 import SoleWhatLogo from "@/components/SoleWhatLogo";
@@ -155,13 +156,6 @@ const NAV_GROUPS: NavGroup[] = [
         href: "/admin/marketing",
         icon: MessageSquare,
       },
-      {
-        label: "Download App (APK)",
-        href: "/admin/download-app",
-        badge: "NEW",
-        badgeColor: "#10b981",
-        icon: Download,
-      },
     ],
   },
   {
@@ -221,6 +215,11 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Sales Analytics",
         href: "/admin/analytics",
         icon: BarChart3,
+      },
+      {
+        label: "15 & 30 Days Sales",
+        href: "/admin/sales-report",
+        icon: TrendingUp,
       },
       {
         label: "Recipe & Inventory",

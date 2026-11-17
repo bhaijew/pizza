@@ -2,6 +2,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ADMIN_COOKIE, verifyAdminSession } from "@/lib/admin-auth";
 import { fetchSettings } from "@/lib/menu-data";
+import { getShopBranding } from "@/lib/shop-branding";
 import { isServiceRoleConfigured, createAdminClient } from "@/utils/supabase/admin";
 import AdminLoginClient from "./AdminLoginClient";
 
@@ -66,9 +67,13 @@ export default async function AdminLoginPage({
     }
   }
 
-  const settings = await fetchSettings(boundShop?.id ?? null).catch(() => null);
+  const [settings, branding] = await Promise.all([
+    fetchSettings(boundShop?.id ?? null).catch(() => null),
+    getShopBranding(boundShop?.id ?? null).catch(() => null),
+  ]);
+  const logoUrl = branding?.logo_url || settings?.logo_url || null;
   const rawName = boundShop?.name || settings?.shop_name?.trim() || "SoleWhat POS & Cloud Operations";
   const setupName = rawName.replace(/Soule\s*What(\s*Management)?/gi, "SoleWhat POS & Cloud Operations");
 
-  return <AdminLoginClient setupName={setupName} boundShop={boundShop} />;
+  return <AdminLoginClient setupName={setupName} boundShop={boundShop} logoUrl={logoUrl} />;
 }

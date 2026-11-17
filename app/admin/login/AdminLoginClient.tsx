@@ -23,11 +23,13 @@ import {
 interface AdminLoginClientProps {
   setupName?: string;
   boundShop?: { id: number; name: string; slug: string } | null;
+  logoUrl?: string | null;
 }
 
 export default function AdminLoginClient({
   setupName = "SoleWhat POS & Cloud Operations",
   boundShop = null,
+  logoUrl = null,
 }: AdminLoginClientProps) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -130,7 +132,17 @@ export default function AdminLoginClient({
           {/* Brand & Setup Identity */}
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="flex-shrink-0">
-              <SoleWhatLogo size={36} variant="shield" showGlow={false} />
+              {logoUrl ? (
+                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-center p-1 overflow-hidden">
+                  <img
+                    src={logoUrl}
+                    alt={rawName}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              ) : (
+                <SoleWhatLogo size={36} variant="shield" showGlow={false} />
+              )}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -302,9 +314,21 @@ export default function AdminLoginClient({
               {/* Header Icon & Brand */}
               <div className="text-center mb-6">
                 
-                {/* Sole-What Bespoke Brand Logo Container */}
-                <div className="inline-flex items-center justify-center mb-3 transition-transform hover:scale-105">
-                  <SoleWhatLogo size={64} variant="badge" showGlow={true} />
+                {/* Brand Logo Container */}
+                <div className="inline-flex items-center justify-center mb-3.5 transition-transform hover:scale-105">
+                  {logoUrl ? (
+                    <div className="w-[72px] h-[72px] rounded-2xl bg-white border border-slate-200/90 shadow-md p-2 flex items-center justify-center">
+                      <img
+                        src={logoUrl}
+                        alt={rawName}
+                        className="w-full h-full object-contain rounded-xl"
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-1 rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-orange-200/60 shadow-sm">
+                      <SoleWhatLogo size={68} variant="badge" showGlow={true} />
+                    </div>
+                  )}
                 </div>
 
                 {boundShop ? (
@@ -431,14 +455,6 @@ export default function AdminLoginClient({
                 <p className="text-[11px] text-slate-400 font-medium">
                   Press <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-mono text-[10px]">Enter ↵</kbd> to sign in directly
                 </p>
-
-                <Link
-                  href="/download-app"
-                  className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all flex items-center justify-center gap-2 no-underline mt-1"
-                >
-                  <span>📱</span>
-                  <span>Download Android Admin App (APK)</span>
-                </Link>
 
                 <Link
                   href="/"
