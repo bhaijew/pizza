@@ -312,10 +312,10 @@ export default function AdminLoginClient({
             >
               
               {/* Header Icon & Brand */}
-              <div className="text-center mb-6">
+              <div className="flex flex-col items-center text-center mb-6">
                 
                 {/* Brand Logo Container */}
-                <div className="inline-flex items-center justify-center mb-3.5 transition-transform hover:scale-105">
+                <div className="flex items-center justify-center mb-3 transition-transform hover:scale-105">
                   {logoUrl ? (
                     <div className="w-[72px] h-[72px] rounded-2xl bg-white border border-slate-200/90 shadow-md p-2 flex items-center justify-center">
                       <img
@@ -332,12 +332,12 @@ export default function AdminLoginClient({
                 </div>
 
                 {boundShop ? (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-orange-100 text-orange-800 border border-orange-300 mb-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-orange-100 text-orange-800 border border-orange-300 mb-3">
                     <span className="w-2 h-2 rounded-full bg-orange-600 animate-pulse" />
                     <span>{boundShop.name} Branch Portal</span>
                   </div>
                 ) : (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 mb-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 mb-3">
                     <span>{rawName}</span>
                   </div>
                 )}

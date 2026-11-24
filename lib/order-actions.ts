@@ -892,6 +892,8 @@ export async function confirmDeliveryByRider(
 
     // Automated WhatsApp Review Prompt on Rider Delivery
     if (order.customer_phone && !order.notes?.includes("[REVIEW_PROMPT_SENT]")) {
+      const updatedNotes = order.notes ? `${order.notes} [REVIEW_PROMPT_SENT]` : "[REVIEW_PROMPT_SENT]";
+      db.from("orders").update({ notes: updatedNotes }).eq("id", order.id).then(() => {});
       sendWhatsAppReviewPrompt({
         customerPhone: order.customer_phone,
         customerName: order.customer_name,

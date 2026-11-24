@@ -314,6 +314,24 @@ export async function dispatchReviewPromptAlert(orderNumber: string): Promise<{
       shopId: order.shop_id,
     });
 
+    if (res.success) {
+      try {
+        const { data: currentOrd } = await db
+          .from("orders")
+          .select("notes")
+          .ilike("order_number", cleanNumber)
+          .maybeSingle();
+
+        const currentNotes = currentOrd?.notes || "";
+        if (!currentNotes.includes("[REVIEW_PROMPT_SENT]")) {
+          const updatedNotes = currentNotes ? `${currentNotes} [REVIEW_PROMPT_SENT]` : "[REVIEW_PROMPT_SENT]";
+          await db.from("orders").update({ notes: updatedNotes }).ilike("order_number", cleanNumber);
+        }
+      } catch (noteErr) {
+        console.warn("[dispatchReviewPromptAlert] Note update warning:", noteErr);
+      }
+    }
+
     return { success: res.success, error: res.error, reviewUrl: res.reviewUrl };
   } catch (err: any) {
     return { success: false, error: err?.message || "Failed to dispatch review prompt." };

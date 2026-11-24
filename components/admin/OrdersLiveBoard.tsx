@@ -121,6 +121,7 @@ function getCleanCustomerNote(notes?: string | null) {
     .replace(/\[RIDER:[^\]]*\]/gi, "")
     .replace(/\[RECREATED:[^\]]*\]/gi, "")
     .replace(/\[DINE-IN:[^\]]*\]/gi, "")
+    .replace(/\[REVIEW_PROMPT_SENT\]/gi, "")
     .replace(/TOKEN:\s*[A-Za-z0-9-]+/gi, "")
     .trim();
 }
@@ -494,7 +495,18 @@ export default function OrdersLiveBoard({
 
   const handleStatusChange = (orderId: number, nextStatus: string) => {
     setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: nextStatus as any } : o))
+      prev.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              status: nextStatus as any,
+              notes:
+                nextStatus === "delivered" && o.customer_phone && !o.notes?.includes("[REVIEW_PROMPT_SENT]")
+                  ? (o.notes ? `${o.notes} [REVIEW_PROMPT_SENT]` : "[REVIEW_PROMPT_SENT]")
+                  : o.notes,
+            }
+          : o
+      )
     );
 
     startTransition(async () => {
@@ -1447,6 +1459,25 @@ export default function OrdersLiveBoard({
                           <span>RECREATED</span>
                         </span>
                       )}
+                      {order.notes?.includes("[REVIEW_PROMPT_SENT]") && (
+                        <span
+                          style={{
+                            padding: "1px 6px",
+                            borderRadius: "3px",
+                            fontSize: "9.5px",
+                            fontWeight: 800,
+                            background: "#ecfdf5",
+                            color: "#059669",
+                            border: "1px solid #a7f3d0",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                          }}
+                          title="Google Review prompt was sent to customer via WhatsApp"
+                        >
+                          <span>⭐ Review Sent</span>
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: "10.5px", color: "#64748b" }}>
                       {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(order.created_at).toLocaleDateString()}
@@ -2363,40 +2394,97 @@ export default function OrdersLiveBoard({
                           </div>
 
                           {order.customer_phone && (
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  const { dispatchReviewPromptAlert } = await import("@/lib/review-actions");
-                                  const res = await dispatchReviewPromptAlert(order.order_number);
-                                  if (res.success) {
-                                    alert(`⭐ WhatsApp 5-Star Review Prompt sent to ${order.customer_phone}!\n\nReview Link:\n${res.reviewUrl || "Google Review Link"}`);
-                                  } else {
-                                    alert(res.error || "Could not send WhatsApp alert.");
+                            order.notes?.includes("[REVIEW_PROMPT_SENT]") ? (
+                              <div
+                                style={{
+                                  height: "32px",
+                                  padding: "0 8px",
+                                  borderRadius: "6px",
+                                  background: "#ecfdf5",
+                                  border: "1px solid #6ee7b7",
+                                  color: "#065f46",
+                                  fontSize: "11px",
+                                  fontWeight: 800,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "5px",
+                                  whiteSpace: "nowrap",
+                                }}
+                                title="Google Review prompt was sent to customer via WhatsApp"
+                              >
+                                <span className="text-emerald-600 font-bold">✓</span>
+                                <span>Review Sent</span>
+                                <button
+                                  type="button"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (!confirm(`Resend WhatsApp review prompt to ${order.customer_phone}?`)) return;
+                                    try {
+                                      const { dispatchReviewPromptAlert } = await import("@/lib/review-actions");
+                                      const res = await dispatchReviewPromptAlert(order.order_number);
+                                      if (res.success) {
+                                        alert(`⭐ Review prompt resent to ${order.customer_phone}!`);
+                                      } else {
+                                        alert(res.error || "Could not send WhatsApp alert.");
+                                      }
+                                    } catch (e: any) {
+                                      alert(e?.message || "Error dispatching alert");
+                                    }
+                                  }}
+                                  className="text-[10px] text-emerald-700 hover:text-emerald-900 underline font-semibold cursor-pointer ml-1"
+                                  title="Resend review prompt"
+                                >
+                                  Resend
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  try {
+                                    const { dispatchReviewPromptAlert } = await import("@/lib/review-actions");
+                                    const res = await dispatchReviewPromptAlert(order.order_number);
+                                    if (res.success) {
+                                      setOrders((prev) =>
+                                        prev.map((o) =>
+                                          o.id === order.id
+                                            ? {
+                                                ...o,
+                                                notes: o.notes
+                                                  ? `${o.notes} [REVIEW_PROMPT_SENT]`
+                                                  : "[REVIEW_PROMPT_SENT]",
+                                              }
+                                            : o
+                                        )
+                                      );
+                                      alert(`⭐ WhatsApp 5-Star Review Prompt sent to ${order.customer_phone}!\n\nReview Link:\n${res.reviewUrl || "Google Review Link"}`);
+                                    } else {
+                                      alert(res.error || "Could not send WhatsApp alert.");
+                                    }
+                                  } catch (e: any) {
+                                    alert(e?.message || "Error dispatching alert");
                                   }
-                                } catch (e: any) {
-                                  alert(e?.message || "Error dispatching alert");
-                                }
-                              }}
-                              style={{
-                                height: "32px",
-                                padding: "0 8px",
-                                borderRadius: "6px",
-                                background: "#fffbeb",
-                                border: "1px solid #fde68a",
-                                color: "#b45309",
-                                fontSize: "11px",
-                                fontWeight: 800,
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                whiteSpace: "nowrap",
-                              }}
-                              title="Send 5-Star Google Review Prompt to Customer WhatsApp"
-                            >
-                              <span>⭐ Review WA</span>
-                            </button>
+                                }}
+                                style={{
+                                  height: "32px",
+                                  padding: "0 8px",
+                                  borderRadius: "6px",
+                                  background: "#fffbeb",
+                                  border: "1px solid #fde68a",
+                                  color: "#b45309",
+                                  fontSize: "11px",
+                                  fontWeight: 800,
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  whiteSpace: "nowrap",
+                                }}
+                                title="Send 5-Star Google Review Prompt to Customer WhatsApp"
+                              >
+                                <span>⭐ Send Review</span>
+                              </button>
+                            )
                           )}
                         </div>
                       ) : order.status === "cancelled" ? (
