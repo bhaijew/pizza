@@ -303,10 +303,9 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
 
     // Build base notes with metadata
     let enrichedNotes = input.notes?.trim() || "";
-    enrichedNotes = `[ONLINE_MENU: AWAITING_VERIFICATION] ${enrichedNotes}`.trim();
 
     if (input.order_type === "dine_in" && tableNumber) {
-      enrichedNotes = `[DINE-IN: Table ${tableNumber} | VERIFY TOKEN: ${tokenNumber}] ${enrichedNotes}`.trim();
+      enrichedNotes = `[DINE-IN: Table ${tableNumber} | TOKEN: ${tokenNumber}] ${enrichedNotes}`.trim();
     } else if (input.order_type === "takeaway" && tokenNumber) {
       enrichedNotes = `[TAKEAWAY: Token ${tokenNumber}] ${enrichedNotes}`.trim();
     } else if (input.order_type === "delivery") {
@@ -334,8 +333,8 @@ export async function placeCustomerOrder(input: CreateOrderInput): Promise<{
       discount_amount: discountAmount,
       promo_code: input.promo_code || null,
       points_redeemed: input.points_redeemed || 0,
-      is_verified: false,
-      source: "online_menu",
+      is_verified: true,
+      source: "app",
     };
 
     // Attempt insertion with up to 3 automatic concurrency conflict retries
