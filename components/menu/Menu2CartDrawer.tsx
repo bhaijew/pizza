@@ -40,6 +40,14 @@ interface Menu2CartDrawerProps {
   googleReviewUrl?: string;
   menuProducts?: Product[];
   themeId?: Menu2ThemeId;
+  minDeliveryOrder?: number;
+  membershipCardSettings?: {
+    enabled: boolean;
+    name: string;
+    price: number;
+    validity: string;
+    perks: string;
+  };
 }
 
 export default function Menu2CartDrawer({
@@ -54,6 +62,8 @@ export default function Menu2CartDrawer({
   googleReviewUrl,
   menuProducts = [],
   themeId = "ruby_gold",
+  minDeliveryOrder = 0,
+  membershipCardSettings,
 }: Menu2CartDrawerProps) {
   const theme = MENU2_THEMES[themeId] || MENU2_THEMES.ruby_gold;
   const {
@@ -196,6 +206,13 @@ export default function Menu2CartDrawer({
       setErrorMessage("Please enter your complete delivery address.");
       return;
     }
+    const minDelivery = Number(minDeliveryOrder) || 0;
+    if (selectedOrderType === "delivery" && minDelivery > 0 && totalPrice < minDelivery) {
+      setErrorMessage(
+        `Minimum delivery order is ${formatPrice(minDelivery)}. Please add items worth ${formatPrice(minDelivery - totalPrice)} more.`
+      );
+      return;
+    }
     if (items.length === 0) {
       setErrorMessage("Your basket is empty.");
       return;
@@ -211,6 +228,14 @@ export default function Menu2CartDrawer({
       selected_toppings: i.selectedToppings || [],
     }));
 
+    const hasMembershipCard = items.some(
+      (i) => i.product.id === 999999 || String(i.product.slug).includes("membership")
+    );
+    let enrichedNotes = orderNotes.trim();
+    if (hasMembershipCard) {
+      enrichedNotes = `[NEW_MEMBERSHIP_CARD: ${membershipCardSettings?.name || "Family Card"} (Rs. ${membershipCardSettings?.price || 499})] ${enrichedNotes}`.trim();
+    }
+
     const result = await placeCustomerOrder({
       order_type: selectedOrderType,
       table_number: selectedOrderType === "dine_in" ? currentTable.trim() : undefined,
@@ -220,7 +245,7 @@ export default function Menu2CartDrawer({
       delivery_fee: 0,
       discount_amount: totalDiscount,
       promo_code: appliedPromo?.code || null,
-      notes: orderNotes.trim(),
+      notes: enrichedNotes,
       items: orderItems,
       total: finalPayable,
       shop_id: shopId || undefined,
@@ -518,6 +543,31 @@ export default function Menu2CartDrawer({
 
             {items.length > 0 && (
               <div className={`p-4 sm:p-5 ${theme.cardBg} border-t ${theme.cardBorder} space-y-3 shrink-0`}>
+                {/* Minimum Delivery Check Alert */}
+                {selectedOrderType === "delivery" && Number(minDeliveryOrder) > 0 && (
+                  <div
+                    className={`p-2.5 rounded-[7px] text-xs flex items-center justify-between border ${
+                      totalPrice >= Number(minDeliveryOrder)
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                        : "bg-amber-500/15 border-amber-500/40 text-amber-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Bike size={16} className="text-amber-400 shrink-0" />
+                      <span>
+                        Min Delivery Order: <strong>{formatPrice(minDeliveryOrder)}</strong>
+                      </span>
+                    </div>
+                    {totalPrice >= Number(minDeliveryOrder) ? (
+                      <span className="text-[11px] font-black text-emerald-400">✓ Met</span>
+                    ) : (
+                      <span className="text-[11px] font-black text-amber-400">
+                        Add {formatPrice(Number(minDeliveryOrder) - totalPrice)} more
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between opacity-75 font-semibold">
                     <span>Items Subtotal</span>
@@ -535,14 +585,30 @@ export default function Menu2CartDrawer({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setStep("info")}
-                  className={`w-full py-3.5 px-5 rounded-[7px] ${theme.primaryBtn} font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-between shadow-lg transition cursor-pointer`}
-                >
-                  <span>Proceed to Customer Info</span>
-                  <ChevronRight size={17} />
-                </button>
+                {selectedOrderType === "delivery" && Number(minDeliveryOrder) > 0 && totalPrice < Number(minDeliveryOrder) ? (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full py-3.5 px-5 rounded-[7px] bg-neutral-800 text-neutral-400 font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-between cursor-not-allowed border border-neutral-700 opacity-80"
+                    >
+                      <span>Add {formatPrice(Number(minDeliveryOrder) - totalPrice)} more for Delivery</span>
+                      <Bike size={17} />
+                    </button>
+                    <p className="text-[11px] text-center opacity-70">
+                      Or switch to <strong>Takeaway</strong> / <strong>Dine-in</strong> to order any amount.
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setStep("info")}
+                    className={`w-full py-3.5 px-5 rounded-[7px] ${theme.primaryBtn} font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-between shadow-lg transition cursor-pointer`}
+                  >
+                    <span>Proceed to Customer Info</span>
+                    <ChevronRight size={17} />
+                  </button>
+                )}
               </div>
             )}
           </>

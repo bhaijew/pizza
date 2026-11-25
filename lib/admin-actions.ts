@@ -1399,6 +1399,12 @@ export async function updateMenuUiSettings(input: {
   heroBgImage?: string;
   activeMenuTemplate?: "menu1" | "menu2";
   menu2Theme?: string;
+  minDeliveryOrder?: number;
+  membershipCardEnabled?: boolean;
+  membershipCardName?: string;
+  membershipCardPrice?: number;
+  membershipCardValidity?: string;
+  membershipCardPerks?: string;
 }): Promise<{ error: string | null; success: boolean }> {
   await requireAdmin();
   const db = createAdminClient();
@@ -1448,6 +1454,24 @@ export async function updateMenuUiSettings(input: {
               ? "menu2"
               : "menu1";
         }
+        if (input.minDeliveryOrder !== undefined) {
+          existingFlags.min_delivery_order = Number(input.minDeliveryOrder) || 0;
+        }
+        if (input.membershipCardEnabled !== undefined) {
+          existingFlags.membership_card_enabled = Boolean(input.membershipCardEnabled);
+        }
+        if (input.membershipCardName !== undefined) {
+          existingFlags.membership_card_name = input.membershipCardName.trim();
+        }
+        if (input.membershipCardPrice !== undefined) {
+          existingFlags.membership_card_price = Number(input.membershipCardPrice) || 0;
+        }
+        if (input.membershipCardValidity !== undefined) {
+          existingFlags.membership_card_validity = input.membershipCardValidity.trim();
+        }
+        if (input.membershipCardPerks !== undefined) {
+          existingFlags.membership_card_perks = input.membershipCardPerks.trim();
+        }
         payload.feature_flags = existingFlags;
       }
 
@@ -1481,6 +1505,24 @@ export async function updateMenuUiSettings(input: {
             existingFlags.menu2_status === "approved" && input.activeMenuTemplate === "menu2"
               ? "menu2"
               : "menu1";
+        }
+        if (input.minDeliveryOrder !== undefined) {
+          existingFlags.min_delivery_order = Number(input.minDeliveryOrder) || 0;
+        }
+        if (input.membershipCardEnabled !== undefined) {
+          existingFlags.membership_card_enabled = Boolean(input.membershipCardEnabled);
+        }
+        if (input.membershipCardName !== undefined) {
+          existingFlags.membership_card_name = input.membershipCardName.trim();
+        }
+        if (input.membershipCardPrice !== undefined) {
+          existingFlags.membership_card_price = Number(input.membershipCardPrice) || 0;
+        }
+        if (input.membershipCardValidity !== undefined) {
+          existingFlags.membership_card_validity = input.membershipCardValidity.trim();
+        }
+        if (input.membershipCardPerks !== undefined) {
+          existingFlags.membership_card_perks = input.membershipCardPerks.trim();
         }
         payload.feature_flags = existingFlags;
       }

@@ -122,6 +122,29 @@ function Menu2Inner({
 
   const [selectedVarByProduct, setSelectedVarByProduct] = useState<Record<string, number>>({});
 
+  const hasMembershipInCart = useMemo(() => {
+    return cartItems.some(
+      (ci) => ci.product.id === 999999 || String(ci.product.slug || "").includes("membership")
+    );
+  }, [cartItems]);
+
+  const handleBuyMembership = () => {
+    const membershipItem: Product = {
+      id: 999999,
+      name: `${settings.membership_card_name || "Family Card"} (${settings.membership_card_validity || "1 Year"} Membership)`,
+      slug: "membership-family-card",
+      description: settings.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas for 1 Year",
+      price: Number(settings.membership_card_price) || 499,
+      category_id: 0,
+      image_url: "https://images.unsplash.com/photo-1556742049-0a67c5574f73?auto=format&fit=crop&w=800&q=80",
+      is_available: true,
+      is_active: true,
+      sort_order: 0,
+    };
+    addItem(membershipItem, []);
+    setCartOpen(true);
+  };
+
   const [orderType, setOrderType] = useState<"dine_in" | "takeaway" | "delivery">(
     initialOrderType || (initialTableNumber ? "dine_in" : "delivery")
   );
@@ -527,6 +550,59 @@ function Menu2Inner({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left / Main Column: Menu Sections (8 cols on lg) */}
           <div className="lg:col-span-8 space-y-7">
+            {/* ─── VIP MEMBERSHIP CARD PROMO CARD ─── */}
+            {settings.membership_card_enabled !== false && (
+              <div className="relative overflow-hidden rounded-[8px] border-2 border-amber-500/50 bg-gradient-to-r from-neutral-950 via-amber-950/40 to-neutral-950 p-3.5 sm:p-4 shadow-xl text-white">
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none" />
+                <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[7px] bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0 shadow-lg text-black font-black">
+                      <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-black animate-pulse" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          VIP MEMBERSHIP
+                        </span>
+                        <span className="text-[11px] font-bold text-amber-300">
+                          Valid: {settings.membership_card_validity || "1 Year"}
+                        </span>
+                      </div>
+                      <h3 className="text-sm sm:text-base font-black text-amber-200 mt-0.5">
+                        {settings.membership_card_name || "Family Card"}
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-neutral-300 mt-0.5">
+                        🎁 <strong>{settings.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas"}</strong>. Special members only pricing &amp; deals!
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 justify-between sm:justify-end">
+                    <div className="text-left sm:text-right">
+                      <span className="text-[10px] opacity-70 block">Annual Card</span>
+                      <span className="text-sm sm:text-base font-black text-amber-400">
+                        {formatPrice(Number(settings.membership_card_price) || 499)}
+                      </span>
+                    </div>
+
+                    {hasMembershipInCart ? (
+                      <div className="flex items-center gap-1.5 px-3 py-2 rounded-[6px] bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-black">
+                        <Check className="w-4 h-4" /> Card in Basket!
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleBuyMembership}
+                        className="px-3.5 py-2 rounded-[6px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black text-xs shadow-lg transition active:scale-95 flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Buy Card ({formatPrice(Number(settings.membership_card_price) || 499)})
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {groupedSections.length === 0 ? (
               <div className={`${theme.cardBg} rounded-[7px] border ${theme.cardBorder} p-10 text-center`}>
                 <div className="text-4xl mb-2">🍕</div>
@@ -554,8 +630,8 @@ function Menu2Inner({
                     </span>
                   </div>
 
-                  {/* Mobile-Responsive Rich Product Cards Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* Mobile-Responsive 2-Products Per Row Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2.5 sm:gap-3.5">
                     {section.items.map((product) => {
                       const variations = Array.isArray(product.variations) ? product.variations : [];
                       const hasVariations = variations.length > 0;
@@ -579,83 +655,133 @@ function Menu2Inner({
                           (!ci.selectedToppings || ci.selectedToppings.length === 0)
                       );
 
+                      const isPizzaCat =
+                        String(section.name || "").toLowerCase().includes("pizza") ||
+                        String(product.name || "").toLowerCase().includes("pizza");
+                      const isMemberPizza =
+                        (settings.membership_card_enabled !== false) &&
+                        isPizzaCat &&
+                        !String(product.name || "").toLowerCase().includes("train") &&
+                        !String(product.name || "").toLowerCase().includes("single");
+
                       return (
                         <div
                           key={product.id}
                           onClick={() => setSelectedProduct(product)}
-                          className={`group ${theme.cardBg} rounded-[7px] border-2 ${theme.cardBorder} ${theme.cardHoverBorder} overflow-hidden shadow-xs hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between`}
+                          className={`group ${theme.cardBg} rounded-[8px] border ${theme.cardBorder} ${theme.cardHoverBorder} overflow-hidden shadow-xs hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between`}
                         >
                           <div>
-                            {/* Top Row: Square Image + Title + Price */}
-                            <div className="p-3.5 flex gap-3.5 items-start">
-                              <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-[7px] overflow-hidden ${theme.headerBg} shrink-0 relative border ${theme.cardBorder}`}>
-                                {product.image_url ? (
-                                  <OptimizedImage
-                                    src={product.image_url}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                  />
-                                ) : (
-                                  <div className={`w-full h-full ${theme.headerBg} flex flex-col items-center justify-center p-2 text-center`}>
-                                    <span className="text-3xl">
-                                      {getCategoryEmoji(product.category?.name || product.name)}
-                                    </span>
-                                    <span className={`text-[9px] font-extrabold uppercase tracking-wider ${theme.accentText} mt-1`}>
-                                      Fresh
-                                    </span>
-                                  </div>
-                                )}
-
-                                {product.badge && (
-                                  <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-[4px] ${theme.primaryBadge} text-[9px] font-black uppercase shadow-xs`}>
-                                    {product.badge}
+                            {/* Card Top: Full-Width Image with Badges & Quick-Add */}
+                            <div className="relative w-full aspect-[4/3] sm:aspect-video overflow-hidden bg-black/20">
+                              {product.image_url ? (
+                                <OptimizedImage
+                                  src={product.image_url}
+                                  alt={product.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                              ) : (
+                                <div className={`w-full h-full ${theme.headerBg} flex flex-col items-center justify-center p-2 text-center`}>
+                                  <span className="text-2xl sm:text-3xl">
+                                    {getCategoryEmoji(product.category?.name || product.name)}
                                   </span>
-                                )}
-                              </div>
-
-                              {/* Title, Description & Price */}
-                              <div className="flex-1 min-w-0">
-                                <h4 className={`text-sm sm:text-base font-black ${theme.cardTitleText} transition-colors leading-snug`}>
-                                  {product.name}
-                                </h4>
-
-                                {dealBullets.length > 0 ? (
-                                  <div className="mt-1.5 flex flex-wrap gap-1">
-                                    {dealBullets.slice(0, 3).map((b, idx) => (
-                                      <span
-                                        key={idx}
-                                        className={`px-1.5 py-0.5 rounded-[4px] ${theme.sizeBoxBg} border text-[10px] font-bold`}
-                                      >
-                                        • {b}
-                                      </span>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  product.description && (
-                                    <p className={`text-xs ${theme.cardDescText} mt-1 line-clamp-2 leading-relaxed`}>
-                                      {product.description}
-                                    </p>
-                                  )
-                                )}
-
-                                <div className="mt-2.5 flex items-baseline gap-1.5">
-                                  {hasVariations && (
-                                    <span className="text-[10px] font-extrabold uppercase opacity-60">
-                                      {activeVar?.name}:
-                                    </span>
-                                  )}
-                                  <span className={`text-base sm:text-lg font-black ${theme.priceText}`}>
-                                    {formatPrice(displayPrice)}
+                                  <span className={`text-[8px] sm:text-[9px] font-extrabold uppercase tracking-wider ${theme.accentText} mt-1`}>
+                                    Fresh
                                   </span>
                                 </div>
+                              )}
+
+                              {/* Badges on Top-Left */}
+                              <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 items-start z-10 pointer-events-none">
+                                {isMemberPizza ? (
+                                  <span className="px-1.5 py-0.5 rounded-[4px] bg-gradient-to-r from-amber-500 to-amber-600 text-black text-[8px] sm:text-[9px] font-black uppercase shadow-md flex items-center gap-1">
+                                    <Sparkles size={9} /> Buy 1 Get 1
+                                  </span>
+                                ) : product.badge ? (
+                                  <span className={`px-1.5 py-0.5 rounded-[4px] ${theme.primaryBadge} text-[8px] sm:text-[9px] font-black uppercase shadow-xs`}>
+                                    {product.badge}
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              {/* Quick Add Floating Controls on Image */}
+                              <div className="absolute bottom-1.5 right-1.5 z-10">
+                                {matchingCartItem ? (
+                                  <div
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex items-center gap-1 bg-black/90 backdrop-blur-md text-white px-1.5 py-0.5 rounded-[5px] border border-white/20 shadow-lg"
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setQty(
+                                          getItemKey(matchingCartItem),
+                                          matchingCartItem.quantity - 1
+                                        )
+                                      }
+                                      className="w-5 h-5 rounded-[4px] bg-white/20 hover:bg-red-600 text-white font-black text-xs flex items-center justify-center cursor-pointer"
+                                    >
+                                      -
+                                    </button>
+                                    <span className="text-xs font-black px-1 text-amber-400">
+                                      {matchingCartItem.quantity}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setQty(
+                                          getItemKey(matchingCartItem),
+                                          matchingCartItem.quantity + 1
+                                        )
+                                      }
+                                      className={`w-5 h-5 rounded-[4px] ${theme.primaryBadge} font-black text-xs flex items-center justify-center cursor-pointer`}
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleDirectAdd(product, e)}
+                                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-[6px] ${
+                                      isAdded ? "bg-emerald-600 text-white" : theme.primaryBtn
+                                    } font-black flex items-center justify-center shadow-lg transition active:scale-90`}
+                                    title="Add to order"
+                                  >
+                                    {isAdded ? <Check size={14} /> : <Plus size={16} />}
+                                  </button>
+                                )}
                               </div>
                             </div>
 
-                            {/* Interactive Size Pills Bar */}
-                            {hasVariations && (
-                              <div className="px-3.5 pb-2.5">
-                                <div className={`grid grid-cols-3 gap-1.5 ${theme.sizeBoxBg} p-1.5 rounded-[7px] border`}>
-                                  {variations.map((v, idx) => {
+                            {/* Content: Title, Description, Variations */}
+                            <div className="p-2 sm:p-3 flex flex-col flex-1">
+                              <h4 className={`text-xs sm:text-sm font-black ${theme.cardTitleText} line-clamp-1 leading-tight group-hover:text-amber-400 transition-colors`}>
+                                {product.name}
+                              </h4>
+
+                              {dealBullets.length > 0 ? (
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                  {dealBullets.slice(0, 2).map((b, idx) => (
+                                    <span
+                                      key={idx}
+                                      className={`px-1 py-0.5 rounded-[3px] ${theme.sizeBoxBg} border text-[9px] font-bold line-clamp-1`}
+                                    >
+                                      • {b}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                product.description && (
+                                  <p className={`text-[10px] sm:text-xs ${theme.cardDescText} mt-1 line-clamp-1 opacity-70`}>
+                                    {product.description}
+                                  </p>
+                                )
+                              )}
+
+                              {/* Variation Size Pills (Interactive) */}
+                              {hasVariations && (
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                  {variations.slice(0, 3).map((v, idx) => {
                                     const isVarActive = selectedVarIdx === idx;
                                     return (
                                       <button
@@ -668,86 +794,40 @@ function Menu2Inner({
                                             [String(product.id)]: idx,
                                           }));
                                         }}
-                                        className={`py-1 px-1.5 rounded-[5px] text-center transition cursor-pointer ${
+                                        className={`py-0.5 px-1.5 rounded-[4px] text-[9px] font-bold transition cursor-pointer border ${
                                           isVarActive
                                             ? `${theme.sizeActiveBg} shadow-xs`
-                                            : "opacity-75 hover:opacity-100"
+                                            : `${theme.sizeBoxBg} opacity-75 hover:opacity-100`
                                         }`}
                                       >
-                                        <span className="block text-[10px] font-extrabold truncate">
-                                          {v.name}
-                                        </span>
-                                        <span className="block text-[9px] font-bold opacity-90">
-                                          {formatPrice(Number(v.price) || 0)}
-                                        </span>
+                                        {v.name}
                                       </button>
                                     );
                                   })}
+                                  {variations.length > 3 && (
+                                    <span className="text-[9px] opacity-60 self-center">+{variations.length - 3}</span>
+                                  )}
                                 </div>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </div>
 
-                          {/* Rich Colored Card Footer */}
-                          <div className={`px-3.5 py-2.5 ${theme.cardFooterBg} border-t flex items-center justify-between gap-2`}>
-                            <span className="text-[11px] font-bold opacity-70">
-                              Tap to customize
-                            </span>
-
-                            {matchingCartItem ? (
-                              <div
-                                onClick={(e) => e.stopPropagation()}
-                                className={`inline-flex items-center gap-2 ${theme.headerBg} text-white p-1 rounded-[7px]`}
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setQty(
-                                      getItemKey(matchingCartItem),
-                                      matchingCartItem.quantity - 1
-                                    )
-                                  }
-                                  className="w-6 h-6 rounded-[5px] bg-white/15 hover:bg-red-600 text-white font-black text-xs flex items-center justify-center cursor-pointer"
-                                >
-                                  -
-                                </button>
-                                <span className="text-xs font-black px-1">
-                                  {matchingCartItem.quantity}
+                          {/* Card Footer: Price & Details */}
+                          <div className={`px-2 sm:px-3 py-1.5 sm:py-2 ${theme.cardFooterBg} border-t flex items-center justify-between`}>
+                            <div className="flex items-baseline gap-1">
+                              {hasVariations && (
+                                <span className="text-[9px] font-extrabold uppercase opacity-60">
+                                  {activeVar?.name}:
                                 </span>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setQty(
-                                      getItemKey(matchingCartItem),
-                                      matchingCartItem.quantity + 1
-                                    )
-                                  }
-                                  className={`w-6 h-6 rounded-[5px] ${theme.primaryBadge} font-black text-xs flex items-center justify-center cursor-pointer`}
-                                >
-                                  +
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={(e) => handleDirectAdd(product, e)}
-                                className={`inline-flex items-center gap-1 px-3.5 py-1.5 rounded-[7px] text-xs font-black uppercase tracking-wide transition cursor-pointer shadow-xs ${
-                                  isAdded ? "bg-emerald-600 text-white" : theme.primaryBtn
-                                }`}
-                              >
-                                {isAdded ? (
-                                  <>
-                                    <Check size={13} />
-                                    <span>Added</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Plus size={13} />
-                                    <span>Add</span>
-                                  </>
-                                )}
-                              </button>
-                            )}
+                              )}
+                              <span className={`text-xs sm:text-sm font-black ${theme.priceText}`}>
+                                {formatPrice(displayPrice)}
+                              </span>
+                            </div>
+
+                            <span className="text-[10px] font-bold opacity-60 hidden sm:inline">
+                              Customize &gt;
+                            </span>
                           </div>
                         </div>
                       );
@@ -903,6 +983,14 @@ function Menu2Inner({
         googleReviewUrl={settings.google_review_url || ""}
         menuProducts={liveProducts}
         themeId={themeId}
+        minDeliveryOrder={settings.min_delivery_order}
+        membershipCardSettings={{
+          enabled: settings.membership_card_enabled !== false,
+          name: settings.membership_card_name || "Family Card",
+          price: Number(settings.membership_card_price) || 499,
+          validity: settings.membership_card_validity || "1 Year",
+          perks: settings.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas",
+        }}
       />
     </div>
   );

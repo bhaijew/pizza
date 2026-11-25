@@ -91,6 +91,26 @@ export default function MenuUiManager({
   // ─── THEME & COLOR STATE ───────────────────────────────────────
   const [themeColor, setThemeColor] = useState(initialSettings.theme_color || "#7c3aed");
 
+  // ─── DELIVERY MINIMUM & MEMBERSHIP CARD SYSTEM ──────────────────
+  const [minDeliveryOrder, setMinDeliveryOrder] = useState<number>(
+    initialSettings.min_delivery_order || 0
+  );
+  const [membershipCardEnabled, setMembershipCardEnabled] = useState<boolean>(
+    initialSettings.membership_card_enabled !== false
+  );
+  const [membershipCardName, setMembershipCardName] = useState<string>(
+    initialSettings.membership_card_name || "Family Card"
+  );
+  const [membershipCardPrice, setMembershipCardPrice] = useState<number>(
+    initialSettings.membership_card_price || 499
+  );
+  const [membershipCardValidity, setMembershipCardValidity] = useState<string>(
+    initialSettings.membership_card_validity || "1 Year"
+  );
+  const [membershipCardPerks, setMembershipCardPerks] = useState<string>(
+    initialSettings.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas"
+  );
+
   // ─── MENU 2.0 PREMIUM SYSTEM & COLOR SCHEME STATE ──────────────
   const [menu2Status, setMenu2Status] = useState<"locked" | "requested" | "approved">(
     initialSettings.menu2_status || "locked"
@@ -204,6 +224,12 @@ export default function MenuUiManager({
         heroBgImage,
         activeMenuTemplate,
         menu2Theme,
+        minDeliveryOrder,
+        membershipCardEnabled,
+        membershipCardName,
+        membershipCardPrice,
+        membershipCardValidity,
+        membershipCardPerks,
       });
 
       if (res.success) {
@@ -721,6 +747,208 @@ export default function MenuUiManager({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* ─── CARD: DELIVERY MINIMUM & VIP MEMBERSHIP CARD ─── */}
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #e2e8f0",
+              borderRadius: "7px",
+              padding: "20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              boxShadow: "0 2px 8px rgba(15, 23, 42, 0.05)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div
+                style={{
+                  width: "28px",
+                  height: "28px",
+                  borderRadius: "6px",
+                  background: "#fef3c7",
+                  color: "#d97706",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Crown size={16} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: "14px", fontWeight: 900, margin: 0, color: "#0f172a" }}>
+                  Delivery Minimum &amp; VIP Membership Card
+                </h2>
+                <p style={{ fontSize: "12px", color: "#64748b", margin: "2px 0 0 0" }}>
+                  Set delivery minimum rules and offer digital VIP membership cards to online customers.
+                </p>
+              </div>
+            </div>
+
+            {/* Minimum Delivery Order (Rs.) */}
+            <div
+              style={{
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "6px",
+                padding: "14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label style={{ fontSize: "13px", fontWeight: 800, color: "#0f172a" }}>
+                  🛵 Minimum Order for Delivery (Rs.)
+                </label>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: minDeliveryOrder > 0 ? "#15803d" : "#64748b" }}>
+                  {minDeliveryOrder > 0 ? `Active: Rs. ${minDeliveryOrder}` : "Disabled (No minimum)"}
+                </span>
+              </div>
+              <input
+                type="number"
+                min="0"
+                step="50"
+                value={minDeliveryOrder || ""}
+                onChange={(e) => setMinDeliveryOrder(Math.max(0, Number(e.target.value) || 0))}
+                placeholder="e.g. 700"
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: "5px",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  color: "#0f172a",
+                  outline: "none",
+                }}
+              />
+              <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>
+                Customers placing <strong>Delivery</strong> orders must reach this minimum order value at checkout (e.g. Rs. 700). Takeaway &amp; Dine-in orders have no minimum.
+              </p>
+            </div>
+
+            {/* VIP Membership Card System */}
+            <div
+              style={{
+                background: "#fdf8ee",
+                border: "1px solid #fde68a",
+                borderRadius: "6px",
+                padding: "16px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Sparkles size={16} style={{ color: "#b45309" }} />
+                  <span style={{ fontSize: "13px", fontWeight: 800, color: "#78350f" }}>
+                    💳 VIP Membership Card (Buy Online)
+                  </span>
+                </div>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "12px", fontWeight: 700, color: "#78350f" }}>
+                  <input
+                    type="checkbox"
+                    checked={membershipCardEnabled}
+                    onChange={(e) => setMembershipCardEnabled(e.target.checked)}
+                    style={{ accentColor: "#d97706", width: "16px", height: "16px" }}
+                  />
+                  <span>Enable Card</span>
+                </label>
+              </div>
+
+              {membershipCardEnabled && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <div>
+                    <label style={{ fontSize: "11px", fontWeight: 700, color: "#78350f", display: "block", marginBottom: "4px" }}>
+                      Card Title / Name
+                    </label>
+                    <input
+                      type="text"
+                      value={membershipCardName}
+                      onChange={(e) => setMembershipCardName(e.target.value)}
+                      placeholder="e.g. Family Card"
+                      style={{
+                        width: "100%",
+                        padding: "8px 10px",
+                        borderRadius: "5px",
+                        border: "1px solid #fcd34d",
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        background: "#ffffff",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: "11px", fontWeight: 700, color: "#78350f", display: "block", marginBottom: "4px" }}>
+                      Price (Rs.)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={membershipCardPrice}
+                      onChange={(e) => setMembershipCardPrice(Math.max(0, Number(e.target.value) || 0))}
+                      placeholder="e.g. 499"
+                      style={{
+                        width: "100%",
+                        padding: "8px 10px",
+                        borderRadius: "5px",
+                        border: "1px solid #fcd34d",
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        background: "#ffffff",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: "11px", fontWeight: 700, color: "#78350f", display: "block", marginBottom: "4px" }}>
+                      Validity Duration
+                    </label>
+                    <input
+                      type="text"
+                      value={membershipCardValidity}
+                      onChange={(e) => setMembershipCardValidity(e.target.value)}
+                      placeholder="e.g. 1 Year"
+                      style={{
+                        width: "100%",
+                        padding: "8px 10px",
+                        borderRadius: "5px",
+                        border: "1px solid #fcd34d",
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        background: "#ffffff",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: "11px", fontWeight: 700, color: "#78350f", display: "block", marginBottom: "4px" }}>
+                      Key Benefits / Discount
+                    </label>
+                    <input
+                      type="text"
+                      value={membershipCardPerks}
+                      onChange={(e) => setMembershipCardPerks(e.target.value)}
+                      placeholder="e.g. Buy 1 Get 1 Free on all Pizzas"
+                      style={{
+                        width: "100%",
+                        padding: "8px 10px",
+                        borderRadius: "5px",
+                        border: "1px solid #fcd34d",
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        background: "#ffffff",
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ─── CARD 1: MENU THEME & ACCENT COLOR ─── */}

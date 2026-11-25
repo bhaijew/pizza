@@ -236,6 +236,14 @@ export interface ShopSettings {
   active_menu_template?: "menu1" | "menu2" | string;
   menu2_theme?: string;
   menu2_requested_at?: string | null;
+
+  // Delivery Minimum & Membership Card System
+  min_delivery_order?: number;
+  membership_card_enabled?: boolean;
+  membership_card_name?: string;
+  membership_card_price?: number;
+  membership_card_validity?: string;
+  membership_card_perks?: string;
 }
 
 export const DEFAULT_SETTINGS: ShopSettings = {
@@ -254,6 +262,12 @@ export const DEFAULT_SETTINGS: ShopSettings = {
   slider_enabled: true,
   slider_height_mobile: 180,
   slider_images: DEFAULT_PROMO_SLIDES,
+  min_delivery_order: 0,
+  membership_card_enabled: true,
+  membership_card_name: "Family Card",
+  membership_card_price: 499,
+  membership_card_validity: "1 Year",
+  membership_card_perks: "Buy 1 Get 1 Free on all Pizzas",
 
   // Default Hero Section settings
   hero_badge_text: "Artisan Kitchen • Stone Baked Daily",
@@ -397,6 +411,12 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
               active_menu_template: ff.menu2_status === "approved" && ff.active_menu_template === "menu2" ? "menu2" : "menu1",
               menu2_theme: ff.menu2_theme || "ruby_gold",
               menu2_requested_at: ff.menu2_requested_at || null,
+              min_delivery_order: Number(ff.min_delivery_order) || 0,
+              membership_card_enabled: ff.membership_card_enabled !== false,
+              membership_card_name: ff.membership_card_name || "Family Card",
+              membership_card_price: Number(ff.membership_card_price) || 499,
+              membership_card_validity: ff.membership_card_validity || "1 Year",
+              membership_card_perks: ff.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas",
             };
           }
         } catch {
@@ -455,6 +475,12 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
               active_menu_template: ff.menu2_status === "approved" && ff.active_menu_template === "menu2" ? "menu2" : "menu1",
               menu2_theme: ff.menu2_theme || "ruby_gold",
               menu2_requested_at: ff.menu2_requested_at || null,
+              min_delivery_order: Number(ff.min_delivery_order) || 0,
+              membership_card_enabled: ff.membership_card_enabled !== false,
+              membership_card_name: ff.membership_card_name || "Family Card",
+              membership_card_price: Number(ff.membership_card_price) || 499,
+              membership_card_validity: ff.membership_card_validity || "1 Year",
+              membership_card_perks: ff.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas",
             } as ShopSettings;
           }
         } catch {
