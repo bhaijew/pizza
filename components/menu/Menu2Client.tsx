@@ -349,8 +349,8 @@ function Menu2Inner({
 
   return (
     <div className={`min-h-screen ${theme.pageBg} font-sans pb-28 lg:pb-16 transition-colors duration-300`}>
-      {/* ─── TOP STICKY HEADER (Rich Gradient + 5-Color Theme Switcher + My Order) ─── */}
-      <header className={`sticky top-0 z-40 ${theme.headerBg} text-white border-b ${theme.headerBorder} shadow-lg`}>
+      {/* ─── TOP HEADER (Scrolls away naturally on scroll) ─── */}
+      <header className={`relative z-20 ${theme.headerBg} text-white border-b ${theme.headerBorder} shadow-lg`}>
         <div className="max-w-7xl mx-auto px-3.5 sm:px-6 py-3 flex items-center justify-between gap-3">
           {/* Brand Identity */}
           <div className="flex items-center gap-3 min-w-0">
@@ -462,30 +462,32 @@ function Menu2Inner({
         </div>
       </section>
 
-      {/* ─── STICKY SEARCH + SQUARE CATEGORY DECK ─── */}
-      <div className={`sticky top-[92px] md:top-[65px] z-30 ${theme.stickyBarBg} backdrop-blur-md border-b py-3 shadow-xs`}>
-        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 space-y-2.5">
-          {/* Search Input */}
-          <div className="relative">
-            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-50" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search pizzas, burgers, deals, or drinks..."
-              className={`w-full pl-9 pr-8 py-2.5 rounded-[7px] ${theme.cardBg} border ${theme.cardBorder} text-xs sm:text-sm font-semibold focus:outline-none shadow-2xs`}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
+      {/* ─── SEARCH BAR (Scrolls away naturally) ─── */}
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 pt-2 pb-1">
+        <div className="relative">
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-50" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search pizzas, burgers, deals, or drinks..."
+            className={`w-full pl-9 pr-8 py-2.5 rounded-[7px] ${theme.cardBg} border ${theme.cardBorder} text-xs sm:text-sm font-semibold focus:outline-none shadow-2xs`}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      </div>
 
+      {/* ─── STICKY SQUARE CATEGORY DECK (ONLY CATEGORIES REMAIN FIXED/STICKY ON SCROLL) ─── */}
+      <div className={`sticky top-0 z-30 ${theme.stickyBarBg} backdrop-blur-md border-b py-2 sm:py-2.5 shadow-xs`}>
+        <div className="max-w-7xl mx-auto px-3.5 sm:px-6">
           {/* Horizontal Category Tiles */}
           <div className="flex items-stretch gap-2 overflow-x-auto no-scrollbar pb-0.5">
             <button
@@ -854,7 +856,7 @@ function Menu2Inner({
           </div>
 
           {/* Right Column: Live Sticky Order Basket on Desktop (4 cols on lg) */}
-          <aside className="hidden lg:block lg:col-span-4 sticky top-[145px]">
+          <aside className="hidden lg:block lg:col-span-4 sticky top-[60px]">
             <div className={`${theme.cardBg} rounded-[7px] border-2 ${theme.cardBorder} shadow-md overflow-hidden`}>
               <div className={`p-4 ${theme.headerBg} text-white flex items-center justify-between`}>
                 <div className="flex items-center gap-2.5">
