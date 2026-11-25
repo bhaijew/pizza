@@ -14,8 +14,9 @@ import Menu2Client from "@/components/menu/Menu2Client";
 import MenuSkeleton from "@/components/menu/MenuSkeleton";
 import Link from "next/link";
 
-// 30-second ISR edge cache: enables sub-100ms instant page loads
-export const revalidate = 30;
+// Always render dynamic so real-time admin settings & menu updates reflect immediately
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const getCachedShop = cache(async (slug: string) => {
   return fetchShopBySlugOrId(slug);
@@ -306,6 +307,16 @@ export default async function DynamicShopMenuPage({
         ? "menu2"
         : "menu1",
     menu2_theme: ff.menu2_theme || "ruby_gold",
+    min_delivery_order: Number(ff.min_delivery_order) || 0,
+    membership_card_enabled: Boolean(ff.membership_card_enabled),
+    membership_card_name: ff.membership_card_name || "Family Card",
+    membership_card_price: Number(ff.membership_card_price) || 499,
+    membership_card_validity: ff.membership_card_validity || "1 Year",
+    membership_card_perks: ff.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas",
+    membership_card_bg_image:
+      ff.membership_card_bg_image ||
+      DEFAULT_SETTINGS.membership_card_bg_image ||
+      "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80",
   };
 
   const useMenu2 =
