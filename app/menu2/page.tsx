@@ -11,8 +11,9 @@ import { createAdminClient, isServiceRoleConfigured } from "@/utils/supabase/adm
 import Menu2Client from "@/components/menu/Menu2Client";
 import MenuSkeleton from "@/components/menu/MenuSkeleton";
 
-// 30-second ISR edge cache
-export const revalidate = 30;
+// Always render dynamic so admin toggles & real-time updates reflect immediately
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "Menu 2.0 — Modern Online Ordering",
@@ -74,6 +75,28 @@ export default async function Menu2Page({ searchParams }: Menu2PageProps) {
       (shop as any)?.feature_flags?.menu2_theme || baseSettings.menu2_theme || "ruby_gold",
     menu2_status:
       (shop as any)?.feature_flags?.menu2_status || baseSettings.menu2_status || "locked",
+    membership_card_enabled:
+      (shop as any)?.feature_flags?.membership_card_enabled !== undefined
+        ? Boolean((shop as any)?.feature_flags?.membership_card_enabled)
+        : Boolean(baseSettings.membership_card_enabled),
+    membership_card_name:
+      (shop as any)?.feature_flags?.membership_card_name || baseSettings.membership_card_name || "Family Card",
+    membership_card_price:
+      (shop as any)?.feature_flags?.membership_card_price !== undefined
+        ? Number((shop as any)?.feature_flags?.membership_card_price)
+        : Number(baseSettings.membership_card_price) || 499,
+    membership_card_validity:
+      (shop as any)?.feature_flags?.membership_card_validity || baseSettings.membership_card_validity || "1 Year",
+    membership_card_perks:
+      (shop as any)?.feature_flags?.membership_card_perks || baseSettings.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas",
+    membership_card_bg_image:
+      (shop as any)?.feature_flags?.membership_card_bg_image ||
+      baseSettings.membership_card_bg_image ||
+      "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80",
+    min_delivery_order:
+      (shop as any)?.feature_flags?.min_delivery_order !== undefined
+        ? Number((shop as any)?.feature_flags?.min_delivery_order)
+        : Number(baseSettings.min_delivery_order) || 0,
   };
 
   return (

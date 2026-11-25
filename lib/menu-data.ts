@@ -244,6 +244,7 @@ export interface ShopSettings {
   membership_card_price?: number;
   membership_card_validity?: string;
   membership_card_perks?: string;
+  membership_card_bg_image?: string;
 }
 
 export const DEFAULT_SETTINGS: ShopSettings = {
@@ -268,6 +269,7 @@ export const DEFAULT_SETTINGS: ShopSettings = {
   membership_card_price: 499,
   membership_card_validity: "1 Year",
   membership_card_perks: "Buy 1 Get 1 Free on all Pizzas",
+  membership_card_bg_image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80",
 
   // Default Hero Section settings
   hero_badge_text: "Artisan Kitchen • Stone Baked Daily",
@@ -417,6 +419,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
               membership_card_price: Number(ff.membership_card_price) || 499,
               membership_card_validity: ff.membership_card_validity || "1 Year",
               membership_card_perks: ff.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas",
+              membership_card_bg_image: ff.membership_card_bg_image || DEFAULT_SETTINGS.membership_card_bg_image,
             };
           }
         } catch {
@@ -481,6 +484,7 @@ export async function fetchSettings(shopId?: number | null): Promise<ShopSetting
               membership_card_price: Number(ff.membership_card_price) || 499,
               membership_card_validity: ff.membership_card_validity || "1 Year",
               membership_card_perks: ff.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas",
+              membership_card_bg_image: ff.membership_card_bg_image || DEFAULT_SETTINGS.membership_card_bg_image,
             } as ShopSettings;
           }
         } catch {

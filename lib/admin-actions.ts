@@ -1405,6 +1405,7 @@ export async function updateMenuUiSettings(input: {
   membershipCardPrice?: number;
   membershipCardValidity?: string;
   membershipCardPerks?: string;
+  membershipCardBgImage?: string;
 }): Promise<{ error: string | null; success: boolean }> {
   await requireAdmin();
   const db = createAdminClient();
@@ -1442,7 +1443,8 @@ export async function updateMenuUiSettings(input: {
       input.membershipCardName !== undefined ||
       input.membershipCardPrice !== undefined ||
       input.membershipCardValidity !== undefined ||
-      input.membershipCardPerks !== undefined;
+      input.membershipCardPerks !== undefined ||
+      input.membershipCardBgImage !== undefined;
 
     if (activeShop.shopId) {
       if (shouldUpdateFlags) {
@@ -1481,6 +1483,9 @@ export async function updateMenuUiSettings(input: {
         }
         if (input.membershipCardPerks !== undefined) {
           existingFlags.membership_card_perks = input.membershipCardPerks.trim();
+        }
+        if (input.membershipCardBgImage !== undefined) {
+          existingFlags.membership_card_bg_image = input.membershipCardBgImage.trim();
         }
         payload.feature_flags = existingFlags;
       }
@@ -1533,6 +1538,9 @@ export async function updateMenuUiSettings(input: {
         }
         if (input.membershipCardPerks !== undefined) {
           existingFlags.membership_card_perks = input.membershipCardPerks.trim();
+        }
+        if (input.membershipCardBgImage !== undefined) {
+          existingFlags.membership_card_bg_image = input.membershipCardBgImage.trim();
         }
         payload.feature_flags = existingFlags;
       }

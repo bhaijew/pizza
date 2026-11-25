@@ -552,50 +552,65 @@ function Menu2Inner({
           <div className="lg:col-span-8 space-y-7">
             {/* ─── VIP MEMBERSHIP CARD PROMO CARD ─── */}
             {Boolean(settings.membership_card_enabled) && (
-              <div className="relative overflow-hidden rounded-[8px] border-2 border-amber-500/50 bg-gradient-to-r from-neutral-950 via-amber-950/40 to-neutral-950 p-3.5 sm:p-4 shadow-xl text-white">
-                <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none" />
-                <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[7px] bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0 shadow-lg text-black font-black">
+              <div className="relative overflow-hidden rounded-[10px] border-2 border-amber-500/60 p-4 sm:p-5 shadow-2xl text-white group">
+                {/* Background Food & Texture Image */}
+                <div
+                  className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-luminosity scale-105 transition-transform duration-700 group-hover:scale-100 pointer-events-none"
+                  style={{
+                    backgroundImage: `url('${
+                      settings.membership_card_bg_image ||
+                      "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80"
+                    }')`,
+                  }}
+                />
+                {/* Dark Luxury Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/85 to-amber-950/90 pointer-events-none" />
+                {/* Glow Spheres */}
+                <div className="absolute -top-12 -right-12 w-44 h-44 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-amber-600/15 rounded-full blur-2xl pointer-events-none" />
+
+                <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-[8px] bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center shrink-0 shadow-lg text-black font-black border border-amber-300">
                       <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-black animate-pulse" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-xs">
                           VIP MEMBERSHIP
                         </span>
-                        <span className="text-[11px] font-bold text-amber-300">
-                          Valid: {settings.membership_card_validity || "1 Year"}
+                        <span className="text-[11px] font-bold text-amber-300 flex items-center gap-1">
+                          ★ Valid: {settings.membership_card_validity || "1 Year"}
                         </span>
                       </div>
-                      <h3 className="text-sm sm:text-base font-black text-amber-200 mt-0.5">
+                      <h3 className="text-base sm:text-lg font-black text-amber-100 mt-1 tracking-tight drop-shadow-sm">
                         {settings.membership_card_name || "Family Card"}
                       </h3>
-                      <p className="text-[11px] sm:text-xs text-neutral-300 mt-0.5">
-                        🎁 <strong>{settings.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas"}</strong>. Special members only pricing &amp; deals!
+                      <p className="text-xs sm:text-sm text-neutral-200 mt-0.5 leading-snug">
+                        🎁 <strong>{settings.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas"}</strong>. Exclusive members-only deals &amp; discounts!
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 justify-between sm:justify-end">
+                  <div className="flex items-center gap-3 w-full sm:w-auto shrink-0 justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-amber-500/20">
                     <div className="text-left sm:text-right">
-                      <span className="text-[10px] opacity-70 block">Annual Card</span>
-                      <span className="text-sm sm:text-base font-black text-amber-400">
+                      <span className="text-[10px] uppercase font-bold text-amber-300/80 block">Annual Card</span>
+                      <span className="text-base sm:text-lg font-black text-amber-400">
                         {formatPrice(Number(settings.membership_card_price) || 499)}
                       </span>
                     </div>
 
                     {hasMembershipInCart ? (
-                      <div className="flex items-center gap-1.5 px-3 py-2 rounded-[6px] bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-black">
+                      <div className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-[7px] bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-black shadow-inner">
                         <Check className="w-4 h-4" /> Card in Basket!
                       </div>
                     ) : (
                       <button
                         type="button"
                         onClick={handleBuyMembership}
-                        className="px-3.5 py-2 rounded-[6px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black text-xs shadow-lg transition active:scale-95 flex items-center gap-1 cursor-pointer"
+                        className="px-4 py-2.5 rounded-[7px] bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-black font-black text-xs sm:text-sm shadow-xl transition active:scale-95 flex items-center gap-1.5 cursor-pointer border border-amber-300/50"
                       >
-                        <Plus className="w-3.5 h-3.5" /> Buy Card ({formatPrice(Number(settings.membership_card_price) || 499)})
+                        <Plus className="w-4 h-4" /> Buy Card ({formatPrice(Number(settings.membership_card_price) || 499)})
                       </button>
                     )}
                   </div>

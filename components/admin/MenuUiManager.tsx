@@ -80,6 +80,25 @@ const HERO_GRADIENT_PRESETS = [
   { label: "Dark Obsidian", gradient: "linear-gradient(135deg, #09090b 0%, #18181b 50%, #27272a 100%)", desc: "Minimalist stealth charcoal" },
 ];
 
+const CARD_BG_PRESETS = [
+  {
+    name: "Artisan Pizza",
+    url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    name: "Luxury Ambiance",
+    url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    name: "Stone Oven Glow",
+    url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    name: "Cheesy Slice",
+    url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1200&q=80",
+  },
+];
+
 export default function MenuUiManager({
   initialSettings,
   shopName = "Pizza Shop",
@@ -109,6 +128,10 @@ export default function MenuUiManager({
   );
   const [membershipCardPerks, setMembershipCardPerks] = useState<string>(
     initialSettings.membership_card_perks || "Buy 1 Get 1 Free on all Pizzas"
+  );
+  const [membershipCardBgImage, setMembershipCardBgImage] = useState<string>(
+    initialSettings.membership_card_bg_image ||
+      "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80"
   );
 
   // ─── MENU 2.0 PREMIUM SYSTEM & COLOR SCHEME STATE ──────────────
@@ -230,6 +253,7 @@ export default function MenuUiManager({
         membershipCardPrice,
         membershipCardValidity,
         membershipCardPerks,
+        membershipCardBgImage,
       });
 
       if (res.success) {
@@ -966,6 +990,72 @@ export default function MenuUiManager({
                         background: "#ffffff",
                       }}
                     />
+                  </div>
+
+                  {/* Card Background Image & Presets */}
+                  <div style={{ gridColumn: "1 / -1", marginTop: "4px" }}>
+                    <label style={{ fontSize: "11px", fontWeight: 700, color: "#78350f", display: "block", marginBottom: "4px" }}>
+                      Card Background Image (Cover Texture)
+                    </label>
+                    <input
+                      type="text"
+                      value={membershipCardBgImage}
+                      onChange={(e) => setMembershipCardBgImage(e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      style={{
+                        width: "100%",
+                        padding: "8px 10px",
+                        borderRadius: "5px",
+                        border: "1px solid #fcd34d",
+                        fontSize: "12px",
+                        background: "#ffffff",
+                        marginBottom: "8px",
+                      }}
+                    />
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" }}>
+                      {CARD_BG_PRESETS.map((preset) => (
+                        <button
+                          key={preset.url}
+                          type="button"
+                          onClick={() => setMembershipCardBgImage(preset.url)}
+                          style={{
+                            border: membershipCardBgImage === preset.url ? "2px solid #d97706" : "1px solid #cbd5e1",
+                            borderRadius: "5px",
+                            overflow: "hidden",
+                            cursor: "pointer",
+                            padding: 0,
+                            position: "relative",
+                            aspectRatio: "16/9",
+                            background: "#000",
+                          }}
+                        >
+                          <img
+                            src={preset.url}
+                            alt={preset.name}
+                            style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.8 }}
+                          />
+                          <span
+                            style={{
+                              position: "absolute",
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              background: "rgba(0,0,0,0.75)",
+                              color: "#fff",
+                              fontSize: "9px",
+                              padding: "2px",
+                              fontWeight: 700,
+                              textAlign: "center",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {preset.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1745,17 +1835,47 @@ export default function MenuUiManager({
                 {/* Live VIP Membership Card Banner in Preview (Real-time reflect) */}
                 {membershipCardEnabled && (
                   <div style={{ padding: "8px 10px", background: "#fef3c7", borderBottom: "1px solid #fde68a" }}>
-                    <div style={{ background: "linear-gradient(135deg, #18181b 0%, #27272a 100%)", border: "1px solid #d97706", color: "#fef3c7", borderRadius: "6px", padding: "8px 10px", fontSize: "10px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 900 }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: "4px", color: "#fbbf24" }}>
-                          <Sparkles size={11} /> {membershipCardName || "VIP Family Card"}
-                        </span>
-                        <span style={{ background: "#d97706", color: "#fff", padding: "1px 6px", borderRadius: "3px", fontSize: "9px", fontWeight: 900 }}>
-                          Rs. {membershipCardPrice || 499}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: "9px", opacity: 0.85, marginTop: "2px" }}>
-                        {membershipCardPerks || "Buy 1 Get 1 Free on all Pizzas"}
+                    <div
+                      style={{
+                        position: "relative",
+                        overflow: "hidden",
+                        border: "1px solid #d97706",
+                        color: "#fef3c7",
+                        borderRadius: "6px",
+                        padding: "8px 10px",
+                        fontSize: "10px",
+                        background: "#18181b",
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          backgroundImage: `url(${membershipCardBgImage})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          opacity: 0.35,
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: "linear-gradient(to right, #09090b, rgba(9,9,11,0.85), rgba(69,26,3,0.9))",
+                        }}
+                      />
+                      <div style={{ position: "relative", zIndex: 1 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 900 }}>
+                          <span style={{ display: "flex", alignItems: "center", gap: "4px", color: "#fbbf24" }}>
+                            <Sparkles size={11} /> {membershipCardName || "VIP Family Card"}
+                          </span>
+                          <span style={{ background: "#d97706", color: "#fff", padding: "1px 6px", borderRadius: "3px", fontSize: "9px", fontWeight: 900 }}>
+                            Rs. {membershipCardPrice || 499}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: "9px", opacity: 0.9, marginTop: "2px" }}>
+                          {membershipCardPerks || "Buy 1 Get 1 Free on all Pizzas"}
+                        </div>
                       </div>
                     </div>
                   </div>
