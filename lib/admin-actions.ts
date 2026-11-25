@@ -1434,8 +1434,18 @@ export async function updateMenuUiSettings(input: {
   if (input.heroBgImage !== undefined) payload.hero_bg_image = input.heroBgImage;
 
   try {
+    const shouldUpdateFlags =
+      input.menu2Theme !== undefined ||
+      input.activeMenuTemplate !== undefined ||
+      input.minDeliveryOrder !== undefined ||
+      input.membershipCardEnabled !== undefined ||
+      input.membershipCardName !== undefined ||
+      input.membershipCardPrice !== undefined ||
+      input.membershipCardValidity !== undefined ||
+      input.membershipCardPerks !== undefined;
+
     if (activeShop.shopId) {
-      if (input.menu2Theme !== undefined || input.activeMenuTemplate !== undefined) {
+      if (shouldUpdateFlags) {
         const { data: shopRow } = await db
           .from("shops")
           .select("feature_flags")
@@ -1487,7 +1497,7 @@ export async function updateMenuUiSettings(input: {
         await db.from("shops").update(fallbackPayload).eq("id", activeShop.shopId);
       }
     } else {
-      if (input.menu2Theme !== undefined || input.activeMenuTemplate !== undefined) {
+      if (shouldUpdateFlags) {
         const { data: settingsRow } = await db
           .from("shop_settings")
           .select("feature_flags")

@@ -172,6 +172,13 @@ const NAV_GROUPS: NavGroup[] = [
         icon: Tags,
       },
       {
+        label: "Menu UI & Themes",
+        href: "/admin/menu-ui",
+        icon: Palette,
+        badge: "PRO",
+        badgeColor: "bg-emerald-500 text-white",
+      },
+      {
         label: "Special Deals",
         href: "/admin/deals",
         icon: Sparkles,

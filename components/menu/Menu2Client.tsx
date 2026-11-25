@@ -551,7 +551,7 @@ function Menu2Inner({
           {/* Left / Main Column: Menu Sections (8 cols on lg) */}
           <div className="lg:col-span-8 space-y-7">
             {/* ─── VIP MEMBERSHIP CARD PROMO CARD ─── */}
-            {settings.membership_card_enabled !== false && (
+            {Boolean(settings.membership_card_enabled) && (
               <div className="relative overflow-hidden rounded-[8px] border-2 border-amber-500/50 bg-gradient-to-r from-neutral-950 via-amber-950/40 to-neutral-950 p-3.5 sm:p-4 shadow-xl text-white">
                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none" />
                 <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -659,7 +659,7 @@ function Menu2Inner({
                         String(section.name || "").toLowerCase().includes("pizza") ||
                         String(product.name || "").toLowerCase().includes("pizza");
                       const isMemberPizza =
-                        (settings.membership_card_enabled !== false) &&
+                        Boolean(settings.membership_card_enabled) &&
                         isPizzaCat &&
                         !String(product.name || "").toLowerCase().includes("train") &&
                         !String(product.name || "").toLowerCase().includes("single");
@@ -985,7 +985,7 @@ function Menu2Inner({
         themeId={themeId}
         minDeliveryOrder={settings.min_delivery_order}
         membershipCardSettings={{
-          enabled: settings.membership_card_enabled !== false,
+          enabled: Boolean(settings.membership_card_enabled),
           name: settings.membership_card_name || "Family Card",
           price: Number(settings.membership_card_price) || 499,
           validity: settings.membership_card_validity || "1 Year",

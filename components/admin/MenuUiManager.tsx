@@ -96,7 +96,7 @@ export default function MenuUiManager({
     initialSettings.min_delivery_order || 0
   );
   const [membershipCardEnabled, setMembershipCardEnabled] = useState<boolean>(
-    initialSettings.membership_card_enabled !== false
+    Boolean(initialSettings.membership_card_enabled)
   );
   const [membershipCardName, setMembershipCardName] = useState<string>(
     initialSettings.membership_card_name || "Family Card"
@@ -305,7 +305,28 @@ export default function MenuUiManager({
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <a
+            href={`/menu2?shop=${shopSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "9px 15px",
+              borderRadius: "5px",
+              background: "#0f172a",
+              color: "#f8fafc",
+              fontSize: "12px",
+              fontWeight: 800,
+              textDecoration: "none",
+              border: "1px solid #334155",
+            }}
+          >
+            <ExternalLink size={14} />
+            <span>Open Live Menu 2.0</span>
+          </a>
           <button
             type="button"
             onClick={handleSave}
@@ -1718,6 +1739,33 @@ export default function MenuUiManager({
                         </div>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* Live VIP Membership Card Banner in Preview (Real-time reflect) */}
+                {membershipCardEnabled && (
+                  <div style={{ padding: "8px 10px", background: "#fef3c7", borderBottom: "1px solid #fde68a" }}>
+                    <div style={{ background: "linear-gradient(135deg, #18181b 0%, #27272a 100%)", border: "1px solid #d97706", color: "#fef3c7", borderRadius: "6px", padding: "8px 10px", fontSize: "10px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 900 }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: "4px", color: "#fbbf24" }}>
+                          <Sparkles size={11} /> {membershipCardName || "VIP Family Card"}
+                        </span>
+                        <span style={{ background: "#d97706", color: "#fff", padding: "1px 6px", borderRadius: "3px", fontSize: "9px", fontWeight: 900 }}>
+                          Rs. {membershipCardPrice || 499}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "9px", opacity: 0.85, marginTop: "2px" }}>
+                        {membershipCardPerks || "Buy 1 Get 1 Free on all Pizzas"}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Live Delivery Minimum in Preview */}
+                {minDeliveryOrder > 0 && (
+                  <div style={{ padding: "4px 10px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", fontSize: "9px", fontWeight: 700, color: "#64748b", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span>🛵 Min Delivery Order:</span>
+                    <strong style={{ color: "#0f172a" }}>Rs. {minDeliveryOrder}</strong>
                   </div>
                 )}
 

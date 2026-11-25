@@ -106,6 +106,34 @@ export default function Menu2CartDrawer({
   const [reviewSubmitted, setReviewSubmitted] = useState<boolean>(false);
   const [reviewSubmitting, setReviewSubmitting] = useState<boolean>(false);
 
+  const hasMembershipCard = useMemo(() => {
+    return items.some(
+      (item) =>
+        item.product.slug === "membership-family-card" ||
+        item.product.name.toLowerCase().includes("membership") ||
+        item.product.name.toLowerCase().includes("family card")
+    );
+  }, [items]);
+
+  const isOnlyMembership = useMemo(() => {
+    return (
+      items.length > 0 &&
+      items.every(
+        (item) =>
+          item.product.slug === "membership-family-card" ||
+          item.product.name.toLowerCase().includes("membership") ||
+          item.product.name.toLowerCase().includes("family card")
+      )
+    );
+  }, [items]);
+
+  useEffect(() => {
+    if (hasMembershipCard && selectedOrderType !== "delivery") {
+      setSelectedOrderType("delivery");
+      if (propSetOrderType) propSetOrderType("delivery");
+    }
+  }, [hasMembershipCard, selectedOrderType, propSetOrderType]);
+
   useEffect(() => {
     if (propTableNumber) {
       setCurrentTable(propTableNumber);
@@ -159,6 +187,10 @@ export default function Menu2CartDrawer({
   }, [menuProducts, items]);
 
   const handleOrderTypeChange = (type: "dine_in" | "takeaway" | "delivery") => {
+    if (hasMembershipCard && type !== "delivery") {
+      setErrorMessage("Membership card purchase is only available for Home Delivery.");
+      return;
+    }
     setSelectedOrderType(type);
     if (propSetOrderType) propSetOrderType(type);
   };
@@ -207,7 +239,7 @@ export default function Menu2CartDrawer({
       return;
     }
     const minDelivery = Number(minDeliveryOrder) || 0;
-    if (selectedOrderType === "delivery" && minDelivery > 0 && totalPrice < minDelivery) {
+    if (selectedOrderType === "delivery" && minDelivery > 0 && totalPrice < minDelivery && !isOnlyMembership) {
       setErrorMessage(
         `Minimum delivery order is ${formatPrice(minDelivery)}. Please add items worth ${formatPrice(minDelivery - totalPrice)} more.`
       );
@@ -544,7 +576,7 @@ export default function Menu2CartDrawer({
             {items.length > 0 && (
               <div className={`p-4 sm:p-5 ${theme.cardBg} border-t ${theme.cardBorder} space-y-3 shrink-0`}>
                 {/* Minimum Delivery Check Alert */}
-                {selectedOrderType === "delivery" && Number(minDeliveryOrder) > 0 && (
+                {selectedOrderType === "delivery" && Number(minDeliveryOrder) > 0 && !isOnlyMembership && (
                   <div
                     className={`p-2.5 rounded-[7px] text-xs flex items-center justify-between border ${
                       totalPrice >= Number(minDeliveryOrder)
@@ -585,7 +617,7 @@ export default function Menu2CartDrawer({
                   </div>
                 </div>
 
-                {selectedOrderType === "delivery" && Number(minDeliveryOrder) > 0 && totalPrice < Number(minDeliveryOrder) ? (
+                {selectedOrderType === "delivery" && Number(minDeliveryOrder) > 0 && totalPrice < Number(minDeliveryOrder) && !isOnlyMembership ? (
                   <div className="space-y-2">
                     <button
                       type="button"
@@ -628,34 +660,59 @@ export default function Menu2CartDrawer({
 
               {/* 1. Order Mode Selector */}
               <div className={`${theme.cardBg} p-3.5 rounded-[7px] border ${theme.cardBorder} space-y-2.5`}>
-                <label className="block text-[11px] font-black uppercase tracking-wider opacity-75">
-                  1. Select Order Mode
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: "delivery", label: "Delivery", icon: Bike },
-                    { id: "takeaway", label: "Takeaway", icon: ShoppingBag },
-                    { id: "dine_in", label: "Dine-In", icon: UtensilsCrossed },
-                  ].map((m) => {
-                    const Icon = m.icon;
-                    const active = selectedOrderType === m.id;
-                    return (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => handleOrderTypeChange(m.id as any)}
-                        className={`py-2.5 px-2 rounded-[7px] border-2 flex flex-col items-center justify-center gap-1 text-xs font-extrabold transition cursor-pointer ${
-                          active
-                            ? `${theme.catActiveBg}`
-                            : `${theme.sizeBoxBg} ${theme.cardBorder}`
-                        }`}
-                      >
-                        <Icon size={15} />
-                        <span>{m.label}</span>
-                      </button>
-                    );
-                  })}
+                <div className="flex items-center justify-between">
+                  <label className="block text-[11px] font-black uppercase tracking-wider opacity-75">
+                    1. Select Order Mode
+                  </label>
+                  {hasMembershipCard && (
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      💳 Membership Card (Delivery Only)
+                    </span>
+                  )}
                 </div>
+
+                {hasMembershipCard ? (
+                  <div className="p-3 rounded-[7px] bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold shrink-0">
+                        <Bike size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-amber-300">Home Delivery</p>
+                        <p className="text-[10px] text-amber-200/70">Membership card physical delivery &amp; registration at your doorstep</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">
+                      Fixed Mode
+                    </span>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: "delivery", label: "Delivery", icon: Bike },
+                      { id: "takeaway", label: "Takeaway", icon: ShoppingBag },
+                      { id: "dine_in", label: "Dine-In", icon: UtensilsCrossed },
+                    ].map((m) => {
+                      const Icon = m.icon;
+                      const active = selectedOrderType === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => handleOrderTypeChange(m.id as any)}
+                          className={`py-2.5 px-2 rounded-[7px] border-2 flex flex-col items-center justify-center gap-1 text-xs font-extrabold transition cursor-pointer ${
+                            active
+                              ? `${theme.catActiveBg}`
+                              : `${theme.sizeBoxBg} ${theme.cardBorder}`
+                          }`}
+                        >
+                          <Icon size={15} />
+                          <span>{m.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* 2. Customer Contact & Address Details */}
