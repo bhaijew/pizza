@@ -1388,8 +1388,8 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
 
             {/* Direct POS Download (No Popup) */}
             <a
-              href="https://github.com/bhaijew/sole/releases/download/v1.8.23/Sole-What-Setup-1.8.23.exe"
-              download="Sole-What-Setup-1.8.23.exe"
+              href="https://github.com/bhaijew/sole/releases/download/v1.8.26/Sole-What-Setup-1.8.26.exe"
+              download="Sole-What-Setup-1.8.26.exe"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -1408,10 +1408,10 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                 textDecoration: "none",
               }}
               className="hover:scale-105 transition-transform"
-              title="Download FloDesktop POS Setup 1.8.23.exe (Direct Download)"
+              title="Download FloDesktop POS Setup 1.8.26.exe (Direct Download)"
             >
               <Download size={14} />
-              <span className="hidden sm:inline">Download POS (1.8.23)</span>
+              <span className="hidden sm:inline">Download POS (1.8.26)</span>
               <span className="sm:hidden">POS</span>
             </a>
           </div>
@@ -3507,8 +3507,8 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                   </button>
 
                   <a
-                    href="https://github.com/bhaijew/sole/releases/download/v1.8.23/Sole-What-Setup-1.8.23.exe"
-                    download="Sole-What-Setup-1.8.23.exe"
+                    href="https://github.com/bhaijew/sole/releases/download/v1.8.26/Sole-What-Setup-1.8.26.exe"
+                    download="Sole-What-Setup-1.8.26.exe"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -3526,10 +3526,10 @@ CREATE POLICY "Service full pos_staff" ON public.pos_staff FOR ALL TO service_ro
                       boxShadow: "0 3px 12px rgba(16, 185, 129, 0.3)",
                     }}
                     className="hover:scale-105 transition-transform"
-                    title="Download FloDesktop POS Setup 1.8.23.exe (Direct Download)"
+                    title="Download FloDesktop POS Setup 1.8.26.exe (Direct Download)"
                   >
                     <Download size={15} />
-                    <span>Download POS Setup (v1.8.23.exe)</span>
+                    <span>Download POS Setup (v1.8.26.exe)</span>
                   </a>
 
                   <a

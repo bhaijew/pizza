@@ -776,8 +776,8 @@ export default function AdminShell({
         >
           {/* Direct POS App Download (No Popup) */}
           <a
-            href="https://github.com/bhaijew/sole/releases/download/v1.8.23/Sole-What-Setup-1.8.23.exe"
-            download="Sole-What-Setup-1.8.23.exe"
+            href="https://github.com/bhaijew/sole/releases/download/v1.8.26/Sole-What-Setup-1.8.26.exe"
+            download="Sole-What-Setup-1.8.26.exe"
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -797,10 +797,10 @@ export default function AdminShell({
               transition: "all 0.15s ease",
             }}
             className="hover:opacity-90"
-            title="Download FloDesktop POS Setup 1.8.23.exe (Direct Download)"
+            title="Download FloDesktop POS Setup 1.8.26.exe (Direct Download)"
           >
             <Download size={13} />
-            <span>Download POS App (1.8.23)</span>
+            <span>Download POS App (1.8.26)</span>
           </a>
 
           {/* Dark Mode Toggle */}
@@ -1511,8 +1511,8 @@ export default function AdminShell({
           >
             {/* Direct POS App Download (No Popup) */}
             <a
-              href="https://github.com/bhaijew/sole/releases/download/v1.8.23/Sole-What-Setup-1.8.23.exe"
-              download="Sole-What-Setup-1.8.23.exe"
+              href="https://github.com/bhaijew/sole/releases/download/v1.8.26/Sole-What-Setup-1.8.26.exe"
+              download="Sole-What-Setup-1.8.26.exe"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -1532,10 +1532,10 @@ export default function AdminShell({
                 transition: "all 0.15s ease",
               }}
               className="hover:opacity-90"
-              title="Download FloDesktop POS Setup 1.8.23.exe"
+              title="Download FloDesktop POS Setup 1.8.26.exe"
             >
               <Download size={13} />
-              <span>Download POS App (1.8.23)</span>
+              <span>Download POS App (1.8.26)</span>
             </a>
 
             {/* Dark Mode Toggle */}

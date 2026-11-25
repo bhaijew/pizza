@@ -15,6 +15,7 @@ import {
   Moon,
   ExternalLink,
   CheckCircle2,
+  Laptop,
 } from "lucide-react";
 
 const APK_DIRECT_URL = "https://github.com/bhaijew/appsolewhat/releases/latest/download/app-release.apk";
@@ -22,6 +23,9 @@ const APP_VERSION = "1.0.19";
 const BUILD_NUM = "20";
 const APK_SIZE = "55.8 MB";
 const RELEASE_DATE = "Nov 15, 2026";
+const EXE_DIRECT_URL = "https://github.com/bhaijew/sole/releases/download/v1.8.26/Sole-What-Setup-1.8.26.exe";
+const EXE_VERSION = "1.8.26";
+const EXE_SIZE = "~85 MB";
 const THEME_STORAGE_KEY = "pizza_admin_download_theme";
 
 export default function DownloadAppClient() {
@@ -289,6 +293,94 @@ export default function DownloadAppClient() {
                 <p className={`text-[11px] mt-3 leading-normal ${mutedText}`}>
                   Point your Android camera at the QR code to download the APK directly to your device.
                 </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Windows POS Desktop App Card */}
+        <div
+          style={{ borderRadius: "5px" }}
+          className={`border p-6 sm:p-8 ${cardBg}`}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+            <div className="md:col-span-8 space-y-5">
+              <div className="flex items-start gap-3.5">
+                <div
+                  style={{ borderRadius: "5px" }}
+                  className={`p-2.5 border shrink-0 bg-emerald-500/10 text-emerald-600 border-emerald-500/20`}
+                >
+                  <Laptop size={40} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className={`text-lg sm:text-xl font-bold tracking-tight ${headingText}`}>
+                      Sole What POS Desktop App
+                    </h2>
+                    <span
+                      style={{ borderRadius: "5px" }}
+                      className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[11px] font-semibold px-2 py-0.5"
+                    >
+                      v{EXE_VERSION} (Windows .EXE)
+                    </span>
+                  </div>
+                  <p className={`text-xs mt-0.5 ${mutedText}`}>
+                    Native 64-bit Windows Installer &bull; Direct ESC/POS Thermal Printing &amp; Offline Cache
+                  </p>
+                </div>
+              </div>
+
+              <p className={`text-xs sm:text-sm leading-relaxed ${bodyText}`}>
+                Dedicated cashier counter application for Windows PC. Delivers instant zero-latency silent thermal receipt printing, cash drawer kick triggers, and real-time offline-resilient sync with Supabase cloud.
+              </p>
+
+              <div
+                style={{ borderRadius: "5px" }}
+                className={`grid grid-cols-3 border divide-x text-xs ${subCardBg} ${
+                  isDark ? "divide-slate-800" : "divide-slate-200"
+                }`}
+              >
+                <div className="p-2.5">
+                  <div className={`text-[11px] ${mutedText}`}>Package</div>
+                  <div className={`font-semibold mt-0.5 ${headingText}`}>Sole-What-Setup-{EXE_VERSION}.exe</div>
+                </div>
+                <div className="p-2.5">
+                  <div className={`text-[11px] ${mutedText}`}>Size</div>
+                  <div className={`font-semibold mt-0.5 ${headingText}`}>{EXE_SIZE}</div>
+                </div>
+                <div className="p-2.5">
+                  <div className={`text-[11px] ${mutedText}`}>Printing</div>
+                  <div className={`font-semibold mt-0.5 text-emerald-600`}>Raw USB Ready ✓</div>
+                </div>
+              </div>
+
+              <div className="space-y-2.5 pt-1">
+                <a
+                  href={EXE_DIRECT_URL}
+                  download={`Sole-What-Setup-${EXE_VERSION}.exe`}
+                  style={{ borderRadius: "5px" }}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-sm px-5 py-3 transition-colors flex items-center justify-center gap-2 no-underline cursor-pointer shadow-md"
+                >
+                  <Download size={18} />
+                  <span>Download Windows POS App (v{EXE_VERSION} .exe)</span>
+                </a>
+              </div>
+            </div>
+
+            <div className="md:col-span-4">
+              <div
+                style={{ borderRadius: "5px" }}
+                className={`border p-5 flex flex-col items-start ${subCardBg}`}
+              >
+                <div className={`flex items-center gap-1.5 text-xs font-semibold mb-3 ${headingText}`}>
+                  <ShieldCheck size={16} className="text-emerald-500" />
+                  <span>Quick Setup Info</span>
+                </div>
+                <ul className={`space-y-2 text-xs leading-relaxed ${bodyText}`}>
+                  <li>&bull; Click the download button to start the <strong>.exe</strong> download automatically.</li>
+                  <li>&bull; Run <strong>Sole-What-Setup-{EXE_VERSION}.exe</strong> and complete standard setup.</li>
+                  <li>&bull; Enter cashier 4-digit PIN to immediately launch counter mode.</li>
+                </ul>
               </div>
             </div>
           </div>

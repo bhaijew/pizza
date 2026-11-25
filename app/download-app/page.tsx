@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import DownloadAppClient from "@/components/DownloadAppClient";
 
 export const metadata: Metadata = {
-  title: "Download Mobile App (APK) | Sole What Admin",
+  title: "Download Apps (Android APK & Windows POS) | Sole What",
   description:
-    "Direct browser download for Sole What Admin Android APK (v1.0.9). Manage live orders, verify online orders, and close daily registers in real time.",
+    "Direct browser download for Sole What Admin Android APK and Windows Native POS Setup (Sole-What-Setup-1.8.26.exe).",
 };
 
 export default function DownloadAppPage() {
